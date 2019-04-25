@@ -1,0 +1,8 @@
+.DS_Store
+build/
+standalone/bld/*
+dist/
+plugin.dylib
+plugin.so
+standalone/exe_*
+pynb/.ipynb_checkpoints/*

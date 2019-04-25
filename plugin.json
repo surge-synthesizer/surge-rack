@@ -1,0 +1,21 @@
+{
+	"slug": "SurgeRack",
+	"name": "Surge for Rack",
+	"version": "1.0.0",
+	"license": "GPL3",
+	"author": "@baconpaul",
+	"authorEmail": "",
+	"authorUrl": "",
+	"pluginUrl": "https://surge/",
+	"manualUrl": "",
+	"sourceUrl": "https://surge/",
+	"donateUrl": "",
+	"modules": [
+		{
+			"slug": "SurgeFX",
+			"name": "SurgeFX",
+			"description": "",
+			"tags": []
+		}
+	]
+}
