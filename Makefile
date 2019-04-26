@@ -1,5 +1,16 @@
+RACK_DIR ?= ../..
+include $(RACK_DIR)/arch.mk
+
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS +=
+FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
+	-Isurge/libs/xml \
+	-Isurge/libs/filesystem \
+	-Isurge/src/headless \
+	-DRELEASE=1 \
+	-DTARGET_HEADLESS \
+	-DTARGET_RACK \
+	-DRACK_V1
+
 CFLAGS +=
 CXXFLAGS += 
 
@@ -10,16 +21,92 @@ LDFLAGS +=
 # Add .cpp and .c files to the build
 SOURCES += $(wildcard src/*.cpp)
 
+SRG=surge/src/common
+SOURCES += $(SRG)/Parameter.cpp \
+	$(SRG)/Sample.cpp \
+	$(SRG)/SampleLoadRiffWave.cpp \
+	$(SRG)/SurgeError.cpp \
+	$(SRG)/SurgePatch.cpp \
+	$(SRG)/SurgeStorage.cpp \
+	$(SRG)/SurgeStorageLoadWavetable.cpp \
+	$(SRG)/SurgeSynthesizer.cpp \
+	$(SRG)/SurgeSynthesizerIO.cpp \
+	$(SRG)/UserDefaults.cpp \
+	$(SRG)/precompiled.cpp \
+    $(SRG)/dsp/AdsrEnvelope.cpp \
+    $(SRG)/dsp/BiquadFilter.cpp \
+    $(SRG)/dsp/BiquadFilterSSE2.cpp \
+    $(SRG)/dsp/DspUtilities.cpp \
+    $(SRG)/dsp/FMOscillator.cpp \
+    $(SRG)/dsp/FilterCoefficientMaker.cpp \
+    $(SRG)/dsp/LfoModulationSource.cpp \
+    $(SRG)/dsp/Oscillator.cpp \
+    $(SRG)/dsp/QuadFilterChain.cpp \
+    $(SRG)/dsp/QuadFilterUnit.cpp \
+    $(SRG)/dsp/SampleAndHoldOscillator.cpp \
+    $(SRG)/dsp/SurgeSuperOscillator.cpp \
+    $(SRG)/dsp/SurgeVoice.cpp \
+    $(SRG)/dsp/VectorizedSvfFilter.cpp \
+    $(SRG)/dsp/Wavetable.cpp \
+    $(SRG)/dsp/WavetableOscillator.cpp \
+    $(SRG)/dsp/WindowOscillator.cpp \
+    $(SRG)/dsp/effect/ConditionerEffect.cpp \
+    $(SRG)/dsp/effect/DistortionEffect.cpp \
+    $(SRG)/dsp/effect/DualDelayEffect.cpp \
+    $(SRG)/dsp/effect/Effect.cpp \
+    $(SRG)/dsp/effect/FreqshiftEffect.cpp \
+    $(SRG)/dsp/effect/PhaserEffect.cpp \
+    $(SRG)/dsp/effect/Reverb1Effect.cpp \
+    $(SRG)/dsp/effect/Reverb2Effect.cpp \
+    $(SRG)/dsp/effect/RotarySpeakerEffect.cpp \
+    $(SRG)/dsp/effect/VocoderEffect.cpp \
+    $(SRG)/vt_dsp/basic_dsp.cpp \
+    $(SRG)/vt_dsp/halfratefilter.cpp \
+    $(SRG)/vt_dsp/lipol.cpp \
+    $(SRG)/vt_dsp/macspecific.cpp \
+    $(SRG)/thread/CriticalSection.cpp
+
+# ASM ERRORS need fixing
+
+
+SRL=surge/libs
+SOURCES += $(SRL)/xml/tinystr.cpp \
+	$(SRL)/xml/tinyxml.cpp \
+	$(SRL)/xml/tinyxmlerror.cpp \
+	$(SRL)/xml/tinyxmlparser.cpp
+
+ifdef ARCH_MAC
+SOURCES += $(SRL)/filesystem/filesystem.cpp
+
+LDFLAGS += -framework CoreFoundation -framework CoreServices
+endif
+
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md
 
 # Include the VCV plugin Makefile framework
-RACK_DIR ?= ../..
 include $(RACK_DIR)/plugin.mk
 
-shadist:	dist
-	openssl sha256 dist/$(SLUG)-$(VERSION)-$(ARCH).zip > dist/$(SLUG)-$(VERSION)-$(ARCH).zip.sha256
+# Obvioulsy get rid of this one day
+FLAGS += 	-Wno-undefined-bool-conversion \
+	-Wno-unused-variable \
+	-Wno-reorder \
+	-Wno-char-subscripts \
+	-Wno-sign-compare \
+	-Wno-ignored-qualifiers \
+	-Wno-c++17-extensions
+
+# Add Surge Specific make flags based on architecture
+ifdef ARCH_MAC
+	FLAGS += -DMAC -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
+endif
+
+ifdef ARCH_LINUX
+endif
+
+ifdef ARCH_WIN
+endif
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/FIXME
 
@@ -42,3 +129,8 @@ install_local:	dist
 run_local:	install_local
 	/Applications/Rack.app/Contents/MacOS/Rack
 
+missing_symbols:	dist
+	nm plugin.dylib  | grep " U " | c++filt
+
+go:	dist
+	(cd ~/dev/VCVRack/V1/Rack && make run)
