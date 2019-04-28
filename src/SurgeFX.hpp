@@ -2,6 +2,10 @@
 
 #include "dsp/effect/Effect.h"
 
+#ifndef RACK_V1
+#define INFO(format,...) loggerLog(rack::INFO_LEVEL, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#endif
+
 template <typename TBase>
 struct SurgeFX : virtual TBase
 {
@@ -37,7 +41,44 @@ struct SurgeFX : virtual TBase
     {
         TBase::config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         TBase::configParam(FX_TYPE, 0, 9, 1 );
-        
+        setupSurge();
+        for( int i=0; i<12; ++i )
+        {
+            TBase::configParam(FX_PARAM_0 + i, 0, 1, fxstorage->p[i].get_value_f01() );
+        }
+    }
+#else
+    SurgeFX() : TBase(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS)
+    {
+    }
+#endif
+
+
+    inline float getParam(int id) {
+#if RACK_V1
+        return params[id].getValue();
+#else
+        return params[id].value;
+#endif        
+    }
+
+    inline float getInput(int id) {
+#if RACK_V1
+        return inputs[id].getVoltage();
+#else
+        return inputs[id].value;
+#endif        
+    }
+
+    inline void setOutput(int id, float v) {
+#if RACK_V1
+        outputs[id].setVoltage(v);
+#else
+        outputs[id].value = v;
+#endif        
+    }
+
+    void setupSurge() {
         INFO( "Making FX" );
         // TODO: Have a mode where these paths come from res/
         storage.reset(new SurgeStorage());
@@ -72,11 +113,6 @@ struct SurgeFX : virtual TBase
         fxstorage->p[9].set_value_f01(0.0);
         fxstorage->p[10].set_value_f01(1.0);
         fxstorage->p[11].set_value_f01(0.0);
-
-        for( int i=0; i<12; ++i )
-        {
-            TBase::configParam(FX_PARAM_0 + i, 0, 1, fxstorage->p[i].get_value_f01() );
-        }
 
         INFO( "P10 = %lf %lf\n", fxstorage->p[10].get_value_f01(), fxstorage->p[10].val.f );
 
@@ -130,26 +166,27 @@ struct SurgeFX : virtual TBase
             processedL[i] = 0.0f;
             processedR[i] = 0.0f;
         }
-    }
-#else
-    SurgeFX() : TBase(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS)
-    {
-    }
-#endif
 
+    }
+    
 
     float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
     float processedL alignas(16)[BLOCK_SIZE], processedR alignas(16)[BLOCK_SIZE];
     int bufferPos = BLOCK_SIZE-1;
-    
-    void process(const typename TBase::ProcessArgs &args) override {
+
+#if RACK_V1    
+    void process(const typename TBase::ProcessArgs &args) override
+#else
+    void step() override
+#endif
+    {
         for( int i=0; i<n_fx_params; ++i )
         { 
-            fxstorage->p[orderToParam[i]].set_value_f01(params[FX_PARAM_0 + i].getValue());
+            fxstorage->p[orderToParam[i]].set_value_f01(getParam(FX_PARAM_0 + i));
         }
         
-        bufferR[bufferPos] = inputs[INPUT_R_OR_MONO].getVoltage() / 5.0;
-        bufferL[bufferPos] = inputs[INPUT_L].getVoltage() / 5.0; // Surge works on a +/- 1; rack works on +/- 5
+        bufferR[bufferPos] = getInput(INPUT_R_OR_MONO) / 5.0;
+        bufferL[bufferPos] = getInput(INPUT_L) / 5.0; // Surge works on a +/- 1; rack works on +/- 5
         // FIXME - deal with MONO when L not hooked up
 
         bufferPos ++;
@@ -164,8 +201,8 @@ struct SurgeFX : virtual TBase
             bufferPos = 0;
         }
 
-        outputs[OUTPUT_R_OR_MONO].setVoltage(processedR[bufferPos] * 5.0);
-        outputs[OUTPUT_L].setVoltage(processedL[bufferPos] * 5.0);
+        setOutput(OUTPUT_R_OR_MONO, processedR[bufferPos] * 5.0);
+        setOutput(OUTPUT_L, processedL[bufferPos] * 5.0);
     }
 
     std::string getStringName(int gi) {

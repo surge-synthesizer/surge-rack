@@ -1,4 +1,15 @@
 RACK_DIR ?= ../..
+
+ifneq ("$(wildcard $(RACK_DIR)/helper.py)","")
+	RACK_VERSION=1
+	RACK_FLAG=-DRACK_V1
+else
+	RACK_VERSION=062
+	RACK_FLAG=-DRACK_V062
+	SLUG=SurgeRack
+	VERSION=0.6.0
+endif
+
 include $(RACK_DIR)/arch.mk
 
 # FLAGS will be passed to both the C and C++ compiler
@@ -8,8 +19,9 @@ FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
 	-Isurge/src/headless \
 	-DRELEASE=1 \
 	-DTARGET_HEADLESS \
-	-DTARGET_RACK \
-	-DRACK_V1
+	-DTARGET_RACK
+
+FLAGS += $(RACK_FLAG)
 
 CFLAGS +=
 CXXFLAGS += 

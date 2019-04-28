@@ -1,5 +1,10 @@
 #include "rack.hpp"
 
+#ifndef RACK_V1
+#include "widgets.hpp"
+#endif
+
+
 struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
     typedef std::function<void(NVGcontext *)> drawfn_t;
     drawfn_t drawf;
@@ -7,7 +12,11 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
     struct InternalBDW : rack::TransparentWidget {
         drawfn_t drawf;
         InternalBDW(rack::Rect box_, drawfn_t draw_) : drawf(draw_) { box = box_; }
+#if RACK_V1        
         void draw(const DrawArgs &args) override { drawf(args.vg); }
+#else
+        void draw(NVGcontext *vg) override { drawf(vg); }
+#endif        
     };
 
     BufferedDrawFunctionWidget(rack::Vec pos, rack::Vec sz, drawfn_t draw_) : drawf(draw_) {
@@ -36,7 +45,11 @@ struct SurgeRackBG : public rack::TransparentWidget
     }
 };
 
+#if RACK_V1
 struct TextDisplayLight : public rack::widget::Widget
+#else
+struct TextDisplayLight : public rack::Widget
+#endif
 {
     typedef std::function<std::string()> stringGetter_t;
     typedef std::function<bool()> stringDirtyGetter_t;
@@ -50,7 +63,8 @@ struct TextDisplayLight : public rack::widget::Widget
         addChild(new BufferedDrawFunctionWidget(rack::Vec(0,0), box.size,
                                                 [this](NVGcontext *vg) { this->drawChars(vg); } ) );
     }
-    
+
+#if RACK_V1
     void step() override {
         if(dirtyfn())
         {
@@ -64,6 +78,7 @@ struct TextDisplayLight : public rack::widget::Widget
         }
         rack::widget::Widget::step();
     }
+#endif    
     
     static TextDisplayLight *create(rack::Vec pos, rack::Vec size, stringDirtyGetter_t dgf, stringGetter_t gf) {
         TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
