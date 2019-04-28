@@ -3,11 +3,13 @@ RACK_DIR ?= ../..
 ifneq ("$(wildcard $(RACK_DIR)/helper.py)","")
 	RACK_VERSION=1
 	RACK_FLAG=-DRACK_V1
+	RACK_GO=(cd ~/dev/VCVRack/V1/Rack && make run)
 else
 	RACK_VERSION=062
 	RACK_FLAG=-DRACK_V062
 	SLUG=SurgeRack
 	VERSION=0.6.0
+	RACK_GO=	unzip -o dist/$(SLUG)-$(VERSION)-$(ARCH).zip -d ~/Documents/Rack/plugins && (cd ~/Documents/Rack && /Applications/Rack.app/Contents/MacOS/Rack ) 
 endif
 
 include $(RACK_DIR)/arch.mk
@@ -144,8 +146,10 @@ run_local:	install_local
 missing_symbols:	dist
 	nm plugin.dylib  | grep " U " | c++filt
 
+
 go:	dist
-	(cd ~/dev/VCVRack/V1/Rack && make run)
+	$(RACK_GO)
 
 dbg:	dist
 	(cd ~/dev/VCVRack/V1/Rack && make && lldb -- ./Rack -d)
+
