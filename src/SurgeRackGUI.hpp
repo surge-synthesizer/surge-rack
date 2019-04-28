@@ -34,5 +34,61 @@ struct SurgeRackBG : public rack::TransparentWidget
         nvgFillColor(vg, nvgRGBA(200,130,130,255));
         nvgFill(vg);
     }
+};
 
+struct TextDisplayLight : public rack::widget::Widget
+{
+    typedef std::function<std::string()> stringGetter_t;
+    typedef std::function<bool()> stringDirtyGetter_t;
+
+    stringGetter_t getfn;
+    stringDirtyGetter_t dirtyfn;
+    
+    TextDisplayLight() : Widget() {}
+
+    void setup() {
+        addChild(new BufferedDrawFunctionWidget(rack::Vec(0,0), box.size,
+                                                [this](NVGcontext *vg) { this->drawChars(vg); } ) );
+    }
+    
+    void step() override {
+        if(dirtyfn())
+        {
+            for(auto w : children)
+            {
+                if(auto fw = dynamic_cast<rack::FramebufferWidget *>(w))
+                {
+                    fw->dirty = true;
+                }
+            }
+        }
+        rack::widget::Widget::step();
+    }
+    
+    static TextDisplayLight *create(rack::Vec pos, rack::Vec size, stringDirtyGetter_t dgf, stringGetter_t gf) {
+        TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
+        res->getfn = gf;
+        res->dirtyfn = dgf;
+        res->box.pos = pos;
+        res->box.size = size;
+
+        res->setup();
+        
+        return res;
+    }
+
+    void drawChars(NVGcontext *vg) {
+        std::string ch = getfn();
+
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgFillColor(vg, nvgRGBA(20, 20, 25 ,255));
+        nvgFill(vg);
+
+        nvgFillColor( vg, nvgRGBA( 100, 100, 255, 255 ) );
+        nvgFontSize( vg, 15 );
+        nvgTextAlign( vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP );
+        nvgText( vg, 2, 2, ch.c_str(), NULL );
+
+    }
 };

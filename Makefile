@@ -134,3 +134,6 @@ missing_symbols:	dist
 
 go:	dist
 	(cd ~/dev/VCVRack/V1/Rack && make run)
+
+dbg:	dist
+	(cd ~/dev/VCVRack/V1/Rack && make && lldb -- ./Rack -d)
