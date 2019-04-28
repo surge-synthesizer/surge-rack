@@ -2,24 +2,12 @@
   "version": "1.dev.faa9606",
   "modules": [
     {
-      "plugin": "SurgeRack",
-      "version": "1.0.0",
-      "model": "SurgeFX",
-      "params": [],
-      "leftModuleId": 20,
-      "id": 16,
-      "pos": [
-        43,
-        0
-      ]
-    },
-    {
       "plugin": "Fundamental",
       "version": "1.0.0",
       "model": "ADSR",
       "params": [
         {
-          "value": 0.0
+          "value": 0.0825000033
         },
         {
           "value": 0.585500002
@@ -52,7 +40,6 @@
         }
       ],
       "leftModuleId": 19,
-      "rightModuleId": 16,
       "id": 20,
       "pos": [
         40,
@@ -74,11 +61,12 @@
           "blockSize": 256
         }
       },
-      "leftModuleId": 23,
+      "leftModuleId": 28,
+      "rightModuleId": 27,
       "id": 22,
       "pos": [
-        77,
-        0
+        20,
+        1
       ]
     },
     {
@@ -90,23 +78,23 @@
           "value": 1.0
         },
         {
-          "value": 0.282993913
+          "value": 0.712763131
         },
         {
-          "value": 1.0
+          "value": 0.950351536
         },
         {
-          "value": 1.0
+          "value": 0.780645788
         },
         {
           "value": 1.0
         }
       ],
-      "rightModuleId": 22,
+      "rightModuleId": 28,
       "id": 23,
       "pos": [
-        67,
-        0
+        0,
+        1
       ]
     },
     {
@@ -115,7 +103,7 @@
       "model": "SEQ3",
       "params": [
         {
-          "value": 1.44800055
+          "value": 2.5040009
         },
         {
           "value": 0.0
@@ -127,16 +115,16 @@
           "value": 8.0
         },
         {
-          "value": 0.404999971
+          "value": 0.0
         },
         {
           "value": 0.0
         },
         {
-          "value": 0.449999928
+          "value": 1.87499881
         },
         {
-          "value": 0.135000005
+          "value": 1.58999765
         },
         {
           "value": 0.0
@@ -148,7 +136,7 @@
           "value": 1.01999998
         },
         {
-          "value": 2.14500022
+          "value": 1.77000022
         },
         {
           "value": 0.0
@@ -228,12 +216,12 @@
         "gates": [
           1,
           0,
-          1,
           0,
           0,
-          1,
           0,
-          1
+          0,
+          0,
+          0
         ]
       },
       "rightModuleId": 26,
@@ -252,13 +240,13 @@
           "value": 1.0
         },
         {
-          "value": 1.0
-        },
-        {
           "value": 0.0
         },
         {
-          "value": 0.0
+          "value": -5.34599924
+        },
+        {
+          "value": 0.0120000001
         },
         {
           "value": 0.0
@@ -277,9 +265,132 @@
         22,
         0
       ]
+    },
+    {
+      "plugin": "Fundamental",
+      "version": "1.0.0",
+      "model": "Scope",
+      "params": [
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": -0.0
+        },
+        {
+          "value": -0.240000576
+        },
+        {
+          "value": 8.92999172
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        }
+      ],
+      "data": {
+        "lissajous": 0,
+        "external": 0
+      },
+      "leftModuleId": 22,
+      "rightModuleId": 29,
+      "id": 27,
+      "pos": [
+        30,
+        1
+      ]
+    },
+    {
+      "plugin": "Fundamental",
+      "version": "1.0.0",
+      "model": "VCMixer",
+      "params": [
+        {
+          "value": 1.0
+        },
+        {
+          "value": 0.68180126
+        },
+        {
+          "value": 0.924896121
+        },
+        {
+          "value": 1.0
+        },
+        {
+          "value": 1.0
+        }
+      ],
+      "leftModuleId": 23,
+      "rightModuleId": 22,
+      "id": 28,
+      "pos": [
+        10,
+        1
+      ]
+    },
+    {
+      "plugin": "SurgeRack",
+      "version": "1.0.0",
+      "model": "SurgeFX",
+      "params": [
+        {
+          "value": 1.0
+        },
+        {
+          "value": 0.673500478
+        },
+        {
+          "value": 0.635999739
+        },
+        {
+          "value": 0.573000491
+        },
+        {
+          "value": 0.751999497
+        },
+        {
+          "value": 0.122999698
+        },
+        {
+          "value": 0.093999885
+        },
+        {
+          "value": 0.627499938
+        },
+        {
+          "value": 0.199500009
+        },
+        {
+          "value": 0.309000045
+        },
+        {
+          "value": 0.681000173
+        },
+        {
+          "value": 0.499000072
+        },
+        {
+          "value": 0.0
+        }
+      ],
+      "leftModuleId": 27,
+      "id": 29,
+      "pos": [
+        43,
+        1
+      ]
     }
   ],
-  "id": 12,
+  "id": 13,
   "cables": [
     {
       "outputModuleId": 19,
@@ -289,25 +400,11 @@
       "color": "#0986ad"
     },
     {
-      "outputModuleId": 20,
-      "outputId": 0,
-      "inputModuleId": 23,
-      "inputId": 1,
-      "color": "#c91847"
-    },
-    {
       "outputModuleId": 23,
       "outputId": 0,
       "inputModuleId": 22,
       "inputId": 0,
       "color": "#0c8e15"
-    },
-    {
-      "outputModuleId": 23,
-      "outputId": 0,
-      "inputModuleId": 22,
-      "inputId": 1,
-      "color": "#0986ad"
     },
     {
       "outputModuleId": 25,
@@ -317,18 +414,81 @@
       "color": "#c9b70e"
     },
     {
-      "outputModuleId": 26,
-      "outputId": 2,
-      "inputModuleId": 20,
-      "inputId": 1,
-      "color": "#c91847"
-    },
-    {
       "outputModuleId": 25,
       "outputId": 1,
       "inputModuleId": 26,
       "inputId": 0,
       "color": "#0c8e15"
+    },
+    {
+      "outputModuleId": 26,
+      "outputId": 1,
+      "inputModuleId": 20,
+      "inputId": 1,
+      "color": "#c91847"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 23,
+      "inputId": 1,
+      "color": "#0986ad"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 27,
+      "inputId": 0,
+      "color": "#c91847"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 28,
+      "inputId": 1,
+      "color": "#c91847"
+    },
+    {
+      "outputModuleId": 28,
+      "outputId": 0,
+      "inputModuleId": 22,
+      "inputId": 1,
+      "color": "#0c8e15"
+    },
+    {
+      "outputModuleId": 23,
+      "outputId": 0,
+      "inputModuleId": 27,
+      "inputId": 1,
+      "color": "#0986ad"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 29,
+      "inputId": 0,
+      "color": "#0c8e15"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 29,
+      "inputId": 1,
+      "color": "#0986ad"
+    },
+    {
+      "outputModuleId": 29,
+      "outputId": 0,
+      "inputModuleId": 23,
+      "inputId": 2,
+      "color": "#c9b70e"
+    },
+    {
+      "outputModuleId": 29,
+      "outputId": 1,
+      "inputModuleId": 28,
+      "inputId": 2,
+      "color": "#c91847"
     }
   ]
 }
