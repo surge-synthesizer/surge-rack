@@ -2,6 +2,10 @@
 #include "rack.hpp"
 #include <sstream>
 
+#ifndef RACK_V1
+using namespace rack;
+#endif
+
 namespace Surge
 {
 namespace UserInteractions
@@ -14,8 +18,12 @@ void promptError(const std::string &message, const std::string &title,
     oss << "Surge Error\n"
         << title << "\n"
         << message << "\n";
+#if RACK_V1
     // FIXME: What's the appropriate rack error mechanism?
     WARN(oss.str().c_str());
+#else
+    warn(oss.str().c_str());
+#endif
 }
 
 void promptError(const Surge::Error &error, SurgeGUIEditor *guiEditor)
@@ -31,7 +39,12 @@ MessageResult promptOKCancel(const std::string &message, const std::string &titl
         << title << "\n"
         << message << "\n" 
         << "Returning CANCEL";
+#if RACK_V1
+    // FIXME: What's the appropriate rack error mechanism?
     INFO(oss.str().c_str());
+#else
+    info(oss.str().c_str());
+#endif
     return UserInteractions::CANCEL;
 }
 

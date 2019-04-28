@@ -29,14 +29,22 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module) : rack::ModuleWidget(
     {
         int pos = 60 + i * 40;
         int x0 = 0;
-        addParam(rack::createParam<rack::RoundSmallBlackKnob>(rack::Vec( x0 + 10, pos), module, M::FX_PARAM_0 + i ) );
+        addParam(rack::createParam<rack::RoundSmallBlackKnob>(rack::Vec( x0 + 10, pos), module, M::FX_PARAM_0 + i
+#ifndef RACK_V1
+                                                              , 0, 1, 0.5
+#endif
+                     ) );
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec( x0 + 40, pos ), module, M::FX_PARAM_INPUT_0 + i ) );
         addChild(TextDisplayLight::create(rack::Vec( x0 + 90, pos ), rack::Vec( SCREW_WIDTH * 17, 35 ),
                                           [module, i]() { return module ? module->getStringDirty(i) : false; },
                                           [module, i]() { return module ? module->getStringName(i) : "NAME"; } ) );
 
         x0 = SCREW_WIDTH * 25;;
-        addParam(rack::createParam<rack::RoundSmallBlackKnob>(rack::Vec( x0 + 10, pos), module, M::FX_PARAM_0 + i + 6 ) );
+        addParam(rack::createParam<rack::RoundSmallBlackKnob>(rack::Vec( x0 + 10, pos), module, M::FX_PARAM_0 + i + 6
+#ifndef RACK_V1
+                                                              , 0, 1, 0.5
+#endif
+                     ) );
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec( x0 + 40, pos ), module, M::FX_PARAM_INPUT_0 + i + 6) );
         addChild(TextDisplayLight::create(rack::Vec( x0 + 90, pos ), rack::Vec( SCREW_WIDTH * 17, 35 ),
                                           [module, i]() { return module ?  module->getStringDirty(i + 6) : false; },
@@ -45,5 +53,8 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module) : rack::ModuleWidget(
     }
 }
     
-
+#if RACK_V1
 rack::Model *modelSurgeFX = rack::createModel<SurgeFXWidget::M, SurgeFXWidget>("SurgeFX");
+#else
+rack::Model *modelSurgeFX = rack::createModel<SurgeFXWidget::M, SurgeFXWidget>("Surge Team", "SurgeRack", "SurgeFX", rack::EFFECT_TAG);
+#endif
