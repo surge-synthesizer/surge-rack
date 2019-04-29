@@ -1,5 +1,7 @@
 # Surge in Rack (experimental)
 
+[![Build Status](https://dev.azure.com/surge-synthesizer/surge/_apis/build/status/surge-synthesizer.surge-rack?branchName=master)](https://dev.azure.com/surge-synthesizer/surge/_build/latest?definitionId=3&branchName=master)
+
 This repo holds an experimental set of code which aims to break apart the surge synth at
 https://github.com/surge-synthesizer/surge/ into distinct rack modules for the oscillator,
 filter, effect, and waveshaper block segments. Maybe one day the LFOs also.
