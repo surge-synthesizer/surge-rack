@@ -17,7 +17,21 @@ follow one of these directions. Note the makefile
 
 ### Rack 0.6.2
 
-Basically build against the Rack SDK as normal. The azure-pipelines.yml shows you how to do this.
+Basically build against the Rack SDK as normal. The azure-pipelines.yml shows you how to do this. 
+Here's an example
+
+```
+mkdir surge-build
+cd surge-build
+curl -o Rack-SDK.zip  https://vcvrack.com/downloads/Rack-SDK-0.6.2.zip
+unzip Rack-SDK.zip
+git clone https://github.com/surge-synthesizer/surge-rack
+cd surge-rack
+git submodule update --init --recursive
+RACK_DIR=../Rack-SDK make dist
+```
+
+and you should get a built plugin
 
 ### Rack 1.0
 
@@ -37,7 +51,7 @@ git checkout v1
 make
 cd ..
 git clone https://github.com/surge-synthesizer/surge-rack.git 
-cd surget-rack
+cd surge-rack
 make
 cd ../..
 make run
