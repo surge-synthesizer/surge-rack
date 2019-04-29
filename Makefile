@@ -131,6 +131,7 @@ ifdef ARCH_WIN
 		 -Wno-unused-variable -Wno-char-subscripts -Wno-reorder \
 		 -Wno-int-in-bool-context 
 	FLAGS += -DWINDOWS -Isurge/src/windows
+	FLAGS += -v
 endif
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/FIXME
