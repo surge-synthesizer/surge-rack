@@ -5,14 +5,17 @@
 #include <cstring>
 
 template <typename TBase> struct SurgeFX : virtual TBase {
-    enum ParamIds { FX_TYPE, FX_PARAM_0, NUM_PARAMS = FX_PARAM_0 + 12 };
+    enum ParamIds {
+        FX_TYPE=0,
+        FX_PARAM_0,
+        NUM_PARAMS = FX_PARAM_0 + 13 };
     enum InputIds {
         INPUT_R_OR_MONO,
         INPUT_L,
 
         FX_PARAM_INPUT_0,
 
-        NUM_INPUTS = FX_PARAM_INPUT_0 + 12
+        NUM_INPUTS = FX_PARAM_INPUT_0 + 13
     };
     enum OutputIds { OUTPUT_R_OR_MONO, OUTPUT_L, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
@@ -79,12 +82,15 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         storage->init_tables();
 
         fxstorage = &(storage->getPatch().fx[0]);
+        fxstorage->type.val.i = 1;
         surge_effect.reset(spawn_effect(1, storage.get(),
                                         &(storage->getPatch().fx[0]),
                                         storage->getPatch().globaldata));
         surge_effect->init();
         surge_effect->init_ctrltypes();
 
+        fxstorage->type.val.i = 1;
+        
         // Because I know this
         fxstorage->p[0].set_value_f01(0.6);
         fxstorage->p[1].set_value_f01(0.54);
@@ -104,7 +110,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 
         INFO("FX PTR is %x", (size_t)surge_effect.get());
         if (surge_effect.get()) {
-            INFO("FX Type is %s", surge_effect->get_effectname());
+            INFO("FX Type is %s %d", surge_effect->get_effectname(), fxstorage->type.val.i);
             for (auto i = 0; i < n_fx_params; ++i) {
                 if (surge_effect->group_label(i)) {
                     INFO("GROUP: %d %s", surge_effect->group_label_ypos(i),
@@ -152,6 +158,9 @@ template <typename TBase> struct SurgeFX : virtual TBase {
             processedL[i] = 0.0f;
             processedR[i] = 0.0f;
         }
+        if(surge_effect.get())
+            INFO("FX Type 2 is %s %d", surge_effect->get_effectname(), fxstorage->type.val.i);
+
     }
 
     float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
@@ -159,16 +168,33 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         alignas(16)[BLOCK_SIZE];
     int bufferPos = BLOCK_SIZE - 1;
 
+    inline int getTypeParam() {
+        return floor(getParam(FX_TYPE));
+    }
+    
 #if RACK_V1
     void process(const typename TBase::ProcessArgs &args) override
 #else
     void step() override
 #endif
     {
+        int tp = getTypeParam();
+        if(tp != fxstorage->type.val.i && tp != 0) // FIXME: Deal with the 0 case
+        {
+            INFO("FX Type change to %d", tp);
+            fxstorage->type.val.i = tp;
+            surge_effect.reset(spawn_effect(tp, storage.get(),
+                                            &(storage->getPatch().fx[0]),
+                                            storage->getPatch().globaldata));
+            surge_effect->init();
+            surge_effect->init_ctrltypes();
+        }
+
         for (int i = 0; i < n_fx_params; ++i) {
             fxstorage->p[orderToParam[i]].set_value_f01(
                 getParam(FX_PARAM_0 + i));
         }
+
 
         bufferR[bufferPos] = getInput(INPUT_R_OR_MONO) / 5.0;
         bufferL[bufferPos] = getInput(INPUT_L) /
@@ -205,8 +231,15 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         fxstorage->p[i].get_display(txt, false, 0);
         return txt;
     }
-
     bool getStringDirty(int gi) {
+        return true; // fixme of course
+    }
+
+    std::string getEffectNameString() {
+        return ( surge_effect.get() ? surge_effect->get_effectname() : "null" );
+    }
+
+    bool getEffectNameStringDirty() {
         return true; // fixme of course
     }
 

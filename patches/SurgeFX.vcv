@@ -54,7 +54,7 @@
       "data": {
         "audio": {
           "driver": 5,
-          "deviceName": "Apple Inc.: DisplayPort",
+          "deviceName": "Apple Inc.: Built-in Output",
           "offset": 0,
           "maxChannels": 8,
           "sampleRate": 44100,
@@ -103,7 +103,7 @@
       "model": "SEQ3",
       "params": [
         {
-          "value": 2.87600064
+          "value": 1.38800073
         },
         {
           "value": 0.0
@@ -127,7 +127,7 @@
           "value": 1.58999765
         },
         {
-          "value": 0.0
+          "value": 1.15499973
         },
         {
           "value": 0.869999886
@@ -217,8 +217,8 @@
           1,
           0,
           0,
-          0,
-          0,
+          1,
+          1,
           0,
           0,
           0
@@ -343,40 +343,43 @@
       "model": "SurgeFX",
       "params": [
         {
-          "value": 1.0
+          "value": 1.64800715
         },
         {
-          "value": 0.597000599
+          "value": 0.561000943
         },
         {
-          "value": 0.673499703
+          "value": 0.464999437
         },
         {
-          "value": 0.394500107
+          "value": 0.633000612
         },
         {
-          "value": 0.849499583
+          "value": 0.748999894
         },
         {
-          "value": 0.122999698
+          "value": 0.616499841
         },
         {
-          "value": 0.323499531
+          "value": 0.320499539
         },
         {
-          "value": 0.623000205
+          "value": 0.861999631
         },
         {
           "value": 0.573000312
         },
         {
-          "value": 0.650999904
+          "value": 0.72149986
         },
         {
-          "value": 0.681000173
+          "value": 0.793500245
         },
         {
-          "value": 0.499000072
+          "value": 0.596499324
+        },
+        {
+          "value": 0.0
         },
         {
           "value": 0.0

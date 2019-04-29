@@ -36,6 +36,21 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 
     int parmMargin = 3;
 
+    addChild(new SurgeRoundedRect(rack::Vec(SCREW_WIDTH*9.5,10),
+                                  rack::Vec(SCREW_WIDTH*30,45)));
+
+    addChild(TextDisplayLight::create(rack::Vec(SCREW_WIDTH*9.5 + 3, 13),
+                                      rack::Vec(SCREW_WIDTH*29, 39),
+                                      [module]() { return module ? module->getEffectNameString() : "null"; },
+                                      [module]() { return module ? module->getEffectNameStringDirty() : true; },
+                                      25, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT));
+    addParam(rack::createParam<rack::RoundLargeBlackKnob>(
+                 rack::Vec(SCREW_WIDTH*4, 4), module, M::FX_TYPE
+#ifndef RACK_V1
+                 , 0, 10, 1
+#endif                 
+                 ));
+    
     for (int i = 0; i < 6; ++i) {
         int pos = 60 + i * (SurgeParamLargeWidget::height + parmMargin);
         int x0 = 0;
