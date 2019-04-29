@@ -45,6 +45,7 @@ jobs:
   - bash: |
       which g++
       g++ --version
+      find /c/ProgramData/Chocolatey/lib/mingw/tools/install/mingw64/lib/gcc -name "*filesystem*" -print
     displayName: Dump Windows Versions
     condition: variables.isWindows
 
