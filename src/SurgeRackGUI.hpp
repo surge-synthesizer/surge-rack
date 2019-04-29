@@ -312,7 +312,7 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
                       res->box.pos.y + res->box.size.y / 2 - portX / 2),
             module, cvID));
 
-        mw->addParam(rack::createParam<SurgeRackKnob>(
+        mw->addParam(rack::createParam<rack::RoundSmallBlackKnob>(
             rack::Vec(res->box.pos.x + itemMargin, res->box.pos.y), module,
             paramID
 #ifndef RACK_V1
@@ -329,6 +329,30 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
 
         nvgBeginPath(vg);
         nvgRoundedRect(vg, text0, 0, box.size.x - text0, box.size.y, 5);
+        nvgFillColor(vg, SurgeStyle::color2());
+        nvgFill(vg);
+        nvgStrokeColor(vg, SurgeStyle::surgeOrange());
+        nvgStroke(vg);
+    }
+};
+
+
+struct SurgeRoundedRect : public rack::TransparentWidget
+{
+    SurgeRoundedRect(rack::Vec pos, rack::Vec size) : TransparentWidget() {
+        box.pos = pos;
+        box.size = size;
+        addChild(new BufferedDrawFunctionWidget(rack::Vec(0,0), size,
+                                                [this](NVGcontext *vg)
+                                                {
+                                                    this->drawRR(vg);
+                                                }
+                     ));
+    }
+
+    void drawRR(NVGcontext *vg) {
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 5);
         nvgFillColor(vg, SurgeStyle::color2());
         nvgFill(vg);
         nvgStrokeColor(vg, SurgeStyle::surgeOrange());
