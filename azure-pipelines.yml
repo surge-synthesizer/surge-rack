@@ -37,6 +37,11 @@ jobs:
       popd
     displayName: Get Rack  
 
+
+  - bash: |
+      git submodule update --init --recursive
+    displayName: Get Surge SubModule
+
   - bash: |
       export RACK_DIR=$AGENT_TEMPDIRECTORY/Rack-SDK
       export CC=gcc
