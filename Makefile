@@ -96,7 +96,7 @@ LDFLAGS += -framework CoreFoundation -framework CoreServices
 endif
 
 ifdef ARCH_WIN
-LDFLAGS += -lstdc++fs
+SOURCES += $(SRL)/filesystem/filesystem.cpp
 endif
 
 # Add files to the ZIP package when running `make dist`
@@ -131,7 +131,6 @@ ifdef ARCH_WIN
 		 -Wno-unused-variable -Wno-char-subscripts -Wno-reorder \
 		 -Wno-int-in-bool-context 
 	FLAGS += -DWINDOWS -Isurge/src/windows
-	FLAGS += -v
 endif
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/FIXME
