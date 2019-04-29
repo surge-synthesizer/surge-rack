@@ -43,6 +43,12 @@ jobs:
     displayName: Get Surge SubModule
 
   - bash: |
+      which g++
+      g++ --version
+    displayName: Dump Windows Versions
+    condition: variables.isWindows
+
+  - bash: |
       export RACK_DIR=$AGENT_TEMPDIRECTORY/Rack-SDK
       export CC=gcc
       export CPP=g++
