@@ -8,7 +8,9 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     enum ParamIds {
         FX_TYPE=0,
         FX_PARAM_0,
-        NUM_PARAMS = FX_PARAM_0 + 13 };
+        FX_EXTEND_0 = FX_PARAM_0 + 13,
+        NUM_PARAMS = FX_EXTEND_0 + 13
+    };
     enum InputIds {
         INPUT_R_OR_MONO,
         INPUT_L,
