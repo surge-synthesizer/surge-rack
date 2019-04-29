@@ -17,7 +17,7 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 40, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 25, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "SurgeFX");
     bg->hasInput = true;
     bg->hasOutput = true;
@@ -36,16 +36,16 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 
     int parmMargin = 3;
 
-    addChild(new SurgeRoundedRect(rack::Vec(SCREW_WIDTH*9.5,10),
-                                  rack::Vec(SCREW_WIDTH*30,45)));
+    addChild(new SurgeRoundedRect(rack::Vec(SCREW_WIDTH*6.5,10),
+                                  rack::Vec(SCREW_WIDTH*18,45)));
 
-    addChild(TextDisplayLight::create(rack::Vec(SCREW_WIDTH*9.5 + 3, 13),
-                                      rack::Vec(SCREW_WIDTH*29, 39),
+    addChild(TextDisplayLight::create(rack::Vec(SCREW_WIDTH*6.5 + 3, 13),
+                                      rack::Vec(SCREW_WIDTH*18, 39),
                                       [module]() { return module ? module->getEffectNameString() : "null"; },
                                       [module]() { return module ? module->getEffectNameStringDirty() : true; },
                                       25, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT));
     addParam(rack::createParam<rack::RoundLargeBlackKnob>(
-                 rack::Vec(SCREW_WIDTH*4, 4), module, M::FX_TYPE
+                 rack::Vec(SCREW_WIDTH*1, 4), module, M::FX_TYPE
 #ifndef RACK_V1
                  , 0, 10, 1
 #endif                 
@@ -56,7 +56,7 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
         int x0 = 0;
         addChild(SurgeParamLargeWidget::create(
             this, module, rack::Vec(SCREW_WIDTH * 0.5, pos), M::FX_PARAM_0 + i,
-            M::FX_PARAM_INPUT_0 + i, -1,
+            M::FX_PARAM_INPUT_0 + i, M::FX_EXTEND_0 + i,
             [module, i]() { return module ? module->getLabel(i) : "null"; },
             []() { return true; },
             [module, i]() { return module ? module->getSubLabel(i) : "null"; },
@@ -67,8 +67,8 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
             []() { return true; }));
 
         addChild(SurgeParamLargeWidget::create(
-            this, module, rack::Vec(20.5 * SCREW_WIDTH, pos),
-            M::FX_PARAM_0 + i + 6, M::FX_PARAM_INPUT_0 + i + 6, -1,
+            this, module, rack::Vec(12.5 * SCREW_WIDTH, pos),
+            M::FX_PARAM_0 + i + 6, M::FX_PARAM_INPUT_0 + i + 6, M::FX_EXTEND_0 + 6 + i,
             [module, i]() { return module ? module->getLabel(i + 6) : "null"; },
             []() { return true; },
             [module, i]() {

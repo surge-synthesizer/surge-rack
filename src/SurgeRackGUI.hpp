@@ -61,14 +61,14 @@ struct InternalFontMgr {
 using rack::INFO_LEVEL;
 #endif
 
-struct SurgeRackKnob : rack::RoundKnob {
-    SurgeRackKnob() {
+struct SurgeSmallKnob : rack::RoundKnob {
+    SurgeSmallKnob() {
 #if RACK_V1
         setSvg(APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/knobControl.svg")));
+            pluginInstance, "res/vectors/smallKnob.svg")));
 #else
         setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/knobControl.svg")));
+            rack::assetPlugin(pluginInstance, "res/vectors/smallKnob.svg")));
 #endif
     }
 };
@@ -183,6 +183,7 @@ struct TextDisplayLight : public rack::Component
     stringDirtyGetter_t dirtyfn;
     int align;
     int fontsize;
+    NVGcolor color;
 
     TextDisplayLight() : Widget() {}
 
@@ -221,7 +222,9 @@ struct TextDisplayLight : public rack::Component
     static TextDisplayLight *
     create(rack::Vec pos, rack::Vec size, stringGetter_t gf,
            stringDirtyGetter_t dgf, int fsize = 15,
-           int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP) {
+           int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
+           NVGcolor color = nvgRGBA(255, 144, 0, 255) 
+        ) {
         TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
         res->getfn = gf;
         res->dirtyfn = dgf;
@@ -229,6 +232,7 @@ struct TextDisplayLight : public rack::Component
         res->box.size = size;
         res->fontsize = fsize;
         res->align = align;
+        res->color = color;
 
         res->setup();
 
@@ -243,7 +247,7 @@ struct TextDisplayLight : public rack::Component
 
         nvgFontFaceId(vg, fontId);
         nvgFontSize(vg, fontsize);
-        nvgFillColor(vg, SurgeStyle::surgeOrange());
+        nvgFillColor(vg, color);
         nvgTextAlign(vg, align);
 
         float xp = 1, yp = 1;
@@ -270,12 +274,15 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
     SurgeParamLargeWidget() : rack::TransparentWidget() {}
 #endif
     static const int height = 40;
-    static const int width = 19 * SCREW_WIDTH;
+    static const int width = 12 * SCREW_WIDTH;
 
     static constexpr float portX = 24.6721;
-    static const int knobX = 34;
-    static const int toggleX = 10;
-    static const int itemMargin = 2;
+    static constexpr float portY = 24.6721;
+    static const int knobX = 24;
+    static const int knobY = 24;
+    static const int toggleX = 13;
+    static const int toggleY = 20;
+    static const int itemMargin = 3;
 
     static SurgeParamLargeWidget *
     create(rack::ModuleWidget *mw, rack::Module *module, rack::Vec pos,
@@ -296,30 +303,42 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
         int text0 = portX + knobX + toggleX + 4 * itemMargin;
 
         res->addChild(TextDisplayLight::create(
-            rack::Vec(text0 + 3, 3), rack::Vec(res->box.size.x - text0 - 6, 11),
-            sublabelfn, sublabelDirtyFn, 10));
+                          rack::Vec(text0 + 3, 2), rack::Vec(res->box.size.x - text0 - 6, 14),
+                          labelfn, labelDirtyFn, 16));
         res->addChild(TextDisplayLight::create(
-            rack::Vec(text0 + 3, 14),
-            rack::Vec(res->box.size.x - text0 - 6, res->box.size.y - 14 - 3),
-            labelfn, labelDirtyFn, 20, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT));
+                          rack::Vec(text0 + 3, 2),
+                          rack::Vec(res->box.size.x - text0 - 6, 143),
+                          sublabelfn, sublabelDirtyFn, 10, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT));
         res->addChild(TextDisplayLight::create(
-            rack::Vec(text0 + 3, 3),
-            rack::Vec(res->box.size.x - text0 - 6, res->box.size.y - 6),
-            valuefn, valueDirtyFn, 25, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT));
+                          rack::Vec(text0 + 3, 2),
+                          rack::Vec(res->box.size.x - text0 - 4, res->box.size.y - 4),
+                          valuefn, valueDirtyFn, 18, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT,
+                          SurgeStyle::surgeWhite()));
 
         mw->addInput(rack::createInput<rack::PJ301MPort>(
-            rack::Vec(res->box.pos.x + 2 * itemMargin + knobX,
-                      res->box.pos.y + res->box.size.y / 2 - portX / 2),
+                         rack::Vec(res->box.pos.x + itemMargin,
+                                   res->box.pos.y + res->box.size.y / 2 - portX / 2),
             module, cvID));
 
-        mw->addParam(rack::createParam<rack::RoundSmallBlackKnob>(
-            rack::Vec(res->box.pos.x + itemMargin, res->box.pos.y), module,
-            paramID
+        mw->addParam(rack::createParam<rack::CKSS>(
+                         rack::Vec(res->box.pos.x + 2 * itemMargin + portX,
+                                   res->box.pos.y + res->box.size.y / 2 - toggleY / 2), module,
+                         extendedSwitchID
 #ifndef RACK_V1
-            ,
-            0, 1, 0.5
+                         ,
+                         0, 1, 0
 #endif
-            ));
+                         ));
+        
+        mw->addParam(rack::createParam<SurgeSmallKnob>(
+                         rack::Vec(res->box.pos.x + 3 * itemMargin + portX + toggleX,
+                                   res->box.pos.y + res->box.size.y / 2 - knobY/2 ), module,
+                         paramID
+#ifndef RACK_V1
+                         ,
+                         0, 1, 0.5
+#endif
+                         ));
 
         return res;
     }
