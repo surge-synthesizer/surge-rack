@@ -103,7 +103,7 @@
       "model": "SEQ3",
       "params": [
         {
-          "value": 2.5040009
+          "value": 2.87600064
         },
         {
           "value": 0.0
@@ -346,31 +346,31 @@
           "value": 1.0
         },
         {
-          "value": 0.673500478
+          "value": 0.597000599
         },
         {
-          "value": 0.635999739
+          "value": 0.673499703
         },
         {
-          "value": 0.573000491
+          "value": 0.394500107
         },
         {
-          "value": 0.751999497
+          "value": 0.849499583
         },
         {
           "value": 0.122999698
         },
         {
-          "value": 0.093999885
+          "value": 0.323499531
         },
         {
-          "value": 0.627499938
+          "value": 0.623000205
         },
         {
-          "value": 0.199500009
+          "value": 0.573000312
         },
         {
-          "value": 0.309000045
+          "value": 0.650999904
         },
         {
           "value": 0.681000173
@@ -421,13 +421,6 @@
       "color": "#0c8e15"
     },
     {
-      "outputModuleId": 26,
-      "outputId": 1,
-      "inputModuleId": 20,
-      "inputId": 1,
-      "color": "#c91847"
-    },
-    {
       "outputModuleId": 20,
       "outputId": 0,
       "inputModuleId": 23,
@@ -466,13 +459,6 @@
       "outputModuleId": 20,
       "outputId": 0,
       "inputModuleId": 29,
-      "inputId": 0,
-      "color": "#0c8e15"
-    },
-    {
-      "outputModuleId": 20,
-      "outputId": 0,
-      "inputModuleId": 29,
       "inputId": 1,
       "color": "#0986ad"
     },
@@ -489,6 +475,20 @@
       "inputModuleId": 28,
       "inputId": 2,
       "color": "#c91847"
+    },
+    {
+      "outputModuleId": 26,
+      "outputId": 1,
+      "inputModuleId": 20,
+      "inputId": 1,
+      "color": "#c91847"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 29,
+      "inputId": 0,
+      "color": "#0c8e15"
     }
   ]
 }

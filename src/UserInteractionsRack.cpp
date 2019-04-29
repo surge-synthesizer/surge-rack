@@ -6,18 +6,13 @@
 using namespace rack;
 #endif
 
-namespace Surge
-{
-namespace UserInteractions
-{
+namespace Surge {
+namespace UserInteractions {
 
 void promptError(const std::string &message, const std::string &title,
-                 SurgeGUIEditor *guiEditor)
-{
+                 SurgeGUIEditor *guiEditor) {
     std::ostringstream oss;
-    oss << "Surge Error\n"
-        << title << "\n"
-        << message << "\n";
+    oss << "Surge Error\n" << title << "\n" << message << "\n";
 #if RACK_V1
     // FIXME: What's the appropriate rack error mechanism?
     WARN(oss.str().c_str());
@@ -26,18 +21,17 @@ void promptError(const std::string &message, const std::string &title,
 #endif
 }
 
-void promptError(const Surge::Error &error, SurgeGUIEditor *guiEditor)
-{
+void promptError(const Surge::Error &error, SurgeGUIEditor *guiEditor) {
     promptError(error.getMessage(), error.getTitle());
 }
 
-MessageResult promptOKCancel(const std::string &message, const std::string &title,
-                             SurgeGUIEditor *guiEditor)
-{
+MessageResult promptOKCancel(const std::string &message,
+                             const std::string &title,
+                             SurgeGUIEditor *guiEditor) {
     std::ostringstream oss;
     oss << "Surge OkCancel\n"
         << title << "\n"
-        << message << "\n" 
+        << message << "\n"
         << "Returning CANCEL";
 #if RACK_V1
     // FIXME: What's the appropriate rack error mechanism?
@@ -48,18 +42,16 @@ MessageResult promptOKCancel(const std::string &message, const std::string &titl
     return UserInteractions::CANCEL;
 }
 
-void openURL(const std::string &url)
-{
-}
+void openURL(const std::string &url) {}
 
-void promptFileOpenDialog(const std::string& initialDirectory,
-                          const std::string& filterSuffix,
+void promptFileOpenDialog(const std::string &initialDirectory,
+                          const std::string &filterSuffix,
                           std::function<void(std::string)> callbackOnOpen,
-                          SurgeGUIEditor* guiEditor)
-{
-   UserInteractions::promptError("OpenFileDialog is unimplemented in this version of Surge. Sorry!",
-                                 "Unimplemented Function", guiEditor);
+                          SurgeGUIEditor *guiEditor) {
+    UserInteractions::promptError(
+        "OpenFileDialog is unimplemented in this version of Surge. Sorry!",
+        "Unimplemented Function", guiEditor);
 }
-};
+}; // namespace UserInteractions
 
-};
+}; // namespace Surge
