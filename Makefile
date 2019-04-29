@@ -95,6 +95,10 @@ SOURCES += $(SRL)/filesystem/filesystem.cpp
 LDFLAGS += -framework CoreFoundation -framework CoreServices
 endif
 
+ifdef ARCH_WIN
+LDFLAGS += -lstdc++fs
+endif
+
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md
@@ -122,6 +126,11 @@ ifdef ARCH_LIN
 endif
 
 ifdef ARCH_WIN
+	FLAGS += -Wno-suggest-override -Wno-sign-compare \
+		 -Wno-ignored-qualifiers \
+		 -Wno-unused-variable -Wno-char-subscripts -Wno-reorder \
+		 -Wno-int-in-bool-context 
+	FLAGS += -DWINDOWS -Isurge/src/windows
 endif
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/FIXME
@@ -155,3 +164,19 @@ go:	dist
 dbg:	dist
 	(cd ~/dev/VCVRack/V1/Rack && make && lldb -- ./Rack -d)
 
+# Special target since we don't have zip on azure (fix this later)
+win-dist: all
+	rm -rf dist
+	mkdir -p dist/$(SLUG)
+	@# Strip and copy plugin binary
+	cp $(TARGET) dist/$(SLUG)/
+ifdef ARCH_MAC
+	$(STRIP) -S dist/$(SLUG)/$(TARGET)
+else
+	$(STRIP) -s dist/$(SLUG)/$(TARGET)
+endif
+	@# Copy distributables
+	cp -R $(DISTRIBUTABLES) dist/$(SLUG)/
+	@# Create ZIP package
+	echo "cd dist && 7z.exe a $(SLUG)-$(VERSION)-$(ARCH).zip -r $(SLUG)"
+	cd dist && 7z.exe a $(SLUG)-$(VERSION)-$(ARCH).zip -r $(SLUG)

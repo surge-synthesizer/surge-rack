@@ -45,7 +45,7 @@ jobs:
   - bash: |
       export RACK_DIR=$AGENT_TEMPDIRECTORY/Rack-SDK
       export CC=gcc
-
+      export CPP=g++
       make win-dist
 
       mkdir products_win/
