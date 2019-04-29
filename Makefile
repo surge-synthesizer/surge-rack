@@ -96,7 +96,7 @@ LDFLAGS += -framework CoreFoundation -framework CoreServices
 endif
 
 ifdef ARCH_WIN
-LDFLAGS += -lstdc++fs
+SOURCES += $(SRL)/filesystem/filesystem.cpp
 endif
 
 # Add files to the ZIP package when running `make dist`
