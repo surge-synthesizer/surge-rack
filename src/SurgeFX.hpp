@@ -2,6 +2,7 @@
 #include "Surge.hpp"
 #include "dsp/effect/Effect.h"
 #include "rack.hpp"
+#include <cstring>
 
 template <typename TBase> struct SurgeFX : virtual TBase {
     enum ParamIds { FX_TYPE, FX_PARAM_0, NUM_PARAMS = FX_PARAM_0 + 12 };
@@ -124,7 +125,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
                     orderTrack.push_back(std::pair<int, int>(
                         i, i * 2 + fxstorage->p[i].posy_offset));
                 } else {
-                    orderTrack.push_back(std::pair<int, int>(i, INT_MAX));
+                    orderTrack.push_back(std::pair<int, int>(i, 10000));
                 }
             }
             std::sort(

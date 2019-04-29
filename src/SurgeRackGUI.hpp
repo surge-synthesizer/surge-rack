@@ -1,6 +1,7 @@
 #include "Surge.hpp"
 #include "rack.hpp"
 #include <map>
+#include <functional>
 
 #ifndef RACK_V1
 #include "widgets.hpp"

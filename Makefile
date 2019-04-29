@@ -102,21 +102,23 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
 
-# Obvioulsy get rid of this one day
-FLAGS += 	-Wno-undefined-bool-conversion \
+
+# Add Surge Specific make flags based on architecture
+ifdef ARCH_MAC
+	# Obvioulsy get rid of this one day
+	FLAGS += 	-Wno-undefined-bool-conversion \
 	-Wno-unused-variable \
 	-Wno-reorder \
 	-Wno-char-subscripts \
 	-Wno-sign-compare \
 	-Wno-ignored-qualifiers \
 	-Wno-c++17-extensions
-
-# Add Surge Specific make flags based on architecture
-ifdef ARCH_MAC
 	FLAGS += -DMAC -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
 endif
 
-ifdef ARCH_LINUX
+ifdef ARCH_LIN
+	FLAGS += -DLINUX -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
+	FLAGS += -Isurge/src/linux
 endif
 
 ifdef ARCH_WIN
