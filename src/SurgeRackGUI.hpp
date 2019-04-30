@@ -64,7 +64,7 @@ using rack::INFO_LEVEL;
 struct SurgeSmallKnob : rack::RoundKnob {
     SurgeSmallKnob() {
 #if RACK_V1
-        setSvg(APP->window->loadSvg(rack::asset::plugin(
+        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/smallKnob.svg")));
 #else
         setSVG(rack::SVG::load(

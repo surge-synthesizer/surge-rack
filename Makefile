@@ -99,6 +99,17 @@ ifdef ARCH_WIN
 SOURCES += $(SRL)/filesystem/filesystem.cpp
 endif
 
+ifdef ARCH_LIN
+SOURCES += surge/src/linux/ConfigurationXml.S
+LDFLAGS += -lstdc++fs
+
+# This is really a hack but...
+build/surge/src/linux/ConfigurationXml.S.o: surge/src/linux/ConfigurationXml.S
+	mkdir -p build/surge/src/linux
+	cd surge/src/linux && $(CC) -c ConfigurationXml.S -o ../../../$@
+
+endif
+
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md
