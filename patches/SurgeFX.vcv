@@ -1,5 +1,5 @@
 {
-  "version": "1.dev.faa9606",
+  "version": "1.dev.2cd29d6",
   "modules": [
     {
       "plugin": "Fundamental",
@@ -40,6 +40,7 @@
         }
       ],
       "leftModuleId": 19,
+      "rightModuleId": 30,
       "id": 20,
       "pos": [
         40,
@@ -48,7 +49,7 @@
     },
     {
       "plugin": "Core",
-      "version": "1.dev.faa9606",
+      "version": "1.dev.2cd29d6",
       "model": "AudioInterface",
       "params": [],
       "data": {
@@ -103,7 +104,7 @@
       "model": "SEQ3",
       "params": [
         {
-          "value": 1.38800073
+          "value": 1.6880008
         },
         {
           "value": 0.0
@@ -220,7 +221,7 @@
           1,
           1,
           0,
-          0,
+          1,
           0
         ]
       },
@@ -301,7 +302,6 @@
         "external": 0
       },
       "leftModuleId": 22,
-      "rightModuleId": 29,
       "id": 27,
       "pos": [
         30,
@@ -343,53 +343,98 @@
       "model": "SurgeFX",
       "params": [
         {
-          "value": 1.64800715
+          "value": 1.0
         },
         {
-          "value": 0.561000943
+          "value": 0.600000024
         },
         {
-          "value": 0.464999437
+          "value": 0.685499907
         },
         {
-          "value": 0.633000612
+          "value": 0.484499991
         },
         {
-          "value": 0.748999894
+          "value": 0.5
         },
         {
-          "value": 0.616499841
+          "value": 0.316500008
         },
         {
-          "value": 0.320499539
+          "value": 0.158499897
         },
         {
-          "value": 0.861999631
+          "value": 0.55250001
         },
         {
-          "value": 0.573000312
+          "value": 0.219000012
         },
         {
-          "value": 0.72149986
+          "value": 0.327000022
         },
         {
-          "value": 0.793500245
+          "value": 0.647999942
         },
         {
-          "value": 0.596499324
+          "value": 0.680500031
+        },
+        {
+          "value": 0.0
         },
         {
           "value": 0.0
         },
         {
           "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 1.0
+        },
+        {
+          "value": 1.0
         }
       ],
-      "leftModuleId": 27,
-      "id": 29,
+      "leftModuleId": 20,
+      "id": 30,
       "pos": [
         43,
-        1
+        0
       ]
     }
   ],
@@ -459,27 +504,6 @@
       "color": "#0986ad"
     },
     {
-      "outputModuleId": 20,
-      "outputId": 0,
-      "inputModuleId": 29,
-      "inputId": 1,
-      "color": "#0986ad"
-    },
-    {
-      "outputModuleId": 29,
-      "outputId": 0,
-      "inputModuleId": 23,
-      "inputId": 2,
-      "color": "#c9b70e"
-    },
-    {
-      "outputModuleId": 29,
-      "outputId": 1,
-      "inputModuleId": 28,
-      "inputId": 2,
-      "color": "#c91847"
-    },
-    {
       "outputModuleId": 26,
       "outputId": 1,
       "inputModuleId": 20,
@@ -489,9 +513,30 @@
     {
       "outputModuleId": 20,
       "outputId": 0,
-      "inputModuleId": 29,
+      "inputModuleId": 30,
       "inputId": 0,
       "color": "#0c8e15"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 30,
+      "inputId": 1,
+      "color": "#0986ad"
+    },
+    {
+      "outputModuleId": 30,
+      "outputId": 0,
+      "inputModuleId": 23,
+      "inputId": 2,
+      "color": "#c9b70e"
+    },
+    {
+      "outputModuleId": 30,
+      "outputId": 1,
+      "inputModuleId": 28,
+      "inputId": 2,
+      "color": "#c91847"
     }
   ]
 }

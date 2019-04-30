@@ -12,9 +12,13 @@
 */
 struct SurgeStyle {
     static NVGcolor surgeBlue() { return nvgRGBA(18, 52, 99, 255); }
+    static NVGcolor surgeBlueBright() {
+        return nvgRGBA(18 * 1.5, 52 * 1.5, 99 * 1.8, 255);
+    }
     static NVGcolor surgeWhite() { return nvgRGBA(255, 255, 255, 255); }
     static NVGcolor surgeOrange() { return nvgRGBA(255, 144, 0, 255); }
     static NVGcolor color2() { return nvgRGBA(27, 28, 32, 255); }
+    static NVGcolor color2Bright() { return nvgRGBA(40, 40, 52, 255); }
     static NVGcolor color4() { return nvgRGBA(255, 255, 255, 255); }
     static NVGcolor surgeOrange2() { return nvgRGBA(101, 50, 3, 255); }
     static NVGcolor surgeOrange3() { return nvgRGBA(227, 112, 8, 255); }
@@ -113,7 +117,7 @@ struct SurgeRackBG : public rack::TransparentWidget {
     bool hasOutput = true;
     int orangeLine = 323;
     int ioMargin = 7;
-    int ioRegionWidth = 70;
+    int ioRegionWidth = 105;
     int fontId = -1;
 
     void drawBG(NVGcontext *vg) {
@@ -136,10 +140,22 @@ struct SurgeRackBG : public rack::TransparentWidget {
                 int x0 = 0;
                 if (i == 1)
                     x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
+                NVGpaint sideGradient;
+                if (i == 0)
+                    sideGradient = nvgLinearGradient(
+                        vg, x0 + ioMargin, orangeLine + ioMargin,
+                        x0 + ioMargin + ioRegionWidth, orangeLine + ioMargin,
+                        SurgeStyle::surgeBlue(), SurgeStyle::surgeBlueBright());
+                else
+                    sideGradient = nvgLinearGradient(
+                        vg, x0 + ioMargin, orangeLine + ioMargin,
+                        x0 + ioMargin + ioRegionWidth, orangeLine + ioMargin,
+                        SurgeStyle::surgeBlueBright(), SurgeStyle::surgeBlue());
+
                 nvgRoundedRect(
                     vg, x0 + ioMargin, orangeLine + ioMargin, ioRegionWidth,
                     box.size.y - orangeLine - 2 * ioMargin, ioMargin);
-                nvgFillColor(vg, SurgeStyle::surgeBlue());
+                nvgFillPaint(vg, sideGradient);
                 nvgFill(vg);
                 nvgStrokeColor(vg, SurgeStyle::color7());
                 nvgStroke(vg);
@@ -147,23 +163,55 @@ struct SurgeRackBG : public rack::TransparentWidget {
                 nvgFillColor(vg, SurgeStyle::color7());
                 nvgFontFaceId(vg, fontId);
                 nvgFontSize(vg, 12);
+                if (i == 0) {
+                    nvgSave(vg);
+                    nvgTranslate(vg, x0 + ioMargin + 2,
+                                 box.size.y - (box.size.y - orangeLine) / 2);
+                    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                    nvgRotate(vg, -M_PI / 2);
+                    nvgText(vg, 0, 0, "Input", NULL);
+                    nvgRestore(vg);
+                } else {
+                    nvgSave(vg);
+                    nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
+                                 box.size.y - (box.size.y - orangeLine) / 2);
+                    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                    nvgRotate(vg, M_PI / 2);
+                    nvgText(vg, 0, 0, "Output", NULL);
+                    nvgRestore(vg);
+                }
+                rack::Vec ll;
+                ll = ioPortLocation(i == 0, 0);
+                ll.y = orangeLine + ioMargin + 1.5;
+                ll.x += 24.6721 / 2;
+                nvgFontSize(vg, 11);
                 nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-                nvgText(vg, x0 + ioMargin + ioRegionWidth / 2,
-                        orangeLine + ioMargin, (i == 0 ? "Input" : "Output"),
-                        NULL);
+                nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
+
+                ll = ioPortLocation(i == 0, 1);
+                ll.y = orangeLine + ioMargin + 1.5;
+                ll.x += 24.6721 / 2;
+                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                nvgText(vg, ll.x, ll.y, "R", NULL);
+
+                ll = ioPortLocation(i == 0, 2);
+                ll.y = orangeLine + ioMargin + 1.5;
+                ll.x += 24.6721 / 2;
+                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                nvgText(vg, ll.x, ll.y, "Gain", NULL);
             }
         }
     }
 
-    rack::Vec ioPortLocation(bool input, bool left) {
+    rack::Vec ioPortLocation(bool input,
+                             int ctrl) { // 0 is L; 1 is R; 2 is gain
         float portX = 24.6721, portY = 24.6721;
         int x0 = 0;
         if (!input)
             x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
-        int padFromEdge = (ioRegionWidth / 2 - portX) / 2;
-        int xRes =
-            x0 + ioMargin + padFromEdge + (left ? 0 : (ioRegionWidth / 2));
+        int padFromEdge = input ? 17 : 5;
+        int xRes = x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
         int yRes = box.size.y - 1.5 * ioMargin - portY;
 
         return rack::Vec(xRes, yRes);
@@ -348,7 +396,11 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
 
         nvgBeginPath(vg);
         nvgRoundedRect(vg, text0, 0, box.size.x - text0, box.size.y, 5);
-        nvgFillColor(vg, SurgeStyle::color2());
+        NVGpaint gradient =
+            nvgLinearGradient(vg, text0, 0, text0, box.size.y,
+                              SurgeStyle::color2Bright(), SurgeStyle::color2());
+        // nvgFillColor(vg, SurgeStyle::color2());
+        nvgFillPaint(vg, gradient);
         nvgFill(vg);
         nvgStrokeColor(vg, SurgeStyle::surgeOrange());
         nvgStroke(vg);
