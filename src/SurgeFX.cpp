@@ -24,15 +24,30 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 
     addChild(bg);
 
-    addInput(rack::createInput<rack::PJ301MPort>(
-        bg->ioPortLocation(true, false), module, M::INPUT_R_OR_MONO));
-    addInput(rack::createInput<rack::PJ301MPort>(bg->ioPortLocation(true, true),
+    addInput(rack::createInput<rack::PJ301MPort>(bg->ioPortLocation(true, 0),
+                                                 module, M::INPUT_R_OR_MONO));
+    addInput(rack::createInput<rack::PJ301MPort>(bg->ioPortLocation(true, 1),
                                                  module, M::INPUT_L));
+    addParam(rack::createParam<rack::RoundSmallBlackKnob>(
+        bg->ioPortLocation(true, 2), module, M::INPUT_GAIN
+#if !RACK_V1
+        ,
+        0, 1, 1
+#endif
+        ));
 
     addOutput(rack::createOutput<rack::PJ301MPort>(
-        bg->ioPortLocation(false, false), module, M::OUTPUT_R_OR_MONO));
-    addOutput(rack::createOutput<rack::PJ301MPort>(
-        bg->ioPortLocation(false, true), module, M::OUTPUT_L));
+        bg->ioPortLocation(false, 0), module, M::OUTPUT_R_OR_MONO));
+    addOutput(rack::createOutput<rack::PJ301MPort>(bg->ioPortLocation(false, 1),
+                                                   module, M::OUTPUT_L));
+    addParam(rack::createParam<rack::RoundSmallBlackKnob>(
+        bg->ioPortLocation(false, 2), module, M::OUTPUT_GAIN
+#if !RACK_V1
+        ,
+        0, 1, 1
+#endif
+
+        ));
 
     int parmMargin = 3;
 

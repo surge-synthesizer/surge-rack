@@ -6,10 +6,12 @@
 
 template <typename TBase> struct SurgeFX : virtual TBase {
     enum ParamIds {
-        FX_TYPE=0,
+        FX_TYPE = 0,
         FX_PARAM_0,
         FX_EXTEND_0 = FX_PARAM_0 + 13,
-        NUM_PARAMS = FX_EXTEND_0 + 13
+        INPUT_GAIN = FX_EXTEND_0 + 13,
+        OUTPUT_GAIN,
+        NUM_PARAMS
     };
     enum InputIds {
         INPUT_R_OR_MONO,
@@ -36,6 +38,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
             TBase::configParam(FX_PARAM_0 + i, 0, 1,
                                fxstorage->p[i].get_value_f01());
         }
+        TBase::configParam(INPUT_GAIN, 0, 1, 1);
+        TBase::configParam(OUTPUT_GAIN, 0, 1, 1);
     }
 #else
     SurgeFX() : TBase(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
@@ -181,6 +185,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 #endif
     {
         int tp = getTypeParam();
+        float inpG = getParam(INPUT_GAIN);
+        float outG = getParam(OUTPUT_GAIN);
         if(tp != fxstorage->type.val.i && tp != 0) // FIXME: Deal with the 0 case
         {
             INFO("FX Type change to %d", tp);
@@ -197,9 +203,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
                 getParam(FX_PARAM_0 + i));
         }
 
-
-        bufferR[bufferPos] = getInput(INPUT_R_OR_MONO) / 5.0;
-        bufferL[bufferPos] = getInput(INPUT_L) /
+        bufferR[bufferPos] = inpG * getInput(INPUT_R_OR_MONO) / 5.0;
+        bufferL[bufferPos] = inpG * getInput(INPUT_L) /
                              5.0; // Surge works on a +/- 1; rack works on +/- 5
         // FIXME - deal with MONO when L not hooked up
 
@@ -214,8 +219,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
             bufferPos = 0;
         }
 
-        setOutput(OUTPUT_R_OR_MONO, processedR[bufferPos] * 5.0);
-        setOutput(OUTPUT_L, processedL[bufferPos] * 5.0);
+        setOutput(OUTPUT_R_OR_MONO, outG * processedR[bufferPos] * 5.0);
+        setOutput(OUTPUT_L, outG * processedL[bufferPos] * 5.0);
     }
 
     std::string getLabel(int gi) {
