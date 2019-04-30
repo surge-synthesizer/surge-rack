@@ -4,7 +4,8 @@
 
 This repo holds an experimental set of code which aims to break apart the surge synth at
 https://github.com/surge-synthesizer/surge/ into distinct rack modules for the oscillator,
-filter, effect, and waveshaper block segments. Maybe one day the LFOs also.
+filter, effect, and waveshaper block segments. Maybe one day the LFOs also. Best way to find out 
+about it is to hop on our slack as detailed over at the surge README.
 
 ## Rack Version Which?
 
@@ -13,7 +14,7 @@ automatically detects which one you have, assuming that if you are using 0.6.2 y
 Rack SDK and if you are using 1.0 you have checked out the v1 branch.
 
 To build it you need (1) patience, (2) to probably have had a chat with the team on slack. Then
-follow one of these directions. Note the makefile
+follow one of these directions. 
 
 ### Rack 0.6.2
 
@@ -35,24 +36,27 @@ and you should get a built plugin
 
 ### Rack 1.0
 
-If you are at step 3, here's instructions:
+Rack 1.0 still isn't stable. But it's what @baconpaul is developing against for now so it should work.
+Inasmuch as any of this alpha software works yet!
 
 ```
 cd (working directory)
 git clone https://github.com/VCVRack/Rack.git
 cd Rack
 git checkout v1
+git submodule update --init --recursive
 make dep
 make
 cd plugins
 git clone https://github.com/VCVRack/Fundamental.git
 cd Fundamental
 git checkout v1
-make
+make dist
 cd ..
 git clone https://github.com/surge-synthesizer/surge-rack.git 
 cd surge-rack
-make
+git submodule update --init --recursive
+make dist
 cd ../..
 make run
 ```
