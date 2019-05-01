@@ -28,7 +28,7 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
                                                  module, M::INPUT_R_OR_MONO));
     addInput(rack::createInput<rack::PJ301MPort>(bg->ioPortLocation(true, 1),
                                                  module, M::INPUT_L));
-    addParam(rack::createParam<rack::RoundSmallBlackKnob>(
+    addParam(rack::createParam<SurgeSmallKnob>(
         bg->ioPortLocation(true, 2), module, M::INPUT_GAIN
 #if !RACK_V1
         ,
@@ -40,7 +40,7 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
         bg->ioPortLocation(false, 0), module, M::OUTPUT_R_OR_MONO));
     addOutput(rack::createOutput<rack::PJ301MPort>(bg->ioPortLocation(false, 1),
                                                    module, M::OUTPUT_L));
-    addParam(rack::createParam<rack::RoundSmallBlackKnob>(
+    addParam(rack::createParam<SurgeSmallKnob>(
         bg->ioPortLocation(false, 2), module, M::OUTPUT_GAIN
 #if !RACK_V1
         ,
@@ -59,7 +59,7 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
                                       [module]() { return module ? module->getEffectNameString() : "null"; },
                                       [module]() { return module ? module->getEffectNameStringDirty() : true; },
                                       25, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT));
-    addParam(rack::createParam<rack::RoundLargeBlackKnob>(
+    addParam(rack::createParam<SurgeKnob>(
                  rack::Vec(SCREW_WIDTH*1, 4), module, M::FX_TYPE
 #ifndef RACK_V1
                  , 0, 10, 1

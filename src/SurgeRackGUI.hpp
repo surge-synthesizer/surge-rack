@@ -69,11 +69,57 @@ struct SurgeSmallKnob : rack::RoundKnob {
     SurgeSmallKnob() {
 #if RACK_V1
         setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/smallKnob.svg")));
+            pluginInstance, "res/vectors/surgeKnob.svg")));
 #else
         setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/smallKnob.svg")));
+            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnob.svg")));
 #endif
+    }
+};
+
+struct SurgeKnob : rack::RoundKnob {
+    SurgeKnob() {
+#if RACK_V1
+        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
+            pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
+#else
+        setSVG(rack::SVG::load(
+            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
+#endif
+    }
+};
+
+struct SurgeKnobRooster : rack::RoundKnob {
+    SurgeKnobRooster() {
+#if RACK_V1
+        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
+            pluginInstance, "res/vectors/surgeKnobRooster.svg")));
+#else
+        setSVG(rack::SVG::load(
+            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnobRooster.svg")));
+#endif
+        shadow->box.size = rack::Vec(24,24);
+        shadow->box.pos = rack::Vec(5,9.5);
+    }
+};
+
+struct SurgeSwitch :
+#if RACK_V1    
+    rack::app::SvgSwitch
+#else
+    rack::SVGSwitch, rack::ToggleSwitch
+#endif
+{
+    SurgeSwitch() {
+#if RACK_V1        
+        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitch_0.svg")));
+        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitch_1.svg")));
+#else
+        addFrame(
+            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitch_0.svg")));
+        addFrame(
+            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitch_1.svg")));
+#endif        
     }
 };
 
@@ -326,9 +372,9 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
 
     static constexpr float portX = 24.6721;
     static constexpr float portY = 24.6721;
-    static const int knobX = 24;
-    static const int knobY = 24;
-    static const int toggleX = 13;
+    static const int knobX = 34;
+    static const int knobY = 34;
+    static const int toggleX = 7;
     static const int toggleY = 20;
     static const int itemMargin = 3;
 
@@ -348,7 +394,7 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
         res->addChild(new BufferedDrawFunctionWidget(
             rack::Vec(0, 0), res->box.size,
             [res](NVGcontext *vg) { res->drawBG(vg); }));
-        int text0 = portX + knobX + toggleX + 4 * itemMargin;
+        int text0 = portX + knobX + toggleX + 5 * itemMargin;
 
         res->addChild(TextDisplayLight::create(
                           rack::Vec(text0 + 3, 2), rack::Vec(res->box.size.x - text0 - 6, 14),
@@ -368,8 +414,8 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
                                    res->box.pos.y + res->box.size.y / 2 - portX / 2),
             module, cvID));
 
-        mw->addParam(rack::createParam<rack::CKSS>(
-                         rack::Vec(res->box.pos.x + 2 * itemMargin + portX,
+        mw->addParam(rack::createParam<SurgeSwitch>(
+                         rack::Vec(res->box.pos.x + 3 * itemMargin + portX,
                                    res->box.pos.y + res->box.size.y / 2 - toggleY / 2), module,
                          extendedSwitchID
 #ifndef RACK_V1
@@ -378,8 +424,8 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
 #endif
                          ));
         
-        mw->addParam(rack::createParam<SurgeSmallKnob>(
-                         rack::Vec(res->box.pos.x + 3 * itemMargin + portX + toggleX,
+        mw->addParam(rack::createParam<SurgeKnobRooster>(
+                         rack::Vec(res->box.pos.x + 4 * itemMargin + portX + toggleX,
                                    res->box.pos.y + res->box.size.y / 2 - knobY/2 ), module,
                          paramID
 #ifndef RACK_V1
@@ -392,7 +438,19 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
     }
 
     void drawBG(NVGcontext *vg) {
-        int text0 = portX + knobX + toggleX + 4 * itemMargin;
+        /*
+          FIXME this overpaints the input port
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, itemMargin / 2, box.size.y / 2 - portY/2 - itemMargin / 2,
+                       portX + itemMargin, portY + itemMargin, 3 );
+        nvgFillColor(vg, SurgeStyle::surgeOrange());
+        nvgFill(vg);
+        nvgStrokeColor(vg, SurgeStyle::surgeOrange2());
+        nvgStrokeWidth(vg, 2);
+        nvgStroke(vg);
+        */
+
+        int text0 = portX + knobX + toggleX + 5 * itemMargin;
 
         nvgBeginPath(vg);
         nvgRoundedRect(vg, text0, 0, box.size.x - text0, box.size.y, 5);
