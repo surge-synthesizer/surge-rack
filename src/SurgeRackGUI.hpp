@@ -35,6 +35,10 @@ struct SurgeStyle {
     static const char *fontFace() {
         return "res/EncodeSansSemiCondensed-Medium.ttf";
     }
+    static const char *fontFaceCondensed() {
+        return "res/EncodeSansCondensed-Medium.ttf";
+    }
+
 };
 
 // Font dictionary
@@ -164,11 +168,12 @@ struct SurgeRackBG : public rack::TransparentWidget {
     int orangeLine = 323;
     int ioMargin = 7;
     int ioRegionWidth = 105;
+    std::string font = SurgeStyle::fontFace();
     int fontId = -1;
 
     void drawBG(NVGcontext *vg) {
         if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
+            fontId = InternalFontMgr::get(vg, font);
 
         nvgBeginPath(vg);
         nvgRect(vg, 0, 0, box.size.x, box.size.y);
@@ -311,6 +316,7 @@ struct TextDisplayLight : public rack::Component
     }
 #endif
 
+    std::string font = SurgeStyle::fontFace();
     int fontId = -1;
 
     static TextDisplayLight *
@@ -335,7 +341,7 @@ struct TextDisplayLight : public rack::Component
 
     void drawChars(NVGcontext *vg) {
         if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
+            fontId = InternalFontMgr::get(vg, font);
 
         std::string ch = getfn();
 
@@ -368,10 +374,12 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
     SurgeParamLargeWidget() : rack::TransparentWidget() {}
 #endif
     static const int height = 40;
-    static const int width = 12 * SCREW_WIDTH;
+    static const int width = 14 * SCREW_WIDTH;
 
     static constexpr float portX = 24.6721;
     static constexpr float portY = 24.6721;
+    static const int sknobX = 24;
+    static const int sknobY = 24;
     static const int knobX = 34;
     static const int knobY = 34;
     static const int toggleX = 7;
@@ -380,7 +388,7 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
 
     static SurgeParamLargeWidget *
     create(rack::ModuleWidget *mw, rack::Module *module, rack::Vec pos,
-           int paramID, int cvID, int extendedSwitchID,
+           int paramID, int paramGainID, int cvID, int extendedSwitchID,
            TextDisplayLight::stringGetter_t labelfn,
            TextDisplayLight::stringDirtyGetter_t labelDirtyFn,
            TextDisplayLight::stringGetter_t sublabelfn,
@@ -394,28 +402,43 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
         res->addChild(new BufferedDrawFunctionWidget(
             rack::Vec(0, 0), res->box.size,
             [res](NVGcontext *vg) { res->drawBG(vg); }));
-        int text0 = portX + knobX + toggleX + 5 * itemMargin;
+        int text0 = portX + knobX +sknobX + toggleX + 6 * itemMargin;
 
         res->addChild(TextDisplayLight::create(
-                          rack::Vec(text0 + 3, 2), rack::Vec(res->box.size.x - text0 - 6, 14),
-                          labelfn, labelDirtyFn, 16));
-        res->addChild(TextDisplayLight::create(
                           rack::Vec(text0 + 3, 2),
-                          rack::Vec(res->box.size.x - text0 - 6, 143),
-                          sublabelfn, sublabelDirtyFn, 10, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT));
-        res->addChild(TextDisplayLight::create(
+                          rack::Vec(res->box.size.x - text0 - 6, res->box.size.y),
+                                    sublabelfn, sublabelDirtyFn, 8, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT));
+
+        TextDisplayLight *lt;
+        res->addChild(lt = TextDisplayLight::create(
+                          rack::Vec(text0 + 3, 2), rack::Vec(res->box.size.x - text0 - 6, 14),
+                          labelfn, labelDirtyFn, 14));
+        lt->font = SurgeStyle::fontFaceCondensed();
+        
+        res->addChild(lt = TextDisplayLight::create(
                           rack::Vec(text0 + 3, 2),
                           rack::Vec(res->box.size.x - text0 - 4, res->box.size.y - 4),
                           valuefn, valueDirtyFn, 18, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT,
                           SurgeStyle::surgeWhite()));
+        lt->font = SurgeStyle::fontFaceCondensed();
 
         mw->addInput(rack::createInput<rack::PJ301MPort>(
                          rack::Vec(res->box.pos.x + itemMargin,
                                    res->box.pos.y + res->box.size.y / 2 - portX / 2),
             module, cvID));
 
+        mw->addParam(rack::createParam<SurgeSmallKnob>(
+                         rack::Vec(res->box.pos.x + 2 * itemMargin + portX,
+                                   res->box.pos.y + res->box.size.y / 2 - sknobY / 2), module,
+                         paramGainID
+#ifndef RACK_V1
+                         ,
+                         0,1,0.5
+#endif
+                         ));
+        
         mw->addParam(rack::createParam<SurgeSwitch>(
-                         rack::Vec(res->box.pos.x + 3 * itemMargin + portX,
+                         rack::Vec(res->box.pos.x + sknobX + 4 * itemMargin + portX,
                                    res->box.pos.y + res->box.size.y / 2 - toggleY / 2), module,
                          extendedSwitchID
 #ifndef RACK_V1
@@ -425,7 +448,7 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
                          ));
         
         mw->addParam(rack::createParam<SurgeKnobRooster>(
-                         rack::Vec(res->box.pos.x + 4 * itemMargin + portX + toggleX,
+                         rack::Vec(res->box.pos.x + sknobX + 5 * itemMargin + portX + toggleX,
                                    res->box.pos.y + res->box.size.y / 2 - knobY/2 ), module,
                          paramID
 #ifndef RACK_V1
@@ -450,7 +473,7 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
         nvgStroke(vg);
         */
 
-        int text0 = portX + knobX + toggleX + 5 * itemMargin;
+        int text0 = portX + sknobX + knobX + toggleX + 6 * itemMargin;
 
         nvgBeginPath(vg);
         nvgRoundedRect(vg, text0, 0, box.size.x - text0, box.size.y, 5);
