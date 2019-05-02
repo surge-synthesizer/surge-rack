@@ -96,8 +96,16 @@ template <typename TBase> struct SurgeFX : virtual TBase {
             paramDisplayCache[i] = "";
             paramDisplayDirty[i] = "";
         }
+
+        std::string dataPath;
+#if RACK_V1
+        dataPath = rack::asset::plugin( pluginInstance, "surge-data/" );
+#else
+        dataPath = "";
+#endif
+        
         // TODO: Have a mode where these paths come from res/
-        storage.reset(new SurgeStorage());
+        storage.reset(new SurgeStorage(dataPath));
         INFO("Storage datapath is: %s", storage->datapath.c_str());
 
         // FIX THIS of course

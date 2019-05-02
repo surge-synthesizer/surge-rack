@@ -116,7 +116,16 @@ endif
 
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
-DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md
+dist:	build/surge-data
+
+build/surge-data:
+	mkdir -p build/surge-data
+	cp surge/resources/data/configuration.xml build/surge-data
+	cp surge/resources/data/windows.wt build/surge-data
+	cp -R surge/resources/data/wavetables build/surge-data/wavetables
+	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty
+
+DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md build/surge-data
 
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
@@ -184,7 +193,7 @@ dbg:	dist
 	(cd ~/dev/VCVRack/V1/Rack && make && lldb -- ./Rack -d)
 
 # Special target since we don't have zip on azure (fix this later)
-win-dist: all
+win-dist: all build/surge-data
 	rm -rf dist
 	mkdir -p dist/$(SLUG)
 	@# Strip and copy plugin binary
