@@ -12,7 +12,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         FX_EXTEND_0 = FX_PARAM_0 + NUM_FX_PARAMS,
         INPUT_GAIN = FX_EXTEND_0 + NUM_FX_PARAMS,
         OUTPUT_GAIN,
-        NUM_PARAMS
+        FX_PARAM_GAIN_0,
+        NUM_PARAMS = FX_PARAM_GAIN_0 + NUM_FX_PARAMS
     };
     enum InputIds {
         INPUT_R_OR_MONO,
@@ -48,6 +49,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         for (int i = 0; i < 12; ++i) {
             TBase::configParam(FX_PARAM_0 + i, 0, 1,
                                fxstorage->p[i].get_value_f01());
+            TBase::configParam(FX_PARAM_GAIN_0 + i, 0, 1, 0.2);
         }
         TBase::configParam(INPUT_GAIN, 0, 1, 1);
         TBase::configParam(OUTPUT_GAIN, 0, 1, 1);
@@ -235,7 +237,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 
         for (int i = 0; i < n_fx_params; ++i) {
             fxstorage->p[orderToParam[i]].set_value_f01(
-                getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i))/10.0);
+                getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i))/10.0 * getParam(FX_PARAM_GAIN_0 + i));
         }
 
         bufferR[bufferPos] = inpG * getInput(INPUT_R_OR_MONO) / 5.0;

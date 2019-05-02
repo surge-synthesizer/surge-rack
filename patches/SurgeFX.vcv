@@ -79,7 +79,7 @@
           "value": 1.0
         },
         {
-          "value": 0.712763131
+          "value": 0.772160649
         },
         {
           "value": 0.950351536
@@ -302,6 +302,7 @@
         "external": 0
       },
       "leftModuleId": 22,
+      "rightModuleId": 31,
       "id": 27,
       "pos": [
         30,
@@ -343,43 +344,40 @@
       "model": "SurgeFX",
       "params": [
         {
-          "value": 1.0
+          "value": 1.60749817
         },
         {
-          "value": 0.600000024
+          "value": 0.309000015
         },
         {
-          "value": 0.685499907
+          "value": 0.64800024
         },
         {
-          "value": 0.484499991
+          "value": 0.677999854
         },
         {
-          "value": 0.5
+          "value": 0.694999933
         },
         {
-          "value": 0.316500008
+          "value": 0.658500314
         },
         {
           "value": 0.158499897
         },
         {
-          "value": 0.55250001
+          "value": 0.506000161
         },
         {
-          "value": 0.219000012
+          "value": 0.431999952
         },
         {
           "value": 0.327000022
         },
         {
-          "value": 0.647999942
+          "value": 0.204000652
         },
         {
-          "value": 0.680500031
-        },
-        {
-          "value": 0.0
+          "value": 0.554499984
         },
         {
           "value": 0.0
@@ -421,13 +419,46 @@
           "value": 0.0
         },
         {
+          "value": 0.955000103
+        },
+        {
+          "value": 0.917306125
+        },
+        {
+          "value": 0.248999983
+        },
+        {
+          "value": 0.00449999981
+        },
+        {
           "value": 0.0
         },
         {
-          "value": 1.0
+          "value": 0.0
         },
         {
-          "value": 1.0
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.351000071
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
         }
       ],
       "leftModuleId": 20,
@@ -436,9 +467,43 @@
         43,
         0
       ]
+    },
+    {
+      "plugin": "Fundamental",
+      "version": "1.0.0",
+      "model": "LFO",
+      "params": [
+        {
+          "value": 1.0
+        },
+        {
+          "value": 1.0
+        },
+        {
+          "value": 2.34999943
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.0
+        },
+        {
+          "value": 0.5
+        },
+        {
+          "value": 0.0
+        }
+      ],
+      "leftModuleId": 27,
+      "id": 31,
+      "pos": [
+        43,
+        1
+      ]
     }
   ],
-  "id": 13,
+  "id": 15,
   "cables": [
     {
       "outputModuleId": 19,
@@ -478,13 +543,6 @@
     {
       "outputModuleId": 20,
       "outputId": 0,
-      "inputModuleId": 27,
-      "inputId": 0,
-      "color": "#c91847"
-    },
-    {
-      "outputModuleId": 20,
-      "outputId": 0,
       "inputModuleId": 28,
       "inputId": 1,
       "color": "#c91847"
@@ -495,13 +553,6 @@
       "inputModuleId": 22,
       "inputId": 1,
       "color": "#0c8e15"
-    },
-    {
-      "outputModuleId": 23,
-      "outputId": 0,
-      "inputModuleId": 27,
-      "inputId": 1,
-      "color": "#0986ad"
     },
     {
       "outputModuleId": 26,
@@ -537,6 +588,34 @@
       "inputModuleId": 28,
       "inputId": 2,
       "color": "#c91847"
+    },
+    {
+      "outputModuleId": 23,
+      "outputId": 0,
+      "inputModuleId": 27,
+      "inputId": 0,
+      "color": "#0c8e15"
+    },
+    {
+      "outputModuleId": 20,
+      "outputId": 0,
+      "inputModuleId": 27,
+      "inputId": 1,
+      "color": "#0986ad"
+    },
+    {
+      "outputModuleId": 31,
+      "outputId": 0,
+      "inputModuleId": 30,
+      "inputId": 3,
+      "color": "#0c8e15"
+    },
+    {
+      "outputModuleId": 31,
+      "outputId": 1,
+      "inputModuleId": 30,
+      "inputId": 8,
+      "color": "#c9b70e"
     }
   ]
 }
