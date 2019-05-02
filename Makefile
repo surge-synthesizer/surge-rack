@@ -4,16 +4,18 @@ ifneq ("$(wildcard $(RACK_DIR)/helper.py)","")
 	RACK_VERSION=1
 	RACK_FLAG=-DRACK_V1
 	RACK_GO=(cd ~/dev/VCVRack/V1/Rack && make run)
-	DISPLAY_VERSION=surge-rack-alpha.1.$(shell git rev-parse --short HEAD).$(shell cd surge && git rev-parse --short HEAD)
+	SURGE_RACK_BASE_VERSION=1.0-alpha
 else
 	RACK_VERSION=062
 	RACK_FLAG=-DRACK_V062
 	SLUG=SurgeRack
 	VERSION=0.6.0
 	RACK_GO=	unzip -o dist/$(SLUG)-$(VERSION)-$(ARCH).zip -d ~/Documents/Rack/plugins && (cd ~/Documents/Rack && /Applications/Rack.app/Contents/MacOS/Rack ) 
-	DISPLAY_VERSION=surge-rack-alpha.0.6.$(shell git rev-parse --short HEAD).$(shell cd surge && git rev-parse --short HEAD)
+	SURGE_RACK_BASE_VERSION=0.6-alpha
 endif
 
+SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
+SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
 include $(RACK_DIR)/arch.mk
 
@@ -131,13 +133,11 @@ ifdef ARCH_MAC
 	-Wno-ignored-qualifiers \
 	-Wno-c++17-extensions
 	FLAGS += -DMAC -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
-	FLAGS += -DDISPLAY_VERSION="$(DISPLAY_VERSION)"
 endif
 
 ifdef ARCH_LIN
 	FLAGS += -DLINUX -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
 	FLAGS += -Isurge/src/linux
-	FLAGS += -DDISPLAY_VERSION="$(DISPLAY_VERSION)"
 endif
 
 ifdef ARCH_WIN
@@ -146,9 +146,11 @@ ifdef ARCH_WIN
 		 -Wno-unused-variable -Wno-char-subscripts -Wno-reorder \
 		 -Wno-int-in-bool-context 
 	FLAGS += -DWINDOWS -Isurge/src/windows
-	FLAGS += -DDISPLAY_VERSION=FIXTHIS_ON_WINDOWS
 endif
 
+FLAGS += -DSURGE_RACK_BASE_VERSION=$(SURGE_RACK_BASE_VERSION)
+FLAGS += -DSURGE_RACK_PLUG_VERSION=$(SURGE_RACK_PLUG_VERSION)
+FLAGS += -DSURGE_RACK_SURGE_VERSION=$(SURGE_RACK_SURGE_VERSION)
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/FIXME
 

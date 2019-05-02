@@ -193,15 +193,34 @@ struct SurgeRackBG : public rack::TransparentWidget {
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgFillColor(vg, SurgeStyle::surgeWhite());
         nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, 11);
-        nvgText(vg, box.size.x/2, box.size.y - 3, TOSTRING(DISPLAY_VERSION), NULL);
+        nvgFontSize(vg, 9);
+
+        char version[1024];
+        snprintf(version, 1024, "bld: %s %s",
+                 __DATE__, __TIME__);
+        nvgText(vg, box.size.x/2, box.size.y - 2, version, NULL);
+
+        snprintf(version, 1024, "%s: %s.%s.%s",
+#if WINDOWS
+                 "win",
+#endif
+#if MAC
+                 "macos",
+#endif
+#if LINUX                 
+                 "linux",
+#endif                 
+                 TOSTRING(SURGE_RACK_BASE_VERSION),
+                 TOSTRING(SURGE_RACK_PLUG_VERSION),
+                 TOSTRING(SURGE_RACK_SURGE_VERSION));
+        nvgText(vg, box.size.x/2, box.size.y - 12, version, NULL);
 
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgFillColor(vg, SurgeStyle::surgeWhite());
         nvgFontFaceId(vg, fontId);
         nvgFontSize(vg, 30);
-        nvgText(vg, box.size.x/2, box.size.y - 16, displayName.c_str(), NULL);
+        nvgText(vg, box.size.x/2, box.size.y - 25, displayName.c_str(), NULL);
 
         for (int i = 0; i < 2; ++i) {
             if ((i == 0 && hasInput) || (i == 1 && hasOutput)) {
