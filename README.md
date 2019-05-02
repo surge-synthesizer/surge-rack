@@ -13,6 +13,12 @@ The code builds with either RACK 0.6.2 or RACK 1.0, inasmuch as it builds at all
 automatically detects which one you have, assuming that if you are using 0.6.2 you are using the
 Rack SDK and if you are using 1.0 you have checked out the v1 branch.
 
+Before you build either system you need to have the rack environment setup. That means you need
+to install MSYS2 and a few other packages. 
+This is completely documented in the Rack manual:
+https://vcvrack.com/manual/Building.html
+
+
 To build it you need (1) patience, (2) to probably have had a chat with the team on slack. Then
 follow one of these directions. 
 
