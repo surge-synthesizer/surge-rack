@@ -31,6 +31,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 
     std::string labelCache[NUM_FX_PARAMS];
     bool labelCacheDirty[NUM_FX_PARAMS];
+    std::string sublabelCache[NUM_FX_PARAMS];
+    bool sublabelCacheDirty[NUM_FX_PARAMS];
     std::string groupCache[NUM_FX_PARAMS];
     bool groupCacheDirty[NUM_FX_PARAMS];
 
@@ -173,10 +175,16 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         }
 
 
+        // I hate having to use this API so much...
         for (auto i = 0; i < n_fx_params; ++i) {
-            if (surge_effect->group_label(i)) {
-                INFO("GROUP: %d %s", surge_effect->group_label_ypos(i),
-                     surge_effect->group_label(i));
+            int fpos = fxstorage->p[orderToParam[i]].posy + 10 * fxstorage->p[orderToParam[i]].posy_offset;
+            sublabelCacheDirty[i] = true;
+            for (auto j=0; j<n_fx_params; ++j) {
+                if (surge_effect->group_label(j) &&
+                    162 + 8 + 10 * surge_effect->group_label_ypos(j) < fpos // constants for SurgeGUIEditor. Sigh.
+                    ) {
+                    sublabelCache[i] = surge_effect->group_label(j);
+                }
             }
         }
 
@@ -267,12 +275,13 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         return res;
     }
     std::string getSubLabel(int gi) {
-        int i = orderToParam[gi];
-        return "group";
+        return sublabelCache[gi];
     }
 
     bool getSubLabelDirty(int gi) {
-        return true;
+        bool res = sublabelCacheDirty[gi];
+        sublabelCacheDirty[gi] = false;
+        return res;
     }
     
     std::string getValueString(int gi) {
