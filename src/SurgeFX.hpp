@@ -26,10 +26,13 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     enum OutputIds { OUTPUT_R_OR_MONO, OUTPUT_L, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
+
     float paramCache[NUM_FX_PARAMS];
     std::string paramDisplayCache[NUM_FX_PARAMS];
     bool paramDisplayDirty[NUM_FX_PARAMS];
 
+    std::string effectNameCache = "";
+    bool effectNameCacheDirty = true;
     std::string labelCache[NUM_FX_PARAMS];
     bool labelCacheDirty[NUM_FX_PARAMS];
     std::string sublabelCache[NUM_FX_PARAMS];
@@ -114,6 +117,9 @@ template <typename TBase> struct SurgeFX : virtual TBase {
                                         storage->getPatch().globaldata));
         surge_effect->init();
         surge_effect->init_ctrltypes();
+
+        effectNameCacheDirty = true;
+        effectNameCache = surge_effect->get_effectname();
 
         fxstorage->type.val.i = 1;
         
@@ -227,6 +233,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
             surge_effect->init();
             surge_effect->init_ctrltypes();
             reorderSurgeParams();
+            effectNameCacheDirty = true;
+            effectNameCache = surge_effect->get_effectname();
         }
 
         for (int i = 0; i < n_fx_params; ++i) {
@@ -301,11 +309,13 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     }
 
     std::string getEffectNameString() {
-        return ( surge_effect.get() ? surge_effect->get_effectname() : "null" );
+        return effectNameCache;
     }
 
     bool getEffectNameStringDirty() {
-        return true; // fixme of course
+        auto res = effectNameCacheDirty;
+        effectNameCacheDirty = false;
+        return res;
     }
 
     std::unique_ptr<Effect> surge_effect;

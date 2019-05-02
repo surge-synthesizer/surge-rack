@@ -27,95 +27,31 @@
       "model": "SurgeRack",
       "params": [
         {
-          "paramId": 27,
+          "paramId": 25,
           "value": 1.0
         },
         {
-          "paramId": 28,
+          "paramId": 26,
           "value": 1.0
         },
         {
           "paramId": 0,
-          "value": 0.969999611
+          "value": 1.28500009
         },
         {
-          "paramId": 14,
+          "paramId": 27,
+          "value": 0.5
+        },
+        {
+          "paramId": 13,
           "value": 0.0
         },
         {
           "paramId": 1,
-          "value": 0.540500045
+          "value": 0.576500058
         },
         {
-          "paramId": 20,
-          "value": 0.0
-        },
-        {
-          "paramId": 7,
-          "value": 0.5825001
-        },
-        {
-          "paramId": 15,
-          "value": 0.0
-        },
-        {
-          "paramId": 2,
-          "value": 0.5
-        },
-        {
-          "paramId": 21,
-          "value": 0.0
-        },
-        {
-          "paramId": 8,
-          "value": 0.5
-        },
-        {
-          "paramId": 16,
-          "value": 0.0
-        },
-        {
-          "paramId": 3,
-          "value": 0.638000131
-        },
-        {
-          "paramId": 22,
-          "value": 0.0
-        },
-        {
-          "paramId": 9,
-          "value": 0.351500005
-        },
-        {
-          "paramId": 17,
-          "value": 0.0
-        },
-        {
-          "paramId": 4,
-          "value": 0.648500085
-        },
-        {
-          "paramId": 23,
-          "value": 0.0
-        },
-        {
-          "paramId": 10,
-          "value": 0.68900001
-        },
-        {
-          "paramId": 18,
-          "value": 0.0
-        },
-        {
-          "paramId": 5,
-          "value": 0.5
-        },
-        {
-          "paramId": 24,
-          "value": 0.0
-        },
-        {
-          "paramId": 11,
+          "paramId": 33,
           "value": 0.5
         },
         {
@@ -123,11 +59,123 @@
           "value": 0.0
         },
         {
+          "paramId": 7,
+          "value": 0.5825001
+        },
+        {
+          "paramId": 28,
+          "value": 0.5
+        },
+        {
+          "paramId": 14,
+          "value": 0.0
+        },
+        {
+          "paramId": 2,
+          "value": 0.663500071
+        },
+        {
+          "paramId": 34,
+          "value": 0.5
+        },
+        {
+          "paramId": 20,
+          "value": 0.0
+        },
+        {
+          "paramId": 8,
+          "value": 0.5
+        },
+        {
+          "paramId": 29,
+          "value": 0.5
+        },
+        {
+          "paramId": 15,
+          "value": 0.0
+        },
+        {
+          "paramId": 3,
+          "value": 0.639500141
+        },
+        {
+          "paramId": 35,
+          "value": 0.5
+        },
+        {
+          "paramId": 21,
+          "value": 0.0
+        },
+        {
+          "paramId": 9,
+          "value": 0.47300005
+        },
+        {
+          "paramId": 30,
+          "value": 0.5
+        },
+        {
+          "paramId": 16,
+          "value": 0.0
+        },
+        {
+          "paramId": 4,
+          "value": 0.648500085
+        },
+        {
+          "paramId": 36,
+          "value": 0.5
+        },
+        {
+          "paramId": 22,
+          "value": 0.0
+        },
+        {
+          "paramId": 10,
+          "value": 0.68900001
+        },
+        {
+          "paramId": 31,
+          "value": 0.5
+        },
+        {
+          "paramId": 17,
+          "value": 0.0
+        },
+        {
+          "paramId": 5,
+          "value": 0.5
+        },
+        {
+          "paramId": 37,
+          "value": 0.5
+        },
+        {
+          "paramId": 23,
+          "value": 0.0
+        },
+        {
+          "paramId": 11,
+          "value": 0.5
+        },
+        {
+          "paramId": 32,
+          "value": 0.5
+        },
+        {
+          "paramId": 18,
+          "value": 0.0
+        },
+        {
           "paramId": 6,
           "value": 0.213499963
         },
         {
-          "paramId": 25,
+          "paramId": 38,
+          "value": 0.5
+        },
+        {
+          "paramId": 24,
           "value": 0.0
         },
         {

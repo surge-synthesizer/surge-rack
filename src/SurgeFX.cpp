@@ -51,16 +51,24 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 
     int parmMargin = 3;
 
-    addChild(new SurgeRoundedRect(rack::Vec(SCREW_WIDTH*6.5,10),
-                                  rack::Vec(SCREW_WIDTH*18,45)));
+    addChild(new SurgeRoundedRect(rack::Vec(box.size.x/4 + 36, 15),
+                                  rack::Vec(box.size.x/2 - SCREW_WIDTH/2 - 36, 34)));
 
-    addChild(TextDisplayLight::create(rack::Vec(SCREW_WIDTH*6.5 + 3, 13),
-                                      rack::Vec(SCREW_WIDTH*18, 39),
+    addChild(TextDisplayLight::create(rack::Vec(box.size.x/4 + 2 + 36, 17),
+                                      rack::Vec(box.size.x/2 - SCREW_WIDTH/2 - 36, 31),
                                       [module]() { return module ? module->getEffectNameString() : "null"; },
                                       [module]() { return module ? module->getEffectNameStringDirty() : true; },
-                                      25, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT));
-    addParam(rack::createParam<SurgeKnob>(
-                 rack::Vec(SCREW_WIDTH*1, 4), module, M::FX_TYPE
+                                      20, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT, SurgeStyle::surgeWhite()));
+    TextDisplayLight *tdl;
+    addChild(tdl = TextDisplayLight::create(rack::Vec(box.size.x/4 + 2 + 36, 16),
+                                            rack::Vec(box.size.x/2 - SCREW_WIDTH/2 - 36, 31),
+                                            []() { return "Effect Type"; },
+                                            []() { return false; },
+                                            12, NVG_ALIGN_TOP | NVG_ALIGN_LEFT));
+    tdl->font = SurgeStyle::fontFaceCondensed();
+
+    addParam(rack::createParam<SurgeKnobRooster>(
+                 rack::Vec(box.size.x / 4, 15), module, M::FX_TYPE
 #ifndef RACK_V1
                  , 0, 10, 1
 #endif                 
