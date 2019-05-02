@@ -344,7 +344,7 @@
       "model": "SurgeFX",
       "params": [
         {
-          "value": 1.60749817
+          "value": 0.17550002
         },
         {
           "value": 0.309000015
@@ -353,13 +353,13 @@
           "value": 0.64800024
         },
         {
-          "value": 0.677999854
+          "value": 0.410999984
         },
         {
           "value": 0.694999933
         },
         {
-          "value": 0.658500314
+          "value": 0.685500264
         },
         {
           "value": 0.158499897
@@ -431,7 +431,7 @@
           "value": 0.00449999981
         },
         {
-          "value": 0.0
+          "value": 0.123000011
         },
         {
           "value": 0.0
@@ -503,7 +503,7 @@
       ]
     }
   ],
-  "id": 15,
+  "id": 16,
   "cables": [
     {
       "outputModuleId": 19,
@@ -615,6 +615,13 @@
       "outputId": 1,
       "inputModuleId": 30,
       "inputId": 8,
+      "color": "#c9b70e"
+    },
+    {
+      "outputModuleId": 31,
+      "outputId": 3,
+      "inputModuleId": 30,
+      "inputId": 4,
       "color": "#c9b70e"
     }
   ]

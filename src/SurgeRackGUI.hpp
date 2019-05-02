@@ -161,6 +161,10 @@ struct SurgeRackBG : public rack::TransparentWidget {
         BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
             pos, size, [this](NVGcontext *vg) { this->drawBG(vg); });
         addChild(bdw);
+        addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(box.size.x - SCREW_WIDTH, box.size.y - SCREW_WIDTH)));
+        addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(0, box.size.y - SCREW_WIDTH)));
+        addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(box.size.x - SCREW_WIDTH, 0)));
+        addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(0, 0)));
     }
 
     bool hasInput = false;
@@ -185,12 +189,26 @@ struct SurgeRackBG : public rack::TransparentWidget {
         nvgFillColor(vg, SurgeStyle::surgeOrange());
         nvgFill(vg);
 
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+        nvgFillColor(vg, SurgeStyle::surgeWhite());
+        nvgFontFaceId(vg, fontId);
+        nvgFontSize(vg, 11);
+        nvgText(vg, box.size.x/2, box.size.y - 3, TOSTRING(DISPLAY_VERSION), NULL);
+
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+        nvgFillColor(vg, SurgeStyle::surgeWhite());
+        nvgFontFaceId(vg, fontId);
+        nvgFontSize(vg, 30);
+        nvgText(vg, box.size.x/2, box.size.y - 16, displayName.c_str(), NULL);
+
         for (int i = 0; i < 2; ++i) {
             if ((i == 0 && hasInput) || (i == 1 && hasOutput)) {
                 nvgBeginPath(vg);
-                int x0 = 0;
+                int x0 = 7;
                 if (i == 1)
-                    x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
+                    x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
                 NVGpaint sideGradient;
                 if (i == 0)
                     sideGradient = nvgLinearGradient(
@@ -217,38 +235,38 @@ struct SurgeRackBG : public rack::TransparentWidget {
                 if (i == 0) {
                     nvgSave(vg);
                     nvgTranslate(vg, x0 + ioMargin + 2,
-                                 box.size.y - (box.size.y - orangeLine) / 2);
-                    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                                 orangeLine + ioMargin * 1.5);
+                    nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
                     nvgRotate(vg, -M_PI / 2);
                     nvgText(vg, 0, 0, "Input", NULL);
                     nvgRestore(vg);
                 } else {
                     nvgSave(vg);
                     nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
-                                 box.size.y - (box.size.y - orangeLine) / 2);
-                    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                                 orangeLine + ioMargin * 1.5);
+                    nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
                     nvgRotate(vg, M_PI / 2);
                     nvgText(vg, 0, 0, "Output", NULL);
                     nvgRestore(vg);
                 }
                 rack::Vec ll;
                 ll = ioPortLocation(i == 0, 0);
-                ll.y = orangeLine + ioMargin + 1.5;
+                ll.y = box.size.y - ioMargin - 1.5;
                 ll.x += 24.6721 / 2;
                 nvgFontSize(vg, 11);
-                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
                 nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
 
                 ll = ioPortLocation(i == 0, 1);
-                ll.y = orangeLine + ioMargin + 1.5;
+                ll.y = box.size.y - ioMargin - 1.5;
                 ll.x += 24.6721 / 2;
-                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
                 nvgText(vg, ll.x, ll.y, "R", NULL);
 
                 ll = ioPortLocation(i == 0, 2);
-                ll.y = orangeLine + ioMargin + 1.5;
+                ll.y = box.size.y - ioMargin - 1.5;
                 ll.x += 24.6721 / 2;
-                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
                 nvgText(vg, ll.x, ll.y, "Gain", NULL);
             }
         }
@@ -257,13 +275,13 @@ struct SurgeRackBG : public rack::TransparentWidget {
     rack::Vec ioPortLocation(bool input,
                              int ctrl) { // 0 is L; 1 is R; 2 is gain
         float portX = 24.6721, portY = 24.6721;
-        int x0 = 0;
+        int x0 = 7;
         if (!input)
-            x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
+            x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
 
         int padFromEdge = input ? 17 : 5;
         int xRes = x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
-        int yRes = box.size.y - 1.5 * ioMargin - portY;
+        int yRes = orangeLine + 1.5 * ioMargin;
 
         return rack::Vec(xRes, yRes);
     }
