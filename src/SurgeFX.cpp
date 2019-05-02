@@ -73,27 +73,41 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
             this, module, rack::Vec(SCREW_WIDTH * 0.5, pos), M::FX_PARAM_0 + i,
             M::FX_PARAM_INPUT_0 + i, M::FX_EXTEND_0 + i,
             [module, i]() { return module ? module->getLabel(i) : "null"; },
-            []() { return true; },
+            [module, i]() {
+                return module ? module->getLabelDirty(i) : false;
+            },
+                    
             [module, i]() { return module ? module->getSubLabel(i) : "null"; },
-            []() { return true; },
+            [module, i]() {
+                return module ? module->getSubLabelDirty(i): false;
+            },
+            
             [module, i]() {
                 return module ? module->getValueString(i) : "null";
             },
-            []() { return true; }));
+            [module, i]() {
+                return module ? module->getValueStringDirty(i) : false;
+            }));
 
         addChild(SurgeParamLargeWidget::create(
             this, module, rack::Vec(12.5 * SCREW_WIDTH, pos),
             M::FX_PARAM_0 + i + 6, M::FX_PARAM_INPUT_0 + i + 6, M::FX_EXTEND_0 + 6 + i,
             [module, i]() { return module ? module->getLabel(i + 6) : "null"; },
-            []() { return true; },
+            [module, i]() {
+                return module ? module->getLabelDirty(i + 6) : false;
+            },
             [module, i]() {
                 return module ? module->getSubLabel(i + 6) : "null";
             },
-            []() { return true; },
+            [module, i]() {
+                return module ? module->getSubLabelDirty(i + 6) : false;
+            },
             [module, i]() {
                 return module ? module->getValueString(i + 6) : "null";
             },
-            []() { return true; }));
+            [module, i]() {
+                return module ? module->getValueStringDirty(i + 6) : false;
+            }));
     }
 }
 

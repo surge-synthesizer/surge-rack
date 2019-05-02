@@ -4,12 +4,13 @@
 #include "rack.hpp"
 #include <cstring>
 
+#define NUM_FX_PARAMS 12
 template <typename TBase> struct SurgeFX : virtual TBase {
     enum ParamIds {
         FX_TYPE = 0,
         FX_PARAM_0,
-        FX_EXTEND_0 = FX_PARAM_0 + 13,
-        INPUT_GAIN = FX_EXTEND_0 + 13,
+        FX_EXTEND_0 = FX_PARAM_0 + NUM_FX_PARAMS,
+        INPUT_GAIN = FX_EXTEND_0 + NUM_FX_PARAMS,
         OUTPUT_GAIN,
         NUM_PARAMS
     };
@@ -19,10 +20,20 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 
         FX_PARAM_INPUT_0,
 
-        NUM_INPUTS = FX_PARAM_INPUT_0 + 13
+        NUM_INPUTS = FX_PARAM_INPUT_0 + NUM_FX_PARAMS
     };
     enum OutputIds { OUTPUT_R_OR_MONO, OUTPUT_L, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
+
+    float paramCache[NUM_FX_PARAMS];
+    std::string paramDisplayCache[NUM_FX_PARAMS];
+    bool paramDisplayDirty[NUM_FX_PARAMS];
+
+    std::string labelCache[NUM_FX_PARAMS];
+    bool labelCacheDirty[NUM_FX_PARAMS];
+    std::string groupCache[NUM_FX_PARAMS];
+    bool groupCacheDirty[NUM_FX_PARAMS];
+
 
     using TBase::inputs;
     using TBase::lights;
@@ -72,7 +83,12 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     }
 
     void setupSurge() {
-        INFO("Making FX");
+        for(auto i=0; i<NUM_FX_PARAMS; ++i)
+        {
+            paramCache[i] = -1;
+            paramDisplayCache[i] = "";
+            paramDisplayDirty[i] = "";
+        }
         // TODO: Have a mode where these paths come from res/
         storage.reset(new SurgeStorage());
         INFO("Storage datapath is: %s", storage->datapath.c_str());
@@ -111,45 +127,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         fxstorage->p[10].set_value_f01(1.0);
         fxstorage->p[11].set_value_f01(0.0);
 
-        INFO("P10 = %lf %lf\n", fxstorage->p[10].get_value_f01(),
-             fxstorage->p[10].val.f);
-
-        INFO("FX PTR is %x", (size_t)surge_effect.get());
-        if (surge_effect.get()) {
-            INFO("FX Type is %s %d", surge_effect->get_effectname(), fxstorage->type.val.i);
-            for (auto i = 0; i < n_fx_params; ++i) {
-                if (surge_effect->group_label(i)) {
-                    INFO("GROUP: %d %s", surge_effect->group_label_ypos(i),
-                         surge_effect->group_label(i));
-                }
-            }
-
-            std::vector<std::pair<int, int>> orderTrack;
-            for (auto i = 0; i < n_fx_params; ++i) {
-                if (fxstorage->p[i].posy_offset) {
-                    char txt[256];
-                    fxstorage->p[i].get_display(txt, false, 0);
-                    INFO("   Param[%d] -> ord=%d %s %lf %lf '%s'", i,
-                         i * 2 + fxstorage->p[i].posy_offset,
-                         fxstorage->p[i].get_name(),
-                         fxstorage->p[i].get_value_f01(), fxstorage->p[i].val.f,
-                         txt);
-                    orderTrack.push_back(std::pair<int, int>(
-                        i, i * 2 + fxstorage->p[i].posy_offset));
-                } else {
-                    orderTrack.push_back(std::pair<int, int>(i, 10000));
-                }
-            }
-            std::sort(
-                orderTrack.begin(), orderTrack.end(),
-                [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
-                    return a.second < b.second;
-                });
-            for (auto a : orderTrack) {
-                orderToParam.push_back(a.first);
-                INFO(" %d -> %d", orderToParam.size() - 1, a.first);
-            }
-        }
+        reorderSurgeParams();
 
         for (auto i = 0; i < BLOCK_SIZE; ++i) {
             bufferL[i] = 0.0f;
@@ -169,6 +147,48 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 
     }
 
+    void reorderSurgeParams() {
+        if (surge_effect.get()) {
+            std::vector<std::pair<int, int>> orderTrack;
+            for (auto i = 0; i < n_fx_params; ++i) {
+                if (fxstorage->p[i].posy_offset) {
+                    orderTrack.push_back(std::pair<int, int>(
+                                             i, i * 2 + fxstorage->p[i].posy_offset));
+                } else {
+                    orderTrack.push_back(std::pair<int, int>(i, 10000));
+                }
+            }
+            std::sort(
+                orderTrack.begin(), orderTrack.end(),
+                [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
+                    return a.second < b.second;
+                });
+            orderToParam.clear();
+            for (auto a : orderTrack) {
+                orderToParam.push_back(a.first);
+                int idx = orderToParam.size() - 1;
+                labelCache[idx] = fxstorage->p[a.first].get_name();;
+                labelCacheDirty[idx] = true;
+            }
+        }
+
+
+        for (auto i = 0; i < n_fx_params; ++i) {
+            if (surge_effect->group_label(i)) {
+                INFO("GROUP: %d %s", surge_effect->group_label_ypos(i),
+                     surge_effect->group_label(i));
+            }
+        }
+
+        for(auto i=0; i<NUM_FX_PARAMS; ++i)
+        {
+            paramCache[i] = -1;
+            paramDisplayCache[i] = "";
+            paramDisplayDirty[i] = "";
+        }
+    }
+
+    
     float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
     float processedL alignas(16)[BLOCK_SIZE], processedR
         alignas(16)[BLOCK_SIZE];
@@ -196,11 +216,26 @@ template <typename TBase> struct SurgeFX : virtual TBase {
                                             storage->getPatch().globaldata));
             surge_effect->init();
             surge_effect->init_ctrltypes();
+            reorderSurgeParams();
+        }
+
+        for (int i = 0; i < n_fx_params; ++i) {
+            if (getParam(FX_PARAM_0 + i) != paramCache[i])
+            {
+                fxstorage->p[orderToParam[i]].set_value_f01(
+                    getParam(FX_PARAM_0 + i));
+                char txt[256];
+                fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
+
+                paramDisplayCache[i] = txt;
+                paramDisplayDirty[i] = true;
+                paramCache[i] = getParam(FX_PARAM_0 + 1);
+            }
         }
 
         for (int i = 0; i < n_fx_params; ++i) {
             fxstorage->p[orderToParam[i]].set_value_f01(
-                getParam(FX_PARAM_0 + i));
+                getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i))/10.0);
         }
 
         bufferR[bufferPos] = inpG * getInput(INPUT_R_OR_MONO) / 5.0;
@@ -224,20 +259,32 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     }
 
     std::string getLabel(int gi) {
-        int i = orderToParam[gi];
-        std::string res = fxstorage->p[i].get_name();
+        return labelCache[gi];
+    }
+    bool getLabelDirty(int gi) {
+        bool res = labelCacheDirty[gi];
+        labelCacheDirty[gi] = false;
         return res;
     }
     std::string getSubLabel(int gi) {
         int i = orderToParam[gi];
         return "group";
     }
-    std::string getValueString(int gi) {
-        int i = orderToParam[gi];
-        char txt[256];
-        fxstorage->p[i].get_display(txt, false, 0);
-        return txt;
+
+    bool getSubLabelDirty(int gi) {
+        return true;
     }
+    
+    std::string getValueString(int gi) {
+        return paramDisplayCache[gi];
+    }
+
+    bool getValueStringDirty(int gi) {
+        auto res = paramDisplayDirty[gi];
+        paramDisplayDirty[gi] = false;
+        return res;
+    }
+    
     bool getStringDirty(int gi) {
         return true; // fixme of course
     }
