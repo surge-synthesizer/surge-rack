@@ -127,6 +127,26 @@ struct SurgeSwitch :
     }
 };
 
+struct SurgeSwitchFull :
+#if RACK_V1    
+    rack::app::SvgSwitch
+#else
+    rack::SVGSwitch, rack::ToggleSwitch
+#endif
+{
+    SurgeSwitchFull() {
+#if RACK_V1        
+        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitchFull_0.svg")));
+        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitchFull_1.svg")));
+#else
+        addFrame(
+            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitchFull_0.svg")));
+        addFrame(
+            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitchFull_1.svg")));
+#endif        
+    }
+};
+
 struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
     typedef std::function<void(NVGcontext *)> drawfn_t;
     drawfn_t drawf;
@@ -143,13 +163,65 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
 #endif
     };
 
+    InternalBDW *kid = nullptr;
     BufferedDrawFunctionWidget(rack::Vec pos, rack::Vec sz, drawfn_t draw_)
         : drawf(draw_) {
         box.pos = pos;
         box.size = sz;
         auto kidBox = rack::Rect(rack::Vec(0, 0), box.size);
-        InternalBDW *kid = new InternalBDW(kidBox, drawf);
+        kid = new InternalBDW(kidBox, drawf);
         addChild(kid);
+    }
+};
+
+
+#if RACK_V1
+struct LabelWidget :  rack::widget::Widget 
+#else
+struct LabelWidget :  rack::Widget 
+#endif
+{
+    std::string label;
+    int align;
+    int fontSize;
+    std::string fontName;
+    int fontId;
+    NVGcolor color;
+
+#if RACK_V1    
+    LabelWidget() : rack::widget::Widget()
+#else
+    LabelWidget() : rack::Widget()
+#endif        
+    {
+    }
+
+    static LabelWidget *create(rack::Vec pos, rack::Vec size, std::string label) {
+        LabelWidget *res = rack::createWidget<LabelWidget>(pos);
+
+        res->box.size = size;
+        res->label = label;
+        res->align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP;
+        res->fontSize = 11;
+        res->fontName = SurgeStyle::fontFace();
+        res->color = SurgeStyle::surgeOrange();
+
+        BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
+            rack::Vec(0,0), size, [res](NVGcontext *vg) { res->drawLabel(vg); });
+        res->addChild(bdw);
+        return res;
+    }
+    
+    void drawLabel(NVGcontext *vg) {
+        if (fontId < 0)
+            fontId = InternalFontMgr::get(vg, fontName);
+
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, align);
+        nvgFillColor(vg, color);
+        nvgFontFaceId(vg, fontId);
+        nvgFontSize(vg, fontSize);
+        nvgText(vg, 0, 0, label.c_str(), NULL);
     }
 };
 
@@ -176,6 +248,7 @@ struct SurgeRackBG : public rack::TransparentWidget {
     int fontId = -1;
 
     void drawBG(NVGcontext *vg) {
+        INFO( "BG DRAW" );
         if (fontId < 0)
             fontId = InternalFontMgr::get(vg, font);
 

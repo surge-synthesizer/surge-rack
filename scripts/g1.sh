@@ -10,7 +10,7 @@ if [ ! -f build/rack1.info ]; then
 	echo date > build/rack1.info
 fi
 
-RACK_DIR=${RACK_DIR} make -j 4 -k dist
+RACK_DIR=${RACK_DIR} make -j 4 -k dist || exit 2
 cp dist/SurgeRack-1.0.0-mac.zip ${RACK_DIR}/plugins
 pushd ${RACK_DIR}/plugins
 rm -rf SurgeRack
