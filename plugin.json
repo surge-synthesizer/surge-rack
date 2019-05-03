@@ -16,6 +16,13 @@
 			"name": "SurgeFX",
 			"description": "",
 			"tags": []
+		},
+		{
+			"slug": "SurgeADSR",
+			"name": "SurgeADSR",
+			"description": "",
+			"tags": []
 		}
+
 	]
 }

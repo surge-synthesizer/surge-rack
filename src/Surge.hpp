@@ -12,3 +12,4 @@
 
 extern rack::Plugin *pluginInstance;
 extern rack::Model *modelSurgeFX;
+extern rack::Model *modelSurgeADSR;

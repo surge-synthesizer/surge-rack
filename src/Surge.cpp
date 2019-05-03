@@ -14,4 +14,5 @@ void init(rack::Plugin *p) {
 #endif
 
     p->addModel(modelSurgeFX);
+    p->addModel(modelSurgeADSR);
 }
