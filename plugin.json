@@ -22,6 +22,12 @@
 			"name": "SurgeADSR",
 			"description": "",
 			"tags": []
+		},
+		{
+			"slug": "SurgeOSC",
+			"name": "SurgeOSC",
+			"description": "",
+			"tags": []
 		}
 
 	]
