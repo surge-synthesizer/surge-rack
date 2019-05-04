@@ -32,6 +32,10 @@ struct SurgeStyle {
     static NVGcolor color7() { return nvgRGBA(205, 206, 212, 255); }
     static NVGcolor color9() { return nvgRGBA(156, 157, 160, 255); }
 
+    static NVGcolor backgroundGray() { return nvgRGBA(205, 206, 212, 255); }
+    static NVGcolor backgroundLightGray() { return nvgRGBA(215, 216, 222, 255); }
+    static NVGcolor backgroundLightOrange() { return nvgRGBA(239, 210, 172, 255); }
+
     static const char *fontFace() {
         return "res/EncodeSansSemiCondensed-Medium.ttf";
     }
@@ -206,7 +210,7 @@ struct SurgeRackBG : public rack::TransparentWidget {
 
         nvgBeginPath(vg);
         nvgRect(vg, 0, 0, box.size.x, box.size.y);
-        nvgFillColor(vg, SurgeStyle::color7());
+        nvgFillColor(vg, SurgeStyle::backgroundGray());
         nvgFill(vg);
 
         nvgBeginPath(vg);
@@ -215,14 +219,20 @@ struct SurgeRackBG : public rack::TransparentWidget {
         nvgFill(vg);
 
         nvgBeginPath(vg);
+        nvgMoveTo(vg, 0, orangeLine);
+        nvgLineTo(vg, box.size.x, orangeLine);
+        nvgStrokeColor(vg, SurgeStyle::surgeBlue());
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+            
+        nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgFillColor(vg, SurgeStyle::surgeWhite());
         nvgFontFaceId(vg, fontId);
         nvgFontSize(vg, 9);
 
         char version[1024];
-        snprintf(version, 1024, "bld: %s %s",
-                 __DATE__, __TIME__);
+        snprintf(version, 1024, "bld: %s %s", __DATE__, __TIME__);
         nvgText(vg, box.size.x/2, box.size.y - 2, version, NULL);
 
         snprintf(version, 1024, "%s: %s.%s.%s",

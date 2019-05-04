@@ -36,10 +36,10 @@ struct SurgeFXWidget : rack::ModuleWidget {
                 box.size.y - SurgeLayout::orangeLine - 2 * ioMargin, ioMargin);
             nvgFillPaint(vg, sideGradient);
             nvgFill(vg);
-            nvgStrokeColor(vg, SurgeStyle::color7());
+            nvgStrokeColor(vg, SurgeStyle::backgroundGray());
             nvgStroke(vg);
             
-            nvgFillColor(vg, SurgeStyle::color7());
+            nvgFillColor(vg, SurgeStyle::backgroundGray());
             nvgFontFaceId(vg, fontId);
             nvgFontSize(vg, 12);
             if (i == 0) {
