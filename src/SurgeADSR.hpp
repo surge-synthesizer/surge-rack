@@ -1,5 +1,6 @@
 #pragma once
 #include "Surge.hpp"
+#include "SurgeModuleCommon.hpp"
 #include "dsp/AdsrEnvelope.h"
 #include "rack.hpp"
 #include <cstring>
@@ -9,7 +10,7 @@
 #endif
 
 #define NUM_ENV_PARAMS 19
-template <typename TBase> struct SurgeADSR : virtual TBase {
+struct SurgeADSR : virtual public SurgeModuleCommon {
     enum ParamIds {
         A_PARAM,
         D_PARAM,
@@ -41,12 +42,6 @@ template <typename TBase> struct SurgeADSR : virtual TBase {
     };
     enum LightIds { NUM_LIGHTS };
 
-
-    using TBase::inputs;
-    using TBase::lights;
-    using TBase::outputs;
-    using TBase::params;
-
 #if RACK_V1    
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
 #else
@@ -54,72 +49,26 @@ template <typename TBase> struct SurgeADSR : virtual TBase {
 #endif    
 
 #if RACK_V1
-    SurgeADSR() : TBase() {
-        TBase::config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    SurgeADSR() : SurgeModuleCommon() {
+        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for( int i=A_PARAM; i<=R_PARAM; ++i )
-            TBase::configParam(i, 0, 1, 0.5);
-        TBase::configParam(MODE_PARAM, 0, 1, 0);
-        TBase::configParam(A_S_PARAM,0,2,0);
-        TBase::configParam(D_S_PARAM,0,2,0);
-        TBase::configParam(R_S_PARAM,0,2,0);
+            configParam(i, 0, 1, 0.5);
+        configParam(MODE_PARAM, 0, 1, 0);
+        configParam(A_S_PARAM,0,2,0);
+        configParam(D_S_PARAM,0,2,0);
+        configParam(R_S_PARAM,0,2,0);
         setupSurge();
     }
 #else
-    SurgeADSR() : TBase(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
+    SurgeADSR() : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
         setupSurge();
     }
 #endif
     
-    inline float getParam(int id) {
-#if RACK_V1
-        return params[id].getValue();
-#else
-        return params[id].value;
-#endif
-    }
 
-    inline float getInput(int id) {
-#if RACK_V1
-        return inputs[id].getVoltage();
-#else
-        return inputs[id].value;
-#endif
-    }
-
-    inline void setOutput(int id, float v) {
-#if RACK_V1
-        outputs[id].setVoltage(v);
-#else
-        outputs[id].value = v;
-#endif
-    }
-
-
-    void setupSurge() {
-        std::string dataPath;
-#if RACK_V1
-        dataPath = rack::asset::plugin( pluginInstance, "surge-data/" );
-#else
-        dataPath = "";
-#endif
+    virtual void setupSurge() {
+        setupSurgeCommon();
         
-        // TODO: Have a mode where these paths come from res/
-        storage.reset(new SurgeStorage(dataPath));
-
-        // FIX THIS of course
-#if RACK_V1        
-        float sr = rack::APP->engine->getSampleRate();
-#else
-        float sr = rack::engineGetSampleRate();
-#endif
-        samplerate = sr;
-        dsamplerate = sr;
-        samplerate_inv = 1.0 / sr;
-        dsamplerate_inv = 1.0 / sr;
-        dsamplerate_os = dsamplerate * OSC_OVERSAMPLING;
-        dsamplerate_os_inv = 1.0 / dsamplerate_os;
-        storage->init_tables();
-
         surge_envelope.reset(new AdsrEnvelope());
         adsrstorage = &(storage->getPatch().scene[0].adsr[0]);
         surge_envelope->init(storage.get(), adsrstorage, storage->getPatch().scenedata[0], nullptr );
@@ -130,19 +79,13 @@ template <typename TBase> struct SurgeADSR : virtual TBase {
         adsrstorage->r_s.val.i = 0;
     }
 
-    virtual void onSampleRateChange() override {
-        INFO( "SAMPLE RATE CHANGE" );
-    }
-    
     std::unique_ptr<AdsrEnvelope> surge_envelope;
-    std::unique_ptr<SurgeStorage> storage;
     ADSRStorage *adsrstorage;
-    std::vector<int> orderToParam;
 
     bool wasGated = false;
     
 #if RACK_V1
-    void process(const typename TBase::ProcessArgs &args) override
+    void process(const typename rack::Module::ProcessArgs &args) override
 #else
     void step() override
 #endif
