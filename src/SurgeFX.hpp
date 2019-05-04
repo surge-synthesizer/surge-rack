@@ -1,11 +1,12 @@
 #pragma once
 #include "Surge.hpp"
+#include "SurgeModuleCommon.hpp"
 #include "dsp/effect/Effect.h"
 #include "rack.hpp"
 #include <cstring>
 
 #define NUM_FX_PARAMS 12
-template <typename TBase> struct SurgeFX : virtual TBase {
+struct SurgeFX : virtual SurgeModuleCommon {
     enum ParamIds {
         FX_TYPE = 0,
         FX_PARAM_0,
@@ -28,8 +29,8 @@ template <typename TBase> struct SurgeFX : virtual TBase {
 
 
     float paramCache[NUM_FX_PARAMS];
-    std::string paramDisplayCache[NUM_FX_PARAMS];
-    bool paramDisplayDirty[NUM_FX_PARAMS];
+
+    StringCache paramDisplayCache[NUM_FX_PARAMS];
 
     std::string effectNameCache = "";
     bool effectNameCacheDirty = true;
@@ -40,86 +41,37 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     std::string groupCache[NUM_FX_PARAMS];
     bool groupCacheDirty[NUM_FX_PARAMS];
 
-
-    using TBase::inputs;
-    using TBase::lights;
-    using TBase::outputs;
-    using TBase::params;
-
 #if RACK_V1
-    SurgeFX() : TBase() {
-        TBase::config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        TBase::configParam(FX_TYPE, 0, 9, 1);
+    SurgeFX() : SurgeModuleCommon() {
         setupSurge();
+        
+        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+        configParam(FX_TYPE, 0, 9, 1);
         for (int i = 0; i < 12; ++i) {
-            TBase::configParam(FX_PARAM_0 + i, 0, 1,
+            configParam(FX_PARAM_0 + i, 0, 1,
                                fxstorage->p[i].get_value_f01());
-            TBase::configParam(FX_PARAM_GAIN_0 + i, 0, 1, 0.2);
+            configParam(FX_PARAM_GAIN_0 + i, 0, 1, 0.2);
         }
-        TBase::configParam(INPUT_GAIN, 0, 1, 1);
-        TBase::configParam(OUTPUT_GAIN, 0, 1, 1);
+        configParam(INPUT_GAIN, 0, 1, 1);
+        configParam(OUTPUT_GAIN, 0, 1, 1);
     }
 #else
-    SurgeFX() : TBase(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
+    SurgeFX() : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
         setupSurge();
     }
 #endif
-
-    inline float getParam(int id) {
-#if RACK_V1
-        return params[id].getValue();
-#else
-        return params[id].value;
-#endif
-    }
-
-    inline float getInput(int id) {
-#if RACK_V1
-        return inputs[id].getVoltage();
-#else
-        return inputs[id].value;
-#endif
-    }
-
-    inline void setOutput(int id, float v) {
-#if RACK_V1
-        outputs[id].setVoltage(v);
-#else
-        outputs[id].value = v;
-#endif
-    }
 
     void setupSurge() {
         for(auto i=0; i<NUM_FX_PARAMS; ++i)
         {
             paramCache[i] = -1;
-            paramDisplayCache[i] = "";
-            paramDisplayDirty[i] = "";
         }
 
-        std::string dataPath;
-#if RACK_V1
-        dataPath = rack::asset::plugin( pluginInstance, "surge-data/" );
-#else
-        dataPath = "";
-#endif
+        setupSurgeCommon();
         
-        // TODO: Have a mode where these paths come from res/
-        storage.reset(new SurgeStorage(dataPath));
-        INFO("Storage datapath is: %s", storage->datapath.c_str());
-
-        // FIX THIS of course
-        float sr = 44100.0;
-        samplerate = sr;
-        dsamplerate = sr;
-        samplerate_inv = 1.0 / sr;
-        dsamplerate_inv = 1.0 / sr;
-        dsamplerate_os = dsamplerate * OSC_OVERSAMPLING;
-        dsamplerate_os_inv = 1.0 / dsamplerate_os;
-        storage->init_tables();
-
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = 1;
+
         surge_effect.reset(spawn_effect(1, storage.get(),
                                         &(storage->getPatch().fx[0]),
                                         storage->getPatch().globaldata));
@@ -161,8 +113,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
             processedR[i] = 0.0f;
         }
         if(surge_effect.get())
-            INFO("FX Type 2 is %s %d", surge_effect->get_effectname(), fxstorage->type.val.i);
-
+            INFO("Effect Setup Complete: FX Type 2 is %s", surge_effect->get_effectname());
     }
 
     void reorderSurgeParams() {
@@ -207,8 +158,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         for(auto i=0; i<NUM_FX_PARAMS; ++i)
         {
             paramCache[i] = -1;
-            paramDisplayCache[i] = "";
-            paramDisplayDirty[i] = "";
+            paramDisplayCache[i].reset("");
         }
     }
 
@@ -223,7 +173,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     }
     
 #if RACK_V1
-    void process(const typename TBase::ProcessArgs &args) override
+    void process(const typename rack::Module::ProcessArgs &args) override
 #else
     void step() override
 #endif
@@ -253,8 +203,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
                 char txt[256];
                 fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
 
-                paramDisplayCache[i] = txt;
-                paramDisplayDirty[i] = true;
+                paramDisplayCache[i].reset(txt);
                 paramCache[i] = getParam(FX_PARAM_0 + 1);
             }
         }
@@ -301,17 +250,7 @@ template <typename TBase> struct SurgeFX : virtual TBase {
         sublabelCacheDirty[gi] = false;
         return res;
     }
-    
-    std::string getValueString(int gi) {
-        return paramDisplayCache[gi];
-    }
-
-    bool getValueStringDirty(int gi) {
-        auto res = paramDisplayDirty[gi];
-        paramDisplayDirty[gi] = false;
-        return res;
-    }
-    
+        
     bool getStringDirty(int gi) {
         return true; // fixme of course
     }
@@ -327,7 +266,6 @@ template <typename TBase> struct SurgeFX : virtual TBase {
     }
 
     std::unique_ptr<Effect> surge_effect;
-    std::unique_ptr<SurgeStorage> storage;
     FxStorage *fxstorage;
     std::vector<int> orderToParam;
 };

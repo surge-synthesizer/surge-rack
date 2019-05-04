@@ -38,7 +38,17 @@ struct SurgeStyle {
     static const char *fontFaceCondensed() {
         return "res/EncodeSansCondensed-Medium.ttf";
     }
+};
 
+struct SurgeLayout
+{
+    static float constexpr portX = 24.6721;
+    static float constexpr portY = 24.6721;
+    static float constexpr surgeKnobX = 24;
+    static float constexpr surgeKnobY = 24;
+    static float constexpr surgeRoosterX = 24;
+    static float constexpr surgeRoosterY = 24;
+    static float constexpr orangeLine = 323;
 };
 
 // Font dictionary
@@ -51,15 +61,7 @@ struct InternalFontMgr {
 #else
             std::string fontPath = rack::assetPlugin(pluginInstance, resName);
 #endif
-            INFO("LOADING FROM %s", fontPath.c_str());
-            fontMap[resName] =
-                nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
-            INFO("LOADING FROM %s -> %d", fontPath.c_str(), fontMap[resName]);
-#ifndef RACK_V1
-            // FIXME
-            if (fontMap[resName] < 0)
-                fontMap[resName] = 1;
-#endif
+            fontMap[resName] = nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
         }
         return fontMap[resName];
     }
@@ -175,61 +177,14 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
 };
 
 
-#if RACK_V1
-struct LabelWidget :  rack::widget::Widget 
-#else
-struct LabelWidget :  rack::Widget 
-#endif
-{
-    std::string label;
-    int align;
-    int fontSize;
-    std::string fontName;
-    int fontId;
-    NVGcolor color;
-
-#if RACK_V1    
-    LabelWidget() : rack::widget::Widget()
-#else
-    LabelWidget() : rack::Widget()
-#endif        
-    {
-    }
-
-    static LabelWidget *create(rack::Vec pos, rack::Vec size, std::string label) {
-        LabelWidget *res = rack::createWidget<LabelWidget>(pos);
-
-        res->box.size = size;
-        res->label = label;
-        res->align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP;
-        res->fontSize = 11;
-        res->fontName = SurgeStyle::fontFace();
-        res->color = SurgeStyle::surgeOrange();
-
-        BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
-            rack::Vec(0,0), size, [res](NVGcontext *vg) { res->drawLabel(vg); });
-        res->addChild(bdw);
-        return res;
-    }
-    
-    void drawLabel(NVGcontext *vg) {
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, fontName);
-
-        nvgBeginPath(vg);
-        nvgTextAlign(vg, align);
-        nvgFillColor(vg, color);
-        nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, fontSize);
-        nvgText(vg, 0, 0, label.c_str(), NULL);
-    }
-};
-
 struct SurgeRackBG : public rack::TransparentWidget {
     std::string displayName;
+    std::function<void(NVGcontext *)> moduleSpecificDraw;
+    
     SurgeRackBG(rack::Vec pos, rack::Vec size, std::string _displayName)
         : displayName(_displayName) {
         box.size = size;
+        moduleSpecificDraw = [](NVGcontext *){};
         BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
             pos, size, [this](NVGcontext *vg) { this->drawBG(vg); });
         addChild(bdw);
@@ -237,18 +192,15 @@ struct SurgeRackBG : public rack::TransparentWidget {
         addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(0, box.size.y - SCREW_WIDTH)));
         addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(box.size.x - SCREW_WIDTH, 0)));
         addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(0, 0)));
+
     }
 
-    bool hasInput = false;
-    bool hasOutput = true;
-    int orangeLine = 323;
-    int ioMargin = 7;
-    int ioRegionWidth = 105;
     std::string font = SurgeStyle::fontFace();
     int fontId = -1;
 
     void drawBG(NVGcontext *vg) {
-        INFO( "BG DRAW" );
+        int orangeLine = SurgeLayout::orangeLine;
+        
         if (fontId < 0)
             fontId = InternalFontMgr::get(vg, font);
 
@@ -290,92 +242,19 @@ struct SurgeRackBG : public rack::TransparentWidget {
 
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+        nvgFillColor(vg, SurgeStyle::surgeOrange2());
+        nvgFontFaceId(vg, fontId);
+        nvgFontSize(vg, 30);
+        nvgText(vg, box.size.x/2 + 1, box.size.y - 25 + 1, displayName.c_str(), NULL);
+
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgFillColor(vg, SurgeStyle::surgeWhite());
         nvgFontFaceId(vg, fontId);
         nvgFontSize(vg, 30);
         nvgText(vg, box.size.x/2, box.size.y - 25, displayName.c_str(), NULL);
 
-        for (int i = 0; i < 2; ++i) {
-            if ((i == 0 && hasInput) || (i == 1 && hasOutput)) {
-                nvgBeginPath(vg);
-                int x0 = 7;
-                if (i == 1)
-                    x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
-                NVGpaint sideGradient;
-                if (i == 0)
-                    sideGradient = nvgLinearGradient(
-                        vg, x0 + ioMargin, orangeLine + ioMargin,
-                        x0 + ioMargin + ioRegionWidth, orangeLine + ioMargin,
-                        SurgeStyle::surgeBlue(), SurgeStyle::surgeBlueBright());
-                else
-                    sideGradient = nvgLinearGradient(
-                        vg, x0 + ioMargin, orangeLine + ioMargin,
-                        x0 + ioMargin + ioRegionWidth, orangeLine + ioMargin,
-                        SurgeStyle::surgeBlueBright(), SurgeStyle::surgeBlue());
-
-                nvgRoundedRect(
-                    vg, x0 + ioMargin, orangeLine + ioMargin, ioRegionWidth,
-                    box.size.y - orangeLine - 2 * ioMargin, ioMargin);
-                nvgFillPaint(vg, sideGradient);
-                nvgFill(vg);
-                nvgStrokeColor(vg, SurgeStyle::color7());
-                nvgStroke(vg);
-
-                nvgFillColor(vg, SurgeStyle::color7());
-                nvgFontFaceId(vg, fontId);
-                nvgFontSize(vg, 12);
-                if (i == 0) {
-                    nvgSave(vg);
-                    nvgTranslate(vg, x0 + ioMargin + 2,
-                                 orangeLine + ioMargin * 1.5);
-                    nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
-                    nvgRotate(vg, -M_PI / 2);
-                    nvgText(vg, 0, 0, "Input", NULL);
-                    nvgRestore(vg);
-                } else {
-                    nvgSave(vg);
-                    nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
-                                 orangeLine + ioMargin * 1.5);
-                    nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-                    nvgRotate(vg, M_PI / 2);
-                    nvgText(vg, 0, 0, "Output", NULL);
-                    nvgRestore(vg);
-                }
-                rack::Vec ll;
-                ll = ioPortLocation(i == 0, 0);
-                ll.y = box.size.y - ioMargin - 1.5;
-                ll.x += 24.6721 / 2;
-                nvgFontSize(vg, 11);
-                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-                nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
-
-                ll = ioPortLocation(i == 0, 1);
-                ll.y = box.size.y - ioMargin - 1.5;
-                ll.x += 24.6721 / 2;
-                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-                nvgText(vg, ll.x, ll.y, "R", NULL);
-
-                ll = ioPortLocation(i == 0, 2);
-                ll.y = box.size.y - ioMargin - 1.5;
-                ll.x += 24.6721 / 2;
-                nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-                nvgText(vg, ll.x, ll.y, "Gain", NULL);
-            }
-        }
-    }
-
-    rack::Vec ioPortLocation(bool input,
-                             int ctrl) { // 0 is L; 1 is R; 2 is gain
-        float portX = 24.6721, portY = 24.6721;
-        int x0 = 7;
-        if (!input)
-            x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
-
-        int padFromEdge = input ? 17 : 5;
-        int xRes = x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
-        int yRes = orangeLine + 1.5 * ioMargin;
-
-        return rack::Vec(xRes, yRes);
+        moduleSpecificDraw(vg);
     }
 };
 

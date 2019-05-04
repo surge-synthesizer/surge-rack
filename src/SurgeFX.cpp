@@ -3,8 +3,98 @@
 #include "SurgeRackGUI.hpp"
 
 struct SurgeFXWidget : rack::ModuleWidget {
-    typedef SurgeFX<rack::Module> M;
+    typedef SurgeFX M;
     SurgeFXWidget(M *module);
+
+    int ioMargin = 7;
+    int ioRegionWidth = 105;
+    int fontId = -1;
+    
+    void moduleBackground(NVGcontext *vg) {
+        if (fontId < 0)
+            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace() );
+
+        for (int i = 0; i < 2; ++i) {
+            nvgBeginPath(vg);
+            int x0 = 7;
+            if (i == 1)
+                x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
+            NVGpaint sideGradient;
+            if (i == 0)
+                sideGradient = nvgLinearGradient(
+                    vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
+                    x0 + ioMargin + ioRegionWidth, SurgeLayout::orangeLine + ioMargin,
+                    SurgeStyle::surgeBlue(), SurgeStyle::surgeBlueBright());
+            else
+                sideGradient = nvgLinearGradient(
+                    vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
+                    x0 + ioMargin + ioRegionWidth, SurgeLayout::orangeLine + ioMargin,
+                    SurgeStyle::surgeBlueBright(), SurgeStyle::surgeBlue());
+            
+            nvgRoundedRect(
+                vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin, ioRegionWidth,
+                box.size.y - SurgeLayout::orangeLine - 2 * ioMargin, ioMargin);
+            nvgFillPaint(vg, sideGradient);
+            nvgFill(vg);
+            nvgStrokeColor(vg, SurgeStyle::color7());
+            nvgStroke(vg);
+            
+            nvgFillColor(vg, SurgeStyle::color7());
+            nvgFontFaceId(vg, fontId);
+            nvgFontSize(vg, 12);
+            if (i == 0) {
+                nvgSave(vg);
+                nvgTranslate(vg, x0 + ioMargin + 2,
+                             SurgeLayout::orangeLine + ioMargin * 1.5);
+                nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+                nvgRotate(vg, -M_PI / 2);
+                nvgText(vg, 0, 0, "Input", NULL);
+                nvgRestore(vg);
+            } else {
+                nvgSave(vg);
+                nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
+                             SurgeLayout::orangeLine + ioMargin * 1.5);
+                nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+                nvgRotate(vg, M_PI / 2);
+                nvgText(vg, 0, 0, "Output", NULL);
+                nvgRestore(vg);
+            }
+            rack::Vec ll;
+            ll = ioPortLocation(i == 0, 0);
+            ll.y = box.size.y - ioMargin - 1.5;
+            ll.x += 24.6721 / 2;
+            nvgFontSize(vg, 11);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
+            
+            ll = ioPortLocation(i == 0, 1);
+            ll.y = box.size.y - ioMargin - 1.5;
+            ll.x += 24.6721 / 2;
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "R", NULL);
+            
+            ll = ioPortLocation(i == 0, 2);
+            ll.y = box.size.y - ioMargin - 1.5;
+            ll.x += 24.6721 / 2;
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "Gain", NULL);
+        }
+    }
+
+    
+    rack::Vec ioPortLocation(bool input,
+                             int ctrl) { // 0 is L; 1 is R; 2 is gain
+        int x0 = 7;
+        if (!input)
+            x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
+
+        int padFromEdge = input ? 17 : 5;
+        int xRes = x0 + ioMargin + padFromEdge + (ctrl * (SurgeLayout::portX + 4));
+        int yRes = SurgeLayout::orangeLine + 1.5 * ioMargin;
+
+        return rack::Vec(xRes, yRes);
+    }
+
 };
 
 SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
@@ -19,17 +109,18 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 
     box.size = rack::Vec(SCREW_WIDTH * 29, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "SurgeFX");
-    bg->hasInput = true;
-    bg->hasOutput = true;
-
+    bg->moduleSpecificDraw = [this](NVGcontext *vg) {
+        this->moduleBackground(vg);
+    };
+    
     addChild(bg);
 
-    addInput(rack::createInput<rack::PJ301MPort>(bg->ioPortLocation(true, 0),
+    addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 0),
                                                  module, M::INPUT_R_OR_MONO));
-    addInput(rack::createInput<rack::PJ301MPort>(bg->ioPortLocation(true, 1),
+    addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 1),
                                                  module, M::INPUT_L));
     addParam(rack::createParam<SurgeSmallKnob>(
-        bg->ioPortLocation(true, 2), module, M::INPUT_GAIN
+                 ioPortLocation(true, 2), module, M::INPUT_GAIN
 #if !RACK_V1
         ,
         0, 1, 1
@@ -37,18 +128,17 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
         ));
 
     addOutput(rack::createOutput<rack::PJ301MPort>(
-        bg->ioPortLocation(false, 0), module, M::OUTPUT_R_OR_MONO));
-    addOutput(rack::createOutput<rack::PJ301MPort>(bg->ioPortLocation(false, 1),
+                  ioPortLocation(false, 0), module, M::OUTPUT_R_OR_MONO));
+    addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(false, 1),
                                                    module, M::OUTPUT_L));
     addParam(rack::createParam<SurgeSmallKnob>(
-        bg->ioPortLocation(false, 2), module, M::OUTPUT_GAIN
+        ioPortLocation(false, 2), module, M::OUTPUT_GAIN
 #if !RACK_V1
         ,
         0, 1, 1
 #endif
 
         ));
-
     int parmMargin = 3;
 
     addChild(new SurgeRoundedRect(rack::Vec(box.size.x/4 + 36, 15),
@@ -92,13 +182,10 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
             [module, i]() {
                 return module ? module->getSubLabelDirty(i): false;
             },
-            
-            [module, i]() {
-                return module ? module->getValueString(i) : "null";
-            },
-            [module, i]() {
-                return module ? module->getValueStringDirty(i) : false;
-            }));
+
+            module ? module->paramDisplayCache[i].getValue : []() { return std::string("null"); },
+            module ? module->paramDisplayCache[i].getDirty : []() { return false; }
+                     ));
 
         addChild(SurgeParamLargeWidget::create(
             this, module, rack::Vec(14.5 * SCREW_WIDTH, pos),
@@ -113,12 +200,9 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
             [module, i]() {
                 return module ? module->getSubLabelDirty(i + 6) : false;
             },
-            [module, i]() {
-                return module ? module->getValueString(i + 6) : "null";
-            },
-            [module, i]() {
-                return module ? module->getValueStringDirty(i + 6) : false;
-            }));
+            module ? module->paramDisplayCache[i+6].getValue : []() { return std::string("null"); },
+            module ? module->paramDisplayCache[i+6].getDirty : []() { return false; }
+                     ));
     }
 }
 
@@ -127,5 +211,5 @@ rack::Model *modelSurgeFX =
     rack::createModel<SurgeFXWidget::M, SurgeFXWidget>("SurgeFX");
 #else
 rack::Model *modelSurgeFX = rack::createModel<SurgeFXWidget::M, SurgeFXWidget>(
-    "Surge Team", "SurgeRack", "SurgeFX", rack::EFFECT_TAG);
+    "Surge Team", "SurgeFX", "SurgeFX", rack::EFFECT_TAG);
 #endif

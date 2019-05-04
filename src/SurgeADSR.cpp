@@ -3,7 +3,7 @@
 #include "SurgeRackGUI.hpp"
 
 struct SurgeADSRWidget : rack::ModuleWidget {
-    typedef SurgeADSR<rack::Module> M;
+    typedef SurgeADSR M;
     SurgeADSRWidget(M *module);
 };
 
@@ -19,8 +19,6 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
 
     box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "SurgeEnv");
-    bg->hasInput = false;
-    bg->hasOutput = false;
     addChild(bg);
 
     addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(15,15),
@@ -35,16 +33,6 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     int envHeight = 40;
     int x0 = 30;
 
-    int lpos = 0;
-    for( auto a : { "A", "D", "S", "R" } )
-    {
-        LabelWidget *lw = LabelWidget::create(rack::Vec(x0 - 20, lpos * envHeight + envStart ),
-                                              rack::Vec(50, envHeight),
-                                              a );
-        bg->addChild(lw);
-        lpos ++;
-    }
-    
     for( int i=M::A_PARAM; i<= M::R_PARAM; ++i )
     {
         int ipos = i - M::A_PARAM;
@@ -89,5 +77,5 @@ rack::Model *modelSurgeADSR =
     rack::createModel<SurgeADSRWidget::M, SurgeADSRWidget>("SurgeADSR");
 #else
 rack::Model *modelSurgeADSR = rack::createModel<SurgeADSRWidget::M, SurgeADSRWidget>(
-    "Surge Team", "SurgeRack", "SurgeADSR", rack::ENVELOPE_GENERATOR_TAG);
+    "Surge Team", "SurgeADSR", "SurgeADSR", rack::ENVELOPE_GENERATOR_TAG);
 #endif
