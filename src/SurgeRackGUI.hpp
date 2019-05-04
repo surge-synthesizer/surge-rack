@@ -50,8 +50,8 @@ struct SurgeLayout
     static float constexpr portY = 24.6721;
     static float constexpr surgeKnobX = 24;
     static float constexpr surgeKnobY = 24;
-    static float constexpr surgeRoosterX = 24;
-    static float constexpr surgeRoosterY = 24;
+    static float constexpr surgeRoosterX = 34;
+    static float constexpr surgeRoosterY = 34;
     static float constexpr orangeLine = 323;
 };
 

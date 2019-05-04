@@ -108,3 +108,30 @@ struct StringCache
     }
 };
         
+struct ParamCache
+{
+    std::vector<float> cache;
+    int np;
+    ParamCache() {
+        np = 0;
+        cache.resize(np);
+    }
+
+    void resize(int n) {
+        np = n;
+        cache.resize(n);
+    }
+    
+    void update(rack::Module *m) {
+        for( auto i=0; i<np; ++i ) {
+#if RACK_V1
+            cache[i] = m->params[i].getValue();
+#else
+            cache[i] = m->params[i].value;
+#endif
+        }
+    }
+    float get(int i) {
+        return cache[ i ];
+    }
+};
