@@ -22,7 +22,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         A_S_PARAM,
         D_S_PARAM,
         R_S_PARAM,
-        
+
         NUM_PARAMS
     };
     enum InputIds {
@@ -33,45 +33,43 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         D_CV,
         S_CV,
         R_CV,
-        
-        NUM_INPUTS 
+
+        NUM_INPUTS
     };
-    enum OutputIds {
-        OUTPUT_ENV,
-        NUM_OUTPUTS
-    };
+    enum OutputIds { OUTPUT_ENV, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
-#if RACK_V1    
+#if RACK_V1
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
 #else
     rack::SchmittTrigger envGateTrigger, envRetrig;
-#endif    
+#endif
 
 #if RACK_V1
     SurgeADSR() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        for( int i=A_PARAM; i<=R_PARAM; ++i )
+        for (int i = A_PARAM; i <= R_PARAM; ++i)
             configParam(i, 0, 1, 0.5);
         configParam(MODE_PARAM, 0, 1, 0);
-        configParam(A_S_PARAM,0,2,0);
-        configParam(D_S_PARAM,0,2,0);
-        configParam(R_S_PARAM,0,2,0);
+        configParam(A_S_PARAM, 0, 2, 0);
+        configParam(D_S_PARAM, 0, 2, 0);
+        configParam(R_S_PARAM, 0, 2, 0);
         setupSurge();
     }
 #else
-    SurgeADSR() : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
+    SurgeADSR()
+        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
         setupSurge();
     }
 #endif
-    
 
     virtual void setupSurge() {
         setupSurgeCommon();
-        
+
         surge_envelope.reset(new AdsrEnvelope());
         adsrstorage = &(storage->getPatch().scene[0].adsr[0]);
-        surge_envelope->init(storage.get(), adsrstorage, storage->getPatch().scenedata[0], nullptr );
+        surge_envelope->init(storage.get(), adsrstorage,
+                             storage->getPatch().scenedata[0], nullptr);
 
         adsrstorage->mode.val.b = false;
         adsrstorage->a_s.val.i = 0;
@@ -83,7 +81,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     ADSRStorage *adsrstorage;
 
     bool wasGated = false;
-    
+
 #if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
 #else
@@ -98,27 +96,26 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         }
 
         bool gated = getInput(GATE_IN) >= 1.f;
-        if( gated ) wasGated = true;
-        if( wasGated && ! gated)
-        {
+        if (gated)
+            wasGated = true;
+        if (wasGated && !gated) {
             wasGated = false;
             surge_envelope->release();
         }
 
-        adsrstorage->mode.val.b = (getParam(MODE_PARAM)<0.5);
+        adsrstorage->mode.val.b = (getParam(MODE_PARAM) < 0.5);
         adsrstorage->a_s.val.i = (int)getParam(A_S_PARAM);
         adsrstorage->d_s.val.i = (int)getParam(D_S_PARAM);
         adsrstorage->r_s.val.i = (int)getParam(R_S_PARAM);
-        
-        adsrstorage->a.set_value_f01(getParam(A_PARAM) + getInput(A_CV)/10.0);
-        adsrstorage->d.set_value_f01(getParam(D_PARAM) + getInput(D_CV)/10.0);
-        adsrstorage->s.set_value_f01(getParam(S_PARAM) + getInput(S_CV)/10.0);
-        adsrstorage->r.set_value_f01(getParam(R_PARAM) + getInput(R_CV)/10.0);
+
+        adsrstorage->a.set_value_f01(getParam(A_PARAM) + getInput(A_CV) / 10.0);
+        adsrstorage->d.set_value_f01(getParam(D_PARAM) + getInput(D_CV) / 10.0);
+        adsrstorage->s.set_value_f01(getParam(S_PARAM) + getInput(S_CV) / 10.0);
+        adsrstorage->r.set_value_f01(getParam(R_PARAM) + getInput(R_CV) / 10.0);
 
         storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0], 0);
         surge_envelope->process_block();
-        
+
         setOutput(OUTPUT_ENV, surge_envelope->get_output() * 10.0);
     }
-    
 };

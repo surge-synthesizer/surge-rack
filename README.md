@@ -1,13 +1,20 @@
 # Surge in Rack (experimental)
 
-[![Build Status](https://dev.azure.com/surge-synthesizer/surge/_apis/build/status/surge-synthesizer.surge-rack?branchName=master)](https://dev.azure.com/surge-synthesizer/surge/_build/latest?definitionId=3&branchName=master)
-
 This repo holds an experimental set of code which aims to break apart the surge synth at
 https://github.com/surge-synthesizer/surge/ into distinct rack modules for the oscillator,
-filter, effect, and waveshaper block segments. Maybe one day the LFOs also. Best way to find out 
-about it is to hop on our slack as detailed over at the surge README.
+filter, effect, and waveshaper block segments. The best way to learn about this is to join
+the Surge slack which is detailed at [the surge readme](https://github.com/surge-synthesizer/surge/blob/master/README.md)
 
-## Rack Version Which?
+## Developing these plugins
+
+We are basically following [the surge developer standards](https://github.com/surge-synthesizer/surge/blob/master/doc/Developer%20Guide.md) 
+just without the 3-space thing (we are using 4 spaces, no hard tabs) and using
+[the surge git protocols](https://github.com/surge-synthesizer/surge/blob/master/doc/git-howto.md). We have a `.clang-format` file for 
+your formatting pleasure also.
+
+We've started writing a [basic code setup guide](docs/arch.md).
+
+## Rack Versions
 
 The code builds with either RACK 0.6.2 or RACK 1.0, inasmuch as it builds at all. The Makefile
 automatically detects which one you have, assuming that if you are using 0.6.2 you are using the
@@ -19,8 +26,8 @@ This is completely documented in the Rack manual:
 https://vcvrack.com/manual/Building.html
 
 
-To build it you need (1) patience, (2) to probably have had a chat with the team on slack. Then
-follow one of these directions. 
+If you have never built a rack plugin before, let us again suggest hopping on our slack in case you 
+get stuck. We build every commit windows, mac, and linux against V0.6.2 and regularly develop against v1.
 
 ### Rack 0.6.2
 
@@ -69,4 +76,4 @@ cd ../..
 make run
 ```
 
-and good luck! See if you can open the patch in surge-rack then.
+

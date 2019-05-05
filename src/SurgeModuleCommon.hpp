@@ -1,35 +1,38 @@
+/*
+** A common base class for all of our Modules, introducing core functions to
+** make sure surge is correctly configured in your module
+*/
+
 #pragma once
 #include "Surge.hpp"
-#include "rack.hpp"
 #include "SurgeStorage.h"
+#include "rack.hpp"
 
-struct SurgeModuleCommon : virtual public rack::Module
-{
-#if RACK_V1    
-    SurgeModuleCommon() : rack::Module() {
-    }
+struct SurgeModuleCommon : virtual public rack::Module {
+#if RACK_V1
+    SurgeModuleCommon() : rack::Module() {}
 #else
-    SurgeModuleCommon(int NUM_P, int NUM_I, int NUM_O, int NUM_L) : rack::Module(NUM_P,NUM_I,NUM_O,NUM_L) {
-        
-        if( this->params.size() == 0)
-        {
-            // FIXME - for some reason the base class constructor isn't called reliably through the templates in V6
+    SurgeModuleCommon(int NUM_P, int NUM_I, int NUM_O, int NUM_L)
+        : rack::Module(NUM_P, NUM_I, NUM_O, NUM_L) {
+
+        if (this->params.size() == 0) {
+            // FIXME - for some reason the base class constructor isn't called
+            // reliably through the templates in V6
             this->params.resize(NUM_P);
             this->inputs.resize(NUM_I);
             this->outputs.resize(NUM_O);
             this->lights.resize(NUM_L);
-
         }
     }
-#endif    
+#endif
 
     virtual void onSampleRateChange() override {
-#if RACK_V1        
+#if RACK_V1
         float sr = rack::APP->engine->getSampleRate();
 #else
         float sr = rack::engineGetSampleRate();
 #endif
-        INFO( "Setting SampleRate to %lf", sr );
+        INFO("Setting SampleRate to %lf", sr);
         samplerate = sr;
         dsamplerate = sr;
         samplerate_inv = 1.0 / sr;
@@ -37,23 +40,22 @@ struct SurgeModuleCommon : virtual public rack::Module
         dsamplerate_os = dsamplerate * OSC_OVERSAMPLING;
         dsamplerate_os_inv = 1.0 / dsamplerate_os;
         storage->init_tables();
-
     }
-    
+
     void setupSurgeCommon() {
         std::string dataPath;
 #if RACK_V1
-        dataPath = rack::asset::plugin( pluginInstance, "surge-data/" );
+        dataPath = rack::asset::plugin(pluginInstance, "surge-data/");
 #else
         dataPath = "";
 #endif
 
-        INFO( "setupSurgeCommon| SurgeStorage::dataPath = %s", dataPath.c_str() );
-        
+        INFO("setupSurgeCommon| SurgeStorage::dataPath = %s", dataPath.c_str());
+
         // TODO: Have a mode where these paths come from res/
         storage.reset(new SurgeStorage(dataPath));
         onSampleRateChange();
-        INFO( "setupSurgeCommon| Completed common setion" );
+        INFO("setupSurgeCommon| Completed common setion");
     }
 
     inline float getParam(int id) {
@@ -80,12 +82,10 @@ struct SurgeModuleCommon : virtual public rack::Module
 #endif
     }
 
-
     std::unique_ptr<SurgeStorage> storage;
 };
 
-struct StringCache
-{
+struct StringCache {
     std::string value;
     bool dirty;
     std::function<std::string()> getValue;
@@ -107,9 +107,8 @@ struct StringCache
         dirty = true;
     }
 };
-        
-struct ParamCache
-{
+
+struct ParamCache {
     std::vector<float> cache;
     int np;
     ParamCache() {
@@ -120,12 +119,12 @@ struct ParamCache
     void resize(int n) {
         np = n;
         cache.resize(n);
-        for( int i=0; i<n; ++i )
+        for (int i = 0; i < n; ++i)
             cache[i] = /* float min */ -1328142.0;
     }
-    
+
     void update(rack::Module *m) {
-        for( auto i=0; i<np; ++i ) {
+        for (auto i = 0; i < np; ++i) {
 #if RACK_V1
             cache[i] = m->params[i].getValue();
 #else
@@ -133,7 +132,5 @@ struct ParamCache
 #endif
         }
     }
-    float get(int i) {
-        return cache[ i ];
-    }
+    float get(int i) { return cache[i]; }
 };
