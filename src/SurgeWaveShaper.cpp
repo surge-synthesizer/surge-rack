@@ -58,7 +58,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 5, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 4, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WS");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -100,6 +100,13 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
                                                  module, M::DRIVE_CV ) );
 
     yPos += SurgeLayout::portY + padMargin;
+
+    addChild(TextDisplayLight::create(
+                 rack::Vec(textMargin, yPos+2),
+                 rack::Vec(box.size.x - 2 * textMargin, textArea),
+                 module ? module->dbGainCache.getValue : []() { return std::string("null"); },
+                 module ? module->dbGainCache.getDirty : []() { return false; },
+                 12, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER ) );
 
     yPos += textArea + padMargin;
     yPos += padMargin;

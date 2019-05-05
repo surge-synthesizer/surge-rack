@@ -36,7 +36,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
 #endif
 
     ParamCache pc;
-    StringCache wsNameCache;
+    StringCache wsNameCache, dbGainCache;
     std::vector<std::string> wsNames;
     
     virtual void setupSurge() {
@@ -83,6 +83,12 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
         {
             swapWS((int)getParam(MODE_PARAM));
             wsNameCache.reset(wsNames[(int)getParam(MODE_PARAM)]);
+        }
+        if( getParam(DRIVE_PARAM) != pc.get(DRIVE_PARAM) )
+        {
+            char txt[ 256] ;
+            snprintf(txt, 256, "%.2f dB", getParam(DRIVE_PARAM) );
+            dbGainCache.reset(txt);
         }
         pc.update(this);
 
