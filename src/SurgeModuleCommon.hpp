@@ -114,12 +114,14 @@ struct ParamCache
     int np;
     ParamCache() {
         np = 0;
-        cache.resize(np);
+        resize(np);
     }
 
     void resize(int n) {
         np = n;
         cache.resize(n);
+        for( int i=0; i<n; ++i )
+            cache[i] = /* float min */ -1328142.0;
     }
     
     void update(rack::Module *m) {

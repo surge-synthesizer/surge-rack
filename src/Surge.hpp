@@ -14,3 +14,4 @@ extern rack::Plugin *pluginInstance;
 extern rack::Model *modelSurgeFX;
 extern rack::Model *modelSurgeADSR;
 extern rack::Model *modelSurgeOSC;
+extern rack::Model *modelSurgeWaveShaper;
