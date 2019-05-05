@@ -2,156 +2,10 @@
 #include "rack.hpp"
 #include <map>
 #include <functional>
-
+#include "SurgeStyle.hpp"
 #ifndef RACK_V1
 #include "widgets.hpp"
 #endif
-
-/*
-** Matches dave's SurgeVCV structure
-*/
-struct SurgeStyle {
-    static NVGcolor surgeBlue() { return nvgRGBA(18, 52, 99, 255); }
-    static NVGcolor surgeBlueBright() {
-        return nvgRGBA(18 * 1.5, 52 * 1.5, 99 * 1.8, 255);
-    }
-    static NVGcolor surgeWhite() { return nvgRGBA(255, 255, 255, 255); }
-    static NVGcolor surgeOrange() { return nvgRGBA(255, 144, 0, 255); }
-    static NVGcolor color2() { return nvgRGBA(27, 28, 32, 255); }
-    static NVGcolor color2Bright() { return nvgRGBA(40, 40, 52, 255); }
-    static NVGcolor color4() { return nvgRGBA(255, 255, 255, 255); }
-    static NVGcolor surgeOrange2() { return nvgRGBA(101, 50, 3, 255); }
-    static NVGcolor surgeOrange3() { return nvgRGBA(227, 112, 8, 255); }
-    static NVGcolor gradient2Color() { return nvgRGBA(12, 12, 12, 255); }
-    static NVGcolor gradient2Color3() { return nvgRGBA(29, 29, 29, 255); }
-    static NVGcolor gradient2Color5() { return nvgRGBA(23, 23, 23, 255); }
-    static NVGcolor color() { return nvgRGBA(75, 81, 93, 255); }
-    static NVGcolor color5() { return nvgRGBA(0, 133, 230, 255); }
-    static NVGcolor color6() { return nvgRGBA(145, 145, 145, 255); }
-    static NVGcolor fillColor() { return nvgRGBA(255, 255, 255, 255); }
-    static NVGcolor color7() { return nvgRGBA(205, 206, 212, 255); }
-    static NVGcolor color9() { return nvgRGBA(156, 157, 160, 255); }
-
-    static NVGcolor backgroundGray() { return nvgRGBA(205, 206, 212, 255); }
-    static NVGcolor backgroundLightGray() { return nvgRGBA(215, 216, 222, 255); }
-    static NVGcolor backgroundLightOrange() { return nvgRGBA(239, 210, 172, 255); }
-
-    static const char *fontFace() {
-        return "res/EncodeSansSemiCondensed-Medium.ttf";
-    }
-    static const char *fontFaceCondensed() {
-        return "res/EncodeSansCondensed-Medium.ttf";
-    }
-};
-
-struct SurgeLayout
-{
-    static float constexpr portX = 24.6721;
-    static float constexpr portY = 24.6721;
-    static float constexpr surgeKnobX = 24;
-    static float constexpr surgeKnobY = 24;
-    static float constexpr surgeRoosterX = 34;
-    static float constexpr surgeRoosterY = 34;
-    static float constexpr orangeLine = 323;
-};
-
-// Font dictionary
-struct InternalFontMgr {
-    static std::map<std::string, int> fontMap;
-    static int get(NVGcontext *vg, std::string resName) {
-        if (fontMap.find(resName) == fontMap.end()) {
-#ifdef RACK_V1
-            std::string fontPath = rack::asset::plugin(pluginInstance, resName);
-#else
-            std::string fontPath = rack::assetPlugin(pluginInstance, resName);
-#endif
-            fontMap[resName] = nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
-        }
-        return fontMap[resName];
-    }
-};
-
-#ifndef RACK_V1
-using rack::INFO_LEVEL;
-#endif
-
-struct SurgeSmallKnob : rack::RoundKnob {
-    SurgeSmallKnob() {
-#if RACK_V1
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnob.svg")));
-#else
-        setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnob.svg")));
-#endif
-    }
-};
-
-struct SurgeKnob : rack::RoundKnob {
-    SurgeKnob() {
-#if RACK_V1
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
-#else
-        setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
-#endif
-    }
-};
-
-struct SurgeKnobRooster : rack::RoundKnob {
-    SurgeKnobRooster() {
-#if RACK_V1
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnobRooster.svg")));
-#else
-        setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnobRooster.svg")));
-#endif
-        shadow->box.size = rack::Vec(24,24);
-        shadow->box.pos = rack::Vec(5,9.5);
-    }
-};
-
-struct SurgeSwitch :
-#if RACK_V1    
-    rack::app::SvgSwitch
-#else
-    rack::SVGSwitch, rack::ToggleSwitch
-#endif
-{
-    SurgeSwitch() {
-#if RACK_V1        
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitch_0.svg")));
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitch_1.svg")));
-#else
-        addFrame(
-            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitch_0.svg")));
-        addFrame(
-            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitch_1.svg")));
-#endif        
-    }
-};
-
-struct SurgeSwitchFull :
-#if RACK_V1    
-    rack::app::SvgSwitch
-#else
-    rack::SVGSwitch, rack::ToggleSwitch
-#endif
-{
-    SurgeSwitchFull() {
-#if RACK_V1        
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitchFull_0.svg")));
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(pluginInstance,"res/vectors/SurgeSwitchFull_1.svg")));
-#else
-        addFrame(
-            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitchFull_0.svg")));
-        addFrame(
-            rack::SVG::load(rack::assetPlugin(pluginInstance,"res/vectors/SurgeSwitchFull_1.svg")));
-#endif        
-    }
-};
 
 struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
     typedef std::function<void(NVGcontext *)> drawfn_t;
@@ -192,6 +46,8 @@ struct SurgeRackBG : public rack::TransparentWidget {
         BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
             pos, size, [this](NVGcontext *vg) { this->drawBG(vg); });
         addChild(bdw);
+
+        // FIXME: If you are narrow enough only add one screw
         addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(box.size.x - SCREW_WIDTH, box.size.y - SCREW_WIDTH)));
         addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(0, box.size.y - SCREW_WIDTH)));
         addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(box.size.x - SCREW_WIDTH, 0)));
@@ -199,71 +55,8 @@ struct SurgeRackBG : public rack::TransparentWidget {
 
     }
 
-    std::string font = SurgeStyle::fontFace();
-    int fontId = -1;
-
     void drawBG(NVGcontext *vg) {
-        int orangeLine = SurgeLayout::orangeLine;
-        
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, font);
-
-        nvgBeginPath(vg);
-        nvgRect(vg, 0, 0, box.size.x, box.size.y);
-        nvgFillColor(vg, SurgeStyle::backgroundGray());
-        nvgFill(vg);
-
-        nvgBeginPath(vg);
-        nvgRect(vg, 0, orangeLine, box.size.x, box.size.y - orangeLine);
-        nvgFillColor(vg, SurgeStyle::surgeOrange());
-        nvgFill(vg);
-
-        nvgBeginPath(vg);
-        nvgMoveTo(vg, 0, orangeLine);
-        nvgLineTo(vg, box.size.x, orangeLine);
-        nvgStrokeColor(vg, SurgeStyle::surgeBlue());
-        nvgStrokeWidth(vg, 1);
-        nvgStroke(vg);
-            
-        nvgBeginPath(vg);
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgFillColor(vg, SurgeStyle::surgeWhite());
-        nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, 9);
-
-        char version[1024];
-        snprintf(version, 1024, "bld: %s %s", __DATE__, __TIME__);
-        nvgText(vg, box.size.x/2, box.size.y - 2, version, NULL);
-
-        snprintf(version, 1024, "%s: %s.%s.%s",
-#if WINDOWS
-                 "win",
-#endif
-#if MAC
-                 "macos",
-#endif
-#if LINUX                 
-                 "linux",
-#endif                 
-                 TOSTRING(SURGE_RACK_BASE_VERSION),
-                 TOSTRING(SURGE_RACK_PLUG_VERSION),
-                 TOSTRING(SURGE_RACK_SURGE_VERSION));
-        nvgText(vg, box.size.x/2, box.size.y - 12, version, NULL);
-
-        nvgBeginPath(vg);
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgFillColor(vg, SurgeStyle::surgeOrange2());
-        nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, 30);
-        nvgText(vg, box.size.x/2 + 1, box.size.y - 25 + 1, displayName.c_str(), NULL);
-
-        nvgBeginPath(vg);
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgFillColor(vg, SurgeStyle::surgeWhite());
-        nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, 30);
-        nvgText(vg, box.size.x/2, box.size.y - 25, displayName.c_str(), NULL);
-
+        SurgeStyle::drawPanelBackground(vg, box.size.x, box.size.y, displayName);
         moduleSpecificDraw(vg);
     }
 };
@@ -460,53 +253,8 @@ struct SurgeParamLargeWidget : public rack::TransparentWidget
     }
 
     void drawBG(NVGcontext *vg) {
-        /*
-          FIXME this overpaints the input port
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, itemMargin / 2, box.size.y / 2 - portY/2 - itemMargin / 2,
-                       portX + itemMargin, portY + itemMargin, 3 );
-        nvgFillColor(vg, SurgeStyle::surgeOrange());
-        nvgFill(vg);
-        nvgStrokeColor(vg, SurgeStyle::surgeOrange2());
-        nvgStrokeWidth(vg, 2);
-        nvgStroke(vg);
-        */
-
         int text0 = portX + sknobX + knobX + toggleX + 6 * itemMargin;
-
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, text0, 0, box.size.x - text0, box.size.y, 5);
-        NVGpaint gradient =
-            nvgLinearGradient(vg, text0, 0, text0, box.size.y,
-                              SurgeStyle::color2Bright(), SurgeStyle::color2());
-        // nvgFillColor(vg, SurgeStyle::color2());
-        nvgFillPaint(vg, gradient);
-        nvgFill(vg);
-        nvgStrokeColor(vg, SurgeStyle::surgeOrange());
-        nvgStroke(vg);
+        SurgeStyle::drawTextBGRect(vg, text0, 0, box.size.x - text0, box.size.y);
     }
 };
 
-
-struct SurgeRoundedRect : public rack::TransparentWidget
-{
-    SurgeRoundedRect(rack::Vec pos, rack::Vec size) : TransparentWidget() {
-        box.pos = pos;
-        box.size = size;
-        addChild(new BufferedDrawFunctionWidget(rack::Vec(0,0), size,
-                                                [this](NVGcontext *vg)
-                                                {
-                                                    this->drawRR(vg);
-                                                }
-                     ));
-    }
-
-    void drawRR(NVGcontext *vg) {
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 5);
-        nvgFillColor(vg, SurgeStyle::color2());
-        nvgFill(vg);
-        nvgStrokeColor(vg, SurgeStyle::surgeOrange());
-        nvgStroke(vg);
-    }
-};
