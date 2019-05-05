@@ -91,7 +91,20 @@ struct SurgeOSCWidget : rack::ModuleWidget {
         nvgText(vg, 0, 0, "Pitch", NULL);
         nvgRestore(vg);
 
-        
+        for( int i=0; i<n_osc_params; ++i )
+        {
+            int yp = i * 30 + 60;
+            int xp = 77;
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, xp, yp, 150, 27, 5 );
+            NVGpaint gradient =
+                nvgLinearGradient(vg, xp, yp, xp, yp + 27,
+                                  SurgeStyle::color2Bright(), SurgeStyle::color2());
+            nvgFillPaint(vg, gradient);
+            nvgFill(vg);
+            nvgStrokeColor(vg, SurgeStyle::surgeOrange());
+            nvgStroke(vg);
+        }
     }
 
     rack::Vec ioPortLocation(int ctrl) { // 0 is L; 1 is R; 2 is gain
@@ -158,7 +171,25 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                  ));
     addInput(rack::createInput<rack::PJ301MPort>(
                  rack::Vec(13 * SCREW_WIDTH + SurgeLayout::surgeRoosterX + padMargin, SCREW_WIDTH + padMargin), module, M::PITCH_CV ) );
-    
+
+    for (int i=0; i<n_osc_params; ++i) {
+        int yp = i * 30 + 60;
+        addParam(rack::createParam<SurgeSmallKnob>(
+                     rack::Vec(10,yp), module, M::OSC_CTRL_PARAM_0 + i
+#if !RACK_V1
+                 ,0,1,0.5
+#endif                 
+                     ));
+        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(40,yp), module, M::OSC_CTRL_CV_0 + i));
+        addChild(TextDisplayLight::create( rack::Vec(80,yp + 2), rack::Vec(10*SCREW_WIDTH,20),
+                                           module ? module->paramNameCache[i].getValue : []() { return std::string( "null" ); },
+                                           module ? module->paramNameCache[i].getDirty : []() { return false; },
+                                           15 ) );
+        addChild(TextDisplayLight::create( rack::Vec(11 * SCREW_WIDTH, yp + 2), rack::Vec(10*SCREW_WIDTH,20),
+                                           module ? module->paramValueCache[i].getValue : []() { return std::string( "null" ); },
+                                           module ? module->paramValueCache[i].getDirty : []() { return false; },
+                                           15 ) );
+    }
 }
 
 #if RACK_V1

@@ -11,13 +11,17 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
         OSC_TYPE,
         PITCH_0,
+
+        OSC_CTRL_PARAM_0,
         
-        NUM_PARAMS
+        NUM_PARAMS = OSC_CTRL_PARAM_0 + n_osc_params
     };
     enum InputIds {
         PITCH_CV,
+
+        OSC_CTRL_CV_0,
         
-        NUM_INPUTS 
+        NUM_INPUTS = OSC_CTRL_CV_0 + n_osc_params
     };
     enum OutputIds {
         OUTPUT_L,
@@ -34,6 +38,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         configParam(OUTPUT_GAIN,0,1,1);
         configParam(OSC_TYPE,0,4,0);
         configParam(PITCH_0, 1, 127, 72);
+        for( int i=0; i<n_osc_params; ++i )
+            configParam(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
         setupSurge();
     }
 #else
@@ -44,6 +50,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
     std::vector<std::pair<int, std::string>> oscConfigurations;
     StringCache oscNameCache;
+
+    StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
     
     virtual void setupSurge() {
         setupSurgeCommon();
@@ -59,15 +67,31 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
         auto config = oscConfigurations[0];
-        surge_osc.reset(spawn_osc(config.first, storage.get(), oscstorage, storage->getPatch().scenedata[0]));
+        respawn(config.first);
         oscNameCache.reset(config.second);
-        surge_osc->init(72.0);
-
-        for( auto i=0; i<n_osc_params; ++i )
-            INFO( "  %d -> %s", i, oscstorage->p[i].get_name() );
     }
 
     int processPosition = BLOCK_SIZE_OS + 1;
+
+    void respawn(int i) {
+        for( int i=0; i<n_osc_params; ++i )
+        {
+            oscstorage->p[i].set_name( "-" );
+            oscstorage->p[i].set_type(ct_none);
+        }
+        surge_osc.reset(spawn_osc(i, storage.get(), oscstorage, storage->getPatch().scenedata[0]));
+        surge_osc->init(72.0);
+        surge_osc->init_ctrltypes();
+        processPosition = BLOCK_SIZE_OS + 1;
+        oscstorage->type.val.i = i;
+        for( auto i=0; i<n_osc_params; ++i )
+        {
+            paramNameCache[i].reset( oscstorage->p[i].get_name() );
+            char txt[256];
+            oscstorage->p[i].get_display(txt, false, 0);
+            paramValueCache[i].reset( txt );
+        }
+    }
     
 #if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
@@ -78,12 +102,27 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         if( (int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE) )
         {
             auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
-            surge_osc.reset(spawn_osc(conf.first, storage.get(), oscstorage, storage->getPatch().scenedata[0]));
-            surge_osc->init(72.0);
-            processPosition = BLOCK_SIZE_OS + 1;
+            respawn(conf.first);
             oscNameCache.reset(conf.second);
         }
+
+        for( int i=0; i<n_osc_params; ++i)
+        {
+            if(getParam(OSC_CTRL_PARAM_0 + i) != pc.get(OSC_CTRL_PARAM_0 + i))
+            {
+                oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                char txt[256];
+                oscstorage->p[i].get_display(txt, false, 0);
+                paramValueCache[i].reset( txt );
+            }
+        }
+
         pc.update(this);
+
+        for( int i=0; i<n_scene_params; ++i )
+        {
+            oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) + getInput(OSC_CTRL_CV_0 + i) / 10.0);
+        }
         
         if( processPosition >= BLOCK_SIZE_OS )
         {
