@@ -103,7 +103,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
 #endif
 
     box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "SurgeADSR");
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "ADSR");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };

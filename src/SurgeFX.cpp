@@ -97,7 +97,7 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 #endif
 
     box.size = rack::Vec(SCREW_WIDTH * 29, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "SurgeFX");
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "FX");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };

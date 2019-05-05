@@ -17,21 +17,27 @@ namespace SurgeInternal
 #else
     typedef std::shared_ptr<rack::SVG> svg_t;
 #endif    
-    static svg_t surgeLogo = nullptr;
-    static svg_t getSurgeLogo()
+    static svg_t surgeLogoBlue = nullptr, surgeLogoWhite=nullptr;
+    static svg_t getSurgeLogo(bool whiteVersion)
     {
-        if( surgeLogo == nullptr )
+        if( surgeLogoBlue == nullptr )
         {
 #if RACK_V1
-            surgeLogo = rack::APP->window->loadSvg(rack::asset::plugin(
-                                                      pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
+            surgeLogoBlue = rack::APP->window->loadSvg(rack::asset::plugin(
+                                                           pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
+            surgeLogoWhite = rack::APP->window->loadSvg(rack::asset::plugin(
+                                                            pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
 #else
-            surgeLogo = rack::SVG::load(
+            surgeLogoBlue = rack::SVG::load(
+                rack::assetPlugin(pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
+            surgeLogoWhite = rack::SVG::load(
                 rack::assetPlugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
 #endif
 
         }
-        return surgeLogo;
+        if( whiteVersion )
+            return surgeLogoWhite;
+        return surgeLogoBlue;
     }
 }
 
@@ -39,27 +45,23 @@ void SurgeStyle::drawBlueIORect(NVGcontext *vg, float x0, float y0, float w, flo
 {
     INFO( "DBIOR" );
     nvgBeginPath(vg);
-    NVGpaint sideGradient;
-    switch(direction)
-    {
-    case 1:
-        sideGradient = nvgLinearGradient(vg,
-                                         x0, y0, x0, y0 + w,
-                                         SurgeStyle::surgeBlue(),
-                                         SurgeStyle::surgeBlueBright());
-        break;
-    case 0:
-    default:
-        sideGradient = nvgLinearGradient(vg,
-                                         x0, y0, x0, y0 + w,
-                                         SurgeStyle::surgeBlueBright(),
-                                         SurgeStyle::surgeBlue());
-        break;
-    }
+    NVGpaint vGradient;
+    vGradient = nvgLinearGradient(vg,
+                                  x0, y0, x0, y0 + h,
+                                  SurgeStyle::surgeBlueBright(),
+                                  SurgeStyle::surgeBlue());
+
     nvgRoundedRect(vg,x0,y0,w,h, 5);
-    nvgFillPaint(vg, sideGradient);
+    nvgFillPaint(vg, vGradient);
     nvgFill(vg);
-    nvgStrokeColor(vg, SurgeStyle::surgeWhite());
+    nvgBeginPath(vg);
+    nvgRoundedRect(vg,x0,y0+1,w,h-1, 5);
+    nvgStrokeColor(vg, SurgeStyle::surgeBlueVeryBright());
+    nvgStrokeWidth(vg, 1 );
+    nvgStroke(vg);
+    nvgBeginPath(vg);
+    nvgRoundedRect(vg,x0,y0,w,h, 5);
+    nvgStrokeColor(vg, SurgeStyle::surgeBlueDark());
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
 
@@ -71,10 +73,21 @@ void SurgeStyle::drawTextBGRect(NVGcontext *vg, float x0, float y0, float w, flo
     nvgRoundedRect(vg, x0, y0, w, h, 5);
     NVGpaint gradient =
         nvgLinearGradient(vg, x0, y0, x0, y0 + h,
-                          SurgeStyle::color2Bright(), SurgeStyle::color2());
+                          SurgeStyle::textBGBright(), SurgeStyle::textBG());
     nvgFillPaint(vg, gradient);
     nvgFill(vg);
+
+    
+    nvgBeginPath(vg);
+    nvgRoundedRect(vg, x0, y0, w, h-1, 5);
+    nvgStrokeColor(vg, SurgeStyle::textBGVeryBright() );
+    nvgStrokeWidth(vg, 1);
+    nvgStroke(vg);
+    
+    nvgBeginPath(vg);
+    nvgRoundedRect(vg, x0, y0, w, h, 5);
     nvgStrokeColor(vg, SurgeStyle::surgeOrange());
+    nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
 }
 
@@ -137,14 +150,14 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h, std::stri
     nvgFontSize(vg, 30);
     nvgText(vg, w/2, h - 25, displayName.c_str(), NULL);
 
-    auto logoSvg = SurgeInternal::getSurgeLogo();
+    auto logoSvg = SurgeInternal::getSurgeLogo(false);
     if( logoSvg && logoSvg->handle )
     {
-        // We want the logo to be 1.5 * screw width high
-        float scaleFactor = 1.5 * SCREW_WIDTH / logoSvg->handle->height;
+        // We want the logo to be screw width - 4  high
+        float scaleFactor = 1.0 * (SCREW_WIDTH-4) / logoSvg->handle->height;
         float x0 = w/2 - logoSvg->handle->width * scaleFactor / 2;
         nvgSave(vg);
-        nvgTranslate(vg, x0, 2);
+        nvgTranslate(vg, x0, 2 );
         nvgScale(vg, scaleFactor, scaleFactor);
 #if RACK_V1        
         rack::svgDraw(vg, logoSvg->handle);

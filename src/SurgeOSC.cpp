@@ -75,7 +75,7 @@ struct SurgeOSCWidget : rack::ModuleWidget {
         {
             int yp = i * 30 + 60;
             int xp = 77;
-            SurgeStyle::drawTextBGRect(vg, xp, yp, 150, 27);
+            SurgeStyle::drawTextBGRect(vg, xp, yp, 200, 27);
         }
     }
 
@@ -100,8 +100,8 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 24, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "SurgeOSC");
+    box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "OSC");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };
@@ -157,10 +157,10 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                                            module ? module->paramNameCache[i].getValue : []() { return std::string( "null" ); },
                                            module ? module->paramNameCache[i].getDirty : []() { return false; },
                                            15 ) );
-        addChild(TextDisplayLight::create( rack::Vec(11 * SCREW_WIDTH, yp + 2), rack::Vec(10*SCREW_WIDTH,20),
+        addChild(TextDisplayLight::create( rack::Vec(8 * SCREW_WIDTH, yp + 2), rack::Vec(10*SCREW_WIDTH,20),
                                            module ? module->paramValueCache[i].getValue : []() { return std::string( "null" ); },
                                            module ? module->paramValueCache[i].getDirty : []() { return false; },
-                                           15 ) );
+                                           15, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite() ) );
     }
 }
 
