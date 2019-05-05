@@ -147,9 +147,12 @@ struct TextDisplayLight : public rack::Component
             yp = box.size.y - 1;
         if (align & NVG_ALIGN_MIDDLE)
             yp = box.size.y / 2;
+
         if (align & NVG_ALIGN_RIGHT)
             xp = box.size.x - 1;
-
+        if( align & NVG_ALIGN_CENTER )
+            xp = box.size.x / 2;
+        
         nvgText(vg, xp, yp, ch.c_str(), NULL);
     }
 };

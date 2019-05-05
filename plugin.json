@@ -28,6 +28,12 @@
 			"name": "SurgeOSC",
 			"description": "",
 			"tags": []
+		},
+		{
+			"slug": "SurgeWaveShaper",
+			"name": "SurgeWaveShaper",
+			"description": "",
+			"tags": []
 		}
 
 	]
