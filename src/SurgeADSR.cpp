@@ -31,23 +31,9 @@ struct SurgeADSRWidget : rack::ModuleWidget {
     
     void moduleBackground(NVGcontext *vg) {
         // The input triggers and output
-        nvgBeginPath(vg);
-        NVGpaint sideGradient = nvgLinearGradient(vg,
-                                                  sideMargin,
-                                                  topLayer,
-                                                  box.size.x - 2 * sideMargin,
-                                                  topLayer,
-                                                  SurgeStyle::surgeBlueBright(),
-                                                  SurgeStyle::surgeBlue());
-        nvgRoundedRect(vg,
-                       sideMargin, topLayer, 
-                       box.size.x - 2 * sideMargin, SurgeLayout::portX + 17 + padMargin,
-                       5);
-        nvgFillPaint(vg, sideGradient);
-        nvgFill(vg);
-        nvgStrokeColor(vg, SurgeStyle::surgeWhite());
-        nvgStrokeWidth(vg, 1);
-        nvgStroke(vg);
+        SurgeStyle::drawBlueIORect(vg, sideMargin, topLayer,
+                                   box.size.x - 2 * sideMargin,
+                                   SurgeLayout::portX + 17 + padMargin);
 
         if (fontId < 0)
             fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());

@@ -19,25 +19,10 @@ struct SurgeFXWidget : rack::ModuleWidget {
             int x0 = 7;
             if (i == 1)
                 x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
-            NVGpaint sideGradient;
-            if (i == 0)
-                sideGradient = nvgLinearGradient(
-                    vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
-                    x0 + ioMargin + ioRegionWidth, SurgeLayout::orangeLine + ioMargin,
-                    SurgeStyle::surgeBlue(), SurgeStyle::surgeBlueBright());
-            else
-                sideGradient = nvgLinearGradient(
-                    vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
-                    x0 + ioMargin + ioRegionWidth, SurgeLayout::orangeLine + ioMargin,
-                    SurgeStyle::surgeBlueBright(), SurgeStyle::surgeBlue());
             
-            nvgRoundedRect(
-                vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin, ioRegionWidth,
-                box.size.y - SurgeLayout::orangeLine - 2 * ioMargin, ioMargin);
-            nvgFillPaint(vg, sideGradient);
-            nvgFill(vg);
-            nvgStrokeColor(vg, SurgeStyle::backgroundGray());
-            nvgStroke(vg);
+            SurgeStyle::drawBlueIORect(vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
+                                       ioRegionWidth, box.size.y - SurgeLayout::orangeLine - 2 * ioMargin,
+                                       (i==0) ? 0 : 1 );
             
             nvgFillColor(vg, SurgeStyle::backgroundGray());
             nvgFontFaceId(vg, fontId);
@@ -79,6 +64,10 @@ struct SurgeFXWidget : rack::ModuleWidget {
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
             nvgText(vg, ll.x, ll.y, "Gain", NULL);
         }
+
+        SurgeStyle::drawTextBGRect(vg, box.size.x / 4 + 36, 15,
+                                   box.size.x/2 - SCREW_WIDTH / 2 - 36, 34 );
+        
     }
 
     
@@ -140,9 +129,6 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
 
         ));
     int parmMargin = 3;
-
-    addChild(new SurgeRoundedRect(rack::Vec(box.size.x/4 + 36, 15),
-                                  rack::Vec(box.size.x/2 - SCREW_WIDTH/2 - 36, 34)));
 
     addChild(TextDisplayLight::create(rack::Vec(box.size.x/4 + 2 + 36, 17),
                                       rack::Vec(box.size.x/2 - SCREW_WIDTH/2 - 36, 31),

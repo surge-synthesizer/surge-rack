@@ -21,21 +21,9 @@ struct SurgeOSCWidget : rack::ModuleWidget {
         
 
         // Draw the output blue box
-        nvgBeginPath(vg);
         float x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
-        NVGpaint sideGradient;
-        sideGradient = nvgLinearGradient(
-            vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
-            x0 + ioMargin + ioRegionWidth, SurgeLayout::orangeLine + ioMargin,
-            SurgeStyle::surgeBlueBright(), SurgeStyle::surgeBlue());
-            
-        nvgRoundedRect(
-            vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin, ioRegionWidth,
-            box.size.y - SurgeLayout::orangeLine - 2 * ioMargin, ioMargin);
-        nvgFillPaint(vg, sideGradient);
-        nvgFill(vg);
-        nvgStrokeColor(vg, SurgeStyle::backgroundGray());
-        nvgStroke(vg);
+        SurgeStyle::drawBlueIORect(vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
+                                   ioRegionWidth, box.size.y - SurgeLayout::orangeLine - 2 * ioMargin);
         
         nvgFillColor(vg, SurgeStyle::backgroundGray());
         nvgFontFaceId(vg, fontId);
@@ -69,16 +57,8 @@ struct SurgeOSCWidget : rack::ModuleWidget {
         nvgText(vg, ll.x, ll.y, "Gain", NULL);
 
         // Background behind the type light
-        nvgBeginPath(vg);
         int text0 = padFromEdge + padMargin + SurgeLayout::surgeRoosterX;
-        nvgRoundedRect(vg, text0, SCREW_WIDTH, 6*SCREW_WIDTH, SurgeLayout::surgeRoosterY, 5);
-        NVGpaint gradient =
-            nvgLinearGradient(vg, text0, SCREW_WIDTH, text0, SCREW_WIDTH+SurgeLayout::surgeRoosterY,
-                              SurgeStyle::color2Bright(), SurgeStyle::color2());
-        nvgFillPaint(vg, gradient);
-        nvgFill(vg);
-        nvgStrokeColor(vg, SurgeStyle::surgeOrange());
-        nvgStroke(vg);
+        SurgeStyle::drawTextBGRect(vg, text0, SCREW_WIDTH, 6*SCREW_WIDTH, SurgeLayout::surgeRoosterY);
 
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId);
@@ -95,15 +75,7 @@ struct SurgeOSCWidget : rack::ModuleWidget {
         {
             int yp = i * 30 + 60;
             int xp = 77;
-            nvgBeginPath(vg);
-            nvgRoundedRect(vg, xp, yp, 150, 27, 5 );
-            NVGpaint gradient =
-                nvgLinearGradient(vg, xp, yp, xp, yp + 27,
-                                  SurgeStyle::color2Bright(), SurgeStyle::color2());
-            nvgFillPaint(vg, gradient);
-            nvgFill(vg);
-            nvgStrokeColor(vg, SurgeStyle::surgeOrange());
-            nvgStroke(vg);
+            SurgeStyle::drawTextBGRect(vg, xp, yp, 150, 27);
         }
     }
 
