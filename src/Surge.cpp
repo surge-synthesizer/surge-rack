@@ -20,4 +20,5 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeWTOSC);
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeLFO);
+    p->addModel(modelSurgeVOC);
 }
