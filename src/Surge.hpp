@@ -15,3 +15,6 @@ extern rack::Model *modelSurgeFX;
 extern rack::Model *modelSurgeADSR;
 extern rack::Model *modelSurgeOSC;
 extern rack::Model *modelSurgeWaveShaper;
+extern rack::Model *modelSurgeWTOSC;
+extern rack::Model *modelSurgeVCF;
+extern rack::Model *modelSurgeLFO;

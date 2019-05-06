@@ -39,7 +39,6 @@ static svg_t getSurgeLogo(bool whiteVersion) {
 
 void SurgeStyle::drawBlueIORect(NVGcontext *vg, float x0, float y0, float w,
                                 float h, int direction) {
-    INFO("DBIOR");
     nvgBeginPath(vg);
     NVGpaint vGradient;
     vGradient =
@@ -86,7 +85,6 @@ void SurgeStyle::drawTextBGRect(NVGcontext *vg, float x0, float y0, float w,
 
 void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
                                      std::string displayName) {
-    INFO("DPBG");
     int orangeLine = SurgeLayout::orangeLine;
     int fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
 
