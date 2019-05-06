@@ -9,9 +9,13 @@ struct SurgeADSRWidget : rack::ModuleWidget {
     int sideMargin = 5;
     int topLayer = 20;
     int padMargin = 3;
+    int ioMargin = 7;
     int fontId = -1, condensedFontId = -1;
-    int adsrHeight = 37;
+    int adsrHeight = 52;
     int adsrSpace = 10;
+    int adsrTextH = 20;
+
+    int modeYPos = 35;
 
     float inputXPos(int which) {
         float xSize = box.size.x - 2 * sideMargin;
@@ -20,74 +24,77 @@ struct SurgeADSRWidget : rack::ModuleWidget {
         return posn;
     }
 
-    float inputYPos(int which) { return topLayer + padMargin + 12; }
+    float inputYPos(int which) {
+        return SurgeLayout::orangeLine + ioMargin + padMargin;
+    }
 
     float ADSRYPos(int which) {
-        int endOfIn = topLayer + SurgeLayout::portX + 17 + 2 * padMargin;
-        return endOfIn + (adsrHeight + adsrSpace) * which + 20;
+        int endOfIn = modeYPos + 21 + padMargin;
+        return endOfIn + (adsrHeight + adsrSpace) * which + 12;
     }
 
     void moduleBackground(NVGcontext *vg) {
         // The input triggers and output
-        SurgeStyle::drawBlueIORect(vg, sideMargin, topLayer,
-                                   box.size.x - 2 * sideMargin,
-                                   SurgeLayout::portX + 17 + padMargin);
+        float ioyb = SurgeLayout::orangeLine + ioMargin;
+        SurgeStyle::drawBlueIORect(
+            vg, sideMargin, ioyb, box.size.x - 2 * sideMargin,
+            box.size.y - SurgeLayout::orangeLine - 2 * ioMargin);
 
         if (fontId < 0)
             fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
 
+        int iotxt = box.size.y - ioMargin - 1.5;
         nvgBeginPath(vg);
         nvgFillColor(vg, SurgeStyle::surgeWhite());
         nvgFontFaceId(vg, fontId);
         nvgFontSize(vg, 12);
-        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
-        nvgText(vg, inputXPos(0) + SurgeLayout::portX / 2, topLayer + 1.5,
-                "gate", NULL);
+        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
+        nvgText(vg, inputXPos(0) + SurgeLayout::portX / 2, iotxt, "gate", NULL);
 
         nvgBeginPath(vg);
-        nvgText(vg, inputXPos(1) + SurgeLayout::portX / 2, topLayer + 1.5,
-                "retrig", NULL);
+        nvgText(vg, inputXPos(1) + SurgeLayout::portX / 2, iotxt, "retrig",
+                NULL);
 
         nvgBeginPath(vg);
-        nvgText(vg, inputXPos(2) + SurgeLayout::portX / 2, topLayer + 1.5,
-                "out", NULL);
+        nvgText(vg, inputXPos(2) + SurgeLayout::portX / 2, iotxt, "out", NULL);
 
         std::vector<std::string> lab = {"A", "D", "S", "R"};
         for (int i = 0; i < 4; ++i) {
             nvgBeginPath(vg);
-            nvgRoundedRect(vg, sideMargin, ADSRYPos(i),
-                           box.size.x - 2 * sideMargin, adsrHeight, 5);
-            nvgStrokeColor(vg, SurgeStyle::surgeOrange2());
-            nvgStrokeWidth(vg, 2);
-            nvgStroke(vg);
-
-            NVGpaint adsrGradient = nvgLinearGradient(
-                vg, sideMargin, ADSRYPos(i), box.size.x - 2 * sideMargin,
-                ADSRYPos(i), SurgeStyle::backgroundLightGray(),
-                SurgeStyle::backgroundLightOrange());
-            nvgFillPaint(vg, adsrGradient);
-            nvgFill(vg);
-
-            nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId);
             nvgFontSize(vg, 20);
-            nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
+            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
 
-            nvgFillColor(vg, SurgeStyle::surgeWhite());
-            nvgText(vg, sideMargin * 2 + 1, ADSRYPos(i) + adsrHeight / 2 + 1,
-                    lab[i].c_str(), NULL);
+            nvgFillColor(vg, SurgeStyle::surgeBlue());
+            nvgText(vg, sideMargin * 2, ADSRYPos(i), lab[i].c_str(), NULL);
+            SurgeStyle::drawTextBGRect(vg, sideMargin * 2 + 20, ADSRYPos(i),
+                                       box.size.x - sideMargin * 3 - 20,
+                                       adsrTextH);
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, sideMargin * 2 + 5, ADSRYPos(i) + 20 + padMargin);
 
-            nvgFillColor(vg, SurgeStyle::surgeOrange2());
-            nvgText(vg, sideMargin * 2, ADSRYPos(i) + adsrHeight / 2,
-                    lab[i].c_str(), NULL);
+            nvgLineTo(vg, sideMargin * 2 + 5,
+                      ADSRYPos(i) + adsrTextH + padMargin + 3 +
+                          SurgeLayout::portY / 2);
+            nvgLineTo(vg, (i == 2) ? 60 : 92,
+                      ADSRYPos(i) + adsrTextH + padMargin + 3 +
+                          SurgeLayout::portY / 2);
+
+            nvgStrokeColor(vg, SurgeStyle::surgeBlue());
+            nvgStroke(vg);
         }
 
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, 15);
+        nvgFontSize(vg, 12);
+        nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
+        nvgFillColor(vg, SurgeStyle::surgeBlue());
+        nvgText(vg, box.size.x / 2 - 9, modeYPos + 21 / 2.0, "mode", NULL);
+
+        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT);
+        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 - 5, "digi", NULL);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        nvgFillColor(vg, SurgeStyle::surgeOrange2());
-        nvgText(vg, sideMargin * 2, 295, "Analog/Digital", NULL);
+        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 + 5, "anlg", NULL);
     }
 };
 
@@ -119,11 +126,19 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     int envHeight = 40;
     int x0 = 30;
 
+    for (int i = 0; i < 4; ++i) {
+        addChild(TextDisplayLight::create(
+            rack::Vec(sideMargin * 2 + 23, ADSRYPos(i) + 1),
+            rack::Vec(box.size.x - sideMargin * 3 - 20, adsrTextH),
+            module ? module->adsrStrings[i].getValue : []() { return "null"; },
+            module ? module->adsrStrings[i].getDirty : []() { return false; },
+            14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
+    }
+
     for (int i = M::A_PARAM; i <= M::R_PARAM; ++i) {
         int ipos = i - M::A_PARAM;
         addParam(rack::createParam<SurgeSmallKnob>(
-            rack::Vec(x0 + 30, ADSRYPos(ipos) +
-                                   (adsrHeight - SurgeLayout::surgeKnobY) / 2),
+            rack::Vec(x0 + 30, ADSRYPos(ipos) + adsrTextH + padMargin + 3),
             module, i
 #if !RACK_V1
             ,
@@ -136,9 +151,8 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     for (int i = M::A_CV; i <= M::R_CV; ++i) {
         int ipos = i - M::A_CV;
         addInput(rack::createInput<rack::PJ301MPort>(
-            rack::Vec(x0,
-                      ADSRYPos(ipos) + (adsrHeight - SurgeLayout::portY) / 2),
-            module, i));
+            rack::Vec(x0, ADSRYPos(ipos) + adsrTextH + padMargin + 3), module,
+            i));
     }
 
     for (int i = M::A_S_PARAM; i <= M::R_S_PARAM; ++i) {
@@ -147,7 +161,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
             ipos++;
 
         addParam(rack::createParam<rack::CKSSThree>(
-            rack::Vec(x0 + 60, ADSRYPos(ipos) + (adsrHeight - 28) / 2.0),
+            rack::Vec(x0 + 60, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
             module, i
 #if !RACK_V1
             ,
@@ -155,10 +169,14 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
 #endif
 
             ));
+        addChild(rack::createLight<rack::SmallLight<rack::GreenLight>>(
+            rack::Vec(x0 + 60 + 14 + padMargin,
+                      ADSRYPos(ipos) + adsrTextH + padMargin),
+            module, M::DIGI_LIGHT));
     }
 
     addParam(rack::createParam<SurgeSwitchFull>(
-        rack::Vec(box.size.x - sideMargin - 20, 290), module, M::MODE_PARAM
+        rack::Vec(box.size.x / 2 - 7, modeYPos), module, M::MODE_PARAM
 #if !RACK_V1
         ,
         0, 1, 0
