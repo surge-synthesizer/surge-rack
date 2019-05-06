@@ -13,7 +13,8 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
     int textMargin = 6;
 
     int fontId = -1;
-
+    int topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
+    
     void addLabel(NVGcontext *vg, int yp, const char *label,
                   NVGcolor col = SurgeStyle::surgeBlue()) {
         if (fontId < 0)
@@ -44,6 +45,7 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
         yPos += textArea + padMargin;
         int sz = SurgeLayout::portX / 2 + 2 * padMargin;
 
+        yPos = topOfInput;
         SurgeStyle::drawBlueIORect(vg, box.size.x / 2 - sz, yPos, sz * 2,
                                    2 * SurgeLayout::portY + 2 * labelHeight +
                                        4 * padMargin);
@@ -66,6 +68,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
 
     box.size = rack::Vec(SCREW_WIDTH * 4, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WS");
+    bg->narrowMode = true;
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };
@@ -121,7 +124,8 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     yPos += textArea + padMargin;
     yPos += padMargin;
 
-    yPos += labelHeight + 2 * padMargin;
+    yPos = topOfInput;
+    yPos += labelHeight + padMargin;
     addInput(rack::createInput<rack::PJ301MPort>(
         rack::Vec(box.size.x / 2 - SurgeLayout::portX / 2, yPos), module,
         M::SIGNAL_IN));
