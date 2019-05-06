@@ -58,6 +58,7 @@ void SurgeStyle::drawBlueIORect(NVGcontext *vg, float x0, float y0, float w,
     nvgStrokeColor(vg, SurgeStyle::surgeBlueDark());
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
+    nvgBeginPath(vg);
 }
 
 void SurgeStyle::drawTextBGRect(NVGcontext *vg, float x0, float y0, float w,
@@ -94,9 +95,23 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgFill(vg);
 
     nvgBeginPath(vg);
+    nvgMoveTo(vg, w-1, 0);
+    nvgLineTo(vg, w-1, h);
+    nvgStrokeColor(vg, SurgeStyle::backgroundDarkGray());
+    nvgStrokeWidth(vg, 1);
+    nvgStroke(vg);
+
+    nvgBeginPath(vg);
     nvgRect(vg, 0, orangeLine, w, h - orangeLine);
     nvgFillColor(vg, SurgeStyle::surgeOrange());
     nvgFill(vg);
+
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, w-1, orangeLine);
+    nvgLineTo(vg, w-1, h);
+    nvgStrokeColor(vg, SurgeStyle::surgeOrange3() );
+    nvgStrokeWidth(vg, 1);
+    nvgStroke(vg);
 
     nvgBeginPath(vg);
     nvgMoveTo(vg, 0, orangeLine);

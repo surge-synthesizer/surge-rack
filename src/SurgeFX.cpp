@@ -16,9 +16,9 @@ struct SurgeFXWidget : rack::ModuleWidget {
 
         for (int i = 0; i < 2; ++i) {
             nvgBeginPath(vg);
-            int x0 = 7;
+            int x0 = 0;
             if (i == 1)
-                x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
+                x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
             SurgeStyle::drawBlueIORect(
                 vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
@@ -73,9 +73,9 @@ struct SurgeFXWidget : rack::ModuleWidget {
 
     rack::Vec ioPortLocation(bool input,
                              int ctrl) { // 0 is L; 1 is R; 2 is gain
-        int x0 = 7;
+        int x0 = 0;
         if (!input)
-            x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
+            x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
         int padFromEdge = input ? 17 : 5;
         int xRes =
