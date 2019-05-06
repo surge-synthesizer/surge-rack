@@ -110,6 +110,10 @@ struct SurgeFX : virtual SurgeModuleCommon {
             processedL[i] = 0.0f;
             processedR[i] = 0.0f;
         }
+
+
+        setupStorageRanges((Parameter *)fxstorage, &(fxstorage->p[n_fx_params-1]));
+                           
         if (surge_effect.get())
             INFO("Effect Setup Complete: FX Type 2 is %s",
                  surge_effect->get_effectname());
@@ -175,43 +179,10 @@ struct SurgeFX : virtual SurgeModuleCommon {
     void step() override
 #endif
     {
-        int tp = getTypeParam();
         float inpG = getParam(INPUT_GAIN);
         float outG = getParam(OUTPUT_GAIN);
-        if (tp != fxstorage->type.val.i &&
-            tp != 0) // FIXME: Deal with the 0 case
-        {
-            INFO("FX Type change to %d", tp);
-            fxstorage->type.val.i = tp;
-            surge_effect.reset(spawn_effect(tp, storage.get(),
-                                            &(storage->getPatch().fx[0]),
-                                            storage->getPatch().globaldata));
-            surge_effect->init();
-            surge_effect->init_ctrltypes();
-            reorderSurgeParams();
-            effectNameCacheDirty = true;
-            effectNameCache = surge_effect->get_effectname();
-        }
 
-        for (int i = 0; i < n_fx_params; ++i) {
-            if (getParam(FX_PARAM_0 + i) != paramCache[i]) {
-                fxstorage->p[orderToParam[i]].set_value_f01(
-                    getParam(FX_PARAM_0 + i));
-                char txt[256];
-                fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
-
-                paramDisplayCache[i].reset(txt);
-                paramCache[i] = getParam(FX_PARAM_0 + 1);
-            }
-        }
-
-        for (int i = 0; i < n_fx_params; ++i) {
-            fxstorage->p[orderToParam[i]].set_value_f01(
-                getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i)) /
-                                               10.0 *
-                                               getParam(FX_PARAM_GAIN_0 + i));
-        }
-
+        
         bufferR[bufferPos] = inpG * getInput(INPUT_R_OR_MONO) / 5.0;
         bufferL[bufferPos] = inpG * getInput(INPUT_L) /
                              5.0; // Surge works on a +/- 1; rack works on +/- 5
@@ -222,7 +193,42 @@ struct SurgeFX : virtual SurgeModuleCommon {
             std::memcpy(processedL, bufferL, BLOCK_SIZE * sizeof(float));
             std::memcpy(processedR, bufferR, BLOCK_SIZE * sizeof(float));
 
-            storage->getPatch().copy_globaldata(storage->getPatch().globaldata);
+            int tp = getTypeParam();
+            if (tp != fxstorage->type.val.i &&
+                tp != 0) // FIXME: Deal with the 0 case
+            {
+                INFO("FX Type change to %d", tp);
+                fxstorage->type.val.i = tp;
+                surge_effect.reset(spawn_effect(tp, storage.get(),
+                                                &(storage->getPatch().fx[0]),
+                                                storage->getPatch().globaldata));
+                surge_effect->init();
+                surge_effect->init_ctrltypes();
+                reorderSurgeParams();
+                effectNameCacheDirty = true;
+                effectNameCache = surge_effect->get_effectname();
+            }
+            
+            for (int i = 0; i < n_fx_params; ++i) {
+                if (getParam(FX_PARAM_0 + i) != paramCache[i]) {
+                    fxstorage->p[orderToParam[i]].set_value_f01(
+                        getParam(FX_PARAM_0 + i));
+                    char txt[256];
+                    fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
+                    
+                    paramDisplayCache[i].reset(txt);
+                    paramCache[i] = getParam(FX_PARAM_0 + 1);
+                }
+            }
+
+            for (int i = 0; i < n_fx_params; ++i) {
+                fxstorage->p[orderToParam[i]].set_value_f01(
+                    getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i)) /
+                    10.0 *
+                    getParam(FX_PARAM_GAIN_0 + i));
+            }
+
+            copyGlobaldataSubset(storage_id_start, storage_id_end);
             surge_effect->process_ringout(processedL, processedR, true);
 
             bufferPos = 0;

@@ -82,7 +82,55 @@ struct SurgeModuleCommon : virtual public rack::Module {
 #endif
     }
 
+    inline bool inputConnected(int id) {
+#if RACK_V1
+        return this->inputs[id].isConnected();
+#else
+        return this->inputs[id].active;
+#endif        
+    }
+
+    inline bool outputConnected(int id) {
+#if RACK_V1
+        return this->outputs[id].isConnected();
+#else
+        return this->outputs[id].active;
+#endif        
+    }
+
+    void copyScenedataSubset(int scene, int start, int end) {
+        int s = storage->getPatch().scene_start[scene];
+        for(int i=start; i<end; ++i )
+        {
+            storage->getPatch().scenedata[scene][i-s].i =
+                storage->getPatch().param_ptr[i]->val.i;
+        }
+    }
+
+    void copyGlobaldataSubset(int start, int end) {
+        for(int i=start; i<end; ++i )
+        {
+            storage->getPatch().globaldata[i].i =
+                storage->getPatch().param_ptr[i]->val.i;
+        }
+    }
+
+    void setupStorageRanges(Parameter *start, Parameter *endIncluding) {
+        int min_id = 100000, max_id = -1;
+        Parameter *oap = start;
+        while( oap <= endIncluding )
+        {
+            if( oap->id > max_id ) max_id = oap->id;
+            if( oap->id < min_id ) min_id = oap->id;
+            oap++;
+        }
+
+        storage_id_start = min_id;
+        storage_id_end = max_id + 1;        
+    }
+    
     std::unique_ptr<SurgeStorage> storage;
+    int storage_id_start, storage_id_end;
 };
 
 struct StringCache {
