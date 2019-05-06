@@ -49,15 +49,6 @@ struct SurgeRackBG : public rack::TransparentWidget {
         BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
             pos, size, [this](NVGcontext *vg) { this->drawBG(vg); });
         addChild(bdw);
-
-        // FIXME: If you are narrow enough only add one screw
-        addChild(rack::createWidget<rack::ScrewSilver>(
-            rack::Vec(box.size.x - SCREW_WIDTH, box.size.y - SCREW_WIDTH)));
-        addChild(rack::createWidget<rack::ScrewSilver>(
-            rack::Vec(0, box.size.y - SCREW_WIDTH)));
-        addChild(rack::createWidget<rack::ScrewSilver>(
-            rack::Vec(box.size.x - SCREW_WIDTH, 0)));
-        addChild(rack::createWidget<rack::ScrewSilver>(rack::Vec(0, 0)));
     }
 
     void drawBG(NVGcontext *vg) {

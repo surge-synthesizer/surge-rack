@@ -20,7 +20,7 @@ struct SurgeOSCWidget : rack::ModuleWidget {
             fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
 
         // Draw the output blue box
-        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
+        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
         SurgeStyle::drawBlueIORect(
             vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
             ioRegionWidth, box.size.y - SurgeLayout::orangeLine - 2 * ioMargin);
@@ -80,7 +80,7 @@ struct SurgeOSCWidget : rack::ModuleWidget {
     }
 
     rack::Vec ioPortLocation(int ctrl) { // 0 is L; 1 is R; 2 is gain
-        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin - 7;
+        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
         int xRes =
             x0 + ioMargin + padFromEdge + (ctrl * (SurgeLayout::portX + 4));
