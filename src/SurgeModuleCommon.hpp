@@ -82,6 +82,14 @@ struct SurgeModuleCommon : virtual public rack::Module {
 #endif
     }
 
+    inline void setLight(int id, float val) {
+#if RACK_V1
+        this->lights[id].setBrightness(val);
+#else
+        this->lights[id].value = val;
+#endif
+    }
+
     inline bool inputConnected(int id) {
 #if RACK_V1
         return this->inputs[id].isConnected();
@@ -180,5 +188,13 @@ struct ParamCache {
 #endif
         }
     }
+
     float get(int i) { return cache[i]; }
+
+    bool changed(int i, SurgeModuleCommon *m) {
+        return m->getParam(i) != cache[i];
+    }
+    bool changedInt(int i, SurgeModuleCommon *m) {
+        return (int)m->getParam(i) != (int)cache[i];
+    }
 };

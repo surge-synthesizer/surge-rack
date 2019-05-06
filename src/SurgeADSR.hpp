@@ -37,13 +37,20 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         NUM_INPUTS
     };
     enum OutputIds { OUTPUT_ENV, NUM_OUTPUTS };
-    enum LightIds { NUM_LIGHTS };
+    enum LightIds {
+        DIGI_LIGHT,
+
+        NUM_LIGHTS
+    };
 
 #if RACK_V1
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
 #else
     rack::SchmittTrigger envGateTrigger, envRetrig;
 #endif
+
+    StringCache adsrStrings[4];
+    ParamCache pc;
 
 #if RACK_V1
     SurgeADSR() : SurgeModuleCommon() {
@@ -77,6 +84,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         adsrstorage->r_s.val.i = 0;
 
         setupStorageRanges(&(adsrstorage->a), &(adsrstorage->mode));
+        pc.resize(NUM_PARAMS);
     }
 
     std::unique_ptr<AdsrEnvelope> surge_envelope;
@@ -97,6 +105,19 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
             surge_envelope->retrigger();
         }
 
+        for (int i = 0; i < 4; ++i) {
+            Parameter *adsr = &(adsrstorage->a);
+            Parameter *p = &(adsr[i]);
+            if (pc.changed(A_PARAM + i, this)) {
+                char txt[1024];
+                p->set_value_f01(getParam(A_PARAM + i));
+                p->get_display(txt, false, 0);
+                adsrStrings[i].reset(txt);
+                INFO("%d -> %s", i, txt);
+            }
+        }
+        pc.update(this);
+
         bool gated = getInput(GATE_IN) >= 1.f;
         if (gated)
             wasGated = true;
@@ -104,6 +125,8 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
             wasGated = false;
             surge_envelope->release();
         }
+
+        setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
 
         adsrstorage->mode.val.b = (getParam(MODE_PARAM) < 0.5);
         adsrstorage->a_s.val.i = (int)getParam(A_S_PARAM);
