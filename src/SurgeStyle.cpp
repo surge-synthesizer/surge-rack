@@ -142,25 +142,14 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
              TOSTRING(SURGE_RACK_SURGE_VERSION));
     nvgText(vg, w / 2, h - 2, version, NULL);
 
-    nvgBeginPath(vg);
-    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-    nvgFillColor(vg, SurgeStyle::surgeOrange2());
-    nvgFontFaceId(vg, fontId);
-    nvgFontSize(vg, 30);
-    nvgText(vg, w / 2 + 1, h - 25 + 1, displayName.c_str(), NULL);
-
-    nvgBeginPath(vg);
-    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-    nvgFillColor(vg, SurgeStyle::surgeWhite());
-    nvgFontFaceId(vg, fontId);
-    nvgFontSize(vg, 30);
-    nvgText(vg, w / 2, h - 25, displayName.c_str(), NULL);
-
     auto logoSvg = SurgeInternal::getSurgeLogo(false);
+    float logoX0 = w / 2;
+    float logoWidth = 10;
     if (logoSvg && logoSvg->handle) {
         // We want the logo to be screw width - 4  high
         float scaleFactor = 1.0 * (SCREW_WIDTH - 4) / logoSvg->handle->height;
         float x0 = w / 2 - logoSvg->handle->width * scaleFactor / 2;
+        logoWidth = logoSvg->handle->width * scaleFactor;
         nvgSave(vg);
         nvgTranslate(vg, x0, 2);
         nvgScale(vg, scaleFactor, scaleFactor);
@@ -175,4 +164,18 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
 #endif
         nvgRestore(vg);
     }
+
+    nvgBeginPath(vg);
+    nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+    nvgFontFaceId(vg, fontId);
+    nvgFontSize(vg, 14);
+    nvgFillColor(vg, SurgeStyle::surgeBlue());
+    nvgText(vg, logoX0 - logoWidth / 2 - 3, 0, "Surge", NULL);
+
+    nvgBeginPath(vg);
+    nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+    nvgFontFaceId(vg, fontId);
+    nvgFontSize(vg, 14);
+    nvgFillColor(vg, SurgeStyle::surgeBlue());
+    nvgText(vg, logoX0 + logoWidth / 2 + 3, 0, displayName.c_str(), NULL);
 }
