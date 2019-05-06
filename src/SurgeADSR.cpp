@@ -63,10 +63,10 @@ struct SurgeADSRWidget : rack::ModuleWidget {
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId);
             nvgFontSize(vg, 20);
-            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
 
             nvgFillColor(vg, SurgeStyle::surgeBlue());
-            nvgText(vg, sideMargin * 2, ADSRYPos(i), lab[i].c_str(), NULL);
+            nvgText(vg, sideMargin * 2 + 5, ADSRYPos(i), lab[i].c_str(), NULL);
             SurgeStyle::drawTextBGRect(vg, sideMargin * 2 + 20, ADSRYPos(i),
                                        box.size.x - sideMargin * 3 - 20,
                                        adsrTextH);

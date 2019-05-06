@@ -50,7 +50,7 @@ struct SurgeStyle {
     static void drawTextBGRect(NVGcontext *vg, float x0, float y0, float w,
                                float h);
     static void drawPanelBackground(NVGcontext *vg, float w, float h,
-                                    std::string displayName);
+                                    std::string displayName, bool narrowMode);
 };
 
 struct SurgeLayout {

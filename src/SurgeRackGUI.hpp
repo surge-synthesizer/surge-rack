@@ -51,9 +51,11 @@ struct SurgeRackBG : public rack::TransparentWidget {
         addChild(bdw);
     }
 
+    bool narrowMode = false;
+    
     void drawBG(NVGcontext *vg) {
         SurgeStyle::drawPanelBackground(vg, box.size.x, box.size.y,
-                                        displayName);
+                                        displayName, narrowMode);
         moduleSpecificDraw(vg);
     }
 };
