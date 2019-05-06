@@ -98,7 +98,8 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
     bool wasGated = false;
     int lastStep = 0;
-
+    float output0, output1;
+    
 #if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
 #else
@@ -107,23 +108,15 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     {
         if (lastStep == 32)
             lastStep = 0;
+
+        bool inNewAttack = false;
+        if (envGateTrigger.process(getInput(GATE_IN))) {
+            lastStep = 0;
+            surge_envelope->attack();
+            inNewAttack = true;
+        }
+
         if (lastStep == 0) {
-            if (envGateTrigger.process(getInput(GATE_IN))) {
-                surge_envelope->attack();
-#if DEBUG_TIMES
-                Parameter *p = &(adsrstorage->a);
-                {
-                    char txt[1024];
-                    p->get_display(txt, false, 0);
-                    auto f = p->val.f;
-                    auto erl = envelope_rate_linear(f);
-                    float steps_per_second = 44100 / 32;
-                    float total_steps = 1.0 / erl;
-                    float seconds = total_steps / steps_per_second;
-                    INFO("A '%s' %lf %lf\n", txt, f, seconds);
-                }
-#endif
-            }
             if (envRetrig.process(getInput(RETRIG_IN))) {
                 surge_envelope->retrigger();
             }
@@ -166,9 +159,23 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
             copyScenedataSubset(0, storage_id_start, storage_id_end);
             surge_envelope->process_block();
+            if( inNewAttack )
+            {
+                output0 = surge_envelope->get_output();
+                surge_envelope->process_block();
+                output1 = surge_envelope->get_output();
+            }
+            else
+            {
+                output0 = output1;
+                output1 = surge_envelope->get_output();
+            }
+                            
         }
 
         lastStep++;
-        setOutput(OUTPUT_ENV, surge_envelope->get_output() * 10.0);
+        float frac = lastStep / 32.0;
+        float outputI = output0 * (1.0-frac) + output1 * frac;
+        setOutput(OUTPUT_ENV, outputI * 10.0);
     }
 };
