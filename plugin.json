@@ -34,6 +34,24 @@
 			"name": "SurgeWaveShaper",
 			"description": "",
 			"tags": []
+		},
+		{
+			"slug": "SurgeWTOSC",
+			"name": "SurgeWTOSC",
+			"description": "",
+			"tags": []
+		},
+		{
+			"slug": "SurgeVCF",
+			"name": "SurgeVCF",
+			"description": "",
+			"tags": []
+		},
+		{
+			"slug": "SurgeLFO",
+			"name": "SurgeLFO",
+			"description": "",
+			"tags": []
 		}
 
 	]
