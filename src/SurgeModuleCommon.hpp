@@ -181,4 +181,7 @@ struct ParamCache {
         }
     }
     float get(int i) { return cache[i]; }
+
+    bool changed(int i, SurgeModuleCommon *m) { return cache[i] != m->getParam(i); }
+    bool changedInt(int i, SurgeModuleCommon *m) { return (int)cache[i] != (int)m->getParam(i); }
 };

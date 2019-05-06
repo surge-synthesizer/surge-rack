@@ -27,8 +27,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
     enum OutputIds { OUTPUT_R_OR_MONO, OUTPUT_L, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
-    float paramCache[NUM_FX_PARAMS];
-
+    ParamCache pc;
+    
     StringCache paramDisplayCache[NUM_FX_PARAMS];
 
     std::string effectNameCache = "";
@@ -61,10 +61,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
 #endif
 
     void setupSurge() {
-        for (auto i = 0; i < NUM_FX_PARAMS; ++i) {
-            paramCache[i] = -1;
-        }
-
+        pc.resize(NUM_PARAMS);
+        
         setupSurgeCommon();
 
         fxstorage = &(storage->getPatch().fx[0]);
@@ -161,7 +159,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
         }
 
         for (auto i = 0; i < NUM_FX_PARAMS; ++i) {
-            paramCache[i] = -1;
             paramDisplayCache[i].reset("");
         }
     }
@@ -210,16 +207,17 @@ struct SurgeFX : virtual SurgeModuleCommon {
             }
             
             for (int i = 0; i < n_fx_params; ++i) {
-                if (getParam(FX_PARAM_0 + i) != paramCache[i]) {
+                if(pc.changed(FX_PARAM_0 + i, this))
+                {
                     fxstorage->p[orderToParam[i]].set_value_f01(
                         getParam(FX_PARAM_0 + i));
                     char txt[256];
                     fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
                     
                     paramDisplayCache[i].reset(txt);
-                    paramCache[i] = getParam(FX_PARAM_0 + 1);
                 }
             }
+            pc.update(this);
 
             for (int i = 0; i < n_fx_params; ++i) {
                 fxstorage->p[orderToParam[i]].set_value_f01(
