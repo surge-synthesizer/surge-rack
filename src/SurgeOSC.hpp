@@ -68,6 +68,15 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         auto config = oscConfigurations[0];
         respawn(config.first);
         oscNameCache.reset(config.second);
+
+
+        /*
+        ** I am making a somewhat dangerous assumption here which is a good one
+        ** as long as noone changes the memory layout in SurgeStorage.h. Namely that
+        ** in oscstorage all the parameters are "up front" and are in order with 
+        ** nothing between them.
+        */
+        setupStorageRanges((Parameter *)oscstorage, &(oscstorage->retrigger));
     }
 
     int processPosition = BLOCK_SIZE_OS + 1;
@@ -97,41 +106,48 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     void step() override
 #endif
     {
-        if ((int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE)) {
-            auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
-            respawn(conf.first);
-            oscNameCache.reset(conf.second);
-        }
+        
+        if (processPosition >= BLOCK_SIZE_OS) {
+            // As @Vortico says "think like a hardware engineer; only snap values when you need them".
+            processPosition = 0;
 
-        for (int i = 0; i < n_osc_params; ++i) {
-            if (getParam(OSC_CTRL_PARAM_0 + i) !=
-                pc.get(OSC_CTRL_PARAM_0 + i)) {
-                oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
-                char txt[256];
-                oscstorage->p[i].get_display(txt, false, 0);
-                paramValueCache[i].reset(txt);
+            if ((int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE)) {
+                auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
+                respawn(conf.first);
+                oscNameCache.reset(conf.second);
+            }
+            
+            for (int i = 0; i < n_osc_params; ++i) {
+                if (getParam(OSC_CTRL_PARAM_0 + i) !=
+                    pc.get(OSC_CTRL_PARAM_0 + i)) {
+                    oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                    char txt[256];
+                    oscstorage->p[i].get_display(txt, false, 0);
+                    paramValueCache[i].reset(txt);
+                }
+            }
+            
+            pc.update(this);
+            if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
+            {
+                for (int i = 0; i < n_scene_params; ++i) {
+                    oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
+                                                   getInput(OSC_CTRL_CV_0 + i) / 10.0);
+                }
+
+                copyScenedataSubset(0, storage_id_start, storage_id_end);
+                surge_osc->process_block(
+                    getParam(PITCH_0) + getInput(PITCH_CV) * 12.0, 0, true);
             }
         }
 
-        pc.update(this);
+        if( outputConnected(OUTPUT_L) )
+            setOutput(OUTPUT_L, surge_osc->output[processPosition] * 10 *
+                      getParam(OUTPUT_GAIN));
 
-        for (int i = 0; i < n_scene_params; ++i) {
-            oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
-                                           getInput(OSC_CTRL_CV_0 + i) / 10.0);
-        }
-
-        if (processPosition >= BLOCK_SIZE_OS) {
-            processPosition = 0;
-            storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0],
-                                               0);
-            surge_osc->process_block(
-                getParam(PITCH_0) + getInput(PITCH_CV) * 12.0, 0, true);
-        }
-
-        setOutput(OUTPUT_L, surge_osc->output[processPosition] * 10 *
-                                getParam(OUTPUT_GAIN));
-        setOutput(OUTPUT_R, surge_osc->outputR[processPosition] * 10 *
-                                getParam(OUTPUT_GAIN));
+        if( outputConnected(OUTPUT_R) )
+            setOutput(OUTPUT_R, surge_osc->outputR[processPosition] * 10 *
+                      getParam(OUTPUT_GAIN));
 
         processPosition++;
     }

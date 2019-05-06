@@ -75,6 +75,8 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         adsrstorage->a_s.val.i = 0;
         adsrstorage->d_s.val.i = 0;
         adsrstorage->r_s.val.i = 0;
+
+        setupStorageRanges(&(adsrstorage->a), &(adsrstorage->mode));
     }
 
     std::unique_ptr<AdsrEnvelope> surge_envelope;
@@ -113,7 +115,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         adsrstorage->s.set_value_f01(getParam(S_PARAM) + getInput(S_CV) / 10.0);
         adsrstorage->r.set_value_f01(getParam(R_PARAM) + getInput(R_CV) / 10.0);
 
-        storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0], 0);
+        copyScenedataSubset(0, storage_id_start, storage_id_end);
         surge_envelope->process_block();
 
         setOutput(OUTPUT_ENV, surge_envelope->get_output() * 10.0);
