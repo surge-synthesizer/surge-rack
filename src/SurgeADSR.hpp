@@ -79,6 +79,12 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
                              storage->getPatch().scenedata[0], nullptr);
 
         adsrstorage->mode.val.b = false;
+
+        adsrstorage->a.temposync = false;
+        adsrstorage->d.temposync = false;
+        adsrstorage->s.temposync = false;
+        adsrstorage->r.temposync = false;
+
         adsrstorage->a_s.val.i = 0;
         adsrstorage->d_s.val.i = 0;
         adsrstorage->r_s.val.i = 0;
@@ -91,6 +97,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     ADSRStorage *adsrstorage;
 
     bool wasGated = false;
+    int lastStep = 0;
 
 #if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
@@ -98,49 +105,70 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     void step() override
 #endif
     {
-        if (envGateTrigger.process(getInput(GATE_IN))) {
-            surge_envelope->attack();
-        }
-        if (envRetrig.process(getInput(RETRIG_IN))) {
-            surge_envelope->retrigger();
-        }
-
-        for (int i = 0; i < 4; ++i) {
-            Parameter *adsr = &(adsrstorage->a);
-            Parameter *p = &(adsr[i]);
-            if (pc.changed(A_PARAM + i, this)) {
-                char txt[1024];
-                p->set_value_f01(getParam(A_PARAM + i));
-                p->get_display(txt, false, 0);
-                adsrStrings[i].reset(txt);
-                INFO("%d -> %s", i, txt);
+        if (lastStep == 32)
+            lastStep = 0;
+        if (lastStep == 0) {
+            if (envGateTrigger.process(getInput(GATE_IN))) {
+                surge_envelope->attack();
+#if DEBUG_TIMES
+                Parameter *p = &(adsrstorage->a);
+                {
+                    char txt[1024];
+                    p->get_display(txt, false, 0);
+                    auto f = p->val.f;
+                    auto erl = envelope_rate_linear(f);
+                    float steps_per_second = 44100 / 32;
+                    float total_steps = 1.0 / erl;
+                    float seconds = total_steps / steps_per_second;
+                    INFO("A '%s' %lf %lf\n", txt, f, seconds);
+                }
+#endif
             }
+            if (envRetrig.process(getInput(RETRIG_IN))) {
+                surge_envelope->retrigger();
+            }
+
+            for (int i = 0; i < 4; ++i) {
+                Parameter *adsr = &(adsrstorage->a);
+                Parameter *p = &(adsr[i]);
+                if (pc.changed(A_PARAM + i, this)) {
+                    char txt[1024];
+                    p->set_value_f01(getParam(A_PARAM + i));
+                    p->get_display(txt, false, 0);
+                    adsrStrings[i].reset(txt);
+                }
+            }
+            pc.update(this);
+
+            bool gated = getInput(GATE_IN) >= 1.f;
+            if (gated)
+                wasGated = true;
+            if (wasGated && !gated) {
+                wasGated = false;
+                surge_envelope->release();
+            }
+
+            setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
+
+            adsrstorage->mode.val.b = (getParam(MODE_PARAM) < 0.5);
+            adsrstorage->a_s.val.i = (int)getParam(A_S_PARAM);
+            adsrstorage->d_s.val.i = (int)getParam(D_S_PARAM);
+            adsrstorage->r_s.val.i = (int)getParam(R_S_PARAM);
+
+            adsrstorage->a.set_value_f01(getParam(A_PARAM) +
+                                         getInput(A_CV) / 10.0);
+            adsrstorage->d.set_value_f01(getParam(D_PARAM) +
+                                         getInput(D_CV) / 10.0);
+            adsrstorage->s.set_value_f01(getParam(S_PARAM) +
+                                         getInput(S_CV) / 10.0);
+            adsrstorage->r.set_value_f01(getParam(R_PARAM) +
+                                         getInput(R_CV) / 10.0);
+
+            copyScenedataSubset(0, storage_id_start, storage_id_end);
+            surge_envelope->process_block();
         }
-        pc.update(this);
 
-        bool gated = getInput(GATE_IN) >= 1.f;
-        if (gated)
-            wasGated = true;
-        if (wasGated && !gated) {
-            wasGated = false;
-            surge_envelope->release();
-        }
-
-        setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
-
-        adsrstorage->mode.val.b = (getParam(MODE_PARAM) < 0.5);
-        adsrstorage->a_s.val.i = (int)getParam(A_S_PARAM);
-        adsrstorage->d_s.val.i = (int)getParam(D_S_PARAM);
-        adsrstorage->r_s.val.i = (int)getParam(R_S_PARAM);
-
-        adsrstorage->a.set_value_f01(getParam(A_PARAM) + getInput(A_CV) / 10.0);
-        adsrstorage->d.set_value_f01(getParam(D_PARAM) + getInput(D_CV) / 10.0);
-        adsrstorage->s.set_value_f01(getParam(S_PARAM) + getInput(S_CV) / 10.0);
-        adsrstorage->r.set_value_f01(getParam(R_PARAM) + getInput(R_CV) / 10.0);
-
-        copyScenedataSubset(0, storage_id_start, storage_id_end);
-        surge_envelope->process_block();
-
+        lastStep++;
         setOutput(OUTPUT_ENV, surge_envelope->get_output() * 10.0);
     }
 };
