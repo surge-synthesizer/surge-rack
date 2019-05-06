@@ -6,52 +6,58 @@
 	"author": "The Surge Team",
 	"authorEmail": "",
 	"authorUrl": "",
-	"pluginUrl": "https://surge/",
+	"pluginUrl": "https://surge-synthesizer.github.io/",
 	"manualUrl": "",
-	"sourceUrl": "https://surge/",
+	"sourceUrl": "https://github.com/surge-synthesizer/surge-rack/",
 	"donateUrl": "",
 	"modules": [
 		{
 			"slug": "SurgeFX",
 			"name": "SurgeFX",
-			"description": "",
-			"tags": []
+			"description": "The Surge FX suite in a single plugin",
+			"tags": [ "Effect", "Delay", "Chorus", "Reverb", "Distortion", "Dynamics" ]
 		},
 		{
 			"slug": "SurgeADSR",
 			"name": "SurgeADSR",
-			"description": "",
-			"tags": []
+			"description": "The Surge ADSR envelope generator",
+			"tags": [ "Envelope generator" ]
 		},
 		{
 			"slug": "SurgeOSC",
 			"name": "SurgeOSC",
-			"description": "",
-			"tags": []
+			"description": "The Surge Oscillators",
+			"tags": ["VCO"]
 		},
 		{
 			"slug": "SurgeWaveShaper",
 			"name": "SurgeWaveShaper",
-			"description": "",
-			"tags": []
+			"description": "The Surge waveshapers",
+			"tags": [ "Waveshaper" ]
 		},
 		{
 			"slug": "SurgeWTOSC",
 			"name": "SurgeWTOSC",
-			"description": "",
-			"tags": []
+			"description": "The Surge WaveTable collection",
+			"tags": [ "VCO" ]
 		},
 		{
 			"slug": "SurgeVCF",
 			"name": "SurgeVCF",
-			"description": "",
-			"tags": []
+			"description": "The Surge Filter",
+			"tags": [ "VCF" ]
 		},
 		{
 			"slug": "SurgeLFO",
 			"name": "SurgeLFO",
-			"description": "",
-			"tags": []
+			"description": "The Surge LFO",
+			"tags": [ "LFO"]
+		},
+		{
+			"slug": "SurgeVOC",
+			"name": "SurgeVOC",
+			"description": "The Surge Vocoder Effect",
+			"tags": [ "Vocoder" ]
 		}
 
 	]
