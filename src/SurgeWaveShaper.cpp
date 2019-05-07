@@ -10,10 +10,11 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
     int textArea = 20;
     int labelHeight = 13;
     int padMargin = 3;
-    int textMargin = 6;
+    int textMargin = 3;
+    int driveOffset = 20;
 
     int fontId = -1;
-    int topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
+    int topOfInput = RACK_HEIGHT - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
     
     void addLabel(NVGcontext *vg, int yp, const char *label,
                   NVGcolor col = SurgeStyle::surgeBlue()) {
@@ -33,7 +34,7 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
         yPos += labelHeight + SurgeLayout::surgeRoosterY + padMargin;
         SurgeStyle::drawTextBGRect(vg, textMargin, yPos,
                                    box.size.x - 2 * textMargin, textArea);
-        yPos += textArea + padMargin;
+        yPos += textArea + padMargin + driveOffset;
         addLabel(vg, yPos, "Drive");
 
         yPos += labelHeight + SurgeLayout::surgeRoosterY + padMargin +
@@ -66,7 +67,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 4, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 3, RACK_HEIGHT);
     topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
 
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WS");
@@ -94,10 +95,11 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
         rack::Vec(box.size.x - 2 * textMargin, textArea),
         module ? module->wsNameCache.getValue
                : []() { return std::string("null"); },
-        module ? module->wsNameCache.getDirty : []() { return false; }, 16,
-        NVG_ALIGN_TOP | NVG_ALIGN_CENTER));
+        module ? module->wsNameCache.getDirty : []() { return false; }, 15,
+        NVG_ALIGN_TOP | NVG_ALIGN_CENTER,
+        SurgeStyle::surgeWhite()));
 
-    yPos += textArea + padMargin;
+    yPos += textArea + padMargin + driveOffset;
 
     yPos += labelHeight + padMargin;
     addParam(rack::createParam<SurgeKnobRooster>(
@@ -120,8 +122,10 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
         rack::Vec(box.size.x - 2 * textMargin, textArea),
         module ? module->dbGainCache.getValue
                : []() { return std::string("null"); },
-        module ? module->dbGainCache.getDirty : []() { return false; }, 12,
-        NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER));
+        module ? module->dbGainCache.getDirty : []() { return false; }, 10,
+        NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
+        SurgeStyle::surgeWhite()
+                 ));
 
     yPos += textArea + padMargin;
     yPos += padMargin;

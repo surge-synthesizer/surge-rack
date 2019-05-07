@@ -13,7 +13,7 @@ struct SurgeADSRWidget : rack::ModuleWidget {
     int fontId = -1, condensedFontId = -1;
     int adsrHeight = 52;
     int adsrSpace = 10;
-    int adsrTextH = 20;
+    int adsrTextH = 18;
 
     int modeYPos = 35;
 
@@ -49,14 +49,14 @@ struct SurgeADSRWidget : rack::ModuleWidget {
         nvgFontFaceId(vg, fontId);
         nvgFontSize(vg, 12);
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
-        nvgText(vg, inputXPos(0) + SurgeLayout::portX / 2, iotxt, "gate", NULL);
+        nvgText(vg, inputXPos(0) + SurgeLayout::portX / 2, iotxt, "Gate", NULL);
 
         nvgBeginPath(vg);
-        nvgText(vg, inputXPos(1) + SurgeLayout::portX / 2, iotxt, "retrig",
+        nvgText(vg, inputXPos(1) + SurgeLayout::portX / 2, iotxt, "Retrig",
                 NULL);
 
         nvgBeginPath(vg);
-        nvgText(vg, inputXPos(2) + SurgeLayout::portX / 2, iotxt, "out", NULL);
+        nvgText(vg, inputXPos(2) + SurgeLayout::portX / 2, iotxt, "Out", NULL);
 
         std::vector<std::string> lab = {"A", "D", "S", "R"};
         for (int i = 0; i < 4; ++i) {
@@ -66,17 +66,17 @@ struct SurgeADSRWidget : rack::ModuleWidget {
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
 
             nvgFillColor(vg, SurgeStyle::surgeBlue());
-            nvgText(vg, sideMargin * 2 + 5, ADSRYPos(i), lab[i].c_str(), NULL);
-            SurgeStyle::drawTextBGRect(vg, sideMargin * 2 + 20, ADSRYPos(i),
+            nvgText(vg, sideMargin  + 5, ADSRYPos(i), lab[i].c_str(), NULL);
+            SurgeStyle::drawTextBGRect(vg, sideMargin * 2 + 12, ADSRYPos(i) + 1,
                                        box.size.x - sideMargin * 3 - 20,
                                        adsrTextH);
             nvgBeginPath(vg);
-            nvgMoveTo(vg, sideMargin * 2 + 5, ADSRYPos(i) + 20 + padMargin);
+            nvgMoveTo(vg, sideMargin  + 5, ADSRYPos(i) + 20 + padMargin);
 
-            nvgLineTo(vg, sideMargin * 2 + 5,
+            nvgLineTo(vg, sideMargin  + 5,
                       ADSRYPos(i) + adsrTextH + padMargin + 3 +
                           SurgeLayout::portY / 2);
-            nvgLineTo(vg, (i == 2) ? 60 : 92,
+            nvgLineTo(vg, (i == 2) ? 55 : 85,
                       ADSRYPos(i) + adsrTextH + padMargin + 3 +
                           SurgeLayout::portY / 2);
 
@@ -89,12 +89,12 @@ struct SurgeADSRWidget : rack::ModuleWidget {
         nvgFontSize(vg, 12);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
         nvgFillColor(vg, SurgeStyle::surgeBlue());
-        nvgText(vg, box.size.x / 2 - 9, modeYPos + 21 / 2.0, "mode", NULL);
+        nvgText(vg, box.size.x / 2 - 9, modeYPos + 21 / 2.0, "Mode", NULL);
 
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT);
-        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 - 5, "digi", NULL);
+        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 - 5, "Digi", NULL);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 + 5, "anlg", NULL);
+        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 + 5, "Anlg", NULL);
     }
 };
 
@@ -108,7 +108,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 7, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "ADSR");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -124,21 +124,21 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
 
     int envStart = topLayer + 24.6 * 2 + 15 + topLayer + 30;
     int envHeight = 40;
-    int x0 = 30;
+    int x0 = 18;
 
     for (int i = 0; i < 4; ++i) {
         addChild(TextDisplayLight::create(
-            rack::Vec(sideMargin * 2 + 23, ADSRYPos(i) + 1),
+            rack::Vec(sideMargin * 2 + 15, ADSRYPos(i) +2),
             rack::Vec(box.size.x - sideMargin * 3 - 20, adsrTextH),
             module ? module->adsrStrings[i].getValue : []() { return "null"; },
             module ? module->adsrStrings[i].getDirty : []() { return false; },
-            14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
+            13, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
     }
 
     for (int i = M::A_PARAM; i <= M::R_PARAM; ++i) {
         int ipos = i - M::A_PARAM;
         addParam(rack::createParam<SurgeSmallKnob>(
-            rack::Vec(x0 + 30, ADSRYPos(ipos) + adsrTextH + padMargin + 3),
+                     rack::Vec(x0 + SurgeLayout::portX + padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 3),
             module, i
 #if !RACK_V1
             ,
@@ -161,7 +161,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
             ipos++;
 
         addParam(rack::createParam<rack::CKSSThree>(
-            rack::Vec(x0 + 60, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
+                     rack::Vec(x0 + 2 * SurgeLayout::portX + 3 * padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
             module, i
 #if !RACK_V1
             ,

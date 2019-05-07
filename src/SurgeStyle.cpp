@@ -147,7 +147,7 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     
     if (narrowMode)
     {
-        logoX0 = SCREW_WIDTH/2;
+        logoX0 = 2;
     }
     
     float logoWidth = 10;
@@ -186,5 +186,5 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgFontFaceId(vg, fontId);
     nvgFontSize(vg, 14);
     nvgFillColor(vg, SurgeStyle::surgeBlue());
-    nvgText(vg, (narrowMode ? w - SCREW_WIDTH/2 : logoX0 + logoWidth / 2 + 3 ), 0, displayName.c_str(), NULL);
+    nvgText(vg, (narrowMode ? w - 2 : logoX0 + logoWidth / 2 + 3 ), 0, displayName.c_str(), NULL);
 }
