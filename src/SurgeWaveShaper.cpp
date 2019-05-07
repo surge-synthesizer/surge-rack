@@ -67,6 +67,8 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
 #endif
 
     box.size = rack::Vec(SCREW_WIDTH * 4, RACK_HEIGHT);
+    topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
+
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WS");
     bg->narrowMode = true;
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
