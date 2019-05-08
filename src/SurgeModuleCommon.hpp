@@ -162,6 +162,12 @@ struct StringCache {
         value = s;
         dirty = true;
     }
+
+    static StringCache null() {
+        StringCache res;
+        res.reset( "null" );
+        return res;
+    }
 };
 
 struct ParamCache {
@@ -189,8 +195,54 @@ struct ParamCache {
         }
     }
 
-    float get(int i) { return cache[i]; }
+    float get(int i) const { return cache[i]; }
 
-    bool changed(int i, SurgeModuleCommon *m) { return cache[i] != m->getParam(i); }
-    bool changedInt(int i, SurgeModuleCommon *m) { return (int)cache[i] != (int)m->getParam(i); }
+    bool changed(int i, SurgeModuleCommon *m) const { return cache[i] != m->getParam(i); }
+    bool changedInt(int i, SurgeModuleCommon *m) const { return (int)cache[i] != (int)m->getParam(i); }
+};
+
+
+/*
+** Bind a surge parameter to a param/cv_id combo. If you only have a knob (no cv) set the cv_id to -1
+*/
+struct RackSurgeParamBinding {
+    Parameter *p;
+    int param_id, cv_id;
+
+    StringCache valCache;
+    StringCache nameCache;
+
+    bool forceRefresh = false;
+
+    
+    RackSurgeParamBinding(Parameter *_p, int _param_id, int _cv_id) {
+        this->p = _p;
+        this->cv_id = _cv_id;
+        this->param_id = _param_id;
+        valCache.reset( "value" );
+        nameCache.reset( "name" );
+        forceRefresh = true;
+    }
+
+    ~RackSurgeParamBinding() {
+    }
+
+    void update(const ParamCache &pc, SurgeModuleCommon *m) {
+        bool paramChanged = false;
+        if(pc.changed(param_id,m) || forceRefresh)
+        {
+            char txt[1024];
+            p->set_value_f01(m->getParam(param_id));
+            p->get_display(txt, false, 0);
+            valCache.reset(txt);
+            paramChanged = true;
+        }
+        if(forceRefresh)
+        {
+            nameCache.reset(p->get_name());
+        }
+
+        if( paramChanged || forceRefresh || m->inputConnected(cv_id) )
+            p->set_value_f01(m->getParam(param_id) + m->getInput(cv_id) / 10.0);
+    }
 };

@@ -9,7 +9,6 @@
 #include "dsp/digital.hpp"
 #endif
 
-#define NUM_ENV_PARAMS 19
 struct SurgeADSR : virtual public SurgeModuleCommon {
     enum ParamIds {
         A_PARAM,
@@ -106,7 +105,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     void step() override
 #endif
     {
-        if (lastStep == 32)
+        if (lastStep == BLOCK_SIZE)
             lastStep = 0;
 
         bool inNewAttack = false;
@@ -174,7 +173,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         }
 
         lastStep++;
-        float frac = lastStep / 32.0;
+        float frac = 1.0 * lastStep / BLOCK_SIZE;
         float outputI = output0 * (1.0-frac) + output1 * frac;
         setOutput(OUTPUT_ENV, outputI * 10.0);
     }

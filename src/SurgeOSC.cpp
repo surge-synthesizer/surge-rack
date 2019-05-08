@@ -130,9 +130,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
         rack::Vec(padFromEdge + 2 * padMargin + SurgeLayout::surgeRoosterX,
                   SCREW_WIDTH + padMargin),
         rack::Vec(100, SurgeLayout::surgeRoosterY),
-        module ? module->oscNameCache.getValue
-               : []() { return std::string("null"); },
-        module ? module->oscNameCache.getDirty : []() { return false; }, 20,
+        module ? module->oscNameCache : StringCache::null(),
         NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT));
 
     addParam(rack::createParam<SurgeKnobRooster>(
