@@ -23,7 +23,6 @@ struct SurgeVOCWidget : rack::ModuleWidget {
         nvgText(vg, 0, 0, "SurgeVOC", NULL );
         nvgText(vg, 0, 22, "Under Construction", NULL);
         nvgRestore(vg);
-        INFO( "DREW BACKGROUND" );
     }
 };
 

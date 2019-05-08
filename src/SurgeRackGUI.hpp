@@ -132,12 +132,18 @@ struct TextDisplayLight : public rack::Component
 
     static TextDisplayLight *
     create(rack::Vec pos, rack::Vec size, 
-           const StringCache &sc,
+           const StringCache *sc,
            int fsize = 15,
            int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
            NVGcolor color = nvgRGBA(255, 144, 0, 255)) {
-        return TextDisplayLight::create(pos, size, sc.getValue, sc.getDirty,
-                                        fsize, align, color);
+        if( sc )
+            return TextDisplayLight::create(pos, size, sc->getValue, sc->getDirty,
+                                            fsize, align, color);
+        else
+            return TextDisplayLight::create(pos, size,
+                                            []() { return "null"; },
+                                            []() { return false; },
+                                            fsize, align, color);
     }
 
     void drawChars(NVGcontext *vg) {
