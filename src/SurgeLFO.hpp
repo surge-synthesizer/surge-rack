@@ -96,7 +96,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
             pb.push_back(std::shared_ptr<RackSurgeParamBinding>(new RackSurgeParamBinding(p0, i, RATE_CV + (i-RATE_PARAM))));
             p0++;
         }
-           
+        
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
         pc.resize(NUM_PARAMS);
     }

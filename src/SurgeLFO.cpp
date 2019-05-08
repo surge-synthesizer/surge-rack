@@ -85,12 +85,12 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
                                                    ));
         addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
-                                          module ? module->pb[i]->nameCache : StringCache::null(),
+                                          module ? &(module->pb[i]->nameCache) : nullptr,
                                           14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeOrange()));
 
         addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2, yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
-                                          module ? module->pb[i]->valCache : StringCache::null(),
+                                          module ? &(module->pb[i]->valCache) : nullptr,
                                           14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));
         
     }

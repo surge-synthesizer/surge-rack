@@ -163,11 +163,6 @@ struct StringCache {
         dirty = true;
     }
 
-    static StringCache null() {
-        StringCache res;
-        res.reset( "null" );
-        return res;
-    }
 };
 
 struct ParamCache {

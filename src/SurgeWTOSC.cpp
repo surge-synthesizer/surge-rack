@@ -23,7 +23,6 @@ struct SurgeWTOSCWidget : rack::ModuleWidget {
         nvgText(vg, 0, 0, "SurgeWTOSC", NULL );
         nvgText(vg, 0, 22, "Under Construction", NULL);
         nvgRestore(vg);
-        INFO( "DREW BACKGROUND" );
     }
 };
 
