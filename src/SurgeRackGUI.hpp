@@ -4,6 +4,7 @@
 */
 #include "Surge.hpp"
 #include "SurgeStyle.hpp"
+#include "SurgeModuleCommon.hpp"
 #include "rack.hpp"
 #include <functional>
 #include <map>
@@ -127,6 +128,16 @@ struct TextDisplayLight : public rack::Component
         res->setup();
 
         return res;
+    }
+
+    static TextDisplayLight *
+    create(rack::Vec pos, rack::Vec size, 
+           const StringCache &sc,
+           int fsize = 15,
+           int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
+           NVGcolor color = nvgRGBA(255, 144, 0, 255)) {
+        return TextDisplayLight::create(pos, size, sc.getValue, sc.getDirty,
+                                        fsize, align, color);
     }
 
     void drawChars(NVGcontext *vg) {
