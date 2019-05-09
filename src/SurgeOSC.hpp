@@ -166,13 +166,22 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             }
         }
 
-        if( outputConnected(OUTPUT_L) )
-            setOutput(OUTPUT_L, surge_osc->output[processPosition] * 10 *
-                      getParam(OUTPUT_GAIN));
-
-        if( outputConnected(OUTPUT_R) )
-            setOutput(OUTPUT_R, surge_osc->outputR[processPosition] * 10 *
-                      getParam(OUTPUT_GAIN));
+        if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
+        {
+            // Special mono mode
+            float output = (surge_osc->output[processPosition] + surge_osc->outputR[processPosition]) * 5.0 * getParam(OUTPUT_GAIN);
+            setOutput(OUTPUT_L, output);
+        }
+        else
+        {
+            if( outputConnected(OUTPUT_L) )
+                setOutput(OUTPUT_L, surge_osc->output[processPosition] * 10 *
+                          getParam(OUTPUT_GAIN));
+            
+            if( outputConnected(OUTPUT_R) )
+                setOutput(OUTPUT_R, surge_osc->outputR[processPosition] * 10 *
+                          getParam(OUTPUT_GAIN));
+        }
 
         processPosition++;
     }
