@@ -100,6 +100,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         }
     }
 
+    int lastUnison = -1;
 #if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
 #else
@@ -118,7 +119,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 oscNameCache.reset(conf.second);
                 respawned = true;
             }
-            
+
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
                     pc.get(OSC_CTRL_PARAM_0 + i) || respawned) {
@@ -128,7 +129,24 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                     paramValueCache[i].reset(txt);
                 }
             }
-            
+
+            if( respawned )
+                lastUnison = oscstorage->p[n_osc_params-1].val.i;
+
+            /*
+            ** Unison is special; in surge it is "per voice" and we have one
+            ** voice here; so in classic mode if unison changes, then go ahead
+            ** and re-init
+            */
+            if((int)getParam(OSC_TYPE) == 0 &&
+               pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
+               oscstorage->p[n_osc_params-1].val.i != lastUnison
+                )
+            {
+                lastUnison = oscstorage->p[n_osc_params-1].val.i;
+                surge_osc->init(72.0);
+            }
+
             pc.update(this);
             if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
             {
