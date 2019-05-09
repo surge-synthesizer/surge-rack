@@ -58,7 +58,7 @@ Inasmuch as any of this alpha software works yet!
 cd (working directory)
 git clone https://github.com/VCVRack/Rack.git
 cd Rack
-git checkout v1
+git checkout v1-gpl
 git submodule update --init --recursive
 make dep
 make
