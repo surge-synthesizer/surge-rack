@@ -4,6 +4,7 @@
 */
 #include "Surge.hpp"
 #include "SurgeStyle.hpp"
+#include "SurgeWidgets.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "rack.hpp"
 #include <functional>
@@ -12,165 +13,9 @@
 #include "widgets.hpp"
 #endif
 
-struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
-    typedef std::function<void(NVGcontext *)> drawfn_t;
-    drawfn_t drawf;
-
-    struct InternalBDW : rack::TransparentWidget {
-        drawfn_t drawf;
-        InternalBDW(rack::Rect box_, drawfn_t draw_) : drawf(draw_) {
-            box = box_;
-        }
-#if RACK_V1
-        void draw(const DrawArgs &args) override { drawf(args.vg); }
-#else
-        void draw(NVGcontext *vg) override { drawf(vg); }
-#endif
-    };
-
-    InternalBDW *kid = nullptr;
-    BufferedDrawFunctionWidget(rack::Vec pos, rack::Vec sz, drawfn_t draw_)
-        : drawf(draw_) {
-        box.pos = pos;
-        box.size = sz;
-        auto kidBox = rack::Rect(rack::Vec(0, 0), box.size);
-        kid = new InternalBDW(kidBox, drawf);
-        addChild(kid);
-    }
-};
-
-struct SurgeRackBG : public rack::TransparentWidget {
-    std::string displayName;
-    std::function<void(NVGcontext *)> moduleSpecificDraw;
-
-    SurgeRackBG(rack::Vec pos, rack::Vec size, std::string _displayName)
-        : displayName(_displayName) {
-        box.size = size;
-        moduleSpecificDraw = [](NVGcontext *) {};
-        BufferedDrawFunctionWidget *bdw = new BufferedDrawFunctionWidget(
-            pos, size, [this](NVGcontext *vg) { this->drawBG(vg); });
-        addChild(bdw);
-    }
-
-    bool narrowMode = false;
-    
-    void drawBG(NVGcontext *vg) {
-        SurgeStyle::drawPanelBackground(vg, box.size.x, box.size.y,
-                                        displayName, narrowMode);
-        moduleSpecificDraw(vg);
-    }
-};
-
-#if RACK_V1
-struct TextDisplayLight : public rack::widget::Widget
-#else
-struct TextDisplayLight : public rack::Component
-#endif
-{
-    typedef std::function<std::string()> stringGetter_t;
-    typedef std::function<bool()> stringDirtyGetter_t;
-
-    stringGetter_t getfn;
-    stringDirtyGetter_t dirtyfn;
-    int align;
-    int fontsize;
-    NVGcolor color;
-
-    TextDisplayLight() : Widget() {}
-
-    void setup() {
-        addChild(new BufferedDrawFunctionWidget(
-            rack::Vec(0, 0), box.size,
-            [this](NVGcontext *vg) { this->drawChars(vg); }));
-    }
-
-#if RACK_V1
-    void step() override {
-        if (dirtyfn()) {
-            for (auto w : children) {
-                if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w)) {
-                    fw->dirty = true;
-                }
-            }
-        }
-        rack::widget::Widget::step();
-    }
-#else
-    void draw(NVGcontext *vg) override {
-        if (dirtyfn()) {
-            for (auto w : children) {
-                if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w)) {
-                    fw->dirty = true;
-                }
-            }
-        }
-        rack::Component::draw(vg);
-    }
-#endif
-
-    std::string font = SurgeStyle::fontFace();
-    int fontId = -1;
-
-    static TextDisplayLight *
-    create(rack::Vec pos, rack::Vec size, stringGetter_t gf,
-           stringDirtyGetter_t dgf, int fsize = 15,
-           int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-           NVGcolor color = nvgRGBA(255, 144, 0, 255)) {
-        TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
-        res->getfn = gf;
-        res->dirtyfn = dgf;
-        res->box.pos = pos;
-        res->box.size = size;
-        res->fontsize = fsize;
-        res->align = align;
-        res->color = color;
-
-        res->setup();
-
-        return res;
-    }
-
-    static TextDisplayLight *
-    create(rack::Vec pos, rack::Vec size, 
-           const StringCache *sc,
-           int fsize = 15,
-           int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-           NVGcolor color = nvgRGBA(255, 144, 0, 255)) {
-        if( sc )
-            return TextDisplayLight::create(pos, size, sc->getValue, sc->getDirty,
-                                            fsize, align, color);
-        else
-            return TextDisplayLight::create(pos, size,
-                                            []() { return "null"; },
-                                            []() { return false; },
-                                            fsize, align, color);
-    }
-
-    void drawChars(NVGcontext *vg) {
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, font);
-
-        std::string ch = getfn();
-
-        nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, fontsize);
-        nvgFillColor(vg, color);
-        nvgTextAlign(vg, align);
-
-        float xp = 1, yp = 1;
-        if (align & NVG_ALIGN_BOTTOM)
-            yp = box.size.y - 1;
-        if (align & NVG_ALIGN_MIDDLE)
-            yp = box.size.y / 2;
-
-        if (align & NVG_ALIGN_RIGHT)
-            xp = box.size.x - 1;
-        if (align & NVG_ALIGN_CENTER)
-            xp = box.size.x / 2;
-
-        nvgText(vg, xp, yp, ch.c_str(), NULL);
-    }
-};
+/*
+** FIXME: THis class is dumb and we should remove it
+*/
 
 #if RACK_V1
 struct SurgeParamLargeWidget : public rack::widget::Widget

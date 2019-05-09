@@ -111,15 +111,17 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
             processPosition = 0;
 
+            bool respawned = false;
             if ((int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE)) {
                 auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
                 respawn(conf.first);
                 oscNameCache.reset(conf.second);
+                respawned = true;
             }
             
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
-                    pc.get(OSC_CTRL_PARAM_0 + i)) {
+                    pc.get(OSC_CTRL_PARAM_0 + i) || respawned) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);
