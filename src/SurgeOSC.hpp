@@ -90,6 +90,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                                   storage->getPatch().scenedata[0]));
         surge_osc->init(72.0);
         surge_osc->init_ctrltypes();
+        surge_osc->init_default_values();
         processPosition = BLOCK_SIZE_OS + 1;
         oscstorage->type.val.i = i;
         for (auto i = 0; i < n_osc_params; ++i) {
@@ -97,7 +98,11 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             char txt[256];
             oscstorage->p[i].get_display(txt, false, 0);
             paramValueCache[i].reset(txt);
+
+            setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
         }
+
+        pc.update(this);
     }
 
     int lastUnison = -1;

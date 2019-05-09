@@ -66,6 +66,14 @@ struct SurgeModuleCommon : virtual public rack::Module {
 #endif
     }
 
+    inline void setParam(int id, float v) {
+#if RACK_V1
+        this->params[id].setValue(v);
+#else
+        this->params[id].value = v;
+#endif
+    }
+
     inline float getInput(int id) {
 #if RACK_V1
         return this->inputs[id].getVoltage();
