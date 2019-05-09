@@ -109,7 +109,7 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgBeginPath(vg);
     nvgMoveTo(vg, w-1, orangeLine);
     nvgLineTo(vg, w-1, h);
-    nvgStrokeColor(vg, SurgeStyle::surgeOrange3() );
+    nvgStrokeColor(vg, SurgeStyle::surgeOrangeMedium() );
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
 

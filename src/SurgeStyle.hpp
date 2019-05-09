@@ -21,8 +21,8 @@ struct SurgeStyle {
 
     static NVGcolor surgeWhite() { return nvgRGBA(255, 255, 255, 255); }
     static NVGcolor surgeOrange() { return nvgRGBA(255, 144, 0, 255); }
-    static NVGcolor surgeOrange2() { return nvgRGBA(101, 50, 3, 255); }
-    static NVGcolor surgeOrange3() { return nvgRGBA(227, 112, 8, 255); }
+    static NVGcolor surgeOrangeMedium() { return nvgRGBA(227, 112, 8, 255); }
+    static NVGcolor surgeOrangeDark() { return nvgRGBA(101, 50, 3, 255); }
 
     static NVGcolor textBG() { return nvgRGBA(27, 28, 32, 255); }
     static NVGcolor textBGBright() { return nvgRGBA(60, 60, 72, 255); }
@@ -84,86 +84,3 @@ struct InternalFontMgr {
 using rack::INFO_LEVEL;
 #endif
 
-struct SurgeSmallKnob : rack::RoundKnob {
-    SurgeSmallKnob() {
-#if RACK_V1
-        setSvg(rack::APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, "res/vectors/surgeKnob.svg")));
-#else
-        setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnob.svg")));
-#endif
-    }
-};
-
-struct SurgeKnob : rack::RoundKnob {
-    SurgeKnob() {
-#if RACK_V1
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
-#else
-        setSVG(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
-#endif
-    }
-};
-
-struct SurgeKnobRooster : rack::RoundKnob {
-    SurgeKnobRooster() {
-#if RACK_V1
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnobRooster.svg")));
-#else
-        setSVG(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/surgeKnobRooster.svg")));
-#endif
-        shadow->box.size = rack::Vec(24, 24);
-        shadow->box.pos = rack::Vec(5, 9.5);
-    }
-};
-
-struct SurgeSwitch :
-#if RACK_V1
-    rack::app::SvgSwitch
-#else
-    rack::SVGSwitch,
-    rack::ToggleSwitch
-#endif
-{
-    SurgeSwitch() {
-#if RACK_V1
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
-#else
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
-#endif
-    }
-};
-
-struct SurgeSwitchFull :
-#if RACK_V1
-    rack::app::SvgSwitch
-#else
-    rack::SVGSwitch,
-    rack::ToggleSwitch
-#endif
-{
-    SurgeSwitchFull() {
-#if RACK_V1
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
-#else
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
-#endif
-    }
-};
