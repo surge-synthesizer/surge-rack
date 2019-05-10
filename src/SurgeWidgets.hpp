@@ -4,6 +4,13 @@
 #include "SurgeStyle.hpp"
 #include "SurgeModuleCommon.hpp"
 
+#if MAC
+#include <execinfo.h>
+#endif
+
+void stackToInfo();
+
+
 struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
     typedef std::function<void(NVGcontext *)> drawfn_t;
     drawfn_t drawf;
@@ -250,9 +257,9 @@ struct SurgeSwitchFull :
 
 struct SurgeButtonBank :
 #if RACK_V1
-    rack::app::ParamWidget
+    public virtual rack::app::ParamWidget
 #else
-    rack::ParamWidget
+    public virtual rack::ParamWidget
 #endif
 {
     int rows, cols, fontSize;
@@ -292,6 +299,7 @@ struct SurgeButtonBank :
         if( paramQuantity )
             paramQuantity->setValue(v);
 #else
+        value = v;
         if( module )
             module->params[paramId].value = v;
 #endif        
@@ -302,8 +310,9 @@ struct SurgeButtonBank :
     void drawWidget(NVGcontext *vg) {
         if( fontId < 0 )
             fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace() );
-        auto bw = box.size.x / rows;
-        auto bh = box.size.y / cols;
+
+        auto bw = (box.size.x-1.0) / rows;
+        auto bh = (box.size.y-1.0) / cols;
 
         int cell = 0;
         for(int c=0;c<cols;++c)
@@ -316,33 +325,50 @@ struct SurgeButtonBank :
                 auto py = c * bh;
 
                 nvgBeginPath(vg);
-                nvgRect(vg,px+1,py+1,bw-2,bh-2);
+                nvgRect(vg,px,py,bw,bh);
                 if( selected )
                 {
-                    nvgFillColor(vg, SurgeStyle::surgeOrange() );
-                    nvgStrokeColor(vg, SurgeStyle::surgeOrangeDark() );
+                    nvgFillColor(vg, SurgeStyle::buttonBoxPressedFill() );
+                    nvgStrokeColor(vg, SurgeStyle::buttonBoxPressedStroke() );
                 }
                 else
                 {
-                    nvgFillColor(vg, SurgeStyle::surgeWhite() );
-                    nvgStrokeColor(vg, SurgeStyle::surgeBlue() );
+                    nvgFillColor(vg, SurgeStyle::buttonBoxOpenFill() );
+                    nvgStrokeColor(vg, SurgeStyle::buttonBoxOpenStroke() );
                 }
                 
-                nvgStrokeWidth(vg,1);
-                nvgStroke(vg);
                 nvgFill(vg);
 
                 if( cell < cellLabels.size() )
                 {
+                    if( selected )
+                    {
+                        nvgBeginPath(vg);
+                        nvgFontFaceId(vg,fontId);
+                        nvgFontSize(vg,fontSize);
+                        nvgFontBlur(vg, 3 );
+                        nvgFillColor(vg, SurgeStyle::surgeWhite() );
+                        nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER );
+                        nvgText(vg, px + bw/2, py + bh/2, cellLabels[cell].c_str(), NULL );
+                        nvgFontBlur(vg, 0);
+                    }
+
                     nvgBeginPath(vg);
                     nvgFontFaceId(vg,fontId);
                     nvgFontSize(vg,fontSize);
-                    if( selected )
-                        nvgFillColor(vg, SurgeStyle::surgeBlue() );
-                    else
-                        nvgFillColor(vg, SurgeStyle::surgeOrange() );
+                    nvgFillColor(vg, SurgeStyle::surgeBlue() );
                     nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER );
                     nvgText(vg, px + bw/2, py + bh/2, cellLabels[cell].c_str(), NULL );
+                }
+
+                if( r != rows - 1 )
+                {
+                    nvgBeginPath(vg);
+                    nvgMoveTo(vg, px + bw, py + 2 );
+                    nvgLineTo(vg, px + bw, py + bh - 2 );
+                    nvgStrokeColor(vg,SurgeStyle::buttonBoxContainerStroke());
+                    nvgStrokeWidth(vg, 1);
+                    nvgStroke(vg);
                 }
 
                 cell++;
@@ -374,11 +400,13 @@ struct SurgeButtonBank :
             bdw->dirty = true;
     }
 #else
-    void onMouseDown(rack::EventMouseDown &e) override {
+    virtual void onMouseDown(rack::EventMouseDown &e) override {
         buttonPressedAt(e.pos.x,e.pos.y);
     }
     
     virtual void onChange(rack::EventChange &e) override {
+        if(module)
+            module->params[paramId].value = value;
         if( bdw )
             bdw->dirty = true;
     }
@@ -386,7 +414,8 @@ struct SurgeButtonBank :
 #endif    
     
     static SurgeButtonBank* create(rack::Vec pos, rack::Vec size,
-                            int rows, int cols, int fontSize=14) {
+                                   SurgeModuleCommon *module, int paramId,
+                                   int rows, int cols, int fontSize=14) {
         SurgeButtonBank *res = rack::createWidget<SurgeButtonBank>(pos);
         res->box.pos = pos;
         res->box.size = size;
@@ -396,7 +425,17 @@ struct SurgeButtonBank :
 
         res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0), size, [res](NVGcontext *vg) { res->drawWidget(vg); } );
         res->addChild(res->bdw);
-        
+
+#if RACK_V1        
+        if( module )
+            res->paramQuantity = module->paramQuantities[paramId];
+#else
+        res->module = module;
+        res->paramId = paramId;
+        res->setLimits(0,rows*cols-1);
+        res->setDefaultValue(0);
+#endif        
+
         return res;
     }
 };
