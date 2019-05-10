@@ -57,10 +57,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
 
     virtual void setupSurge() {
-        setupSurgeCommon();
-
         pc.resize(NUM_PARAMS);
-        pc.update(this);
+        setupSurgeCommon();
 
         oscConfigurations.push_back(std::pair<int, std::string>(0, "Classic"));
         oscConfigurations.push_back(std::pair<int, std::string>(1, "Sine"));
@@ -70,8 +68,15 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             std::pair<int, std::string>(5, "FM3 (free)"));
         oscConfigurations.push_back(std::pair<int, std::string>(3, "SH Noise"));
 
+        
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
-        auto config = oscConfigurations[0];
+        int configNum = 0;
+        if( firstRespawnIsFromJSON )
+        {
+            configNum = (int)getParam(OSC_TYPE);
+        }
+
+        auto config = oscConfigurations[configNum];
         respawn(config.first);
         oscNameCache.reset(config.second);
 
@@ -83,6 +88,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         ** nothing between them.
         */
         setupStorageRanges((Parameter *)oscstorage, &(oscstorage->retrigger));
+
+        pc.update(this);
     }
 
     int processPosition = BLOCK_SIZE_OS + 1;

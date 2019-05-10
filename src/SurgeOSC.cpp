@@ -148,16 +148,8 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
     // Improve this API
     SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(padFromEdge, SCREW_WIDTH + padMargin),
                                                      rack::Vec(box.size.x - 2 * padFromEdge, buttonBankHeight),
+                                                     module, M::OSC_TYPE,
                                                      5, 1, 13 );
-#if RACK_V1
-    if( module )
-        bank->paramQuantity = module->paramQuantities[M::OSC_TYPE];
-#else
-    bank->module = module;
-    bank->paramId = M::OSC_TYPE;
-    bank->setLimits(0,4);
-    bank->setDefaultValue(0);
-#endif    
 
     bank->addLabel("Classic");
     bank->addLabel("Sine");

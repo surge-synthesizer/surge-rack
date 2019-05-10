@@ -37,6 +37,33 @@ struct SurgeStyle {
         return nvgRGBA(239, 210, 172, 255);
     }
 
+    static NVGcolor buttonBoxPressedStroke() {
+        return nvgRGB(0xf0, 0x8f, 0x35);
+    }
+    static NVGcolor buttonBoxPressedFill() {
+        return nvgRGB(0xf1, 0xb8, 0x7d);
+    }
+    static NVGcolor buttonBoxPressedText() {
+        return nvgRGB(0x1a, 0x34, 0x60);
+    }
+
+    static NVGcolor buttonBoxOpenStroke() {
+        return nvgRGB(0xbd, 0xbb, 0xac);
+    }
+    static NVGcolor buttonBoxOpenFill() {
+        return nvgRGB(0xf0, 0xee, 0xdc);
+    }
+    static NVGcolor buttonBoxOpenText() {
+        return nvgRGB(0xc8, 0x7b, 0x2c);
+    }
+
+    static NVGcolor buttonBoxContainerStroke() {
+        return nvgRGB(0xc8, 0x7b, 0x2c);
+    }
+    static NVGcolor buttonBoxContainerFill() {
+        return nvgRGB(0x37, 0x36, 0x32);
+    }
+
     static const char *fontFace() {
         return "res/EncodeSansSemiCondensed-Medium.ttf";
     }
