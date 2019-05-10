@@ -249,3 +249,12 @@ struct RackSurgeParamBinding {
             p->set_value_f01(m->getParam(param_id) + m->getInput(cv_id) / 10.0);
     }
 };
+
+// This comes from surge unitconversion.h which is not used anywhere; but also which doesn't compile
+inline char* get_notename(char* s, int i_value)
+{
+   int octave = (i_value / 12) - 2;
+   char notenames[12][3] = {"C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B "};
+   sprintf(s, "%s%i", notenames[i_value % 12], octave);
+   return s;
+}

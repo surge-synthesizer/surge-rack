@@ -11,7 +11,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
         OSC_TYPE,
         PITCH_0,
-
+        PITCH_0_IN_FREQ,
+        
         OSC_CTRL_PARAM_0,
 
         NUM_PARAMS = OSC_CTRL_PARAM_0 + n_osc_params
@@ -33,7 +34,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(OUTPUT_GAIN, 0, 1, 1);
         configParam(OSC_TYPE, 0, 4, 0);
-        configParam(PITCH_0, 1, 127, 72);
+        configParam(PITCH_0, 1, 127, 60);
+        configParam(PITCH_0_IN_FREQ, 0, 1, 0);
         for (int i = 0; i < n_osc_params; ++i)
             configParam(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
         setupSurge();
@@ -47,7 +49,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
     std::vector<std::pair<int, std::string>> oscConfigurations;
     StringCache oscNameCache;
-
+    StringCache pitch0DisplayCache;
+    
     StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
 
     virtual void setupSurge() {
@@ -81,6 +84,26 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
     int processPosition = BLOCK_SIZE_OS + 1;
 
+    void updatePitchCache() {
+        char txt[ 1024 ];
+        if( getParam(PITCH_0_IN_FREQ) > 0.5)
+        {
+            float fpitch = getParam(PITCH_0);
+            float freq = 440.f * pow(2.0, (fpitch-69.0)/12.0);
+            snprintf(txt, 1024, "%7.2f hz", freq );
+            char *x = txt;
+            while( *x && *x == ' ' ) ++x;
+            pitch0DisplayCache.reset(x);
+        }
+        else
+        {
+            int ipitch = (int)getParam(PITCH_0);
+            get_notename( txt, ipitch + 12 );
+            pitch0DisplayCache.reset(txt);
+        }
+
+    }
+    
     void respawn(int i) {
         for (int i = 0; i < n_osc_params; ++i) {
             oscstorage->p[i].set_name("-");
@@ -102,6 +125,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
         }
 
+        updatePitchCache();
+        
         pc.update(this);
     }
 
@@ -112,7 +137,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     void step() override
 #endif
     {
-        
         if (processPosition >= BLOCK_SIZE_OS) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
             processPosition = 0;
@@ -125,6 +149,12 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 respawned = true;
             }
 
+            if(pc.changed(PITCH_0, this) ||
+               pc.changed(PITCH_0_IN_FREQ, this))
+            {
+                updatePitchCache();
+            }
+            
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
                     pc.get(OSC_CTRL_PARAM_0 + i) || respawned) {
@@ -161,29 +191,32 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 }
 
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
+                float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
                 surge_osc->process_block(
-                    getParam(PITCH_0) + getInput(PITCH_CV) * 12.0, 0, true);
+                    pitch0 + getInput(PITCH_CV) * 12.0, 0, true);
             }
         }
 
+        float avgl = (surge_osc->output[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
+        float avgr = (surge_osc->outputR[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
         if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
         {
             // Special mono mode
-            float output = (surge_osc->output[processPosition] + surge_osc->outputR[processPosition]) * 5.0 * getParam(OUTPUT_GAIN);
+            float output = (avgl + avgr) * 5.0 * getParam(OUTPUT_GAIN);
             setOutput(OUTPUT_L, output);
         }
         else
         {
             if( outputConnected(OUTPUT_L) )
-                setOutput(OUTPUT_L, surge_osc->output[processPosition] * 10 *
+                setOutput(OUTPUT_L, avgl * 10 *
                           getParam(OUTPUT_GAIN));
             
             if( outputConnected(OUTPUT_R) )
-                setOutput(OUTPUT_R, surge_osc->outputR[processPosition] * 10 *
+                setOutput(OUTPUT_R, avgr * 10 *
                           getParam(OUTPUT_GAIN));
         }
 
-        processPosition++;
+        processPosition += 2; // that's why the call it block_size _OS (oversampled)
     }
 
     std::unique_ptr<Oscillator> surge_osc;
