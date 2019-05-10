@@ -60,6 +60,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
     }
 #endif
 
+    virtual std::string getName() override { return "FX"; }
+
     void setupSurge() {
         pc.resize(NUM_PARAMS);
         
@@ -111,10 +113,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
 
 
         setupStorageRanges((Parameter *)fxstorage, &(fxstorage->p[n_fx_params-1]));
-                           
-        if (surge_effect.get())
-            INFO("Effect Setup Complete: FX Type 2 is %s",
-                 surge_effect->get_effectname());
     }
 
     void reorderSurgeParams() {
@@ -194,7 +192,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
             if (tp != fxstorage->type.val.i &&
                 tp != 0) // FIXME: Deal with the 0 case
             {
-                INFO("FX Type change to %d", tp);
                 fxstorage->type.val.i = tp;
                 surge_effect.reset(spawn_effect(tp, storage.get(),
                                                 &(storage->getPatch().fx[0]),

@@ -31,7 +31,8 @@ struct SurgeVCF : virtual public SurgeModuleCommon {
     }
 #endif
 
-
+    virtual std::string getName() override { return "VCF"; }
+    
     virtual void setupSurge() {
         setupSurgeCommon();
     }

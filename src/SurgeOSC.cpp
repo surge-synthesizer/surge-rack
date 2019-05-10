@@ -2,7 +2,7 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeOSCWidget : rack::ModuleWidget {
+struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
     typedef SurgeOSC M;
     SurgeOSCWidget(M *module);
 
@@ -113,12 +113,16 @@ struct SurgeOSCWidget : rack::ModuleWidget {
 };
 
 SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
-    : rack::ModuleWidget(
-#ifndef RACK_V1
+    : SurgeModuleWidgetCommon(
+#if !RACK_V1
           module
 #endif
-      ) {
-#ifdef RACK_V1
+      )
+#if !RACK_V1
+    , rack::ModuleWidget(module) // why do I need this gcc? SMWC calls it.
+#endif    
+{
+#if RACK_V1
     setModule(module);
 #endif
 

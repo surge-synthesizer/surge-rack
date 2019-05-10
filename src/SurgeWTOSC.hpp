@@ -31,6 +31,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     }
 #endif
 
+    virtual std::string getName() override { return "WTOSC"; }
 
     virtual void setupSurge() {
         setupSurgeCommon();

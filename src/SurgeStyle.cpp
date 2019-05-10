@@ -95,7 +95,9 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgFill(vg);
 
     nvgBeginPath(vg);
-    nvgMoveTo(vg, w-1, 0);
+    nvgMoveTo(vg, 0, h );
+    nvgLineTo(vg, 0, 0 );
+    nvgLineTo(vg, w-1, 0 );
     nvgLineTo(vg, w-1, h);
     nvgStrokeColor(vg, SurgeStyle::backgroundDarkGray());
     nvgStrokeWidth(vg, 1);
@@ -108,7 +110,9 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
 
     nvgBeginPath(vg);
     nvgMoveTo(vg, w-1, orangeLine);
-    nvgLineTo(vg, w-1, h);
+    nvgLineTo(vg, w-1, h-1);
+    nvgLineTo(vg, 0, h-1 );
+    nvgLineTo(vg, 0, orangeLine );
     nvgStrokeColor(vg, SurgeStyle::surgeOrangeMedium() );
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
@@ -119,28 +123,6 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgStrokeColor(vg, SurgeStyle::surgeBlue());
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
-
-    nvgBeginPath(vg);
-    nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-    nvgFillColor(vg, SurgeStyle::surgeWhite());
-    nvgFontFaceId(vg, fontId);
-    nvgFontSize(vg, 9);
-
-    char version[1024];
-    snprintf(version, 1023, "%s: %s.%s.%s",
-#if WINDOWS
-             "win",
-#endif
-#if MAC
-             "macos",
-#endif
-#if LINUX
-             "linux",
-#endif
-             TOSTRING(SURGE_RACK_BASE_VERSION),
-             TOSTRING(SURGE_RACK_PLUG_VERSION),
-             TOSTRING(SURGE_RACK_SURGE_VERSION));
-    nvgText(vg, w / 2, h - 2, version, NULL);
 
     auto logoSvg = SurgeInternal::getSurgeLogo(false);
     float logoX0 = w / 2;

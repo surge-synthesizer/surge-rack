@@ -25,6 +25,8 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     }
 #endif
 
+    virtual std::string getName() override { return "WS"; }
+    
     ParamCache pc;
     StringCache wsNameCache, dbGainCache;
     std::vector<std::string> wsNames;
