@@ -8,9 +8,12 @@
 #include "SurgeStorage.h"
 #include "rack.hpp"
 
+#include <map>
+#include <vector>
+
 struct SurgeModuleCommon : virtual public rack::Module {
 #if RACK_V1
-    SurgeModuleCommon() : rack::Module() {}
+    SurgeModuleCommon() : rack::Module() {  }
 #else
     SurgeModuleCommon(int NUM_P, int NUM_I, int NUM_O, int NUM_L)
         : rack::Module(NUM_P, NUM_I, NUM_O, NUM_L) {
@@ -26,13 +29,34 @@ struct SurgeModuleCommon : virtual public rack::Module {
     }
 #endif
 
+    void showVersion() {
+        char version[1024];
+        snprintf(version, 1023, "%s: %s.%s.%s",
+#if WINDOWS
+                 "win",
+#endif
+#if MAC
+                 "macos",
+#endif
+#if LINUX
+                 "linux",
+#endif
+                 TOSTRING(SURGE_RACK_BASE_VERSION),
+                 TOSTRING(SURGE_RACK_PLUG_VERSION),
+                 TOSTRING(SURGE_RACK_SURGE_VERSION));
+        
+        INFO( "[SurgeRack] Instance: Module=%s Version=%s", getName().c_str(), version );
+    }
+
+    virtual std::string getName() = 0;
+    
     virtual void onSampleRateChange() override {
 #if RACK_V1
         float sr = rack::APP->engine->getSampleRate();
 #else
         float sr = rack::engineGetSampleRate();
 #endif
-        INFO("Setting SampleRate to %lf", sr);
+        INFO("[SurgeRack] Setting SampleRate to %lf", sr);
         samplerate = sr;
         dsamplerate = sr;
         samplerate_inv = 1.0 / sr;
@@ -50,12 +74,12 @@ struct SurgeModuleCommon : virtual public rack::Module {
         dataPath = "";
 #endif
 
-        INFO("setupSurgeCommon| SurgeStorage::dataPath = %s", dataPath.c_str());
+        showVersion();
+        INFO("[SurgeRack] SurgeStorage::dataPath = %s", dataPath.c_str());
 
         // TODO: Have a mode where these paths come from res/
         storage.reset(new SurgeStorage(dataPath));
         onSampleRateChange();
-        INFO("setupSurgeCommon| Completed common setion");
     }
 
     inline float getParam(int id) {
@@ -247,6 +271,34 @@ struct RackSurgeParamBinding {
 
         if( paramChanged || forceRefresh || m->inputConnected(cv_id) )
             p->set_value_f01(m->getParam(param_id) + m->getInput(cv_id) / 10.0);
+    }
+};
+
+struct ParamValueStateSaver {
+    std::map<int, std::map<int, float>> valueStates;
+    ParamValueStateSaver() { }
+
+    void storeParams(int index, int paramStart, int paramEndInclusive, SurgeModuleCommon *m) {
+        std::map<int,float> cache;
+        for( auto i=paramStart; i<=paramEndInclusive; ++i )
+        {
+            cache[i] = m->getParam(i);
+        }
+        valueStates[index] = cache;
+    }
+
+    bool hasStoredAtIndex(int index) {
+        return valueStates.find(index) != valueStates.end();
+    }
+
+    void applyFromIndex(int index, SurgeModuleCommon *m) {
+        if( !hasStoredAtIndex(index) ) return;
+        
+        auto cache = valueStates[index];
+        for(auto pair : cache )
+        {
+            m->setParam(pair.first, pair.second );
+        }
     }
 };
 

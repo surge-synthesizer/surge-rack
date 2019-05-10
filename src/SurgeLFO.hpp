@@ -79,6 +79,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     }
 #endif
 
+    virtual std::string getName() override { return "LFO"; }
     
     virtual void setupSurge() {
         setupSurgeCommon();

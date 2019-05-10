@@ -69,6 +69,8 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     }
 #endif
 
+    virtual std::string getName() override { return "ADSR"; }
+
     virtual void setupSurge() {
         setupSurgeCommon();
 

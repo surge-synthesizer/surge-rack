@@ -28,7 +28,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     enum LightIds { NUM_LIGHTS };
 
     ParamCache pc;
-
+    ParamValueStateSaver knobSaver;
+    
 #if RACK_V1
     SurgeOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -47,6 +48,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
 #endif
 
+    virtual std::string getName() override { return "OSC"; }
+    
     std::vector<std::pair<int, std::string>> oscConfigurations;
     StringCache oscNameCache;
     StringCache pitch0DisplayCache;
@@ -83,7 +86,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
 
     int processPosition = BLOCK_SIZE_OS + 1;
-
+    bool firstRespawnIsFromJSON = false;
+    
     void updatePitchCache() {
         char txt[ 1024 ];
         if( getParam(PITCH_0_IN_FREQ) > 0.5)
@@ -117,13 +121,33 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         processPosition = BLOCK_SIZE_OS + 1;
         oscstorage->type.val.i = i;
         for (auto i = 0; i < n_osc_params; ++i) {
+            if( ! firstRespawnIsFromJSON )
+            {
+                /*
+                ** I"m not coming from JSON - so use the params I see
+                */
+                if( oscstorage->p[i].ctrltype == ct_none )
+                {
+                    setParam(OSC_CTRL_PARAM_0 + 0, 0.0 );
+                }
+                else
+                {
+                    setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
+                }
+            }
+            else
+            {
+                /*
+                ** I am coming from JSON so use the params I have
+                */
+                oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+            }
             paramNameCache[i].reset(oscstorage->p[i].get_name());
             char txt[256];
             oscstorage->p[i].get_display(txt, false, 0);
             paramValueCache[i].reset(txt);
-
-            setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
         }
+        firstRespawnIsFromJSON = false;
 
         updatePitchCache();
         
@@ -143,15 +167,24 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
             bool respawned = false;
             if ((int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE)) {
+                knobSaver.storeParams( (int)pc.get(OSC_TYPE), OSC_CTRL_PARAM_0, OSC_CTRL_PARAM_0 + n_osc_params, this );
+                
                 auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
                 respawn(conf.first);
                 oscNameCache.reset(conf.second);
                 respawned = true;
+                
+                knobSaver.applyFromIndex((int)getParam(OSC_TYPE), this );
             }
 
             if(pc.changed(PITCH_0, this) ||
                pc.changed(PITCH_0_IN_FREQ, this))
             {
+                if( pc.changed(PITCH_0_IN_FREQ, this ) && getParam(PITCH_0_IN_FREQ) > 0.5 )
+                {
+                    // We have switched from note to frequency. We really want to be at the note exactly
+                    setParam(PITCH_0, (int)getParam(PITCH_0));
+                }
                 updatePitchCache();
             }
             
@@ -219,6 +252,29 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         processPosition += 2; // that's why the call it block_size _OS (oversampled)
     }
 
+
+#if RACK_V1
+    virtual json_t *dataToJson() override {
+        json_t *rootJ = json_object();
+        json_object_set_new( rootJ, "streamed", json_integer(1.0) );
+        return rootJ;
+    }
+    virtual void dataFromJson(json_t *root) override {
+        firstRespawnIsFromJSON = true;
+    }
+#else
+    virtual json_t *toJson() override {
+        json_t *rootJ = json_object();
+        json_object_set_new( rootJ, "streamed", json_integer(1.0) );
+
+        return rootJ;
+    }
+
+    virtual void fromJson( json_t *rootJ ) override {
+        firstRespawnIsFromJSON = true;
+    }
+#endif    
+    
     std::unique_ptr<Oscillator> surge_osc;
     OscillatorStorage *oscstorage;
 };
