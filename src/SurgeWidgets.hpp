@@ -307,74 +307,7 @@ struct SurgeButtonBank :
     }
     
     int fontId = -1;
-    void drawWidget(NVGcontext *vg) {
-        if( fontId < 0 )
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace() );
-
-        auto bw = (box.size.x-1.0) / rows;
-        auto bh = (box.size.y-1.0) / cols;
-
-        int cell = 0;
-        for(int c=0;c<cols;++c)
-            for( int r=0;r<rows;++r)
-            {
-                bool selected = false;
-                selected = (int)getPValue() == cell;
-                
-                auto px = r * bw; // remember we are already translated by box.pos.y
-                auto py = c * bh;
-
-                nvgBeginPath(vg);
-                nvgRect(vg,px,py,bw,bh);
-                if( selected )
-                {
-                    nvgFillColor(vg, SurgeStyle::buttonBoxPressedFill() );
-                    nvgStrokeColor(vg, SurgeStyle::buttonBoxPressedStroke() );
-                }
-                else
-                {
-                    nvgFillColor(vg, SurgeStyle::buttonBoxOpenFill() );
-                    nvgStrokeColor(vg, SurgeStyle::buttonBoxOpenStroke() );
-                }
-                
-                nvgFill(vg);
-
-                if( cell < cellLabels.size() )
-                {
-                    if( selected )
-                    {
-                        nvgBeginPath(vg);
-                        nvgFontFaceId(vg,fontId);
-                        nvgFontSize(vg,fontSize);
-                        nvgFontBlur(vg, 3 );
-                        nvgFillColor(vg, SurgeStyle::surgeWhite() );
-                        nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER );
-                        nvgText(vg, px + bw/2, py + bh/2, cellLabels[cell].c_str(), NULL );
-                        nvgFontBlur(vg, 0);
-                    }
-
-                    nvgBeginPath(vg);
-                    nvgFontFaceId(vg,fontId);
-                    nvgFontSize(vg,fontSize);
-                    nvgFillColor(vg, SurgeStyle::surgeBlue() );
-                    nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER );
-                    nvgText(vg, px + bw/2, py + bh/2, cellLabels[cell].c_str(), NULL );
-                }
-
-                if( r != rows - 1 )
-                {
-                    nvgBeginPath(vg);
-                    nvgMoveTo(vg, px + bw, py + 2 );
-                    nvgLineTo(vg, px + bw, py + bh - 2 );
-                    nvgStrokeColor(vg,SurgeStyle::buttonBoxContainerStroke());
-                    nvgStrokeWidth(vg, 1);
-                    nvgStroke(vg);
-                }
-
-                cell++;
-            }
-    }
-
+    void drawWidget(NVGcontext *vg);
     void buttonPressedAt(float x, float y) {
         auto bw = box.size.x / rows;
         auto bh = box.size.y / cols;
