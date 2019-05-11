@@ -29,7 +29,7 @@ struct SurgeModuleCommon : virtual public rack::Module {
     }
 #endif
 
-    void showVersion() {
+    std::string getVersion() {
         char version[1024];
         snprintf(version, 1023, "%s: %s.%s.%s",
 #if WINDOWS
@@ -44,8 +44,11 @@ struct SurgeModuleCommon : virtual public rack::Module {
                  TOSTRING(SURGE_RACK_BASE_VERSION),
                  TOSTRING(SURGE_RACK_PLUG_VERSION),
                  TOSTRING(SURGE_RACK_SURGE_VERSION));
-        
-        INFO( "[SurgeRack] Instance: Module=%s Version=%s", getName().c_str(), version );
+        return std::string(version);
+    }
+
+    void showVersion() {
+        INFO( "[SurgeRack] Instance: Module=%s Version=%s", getName().c_str(), getVersion().c_str() );
     }
 
     virtual std::string getName() = 0;
@@ -171,6 +174,40 @@ struct SurgeModuleCommon : virtual public rack::Module {
     
     std::unique_ptr<SurgeStorage> storage;
     int storage_id_start, storage_id_end;
+
+    std::string comment = "No Comment";
+    virtual json_t *makeCommonDataJson() {
+        json_t *rootJ = json_object();
+        json_object_set_new( rootJ, "comment", json_string( comment.c_str() ) );
+        json_object_set_new( rootJ, "buildVersion", json_string( getVersion().c_str() ) );
+        return rootJ;
+    }
+
+    virtual void readCommonDataJson(json_t *rootJ) {
+        json_t *com = json_object_get(rootJ, "comment" );
+        const char* comchar = json_string_value(com);
+        comment = comchar;
+    }
+    
+#if RACK_V1
+    virtual json_t *dataToJson() override {
+        json_t *rootJ = makeCommonDataJson();
+        return rootJ;
+    }
+    virtual void dataFromJson(json_t *rootJ) override {
+        readCommonDataJson(rootJ);
+    }
+#else
+    virtual json_t *toJson() override {
+        json_t *rootJ = makeCommonDataJson();
+        return rootJ;
+    }
+
+    virtual void fromJson( json_t *rootJ ) override {
+        readCommonDataJson(rootJ);
+    }
+#endif    
+
 };
 
 struct StringCache {

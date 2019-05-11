@@ -259,11 +259,29 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         processPosition += 2; // that's why the call it block_size _OS (oversampled)
     }
 
-    virtual void readCommonDataJson(json_t *root) override {
+
+#if RACK_V1
+    virtual json_t *dataToJson() override {
+        json_t *rootJ = json_object();
+        json_object_set_new( rootJ, "streamed", json_integer(1.0) );
+        return rootJ;
+    }
+    virtual void dataFromJson(json_t *root) override {
         firstRespawnIsFromJSON = true;
-        SurgeModuleCommon::readCommonDataJson(root);
+    }
+#else
+    virtual json_t *toJson() override {
+        json_t *rootJ = json_object();
+        json_object_set_new( rootJ, "streamed", json_integer(1.0) );
+
+        return rootJ;
     }
 
+    virtual void fromJson( json_t *rootJ ) override {
+        firstRespawnIsFromJSON = true;
+    }
+#endif    
+    
     std::unique_ptr<Oscillator> surge_osc;
     OscillatorStorage *oscstorage;
 };
