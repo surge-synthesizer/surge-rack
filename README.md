@@ -20,11 +20,15 @@ The code builds with either RACK 0.6.2 or RACK 1.0, inasmuch as it builds at all
 automatically detects which one you have, assuming that if you are using 0.6.2 you are using the
 Rack SDK and if you are using 1.0 you have checked out the v1 branch.
 
-Before you build either system you need to have the rack environment setup. That means you need
-to install MSYS2 and a few other packages. 
+### Before you build
+
+Before you build either system you need to have the rack environment setup. 
+On windows, that means you need
+to install MSYS2 and a few other packages. On Mac, xcode-select and a few things.
+On Linux a few apt-gets.
+
 This is completely documented in the Rack manual:
 https://vcvrack.com/manual/Building.html
-
 
 If you have never built a rack plugin before, let us again suggest hopping on our slack in case you 
 get stuck. We build every commit windows, mac, and linux against V0.6.2 and regularly develop against v1.
@@ -34,7 +38,9 @@ get stuck. We build every commit windows, mac, and linux against V0.6.2 and regu
 Basically build against the Rack SDK as normal. The azure-pipelines.yml shows you how to do this. 
 Here's an example.
 
-In the MSYS2 64 bit shell do the following:
+On Windows: start a MSYS2 64. On Linux and Mac start a terminal of your choosing.
+
+**Very first time you build**
 
 ```
 mkdir directory-of-your-choosing
@@ -49,10 +55,22 @@ RACK_DIR=../Rack-SDK make dist
 
 and you should get a built plugin. Move the plugin zip to your rack documents folder and restart rack.
 
+**Subsequent changes**
+
+```
+cd directory-of-your-choosing/surge-rack
+(change code as desired)
+RACK_DIR=../Rack-SDK make dist
+```
+
+and you should get a built plugin. Move the plugin zip to your rack documents folder and restart rack.
+
 ### Rack 1.0
 
 Rack 1.0 still isn't stable. But it's what @baconpaul is developing against for now so it should work.
 Inasmuch as any of this alpha software works yet!
+
+** First Time **
 
 ```
 cd (working directory)
@@ -76,4 +94,39 @@ cd ../..
 make run
 ```
 
+**Subsequent Changes**
 
+```
+cd (working directory)/Rack/plugins/surge-rack
+(change code)
+make dist && ( cd ../.. ; make run )
+```
+
+## Updating your working copy
+
+The [the surge git protocols](https://github.com/surge-synthesizer/surge/blob/master/doc/git-howto.md) have full instructions
+but just as a refresher 
+
+** If you cloned from surge-synthesizer/surge-rack **
+
+```
+git checkout master
+git pull origin master
+```
+
+** If you have your own fork **
+
+*one time*
+
+```
+git remote add upstream https://github.com/surge-synthesizer/surge-rack.git
+```
+
+*When you want to update*
+
+```
+git checkout master
+git fetch usptream
+git reset upstream/master --hard
+git push origin
+```
