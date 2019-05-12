@@ -60,13 +60,13 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         pc.resize(NUM_PARAMS);
         setupSurgeCommon();
 
-        oscConfigurations.push_back(std::pair<int, std::string>(0, "Classic"));
-        oscConfigurations.push_back(std::pair<int, std::string>(1, "Sine"));
+        oscConfigurations.push_back(std::pair<int, std::string>(ot_classic, "Classic"));
+        oscConfigurations.push_back(std::pair<int, std::string>(ot_sinus, "Sine"));
         oscConfigurations.push_back(
-            std::pair<int, std::string>(6, "FM2 (fixed)"));
+            std::pair<int, std::string>(ot_FM2, "FM2 (fixed)"));
         oscConfigurations.push_back(
-            std::pair<int, std::string>(5, "FM3 (free)"));
-        oscConfigurations.push_back(std::pair<int, std::string>(3, "SH Noise"));
+            std::pair<int, std::string>(ot_FM, "FM3 (free)"));
+        oscConfigurations.push_back(std::pair<int, std::string>(ot_shnoise, "SH Noise"));
 
         
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
