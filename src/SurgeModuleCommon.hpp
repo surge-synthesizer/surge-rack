@@ -263,6 +263,10 @@ struct ParamCache {
 
     bool changed(int i, SurgeModuleCommon *m) const { return cache[i] != m->getParam(i); }
     bool changedInt(int i, SurgeModuleCommon *m) const { return (int)cache[i] != (int)m->getParam(i); }
+    bool changedAndIsNonZero(int i, SurgeModuleCommon *m) const {
+        auto r = m->getParam(i);
+        return cache[i] != r && r > 0.5;
+    }
 };
 
 
