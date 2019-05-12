@@ -140,7 +140,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         PatchCategory cat = storage->wt_category[storage->wtCategoryOrdering[catIdx]];
         
         wtCategoryName.reset( cat.name );
-        INFO( "CAT NAME %s",  cat.name.c_str() );
 
         int patchIdx = getParam(WT_IN_CATEGORY_IDX) * cat.numberOfPatchesInCatgory;
         if( patchIdx == cat.numberOfPatchesInCatgory ) patchIdx--;
@@ -206,7 +205,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
             if( pc.changedAndIsNonZero(LOAD_WT, this) )
             {
-                INFO( "LOADING WT %d", wtIdx );
+                INFO( "[SurgeRack] WTOSC Loading WT %d", wtIdx );
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
 
