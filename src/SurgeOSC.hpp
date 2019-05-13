@@ -238,7 +238,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         }
 
         float avgl = (surge_osc->output[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
-        float avgr = (surge_osc->outputR[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
+        float avgr = (surge_osc->outputR[processPosition] + surge_osc->outputR[processPosition+1]) * 0.5;
         if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
         {
             // Special mono mode

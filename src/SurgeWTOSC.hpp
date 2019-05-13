@@ -203,12 +203,12 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 updateWtIdx();
             }
 
-            if( pc.changedAndIsNonZero(LOAD_WT, this) )
+            if( pc.changedAndIsNonZero(LOAD_WT, this) || firstRespawnIsFromJSON )
             {
                 INFO( "[SurgeRack] WTOSC Loading WT %d", wtIdx );
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
-
+                surge_osc->init(72);
             }
 
             if( wtIdx != oscstorage->wt.current_id )
@@ -217,7 +217,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             }
             else
             {
-                setLight(NEEDS_LOAD, 1.0);
+                setLight(NEEDS_LOAD, 0.0);
             }
         
 
@@ -243,7 +243,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         }
 
         float avgl = (surge_osc->output[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
-        float avgr = (surge_osc->outputR[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
+        float avgr = (surge_osc->outputR[processPosition] + surge_osc->outputR[processPosition+1]) * 0.5;
         if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
         {
             // Special mono mode
@@ -262,6 +262,13 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         }
 
         processPosition += 2; // that's why the call it block_size _OS (oversampled)
+        firstRespawnIsFromJSON = false;
+    }
+
+    bool firstRespawnIsFromJSON = false;
+    virtual void readCommonDataJson(json_t *root) override {
+        firstRespawnIsFromJSON = true;
+        SurgeModuleCommon::readCommonDataJson(root);
     }
 
     std::unique_ptr<Oscillator> surge_osc;
