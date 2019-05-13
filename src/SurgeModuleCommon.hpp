@@ -11,6 +11,10 @@
 #include <map>
 #include <vector>
 
+#if RACK_V1
+namespace logger = rack::logger;
+#endif
+
 struct SurgeModuleCommon : virtual public rack::Module {
 #if RACK_V1
     SurgeModuleCommon() : rack::Module() {  }

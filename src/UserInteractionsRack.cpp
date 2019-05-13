@@ -2,9 +2,7 @@
 #include "rack.hpp"
 #include <sstream>
 
-#ifndef RACK_V1
 using namespace rack;
-#endif
 
 namespace Surge {
 namespace UserInteractions {
