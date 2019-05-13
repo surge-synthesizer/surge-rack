@@ -8,6 +8,7 @@
 #ifndef RACK_V1
 #define INFO(format, ...)                                                      \
     loggerLog(rack::INFO_LEVEL, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#else
 #endif
 
 extern rack::Plugin *pluginInstance;

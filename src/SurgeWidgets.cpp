@@ -4,6 +4,10 @@
 #include <execinfo.h>
 #endif
 
+#if RACK_V1
+namespace logger = rack::logger;
+#endif
+
 void stackToInfo()
 {
 #if MAC
