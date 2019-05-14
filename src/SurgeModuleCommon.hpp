@@ -82,10 +82,12 @@ struct SurgeModuleCommon : virtual public rack::Module {
 #endif
 
         showVersion();
-        INFO("[SurgeRack] SurgeStorage::dataPath = %s", dataPath.c_str());
-
-        // TODO: Have a mode where these paths come from res/
         storage.reset(new SurgeStorage(dataPath));
+
+        INFO("[SurgeRack] SurgeStorage::dataPath = %s", storage->datapath.c_str());
+        INFO("[SurgeRack] SurgeStorage::userDataPath = %s", storage->userDataPath.c_str());
+        INFO("[SurgeRack] SurgeStorage::wt_list.size() = %d", storage->wt_list.size());
+
         onSampleRateChange();
     }
 

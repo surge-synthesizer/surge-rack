@@ -18,6 +18,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         WT_IN_CATEGORY_IDX,
 
         LOAD_WT,
+
+        WT_OR_WINDOW,
+        
         NUM_PARAMS
     };
     enum InputIds {
@@ -46,6 +49,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
         configParam(CATEGORY_IDX, 0,1, 0);
         configParam(WT_IN_CATEGORY_IDX, 0,1, 0);
+        configParam(WT_OR_WINDOW,0,1,0);
         setupSurge();
     }
 #else
@@ -60,6 +64,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     StringCache pitch0DisplayCache;
     
     StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
+    ParamValueStateSaver knobSaver;
 
     virtual void setupSurge() {
         pc.resize(NUM_PARAMS);
@@ -79,10 +84,10 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         updateWtIdx();
         oscstorage->wt.queue_id = wtIdx;
         storage->perform_queued_wtloads();
+        surge_osc->init(72.0);
 
         processPosition = BLOCK_SIZE_OS + 1;
         oscstorage->type.val.i = 2;
-
 
         for (auto i = 0; i < n_osc_params; ++i) {
             setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
@@ -188,6 +193,45 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 updatePitchCache();
             }
             
+            if( pc.changed(WT_OR_WINDOW, this) )
+            {
+                INFO( "[SurgeRack] changed WT or Window" );
+
+                knobSaver.storeParams( (int)pc.get(WT_OR_WINDOW), OSC_CTRL_PARAM_0, OSC_CTRL_PARAM_0 + n_osc_params, this );
+                
+                int toWhat = ot_wavetable;
+                if( getParam(WT_OR_WINDOW) > 0.5)
+                    toWhat = ot_WT2;
+
+                for (int i = 0; i < n_osc_params; ++i) {
+                    oscstorage->p[i].set_name("-");
+                    oscstorage->p[i].set_type(ct_none);
+                }
+
+                surge_osc.reset(spawn_osc(toWhat, storage.get(), oscstorage,
+                                          storage->getPatch().scenedata[0]));
+                surge_osc->init(72.0);
+                surge_osc->init_ctrltypes();
+                surge_osc->init_default_values();
+                
+                oscstorage->wt.queue_id = wtIdx;
+                storage->perform_queued_wtloads();
+                surge_osc->init(72);
+                
+                for (auto i = 0; i < n_osc_params; ++i) {
+                    setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
+                }
+                knobSaver.applyFromIndex((int)getParam(WT_OR_WINDOW), this );
+
+                for(auto i=0; i<n_osc_params; ++i )
+                {
+                    paramNameCache[i].reset(oscstorage->p[i].get_name());
+                    char txt[256];
+                    oscstorage->p[i].get_display(txt, false, 0);
+                    paramValueCache[i].reset(txt);
+                }
+            }
+
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
                     pc.get(OSC_CTRL_PARAM_0 + i) ) {
@@ -197,6 +241,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     paramValueCache[i].reset(txt);
                 }
             }
+
 
             if( pc.changed(CATEGORY_IDX, this) || pc.changed(WT_IN_CATEGORY_IDX, this) )
             {
