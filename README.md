@@ -5,6 +5,27 @@ https://github.com/surge-synthesizer/surge/ into distinct rack modules for the o
 filter, effect, and waveshaper block segments. The best way to learn about this is to join
 the Surge slack which is detailed at [the surge readme](https://github.com/surge-synthesizer/surge/blob/master/README.md)
 
+**This is Alpha software, changing frequently, including modules with incomplete or non-functional
+panels and DSP code and streaming fragility. There is no guarantee that the code here will work, 
+will compile, or will save and load a patch from session to session or version to version.**
+
+That being said, we do run a v0.6.2 build in continuous integration against every PR, and our primary development
+is mac v1, so there is a good chance you can get it to build. If you see an error please raise a github issue.
+
+## What are the plugins provided and their state
+
+<table>
+<tr><th>Plugin</th><th>Description</th><th>State</th></tr>
+<tr><td>SurgeFX</td><td>The surge FX layer; delay chorus and more</td><td>The first one we tried, so it is a mess and needs work</td></tr>
+<tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Good shape. No temposync/clock yet</td></tr>
+<tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Very good shape. Few pops and clicks but works well. Button bank UI not done</td></tr>
+<tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Works well. Want to change UI to button box</td></tr>
+<tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Innumerable problems. Try at your own risk</td></tr>
+<tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Works perfectly; terrible UI</td></tr>
+<tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
+<tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>which doesn't yet exist in rack</td></tr>
+</table>
+
 ## Developing these plugins
 
 We are basically following [the surge developer standards](https://github.com/surge-synthesizer/surge/blob/master/doc/Developer%20Guide.md) 
@@ -70,7 +91,7 @@ and you should get a built plugin. Move the plugin zip to your rack documents fo
 Rack 1.0 still isn't stable. But it's what @baconpaul is developing against for now so it should work.
 Inasmuch as any of this alpha software works yet!
 
-** First Time **
+**First Time**
 
 ```
 cd (working directory)
@@ -107,14 +128,14 @@ make dist && ( cd ../.. ; make run )
 The [the surge git protocols](https://github.com/surge-synthesizer/surge/blob/master/doc/git-howto.md) have full instructions
 but just as a refresher 
 
-** If you cloned from surge-synthesizer/surge-rack **
+**If you cloned from surge-synthesizer/surge-rack**
 
 ```
 git checkout master
 git pull origin master
 ```
 
-** If you have your own fork **
+**If you have your own fork**
 
 *one time*
 
