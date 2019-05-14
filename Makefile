@@ -105,7 +105,7 @@ endif
 
 ifdef ARCH_LIN
 SOURCES += surge/src/linux/ConfigurationXml.S
-LDFLAGS += -lstdc++fs
+LDFLAGS += -lstdc++fs -pthread
 
 # This is really a hack but...
 build/surge/src/linux/ConfigurationXml.S.o: surge/src/linux/ConfigurationXml.S
