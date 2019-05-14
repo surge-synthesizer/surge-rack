@@ -114,13 +114,12 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgFontSize(vg,12);
         nvgFillColor(vg, SurgeStyle::surgeBlue());
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgText(vg, colOneEnd + padFromEdge, SCREW_WIDTH + padFromEdge + 20, "cat", NULL );
-        nvgText(vg, colOneEnd + padFromEdge + SurgeLayout::surgeRoosterX + padMargin, SCREW_WIDTH + padFromEdge + 20, "wt", NULL );
-        nvgText(vg, colOneEnd + padFromEdge + 2*SurgeLayout::surgeRoosterX + 2*padMargin, SCREW_WIDTH + padFromEdge + 20, "load", NULL );
+        nvgText(vg, colOneEnd + padFromEdge, SCREW_WIDTH + padFromEdge + 20 + 50, "cat", NULL );
+        nvgText(vg, colOneEnd + padFromEdge + SurgeLayout::surgeRoosterX + padMargin, SCREW_WIDTH + padFromEdge + 20 + 50, "wt", NULL );
+        nvgText(vg, colOneEnd + padFromEdge + 2*SurgeLayout::surgeRoosterX + 2*padMargin, SCREW_WIDTH + padFromEdge + 20 + 50, "load", NULL );
 
 
-
-        auto yTPos = SCREW_WIDTH + padFromEdge + 40 + SurgeLayout::surgeRoosterY + padMargin;
+        auto yTPos = SCREW_WIDTH + padFromEdge + 40 + SurgeLayout::surgeRoosterY + padMargin + 50;
         SurgeStyle::drawTextBGRect(vg, colOneEnd + padFromEdge, yTPos,
                                    box.size.x - colOneEnd - 2 * padFromEdge, 20 );
         yTPos += 20 + padMargin;
@@ -228,16 +227,29 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                      15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeWhite()));
     }
 
+    SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(colOneEnd+padFromEdge, pitchY + 20),
+                                                     rack::Vec(box.size.x - colOneEnd - 2 * padFromEdge, 40),
+                                                     module, M::WT_OR_WINDOW,
+                                                     2, 1, 13 );
+
+    bank->addLabel("Wavetable");
+    bank->addLabel("Window");
+    
+    addParam(bank);
+
+    float wtSelY = pitchY + 50;
+
     addParam(rack::createParam<SurgeKnobRooster>(
-                 rack::Vec(colOneEnd + padFromEdge, pitchY + 40), module, M::CATEGORY_IDX
+                 rack::Vec(colOneEnd + padFromEdge, wtSelY + 40), module, M::CATEGORY_IDX
 #if !RACK_V1
         ,
                  0,1,0
 #endif
         ));
 
+
     addParam(rack::createParam<SurgeKnobRooster>(
-                 rack::Vec(colOneEnd + padFromEdge + padMargin + SurgeLayout::surgeRoosterX, pitchY + 40),
+                 rack::Vec(colOneEnd + padFromEdge + padMargin + SurgeLayout::surgeRoosterX, wtSelY + 40),
                  module, M::WT_IN_CATEGORY_IDX
 #if !RACK_V1
                  ,
@@ -246,7 +258,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                  ));
 
     addParam(rack::createParam<rack::CKD6>(
-                 rack::Vec(colOneEnd + padFromEdge + 2*padMargin + 2*SurgeLayout::surgeRoosterX, pitchY + 40),
+                 rack::Vec(colOneEnd + padFromEdge + 2*padMargin + 2*SurgeLayout::surgeRoosterX, wtSelY + 40),
                  module, M::LOAD_WT
 #if !RACK_V1
                  ,
@@ -255,13 +267,13 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                  ));
 
     addChild(rack::createLight<rack::SmallLight<rack::GreenLight>>(
-                 rack::Vec(colOneEnd + padFromEdge + 3*padMargin + 3*SurgeLayout::surgeRoosterX, pitchY + 37),
+                 rack::Vec(colOneEnd + padFromEdge + 3*padMargin + 3*SurgeLayout::surgeRoosterX, wtSelY + 37),
                  module, M::NEEDS_LOAD
                  ));
 
 
     auto xTPos = colOneEnd + padMargin;
-    auto yTPos = SCREW_WIDTH + padFromEdge + 40 + SurgeLayout::surgeRoosterY + padMargin;
+    auto yTPos = SCREW_WIDTH + padFromEdge + 40 + SurgeLayout::surgeRoosterY + padMargin + 50;
     addChild(TextDisplayLight::create(
                  rack::Vec(xTPos + 4, yTPos),
                  rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
