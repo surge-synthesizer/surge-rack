@@ -137,8 +137,8 @@ jobs:
   - task: GitHubRelease@0
     displayName: "Update Github Release"
     inputs:
-      gitHubConnection: surge
-      repositoryName: surge/surge-rack
+      gitHubConnection: surge-synthesizer
+      repositoryName: surge-synthesizer/surge-rack
       action: edit
       tag: Nightly
       addChangeLog: false
