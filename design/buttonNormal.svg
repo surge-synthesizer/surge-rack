@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="27px" height="22px" viewBox="0 0 27 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>Normal</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="50%" y1="94.0851385%" x2="50%" y2="5.68399998%" id="linearGradient-1">
+            <stop stop-color="#FF9E1A" offset="0%"></stop>
+            <stop stop-color="#FF990D" offset="66.1818619%"></stop>
+            <stop stop-color="#F2A63E" offset="99.9709671%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Normal" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group">
+            <rect id="Rectangle" stroke="#FD9405" fill="url(#linearGradient-1)" x="0.5" y="0.5" width="26" height="21" rx="2"></rect>
+            <rect id="Rectangle" stroke="#000000" fill="#5C3603" x="8.5" y="16.5" width="11" height="3" rx="1"></rect>
+        </g>
+    </g>
+</svg>
