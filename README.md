@@ -19,7 +19,7 @@ is mac v1, so there is a good chance you can get it to build. If you see an erro
 <tr><td>SurgeFX</td><td>The surge FX layer; delay chorus and more</td><td>The first one we tried, so it is a mess and needs work</td></tr>
 <tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Good shape. No temposync/clock yet</td></tr>
 <tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Very good shape. Few pops and clicks but works well. Button bank UI not done</td></tr>
-<tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Works well. Want to change UI to button box</td></tr>
+<tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
 <tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Innumerable problems. Try at your own risk</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Works perfectly; terrible UI</td></tr>
 <tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>

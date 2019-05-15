@@ -28,20 +28,12 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     virtual std::string getName() override { return "WS"; }
     
     ParamCache pc;
-    StringCache wsNameCache, dbGainCache;
-    std::vector<std::string> wsNames;
+    StringCache dbGainCache;
 
     virtual void setupSurge() {
         setupSurgeCommon();
 
         pc.resize(NUM_PARAMS);
-
-        wsNames.push_back("none");
-        wsNames.push_back("tanh");
-        wsNames.push_back("hard");
-        wsNames.push_back("asym");
-        wsNames.push_back("sinus");
-        wsNames.push_back("digi");
     }
 
     int processPosition = 0;
@@ -73,7 +65,6 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     {
         if ((int)getParam(MODE_PARAM) != (int)pc.get(MODE_PARAM)) {
             swapWS((int)getParam(MODE_PARAM));
-            wsNameCache.reset(wsNames[(int)getParam(MODE_PARAM)]);
         }
         if (getParam(DRIVE_PARAM) != pc.get(DRIVE_PARAM)) {
             char txt[256];
