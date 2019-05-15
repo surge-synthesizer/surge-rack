@@ -6,7 +6,8 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
     typedef SurgeWaveShaper M;
     SurgeWaveShaperWidget(M *module);
 
-    int roostery0 = 53;
+    int roostery0 = 45;
+    int drivey0 = 160;
     int textArea = 20;
     int labelHeight = 13;
     int padMargin = 3;
@@ -29,12 +30,10 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
         nvgText(vg, box.size.x / 2, yp, label, NULL);
     }
     void moduleBackground(NVGcontext *vg) {
-        int yPos = roostery0 - labelHeight;
+        int yPos = roostery0 - labelHeight - padMargin;
         addLabel(vg, yPos, "Type");
-        yPos += labelHeight + SurgeLayout::surgeRoosterY + padMargin;
-        SurgeStyle::drawTextBGRect(vg, textMargin, yPos,
-                                   box.size.x - 2 * textMargin, textArea);
-        yPos += textArea + padMargin + driveOffset;
+
+        yPos = drivey0;
         addLabel(vg, yPos, "Drive");
 
         yPos += labelHeight + SurgeLayout::surgeRoosterY + padMargin +
@@ -79,29 +78,22 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
 
     int yPos = roostery0;
 
-    addParam(rack::createParam<SurgeKnobRooster>(
-        rack::Vec(box.size.x / 2 - SurgeLayout::surgeRoosterX / 2, yPos),
-        module, M::MODE_PARAM
-#if !RACK_V1
-        ,
-        0, n_ws_type - 1, 0
-#endif
-        ));
+    SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(padMargin, yPos),
+                                                     rack::Vec(box.size.x - 2 * padMargin, n_ws_type * 15 ),
+                                                     module, M::MODE_PARAM,
+                                                     1, n_ws_type, 13 );
 
-    yPos += SurgeLayout::surgeRoosterY + padMargin;
+    bank->addLabel("none");
+    bank->addLabel("tanh");
+    bank->addLabel("hard");
+    bank->addLabel("asym");
+    bank->addLabel("sinus");
+    bank->addLabel("digi");
 
-    addChild(TextDisplayLight::create(
-        rack::Vec(textMargin, yPos),
-        rack::Vec(box.size.x - 2 * textMargin, textArea),
-        module ? module->wsNameCache.getValue
-               : []() { return std::string("null"); },
-        module ? module->wsNameCache.getDirty : []() { return false; }, 15,
-        NVG_ALIGN_TOP | NVG_ALIGN_CENTER,
-        SurgeStyle::surgeWhite()));
+    addParam( bank );
+    
 
-    yPos += textArea + padMargin + driveOffset;
-
-    yPos += labelHeight + padMargin;
+    yPos = drivey0 + labelHeight + padMargin;
     addParam(rack::createParam<SurgeKnobRooster>(
         rack::Vec(box.size.x / 2 - SurgeLayout::surgeRoosterX / 2, yPos),
         module, M::DRIVE_PARAM
