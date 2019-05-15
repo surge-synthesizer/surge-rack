@@ -131,7 +131,10 @@ jobs:
 
   - bash: |
      ls -l $(Build.ArtifactStagingDirectory)
-    displayName: Look in Build Asset Dir 
+     export EXTEND_TAG=`date "+%Y%m%d-%H%M"`-`git rev-parse --short HEAD`
+     for file in $(Build.ArtifactStagingDirectory)/*.zip; do mv "$file" "${file/.zip/-${EXTEND_TAG}.zip}"; done
+     ls -l $(Build.ArtifactStagingDirectory)         
+    displayName: Tag asset names with Date
 
 
   - task: GitHubRelease@0
