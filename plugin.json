@@ -12,11 +12,60 @@
 	"donateUrl": "",
 	"modules": [
 		{
-			"slug": "SurgeFX",
-			"name": "SurgeFX",
-			"description": "The Surge FX suite in a single plugin",
-			"tags": [ "Effect", "Delay", "Chorus", "Reverb", "Distortion", "Dynamics" ]
+			"slug": "SurgeDelay",
+			"name": "SurgeDelay",
+			"description": "The Surge Delay effect",
+			"tags": [ "Effect", "Delay" ]
 		},
+		{
+			"slug": "SurgeChorus",
+			"name": "SurgeChorus",
+			"description": "The Surge Chorus effect",
+			"tags": [ "Effect", "Chorus" ]
+		},
+		{
+			"slug": "SurgeEQ",
+			"name": "SurgeEQ",
+			"description": "The Surge Equalizer",
+			"tags": [ "Effect", "Equalizer" ]
+		},
+		{
+			"slug": "SurgePhaser",
+			"name": "SurgePhaser",
+			"description": "The Surge Phaser",
+			"tags": [ "Effect" ]
+		},
+		{
+			"slug": "SurgeRotary",
+			"name": "SurgeRotary",
+			"description": "The Surge Rotary",
+			"tags": [ "Effect" ]
+		},
+		{
+			"slug": "SurgeDistort",
+			"name": "SurgeDistort",
+			"description": "The Surge Distort",
+			"tags": [ "Effect" ]
+		},
+		{
+			"slug": "SurgeReverb",
+			"name": "SurgeReverb",
+			"description": "The Surge Reverb",
+			"tags": [ "Effect" ]
+		},
+		{
+			"slug": "SurgeReverb2",
+			"name": "SurgeReverb2",
+			"description": "The Surge Reverb2",
+			"tags": [ "Effect" ]
+		},
+		{
+			"slug": "SurgeFreqShift",
+			"name": "SurgeFreqShift",
+			"description": "The Surge FreqShift",
+			"tags": [ "Effect" ]
+		},
+
 		{
 			"slug": "SurgeADSR",
 			"name": "SurgeADSR",

@@ -6,15 +6,30 @@
 #include <cstring>
 
 #define NUM_FX_PARAMS 12
+
+template<int effectNum>
+struct SurgeFXName {
+    static std::string getName() { return "GENERIC"; }
+};
+
+template<> struct SurgeFXName<fxt_delay> { static std::string getName() { return "DELAY"; } };
+template<> struct SurgeFXName<fxt_eq> { static std::string getName() { return "EQ"; } };
+template<> struct SurgeFXName<fxt_phaser> { static std::string getName() { return "PHASER"; } };
+template<> struct SurgeFXName<fxt_rotaryspeaker> { static std::string getName() { return "ROTARY"; } };
+template<> struct SurgeFXName<fxt_distortion> { static std::string getName() { return "DISTORT"; } };
+template<> struct SurgeFXName<fxt_reverb> { static std::string getName() { return "REVERB"; } };
+template<> struct SurgeFXName<fxt_reverb2> { static std::string getName() { return "REVERB2"; } };
+template<> struct SurgeFXName<fxt_freqshift> { static std::string getName() { return "FREQSHIFT"; } };
+template<> struct SurgeFXName<fxt_chorus4> { static std::string getName() { return "CHORUS"; } };
+
+template<int effectNum>
 struct SurgeFX : virtual SurgeModuleCommon {
     enum ParamIds {
-        FX_TYPE = 0,
-        FX_PARAM_0,
+        FX_PARAM_0 = 0,
         FX_EXTEND_0 = FX_PARAM_0 + NUM_FX_PARAMS,
         INPUT_GAIN = FX_EXTEND_0 + NUM_FX_PARAMS,
         OUTPUT_GAIN,
-        FX_PARAM_GAIN_0,
-        NUM_PARAMS = FX_PARAM_GAIN_0 + NUM_FX_PARAMS
+        NUM_PARAMS
     };
     enum InputIds {
         INPUT_R_OR_MONO,
@@ -30,28 +45,19 @@ struct SurgeFX : virtual SurgeModuleCommon {
     ParamCache pc;
     
     StringCache paramDisplayCache[NUM_FX_PARAMS];
-
-    std::string effectNameCache = "";
-    bool effectNameCacheDirty = true;
-    std::string labelCache[NUM_FX_PARAMS];
-    bool labelCacheDirty[NUM_FX_PARAMS];
-    std::string sublabelCache[NUM_FX_PARAMS];
-    bool sublabelCacheDirty[NUM_FX_PARAMS];
-    std::string groupCache[NUM_FX_PARAMS];
-    bool groupCacheDirty[NUM_FX_PARAMS];
+    StringCache labelCache[NUM_FX_PARAMS];
+    StringCache groupCache[NUM_FX_PARAMS];
 
 #if RACK_V1
     SurgeFX() : SurgeModuleCommon() {
-        setupSurge();
-
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(FX_TYPE, 0, 9, 1);
         for (int i = 0; i < 12; ++i) {
-            configParam(FX_PARAM_0 + i, 0, 1, fxstorage->p[i].get_value_f01());
-            configParam(FX_PARAM_GAIN_0 + i, 0, 1, 0.2);
+            configParam(FX_PARAM_0 + i, 0, 1, 0 );
         }
         configParam(INPUT_GAIN, 0, 1, 1);
         configParam(OUTPUT_GAIN, 0, 1, 1);
+        
+        setupSurge();
     }
 #else
     SurgeFX()
@@ -60,7 +66,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
     }
 #endif
 
-    virtual std::string getName() override { return "FX"; }
+    virtual std::string getName() override { return SurgeFXName<effectNum>::getName(); }
 
     void setupSurge() {
         pc.resize(NUM_PARAMS);
@@ -68,35 +74,30 @@ struct SurgeFX : virtual SurgeModuleCommon {
         setupSurgeCommon();
 
         fxstorage = &(storage->getPatch().fx[0]);
-        fxstorage->type.val.i = 1;
+        fxstorage->type.val.i = effectNum;
 
-        surge_effect.reset(spawn_effect(1, storage.get(),
+        surge_effect.reset(spawn_effect(effectNum, storage.get(),
                                         &(storage->getPatch().fx[0]),
                                         storage->getPatch().globaldata));
         surge_effect->init();
         surge_effect->init_ctrltypes();
+        surge_effect->init_default_values();
 
-        effectNameCacheDirty = true;
-        effectNameCache = surge_effect->get_effectname();
-
-        fxstorage->type.val.i = 1;
-
-        // Because I know this
-        fxstorage->p[0].set_value_f01(0.6);
-        fxstorage->p[1].set_value_f01(0.54);
-        fxstorage->p[2].set_value_f01(0.9);
-        fxstorage->p[3].set_value_f01(0.5);
-        fxstorage->p[4].set_value_f01(0);
-        fxstorage->p[5].set_value_f01(1);
-        fxstorage->p[6].set_value_f01(0.5);
-        fxstorage->p[7].set_value_f01(0.0);
-        fxstorage->p[8].set_value_f01(0.0);
-        fxstorage->p[9].set_value_f01(0.0);
-        fxstorage->p[10].set_value_f01(1.0);
-        fxstorage->p[11].set_value_f01(0.0);
-
+        // Do default values
         reorderSurgeParams();
 
+        if( ! firstRespawnIsFromJSON )
+        {
+            // Set up the parametres based on the thingy
+            for( int i=0; i<n_fx_params; ++i )
+            {
+                int o = orderToParam[ i ];
+                INFO( "Setting at %d with %d", i, o );
+                setParam(FX_PARAM_0 + i, fxstorage->p[o].get_value_f01() );
+            }
+        }
+        
+        
         for (auto i = 0; i < BLOCK_SIZE; ++i) {
             bufferL[i] = 0.0f;
             bufferR[i] = 0.0f;
@@ -135,9 +136,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
             for (auto a : orderTrack) {
                 orderToParam.push_back(a.first);
                 int idx = orderToParam.size() - 1;
-                labelCache[idx] = fxstorage->p[a.first].get_name();
-                ;
-                labelCacheDirty[idx] = true;
+                labelCache[idx].reset(fxstorage->p[a.first].get_name());
             }
         }
 
@@ -145,13 +144,12 @@ struct SurgeFX : virtual SurgeModuleCommon {
         for (auto i = 0; i < n_fx_params; ++i) {
             int fpos = fxstorage->p[orderToParam[i]].posy +
                        10 * fxstorage->p[orderToParam[i]].posy_offset;
-            sublabelCacheDirty[i] = true;
             for (auto j = 0; j < n_fx_params; ++j) {
                 if (surge_effect->group_label(j) &&
                     162 + 8 + 10 * surge_effect->group_label_ypos(j) <
                         fpos // constants for SurgeGUIEditor. Sigh.
                 ) {
-                    sublabelCache[i] = surge_effect->group_label(j);
+                    groupCache[i].reset( surge_effect->group_label(j) );
                 }
             }
         }
@@ -165,8 +163,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
     float processedL alignas(16)[BLOCK_SIZE], processedR
         alignas(16)[BLOCK_SIZE];
     int bufferPos = BLOCK_SIZE - 1;
-
-    inline int getTypeParam() { return floor(getParam(FX_TYPE)); }
 
 #if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
@@ -188,21 +184,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
             std::memcpy(processedL, bufferL, BLOCK_SIZE * sizeof(float));
             std::memcpy(processedR, bufferR, BLOCK_SIZE * sizeof(float));
 
-            int tp = getTypeParam();
-            if (tp != fxstorage->type.val.i &&
-                tp != 0) // FIXME: Deal with the 0 case
-            {
-                fxstorage->type.val.i = tp;
-                surge_effect.reset(spawn_effect(tp, storage.get(),
-                                                &(storage->getPatch().fx[0]),
-                                                storage->getPatch().globaldata));
-                surge_effect->init();
-                surge_effect->init_ctrltypes();
-                reorderSurgeParams();
-                effectNameCacheDirty = true;
-                effectNameCache = surge_effect->get_effectname();
-            }
-            
             for (int i = 0; i < n_fx_params; ++i) {
                 if(pc.changed(FX_PARAM_0 + i, this))
                 {
@@ -219,8 +200,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
             for (int i = 0; i < n_fx_params; ++i) {
                 fxstorage->p[orderToParam[i]].set_value_f01(
                     getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i)) /
-                    10.0 *
-                    getParam(FX_PARAM_GAIN_0 + i));
+                    10.0 );
             }
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
@@ -231,32 +211,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
 
         setOutput(OUTPUT_R_OR_MONO, outG * processedR[bufferPos] * 5.0);
         setOutput(OUTPUT_L, outG * processedL[bufferPos] * 5.0);
-    }
-
-    std::string getLabel(int gi) { return labelCache[gi]; }
-    bool getLabelDirty(int gi) {
-        bool res = labelCacheDirty[gi];
-        labelCacheDirty[gi] = false;
-        return res;
-    }
-    std::string getSubLabel(int gi) { return sublabelCache[gi]; }
-
-    bool getSubLabelDirty(int gi) {
-        bool res = sublabelCacheDirty[gi];
-        sublabelCacheDirty[gi] = false;
-        return res;
-    }
-
-    bool getStringDirty(int gi) {
-        return true; // fixme of course
-    }
-
-    std::string getEffectNameString() { return effectNameCache; }
-
-    bool getEffectNameStringDirty() {
-        auto res = effectNameCacheDirty;
-        effectNameCacheDirty = false;
-        return res;
     }
 
     std::unique_ptr<Effect> surge_effect;

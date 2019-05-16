@@ -1,5 +1,7 @@
 #include "Surge.hpp"
 
+std::set<rack::Model *> modelSurgeFXSet;
+
 rack::Plugin *pluginInstance;
 
 void init(rack::Plugin *p) {
@@ -13,7 +15,9 @@ void init(rack::Plugin *p) {
     p->website = "https://github.com/surge-synthesizer/surge-rack";
 #endif
 
-    p->addModel(modelSurgeFX);
+    for( auto m : modelSurgeFXSet )
+        p->addModel(m);
+    
     p->addModel(modelSurgeADSR);
     p->addModel(modelSurgeOSC);
     p->addModel(modelSurgeWaveShaper);

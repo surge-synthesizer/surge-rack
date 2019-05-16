@@ -310,12 +310,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         firstRespawnIsFromJSON = false;
     }
 
-    bool firstRespawnIsFromJSON = false;
-    virtual void readCommonDataJson(json_t *root) override {
-        firstRespawnIsFromJSON = true;
-        SurgeModuleCommon::readCommonDataJson(root);
-    }
-
     std::unique_ptr<Oscillator> surge_osc;
     OscillatorStorage *oscstorage;
 };

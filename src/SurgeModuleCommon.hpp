@@ -108,7 +108,15 @@ struct SurgeModuleCommon : virtual public rack::Module {
             std::string presetBase = std::string("res/presets/") + getName();
             std::string presetDir = rack::asset::plugin(pluginInstance, presetBase.c_str());
             std::vector<std::string> names;
-            for( auto &d : fs::directory_iterator( fs::path( presetDir.c_str() ) ) )
+            
+            fs::path presetPath = fs::path( presetDir.c_str() );
+            if( ! fs::is_directory( presetPath ) )
+            {
+                INFO( "[SurgeRack] %s has no factory plugins", getName().c_str() );
+                return;
+            }
+            INFO( "[SurgeRack] %s loading presets from %s", getName().c_str(), presetDir.c_str() );
+            for( auto &d : fs::directory_iterator( presetDir ) )
             {
                 INFO( "[SurgeRack] %s preset '%s'", getName().c_str(), d.path().generic_string().c_str() );
                 names.push_back( d.path().generic_string().c_str());
@@ -227,7 +235,10 @@ struct SurgeModuleCommon : virtual public rack::Module {
         return rootJ;
     }
 
+    bool firstRespawnIsFromJSON = false;
+
     virtual void readCommonDataJson(json_t *rootJ) {
+        firstRespawnIsFromJSON = true;
         json_t *com = json_object_get(rootJ, "comment" );
         const char* comchar = json_string_value(com);
         comment = comchar;
