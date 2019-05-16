@@ -1,14 +1,16 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf400
-{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
 \margl1440\margr1440\vieww10800\viewh8400\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
-\f0\fs24 \cf0 buttonSelected:\
+\f0\b\fs28 \cf0 buttonSelected
+\f1\b0\fs24 :\
 \
 Fill:\
 Color: #FF9A10\
+cornerRadius: 2px\
 \
 Stroke:\
 Color: #FF2100\
@@ -18,6 +20,14 @@ Inner Shadow:\
 blur: 5px\
 color: #ffffff\
 \
+dropShadow:\
+x:1px\
+y:1px\
+blur: 2px\
+spread: 0px\
+color: #000000\
+opacity: 35%\
+\
 centerOval:\
 fill:\
 gradient:\
@@ -26,7 +36,6 @@ middle: #F0AD53\
 bottom: #FF9A10\
 \
 light:\
-\
 fill: \
 \
 stroke:\
@@ -43,15 +52,25 @@ highlight:\
 color: #ffffff 20% opacity\
 \
 \
-buttonNormal: \
+
+\f0\b\fs28 buttonNormal: 
+\f1\b0\fs24 \
 \
 Fill:\
 gradient top: #F2A63E\
 gradient middle: #FF990D\
 gradient bottom: #FF9E1A\
+cornerRadius: 2px\
 \
 Stroke:\
 #FD9405\
+\
+dropShadow:\
+x: 1px\
+y: 2px\
+blur: 3px\
+color: #000000\
+alpha: 35%\
 \
 light: \
 \
@@ -60,4 +79,13 @@ stroke: \
 \
 Fill:\
 color: #5C3603\
+\
+
+\f0\b\fs28 buttonTrack:\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b0\fs24 \cf0 cornerRadius: 4px\
+fill:\
+color: #000000\
 }
