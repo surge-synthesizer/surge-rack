@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rack.hpp"
+#include <set>
 
 #define SCREW_WIDTH 15
 #define RACK_HEIGHT 380
@@ -11,8 +12,12 @@
 #else
 #endif
 
+
 extern rack::Plugin *pluginInstance;
-extern rack::Model *modelSurgeFX;
+
+
+extern std::set<rack::Model *> modelSurgeFXSet;
+
 extern rack::Model *modelSurgeADSR;
 extern rack::Model *modelSurgeOSC;
 extern rack::Model *modelSurgeWaveShaper;

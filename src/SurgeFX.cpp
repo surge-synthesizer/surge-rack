@@ -2,18 +2,34 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
+template <int effectType>
 struct SurgeFXWidget : rack::ModuleWidget {
-    typedef SurgeFX M;
+    typedef SurgeFX<effectType> M;
     SurgeFXWidget(M *module);
 
+    int padMargin = 3;
     int ioMargin = 7;
     int ioRegionWidth = 105;
     int fontId = -1;
 
+    int nControls = 12;
+    
+    float controlAreaHeight = SurgeLayout::orangeLine - padMargin - SCREW_WIDTH;
+    float controlHeight = controlAreaHeight / nControls;
+
+
     void moduleBackground(NVGcontext *vg) {
+        int textAreaWidth = box.size.x - 4 * padMargin - 2 * SurgeLayout::portX;
         if (fontId < 0)
             fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
 
+        for( int i=0; i<nControls; ++i )
+        {
+            SurgeStyle::drawTextBGRect(vg, 3*padMargin+2*SurgeLayout::portX, i*controlHeight + SCREW_WIDTH + padMargin,
+                                       box.size.x - 4*padMargin - 2 * SurgeLayout::portX, controlHeight-padMargin);
+        }
+
+        
         for (int i = 0; i < 2; ++i) {
             nvgBeginPath(vg);
             int x0 = 0;
@@ -66,9 +82,6 @@ struct SurgeFXWidget : rack::ModuleWidget {
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
             nvgText(vg, ll.x, ll.y, "Gain", NULL);
         }
-
-        SurgeStyle::drawTextBGRect(vg, box.size.x / 4 + 36, 15,
-                                   box.size.x / 2 - SCREW_WIDTH / 2 - 36, 34);
     }
 
     rack::Vec ioPortLocation(bool input,
@@ -86,7 +99,8 @@ struct SurgeFXWidget : rack::ModuleWidget {
     }
 };
 
-SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
+template <int effectType>
+SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
     : rack::ModuleWidget(
 #ifndef RACK_V1
           module
@@ -96,8 +110,8 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 29, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "FX");
+    box.size = rack::Vec(SCREW_WIDTH * 16, RACK_HEIGHT);
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, SurgeFXName<effectType>::getName());
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };
@@ -130,74 +144,57 @@ SurgeFXWidget::SurgeFXWidget(SurgeFXWidget::M *module)
                                                ));
     int parmMargin = 3;
 
-    addChild(TextDisplayLight::create(
-        rack::Vec(box.size.x / 4 + 2 + 36, 17),
-        rack::Vec(box.size.x / 2 - SCREW_WIDTH / 2 - 36, 31),
-        [module]() { return module ? module->getEffectNameString() : "null"; },
-        [module]() {
-            return module ? module->getEffectNameStringDirty() : true;
-        },
-        20, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT, SurgeStyle::surgeWhite()));
-    TextDisplayLight *tdl;
-    addChild(tdl = TextDisplayLight::create(
-                 rack::Vec(box.size.x / 4 + 2 + 36, 16),
-                 rack::Vec(box.size.x / 2 - SCREW_WIDTH / 2 - 36, 31),
-                 []() { return "Effect Type"; }, []() { return false; }, 12,
-                 NVG_ALIGN_TOP | NVG_ALIGN_LEFT));
-    tdl->font = SurgeStyle::fontFaceCondensed();
-
-    addParam(rack::createParam<SurgeKnobRooster>(rack::Vec(box.size.x / 4, 15),
-                                                 module, M::FX_TYPE
-#ifndef RACK_V1
-                                                 ,
-                                                 0, 10, 1
+    
+    int textAreaWidth = box.size.x - 4 * padMargin - 2 * SurgeLayout::portX;
+    for( int i=0; i<nControls; ++i )
+    {
+        float yPos = i * controlHeight + SCREW_WIDTH + padMargin;
+        int pa = M::FX_PARAM_0 + i;
+        int cv = M::FX_PARAM_INPUT_0 + i;
+        addInput(rack::createInput<rack::PJ301MPort>(
+                     rack::Vec(padMargin, yPos), module, cv ));
+        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(2 * padMargin + SurgeLayout::portX, yPos), module,
+                                                   pa
+#if !RACK_V1
+                                                   ,
+                                                   0, 1, 0.5
 #endif
-                                                 ));
+                                                   ));
 
-    for (int i = 0; i < 6; ++i) {
-        int pos = 60 + i * (SurgeParamLargeWidget::height + parmMargin);
-        int x0 = 0;
-        addChild(SurgeParamLargeWidget::create(
-            this, module, rack::Vec(SCREW_WIDTH * 0.5, pos), M::FX_PARAM_0 + i,
-            M::FX_PARAM_GAIN_0 + i, M::FX_PARAM_INPUT_0 + i, M::FX_EXTEND_0 + i,
-            [module, i]() { return module ? module->getLabel(i) : "null"; },
-            [module, i]() { return module ? module->getLabelDirty(i) : false; },
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2, yPos),
+                                          rack::Vec(textAreaWidth, controlHeight - padMargin),
+                                          module ? &(module->labelCache[i]) : nullptr,
+                                          13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeOrange()));
 
-            [module, i]() { return module ? module->getSubLabel(i) : "null"; },
-            [module, i]() {
-                return module ? module->getSubLabelDirty(i) : false;
-            },
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2, yPos),
+                                          rack::Vec(textAreaWidth, controlHeight - padMargin),
+                                          module ? &(module->groupCache[i]) : nullptr,
+                                          9, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
 
-            module ? module->paramDisplayCache[i].getValue
-                   : []() { return std::string("null"); },
-            module ? module->paramDisplayCache[i].getDirty
-                   : []() { return false; }));
-
-        addChild(SurgeParamLargeWidget::create(
-            this, module, rack::Vec(14.5 * SCREW_WIDTH, pos),
-            M::FX_PARAM_0 + i + 6, M::FX_PARAM_GAIN_0 + i + 6,
-            M::FX_PARAM_INPUT_0 + i + 6, M::FX_EXTEND_0 + 6 + i,
-            [module, i]() { return module ? module->getLabel(i + 6) : "null"; },
-            [module, i]() {
-                return module ? module->getLabelDirty(i + 6) : false;
-            },
-            [module, i]() {
-                return module ? module->getSubLabel(i + 6) : "null";
-            },
-            [module, i]() {
-                return module ? module->getSubLabelDirty(i + 6) : false;
-            },
-            module ? module->paramDisplayCache[i + 6].getValue
-                   : []() { return std::string("null"); },
-            module ? module->paramDisplayCache[i + 6].getDirty
-                   : []() { return false; }));
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2 , yPos),
+                                          rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
+                                          module ? &(module->paramDisplayCache[i]) : nullptr,
+                                          14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));
+        
     }
 }
 
+
 #if RACK_V1
-rack::Model *modelSurgeFX =
-    rack::createModel<SurgeFXWidget::M, SurgeFXWidget>("SurgeFX");
+#define CREATE_FX( type, name ) auto v ## type = modelSurgeFXSet.insert( \
+        rack::createModel<SurgeFXWidget< type >::M, SurgeFXWidget< type >>(name));
 #else
-rack::Model *modelSurgeFX = rack::createModel<SurgeFXWidget::M, SurgeFXWidget>(
-    "Surge Team", "SurgeFX", "SurgeFX", rack::EFFECT_TAG);
+#define CREATE_FX( type, name ) auto v ## type = modelSurgeFXSet.insert( \
+        rack::createModel<SurgeFXWidget< type >::M, SurgeFXWidget< type >>( \
+            "Surge Team", name, name, rack::EFFECT_TAG));
 #endif
+
+CREATE_FX( fxt_delay, "SurgeDelay" );
+CREATE_FX( fxt_eq, "SurgeEQ" );
+CREATE_FX( fxt_phaser, "SurgePhaser" );
+CREATE_FX( fxt_rotaryspeaker, "SurgeRotary" );
+CREATE_FX( fxt_distortion, "SurgeDistort" );
+CREATE_FX( fxt_reverb, "SurgeReverb" );
+CREATE_FX( fxt_reverb2, "SurgeReverb2" );
+CREATE_FX( fxt_freqshift, "SurgeFreqShift" );
+CREATE_FX( fxt_chorus4, "SurgeChorus" );
