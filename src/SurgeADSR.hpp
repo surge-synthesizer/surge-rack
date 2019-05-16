@@ -92,6 +92,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
         setupStorageRanges(&(adsrstorage->a), &(adsrstorage->mode));
         pc.resize(NUM_PARAMS);
+
     }
 
     std::unique_ptr<AdsrEnvelope> surge_envelope;

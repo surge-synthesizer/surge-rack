@@ -8,6 +8,16 @@
 #include "SurgeStorage.h"
 #include "rack.hpp"
 
+#if LINUX
+#include <experimental/filesystem>
+#elif MAC || TARGET_RACK
+#include <filesystem.h>
+#else
+#include <filesystem>
+#endif
+
+namespace fs = std::experimental::filesystem;
+
 #include <map>
 #include <vector>
 
@@ -90,6 +100,34 @@ struct SurgeModuleCommon : virtual public rack::Module {
 
         onSampleRateChange();
     }
+
+#if RACK_V1
+    virtual void onAdd() override {
+        if(model && model->presetPaths.size() == 0)
+        {
+            std::string presetBase = std::string("res/presets/") + getName();
+            std::string presetDir = rack::asset::plugin(pluginInstance, presetBase.c_str());
+            std::vector<std::string> names;
+            for( auto &d : fs::directory_iterator( fs::path( presetDir.c_str() ) ) )
+            {
+                INFO( "[SurgeRack] %s preset '%s'", getName().c_str(), d.path().generic_string().c_str() );
+                names.push_back( d.path().generic_string().c_str());
+            }
+
+            std::sort( names.begin(), names.end() );
+            
+            for( auto &n : names )
+            {
+                model->presetPaths.push_back(n);
+            }
+
+            //model->presetPaths.push_back(rack::asset::plugin(pluginInstance, "res/presets/ADSR/One.vcvm" ) );
+            //model->presetPaths.push_back(rack::asset::plugin(pluginInstance, "res/presets/ADSR/Two.vcvm" ) );
+        }
+    }
+#endif        
+
+
 
     inline float getParam(int id) {
 #if RACK_V1
