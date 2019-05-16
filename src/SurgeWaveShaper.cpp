@@ -6,7 +6,7 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
     typedef SurgeWaveShaper M;
     SurgeWaveShaperWidget(M *module);
 
-    int roostery0 = 45;
+    int roostery0 = SCREW_WIDTH + 3;
     int drivey0 = 160;
     int textArea = 20;
     int labelHeight = 13;
@@ -30,10 +30,7 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
         nvgText(vg, box.size.x / 2, yp, label, NULL);
     }
     void moduleBackground(NVGcontext *vg) {
-        int yPos = roostery0 - labelHeight - padMargin;
-        addLabel(vg, yPos, "Type");
-
-        yPos = drivey0;
+        float yPos = drivey0;
         addLabel(vg, yPos, "Drive");
 
         yPos += labelHeight + SurgeLayout::surgeRoosterY + padMargin +
@@ -79,7 +76,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     int yPos = roostery0;
 
     SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(padMargin, yPos),
-                                                     rack::Vec(box.size.x - 2 * padMargin, n_ws_type * 15 ),
+                                                     rack::Vec(box.size.x - 2 * padMargin, n_ws_type * 23 ),
                                                      module, M::MODE_PARAM,
                                                      1, n_ws_type, 13 );
 

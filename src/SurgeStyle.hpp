@@ -30,6 +30,7 @@ struct SurgeStyle {
 
     static NVGcolor backgroundDarkGray() { return nvgRGBA(175, 176, 182, 255); }
     static NVGcolor backgroundGray() { return nvgRGBA(205, 206, 212, 255); }
+    static NVGcolor backgroundGrayTrans() { return nvgRGBA(205, 206, 212, 0); }
     static NVGcolor backgroundLightGray() {
         return nvgRGBA(215, 216, 222, 255);
     }

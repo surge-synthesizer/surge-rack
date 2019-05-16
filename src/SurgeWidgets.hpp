@@ -308,6 +308,8 @@ struct SurgeButtonBank :
     
     int fontId = -1;
     void drawWidget(NVGcontext *vg);
+    void drawSelectedButton(NVGcontext *vg, float x, float y, float w, float h, std::string label);
+    void drawUnselectedButton(NVGcontext *vg, float x, float y, float w, float h, std::string label);
     void buttonPressedAt(float x, float y) {
         auto bw = box.size.x / rows;
         auto bh = box.size.y / cols;
