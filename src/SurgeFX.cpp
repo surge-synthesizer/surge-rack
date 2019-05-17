@@ -198,3 +198,4 @@ CREATE_FX( fxt_reverb, "SurgeReverb" );
 CREATE_FX( fxt_reverb2, "SurgeReverb2" );
 CREATE_FX( fxt_freqshift, "SurgeFreqShift" );
 CREATE_FX( fxt_chorus4, "SurgeChorus" );
+CREATE_FX( fxt_conditioner, "SurgeConditioner" );

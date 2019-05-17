@@ -21,6 +21,7 @@ template<> struct SurgeFXName<fxt_reverb> { static std::string getName() { retur
 template<> struct SurgeFXName<fxt_reverb2> { static std::string getName() { return "REVERB2"; } };
 template<> struct SurgeFXName<fxt_freqshift> { static std::string getName() { return "FREQSHIFT"; } };
 template<> struct SurgeFXName<fxt_chorus4> { static std::string getName() { return "CHORUS"; } };
+template<> struct SurgeFXName<fxt_conditioner> { static std::string getName() { return "CONDITION"; } };
 
 template<int effectNum>
 struct SurgeFX : virtual SurgeModuleCommon {
@@ -92,7 +93,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
             for( int i=0; i<n_fx_params; ++i )
             {
                 int o = orderToParam[ i ];
-                INFO( "Setting at %d with %d", i, o );
                 setParam(FX_PARAM_0 + i, fxstorage->p[o].get_value_f01() );
             }
         }
