@@ -65,6 +65,12 @@
 			"description": "The Surge FreqShift",
 			"tags": [ "Effect" ]
 		},
+		{
+			"slug": "SurgeConditioner",
+			"name": "SurgeConditioner",
+			"description": "The Surge Conditioner",
+			"tags": [ "Effect" ]
+		},
 
 		{
 			"slug": "SurgeADSR",
