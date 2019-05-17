@@ -7,6 +7,9 @@
 #include "svg.hpp"
 #endif
 
+int SurgeStyle::fid = -1;
+int SurgeStyle::fidcond = -1;
+
 /*
 ** These are purposefully not exposed
 */
@@ -86,9 +89,6 @@ void SurgeStyle::drawTextBGRect(NVGcontext *vg, float x0, float y0, float w,
 
 void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
                                      std::string displayName, bool narrowMode) {
-    int orangeLine = SurgeLayout::orangeLine;
-    int fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
-
     nvgBeginPath(vg);
     nvgRect(vg, 0, 0, w, h);
     nvgFillColor(vg, SurgeStyle::backgroundGray());
@@ -157,7 +157,7 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     {
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
-        nvgFontFaceId(vg, fontId);
+        nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 14);
         nvgFillColor(vg, SurgeStyle::surgeBlue());
         nvgText(vg, logoX0 - logoWidth / 2 - 3, 0, "Surge", NULL);
@@ -165,7 +165,7 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     
     nvgBeginPath(vg);
     nvgTextAlign(vg, (narrowMode ? NVG_ALIGN_RIGHT | NVG_ALIGN_TOP : NVG_ALIGN_LEFT | NVG_ALIGN_TOP ) );
-    nvgFontFaceId(vg, fontId);
+    nvgFontFaceId(vg, fontId(vg));
     nvgFontSize(vg, 14);
     nvgFillColor(vg, SurgeStyle::surgeBlue());
     nvgText(vg, (narrowMode ? w - 2 : logoX0 + logoWidth / 2 + 3 ), 0, displayName.c_str(), NULL);

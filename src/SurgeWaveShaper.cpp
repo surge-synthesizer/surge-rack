@@ -2,29 +2,23 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeWaveShaperWidget : rack::ModuleWidget {
+struct SurgeWaveShaperWidget : SurgeModuleWidgetCommon {
     typedef SurgeWaveShaper M;
     SurgeWaveShaperWidget(M *module);
 
-    int roostery0 = SCREW_WIDTH + 3;
+    int buttonsY0 = padFromTop;
     int drivey0 = 160;
     int textArea = 20;
     int labelHeight = 13;
-    int padMargin = 3;
-    int textMargin = 3;
     int driveOffset = 20;
 
-    int fontId = -1;
-    int topOfInput = RACK_HEIGHT - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
+    int topOfInput = RACK_HEIGHT - 5 * padMargin - 3 * labelHeight - 2 * portY;
     
     void addLabel(NVGcontext *vg, int yp, const char *label,
-                  NVGcolor col = SurgeStyle::surgeBlue()) {
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
-
+                  NVGcolor col = surgeBlue()) {
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-        nvgFontFaceId(vg, fontId);
+        nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgFillColor(vg, col);
         nvgText(vg, box.size.x / 2, yp, label, NULL);
@@ -33,38 +27,39 @@ struct SurgeWaveShaperWidget : rack::ModuleWidget {
         float yPos = drivey0;
         addLabel(vg, yPos, "Drive");
 
-        yPos += labelHeight + SurgeLayout::surgeRoosterY + padMargin +
-                SurgeLayout::portY + 4 * padMargin;
-        SurgeStyle::drawTextBGRect(vg, textMargin, yPos,
-                                   box.size.x - 2 * textMargin, textArea);
+        yPos += labelHeight + surgeRoosterY + padMargin +
+                portY + 4 * padMargin;
+        drawTextBGRect(vg, padFromEdge, yPos,
+                                   box.size.x - 2 * padFromEdge, textArea);
         yPos += padMargin;
 
         yPos += textArea + padMargin;
-        int sz = SurgeLayout::portX / 2 + 2 * padMargin;
+        int sz = portX / 2 + 2 * padMargin;
 
         yPos = topOfInput;
-        SurgeStyle::drawBlueIORect(vg, box.size.x / 2 - sz, yPos, sz * 2,
-                                   2 * SurgeLayout::portY + 2 * labelHeight +
+        drawBlueIORect(vg, box.size.x / 2 - sz, yPos, sz * 2,
+                                   2 * portY + 2 * labelHeight +
                                        4 * padMargin);
         yPos += padMargin;
-        addLabel(vg, yPos, "Input", SurgeStyle::surgeWhite());
-        yPos += labelHeight + SurgeLayout::portY + padMargin;
-        addLabel(vg, yPos, "Output", SurgeStyle::surgeWhite());
+        addLabel(vg, yPos, "Input", surgeWhite());
+        yPos += labelHeight + portY + padMargin;
+        addLabel(vg, yPos, "Output", surgeWhite());
     }
 };
 
 SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
-    : rack::ModuleWidget(
 #ifndef RACK_V1
-          module
-#endif
-      ) {
+    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
+#else
+    : SurgeModuleWidgetCommon()
+#endif      
+{
 #ifdef RACK_V1
     setModule(module);
 #endif
 
     box.size = rack::Vec(SCREW_WIDTH * 3, RACK_HEIGHT);
-    topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * SurgeLayout::portY;
+    topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * portY;
 
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WS");
     bg->narrowMode = true;
@@ -73,7 +68,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     };
     addChild(bg);
 
-    int yPos = roostery0;
+    int yPos = buttonsY0;
 
     SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(padMargin, yPos),
                                                      rack::Vec(box.size.x - 2 * padMargin, n_ws_type * 23 ),
@@ -92,28 +87,28 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
 
     yPos = drivey0 + labelHeight + padMargin;
     addParam(rack::createParam<SurgeKnobRooster>(
-        rack::Vec(box.size.x / 2 - SurgeLayout::surgeRoosterX / 2, yPos),
+        rack::Vec(box.size.x / 2 - surgeRoosterX / 2, yPos),
         module, M::DRIVE_PARAM
 #if !RACK_V1
         ,
         -24.0, 0, 24.0
 #endif
         ));
-    yPos += SurgeLayout::surgeRoosterY + 2 * padMargin;
+    yPos += surgeRoosterY + 2 * padMargin;
     addInput(rack::createInput<rack::PJ301MPort>(
-        rack::Vec(box.size.x / 2 - SurgeLayout::portX / 2, yPos), module,
+        rack::Vec(box.size.x / 2 - portX / 2, yPos), module,
         M::DRIVE_CV));
 
-    yPos += SurgeLayout::portY + padMargin;
+    yPos += portY + padMargin;
 
     addChild(TextDisplayLight::create(
-        rack::Vec(textMargin, yPos + 2),
-        rack::Vec(box.size.x - 2 * textMargin, textArea),
+        rack::Vec(padFromEdge, yPos + 2),
+        rack::Vec(box.size.x - 2 * padFromEdge, textArea),
         module ? module->dbGainCache.getValue
                : []() { return std::string("null"); },
         module ? module->dbGainCache.getDirty : []() { return false; }, 10,
         NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-        SurgeStyle::surgeWhite()
+        surgeWhite()
                  ));
 
     yPos += textArea + padMargin;
@@ -122,11 +117,11 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     yPos = topOfInput;
     yPos += labelHeight + padMargin;
     addInput(rack::createInput<rack::PJ301MPort>(
-        rack::Vec(box.size.x / 2 - SurgeLayout::portX / 2, yPos), module,
+        rack::Vec(box.size.x / 2 - portX / 2, yPos), module,
         M::SIGNAL_IN));
-    yPos += SurgeLayout::portY + labelHeight + 2 * padMargin;
+    yPos += portY + labelHeight + 2 * padMargin;
     addOutput(rack::createOutput<rack::PJ301MPort>(
-        rack::Vec(box.size.x / 2 - SurgeLayout::portX / 2, yPos), module,
+        rack::Vec(box.size.x / 2 - portX / 2, yPos), module,
         M::SIGNAL_OUT));
 }
 

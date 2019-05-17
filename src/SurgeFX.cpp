@@ -3,30 +3,25 @@
 #include "SurgeRackGUI.hpp"
 
 template <int effectType>
-struct SurgeFXWidget : rack::ModuleWidget {
+struct SurgeFXWidget : SurgeModuleWidgetCommon {
     typedef SurgeFX<effectType> M;
     SurgeFXWidget(M *module);
 
-    int padMargin = 3;
-    int ioMargin = 7;
     int ioRegionWidth = 105;
-    int fontId = -1;
 
     int nControls = 12;
     
-    float controlAreaHeight = SurgeLayout::orangeLine - padMargin - SCREW_WIDTH;
+    float controlAreaHeight = orangeLine - padMargin - SCREW_WIDTH;
     float controlHeight = controlAreaHeight / nControls;
 
 
     void moduleBackground(NVGcontext *vg) {
-        int textAreaWidth = box.size.x - 4 * padMargin - 2 * SurgeLayout::portX;
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
+        int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
 
         for( int i=0; i<nControls; ++i )
         {
-            SurgeStyle::drawTextBGRect(vg, 3*padMargin+2*SurgeLayout::portX, i*controlHeight + SCREW_WIDTH + padMargin,
-                                       box.size.x - 4*padMargin - 2 * SurgeLayout::portX, controlHeight-padMargin);
+            SurgeStyle::drawTextBGRect(vg, 3*padMargin+2*portX, i*controlHeight + SCREW_WIDTH + padMargin,
+                                       box.size.x - 4*padMargin - 2 * portX, controlHeight-padMargin);
         }
 
         
@@ -37,18 +32,18 @@ struct SurgeFXWidget : rack::ModuleWidget {
                 x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
             SurgeStyle::drawBlueIORect(
-                vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
+                vg, x0 + ioMargin, orangeLine + ioMargin,
                 ioRegionWidth,
-                box.size.y - SurgeLayout::orangeLine - 2 * ioMargin,
+                box.size.y - orangeLine - 2 * ioMargin,
                 (i == 0) ? 0 : 1);
 
             nvgFillColor(vg, SurgeStyle::backgroundGray());
-            nvgFontFaceId(vg, fontId);
+            nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 12);
             if (i == 0) {
                 nvgSave(vg);
                 nvgTranslate(vg, x0 + ioMargin + 2,
-                             SurgeLayout::orangeLine + ioMargin * 1.5);
+                             orangeLine + ioMargin * 1.5);
                 nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
                 nvgRotate(vg, -M_PI / 2);
                 nvgText(vg, 0, 0, "Input", NULL);
@@ -56,7 +51,7 @@ struct SurgeFXWidget : rack::ModuleWidget {
             } else {
                 nvgSave(vg);
                 nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
-                             SurgeLayout::orangeLine + ioMargin * 1.5);
+                             orangeLine + ioMargin * 1.5);
                 nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
                 nvgRotate(vg, M_PI / 2);
                 nvgText(vg, 0, 0, "Output", NULL);
@@ -92,8 +87,8 @@ struct SurgeFXWidget : rack::ModuleWidget {
 
         int padFromEdge = input ? 17 : 5;
         int xRes =
-            x0 + ioMargin + padFromEdge + (ctrl * (SurgeLayout::portX + 4));
-        int yRes = SurgeLayout::orangeLine + 1.5 * ioMargin;
+            x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
+        int yRes = orangeLine + 1.5 * ioMargin;
 
         return rack::Vec(xRes, yRes);
     }
@@ -101,11 +96,12 @@ struct SurgeFXWidget : rack::ModuleWidget {
 
 template <int effectType>
 SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
-    : rack::ModuleWidget(
 #ifndef RACK_V1
-          module
-#endif
-      ) {
+    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
+#else
+    : SurgeModuleWidgetCommon()
+#endif      
+{
 #ifdef RACK_V1
     setModule(module);
 #endif
@@ -145,7 +141,7 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
     int parmMargin = 3;
 
     
-    int textAreaWidth = box.size.x - 4 * padMargin - 2 * SurgeLayout::portX;
+    int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
     for( int i=0; i<nControls; ++i )
     {
         float yPos = i * controlHeight + SCREW_WIDTH + padMargin;
@@ -153,7 +149,7 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
         int cv = M::FX_PARAM_INPUT_0 + i;
         addInput(rack::createInput<rack::PJ301MPort>(
                      rack::Vec(padMargin, yPos), module, cv ));
-        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(2 * padMargin + SurgeLayout::portX, yPos), module,
+        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(2 * padMargin + portX, yPos), module,
                                                    pa
 #if !RACK_V1
                                                    ,
@@ -161,17 +157,17 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 #endif
                                                    ));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2, yPos),
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->labelCache[i]) : nullptr,
                                           13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeOrange()));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2, yPos),
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->groupCache[i]) : nullptr,
                                           9, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * SurgeLayout::portX + 2 , yPos),
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2 , yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
                                           module ? &(module->paramDisplayCache[i]) : nullptr,
                                           14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));

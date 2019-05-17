@@ -7,6 +7,24 @@
 #include "rack.hpp"
 #include <map>
 
+
+// Font dictionary
+struct InternalFontMgr {
+    static std::map<std::string, int> fontMap;
+    static int get(NVGcontext *vg, std::string resName) {
+        if (fontMap.find(resName) == fontMap.end()) {
+#ifdef RACK_V1
+            std::string fontPath = rack::asset::plugin(pluginInstance, resName);
+#else
+            std::string fontPath = rack::assetPlugin(pluginInstance, resName);
+#endif
+            fontMap[resName] =
+                nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
+        }
+        return fontMap[resName];
+    }
+};
+
 struct SurgeStyle {
     static NVGcolor surgeBlue() { return nvgRGBA(18, 52, 99, 255); }
     static NVGcolor surgeBlueBright() {
@@ -72,6 +90,19 @@ struct SurgeStyle {
         return "res/EncodeSansCondensed-Medium.ttf";
     }
 
+    static int fid, fidcond;
+    static int fontId(NVGcontext *vg) {
+        if( fid < 0 )
+            fid = InternalFontMgr::get(vg, fontFace() );
+        return fid;
+    }
+    static int fontIdCondensed(NVGcontext *vg) {
+        if( fidcond < 0 )
+            fidcond = InternalFontMgr::get(vg, fontFaceCondensed() );
+        return fidcond;
+    }
+
+    
     static void drawBlueIORect(NVGcontext *vg, float x0, float y0, float w,
                                float h,
                                int direction = 0); // 0 is L->R 1 is R->L
@@ -79,33 +110,28 @@ struct SurgeStyle {
                                float h);
     static void drawPanelBackground(NVGcontext *vg, float w, float h,
                                     std::string displayName, bool narrowMode);
-};
 
-struct SurgeLayout {
+
+    /*
+      Component Sizes
+     */
     static float constexpr portX = 24.6721;
     static float constexpr portY = 24.6721;
     static float constexpr surgeKnobX = 24;
     static float constexpr surgeKnobY = 24;
     static float constexpr surgeRoosterX = 34;
     static float constexpr surgeRoosterY = 34;
-    static float constexpr orangeLine = 323;
-};
 
-// Font dictionary
-struct InternalFontMgr {
-    static std::map<std::string, int> fontMap;
-    static int get(NVGcontext *vg, std::string resName) {
-        if (fontMap.find(resName) == fontMap.end()) {
-#ifdef RACK_V1
-            std::string fontPath = rack::asset::plugin(pluginInstance, resName);
-#else
-            std::string fontPath = rack::assetPlugin(pluginInstance, resName);
-#endif
-            fontMap[resName] =
-                nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
-        }
-        return fontMap[resName];
-    }
+    /*
+      Overall spacing
+     */
+    static float constexpr padMargin = 3;
+    static float constexpr padFromEdge = 5;
+    static float constexpr padFromTop = SCREW_WIDTH + padMargin;
+    static float constexpr orangeLine = 323;
+    static float constexpr ioMargin = 7; // distance orange line to blue box
+
+    
 };
 
 #ifndef RACK_V1
