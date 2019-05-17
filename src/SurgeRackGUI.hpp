@@ -13,7 +13,7 @@
 #include "widgets.hpp"
 #endif
 
-struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget {
+struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, SurgeStyle {
 #if RACK_V1
     SurgeModuleWidgetCommon() : rack::ModuleWidget() { }
 #else

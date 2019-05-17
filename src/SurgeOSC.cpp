@@ -6,11 +6,7 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
     typedef SurgeOSC M;
     SurgeOSCWidget(M *module);
 
-    int fontId = -1;
-    int ioMargin = 7;
     int ioRegionWidth = 105;
-    int padMargin = 3;
-    int padFromEdge = 5;
 
     float buttonBankY = SCREW_WIDTH + padFromEdge;
     float buttonBankHeight = 25;
@@ -18,29 +14,26 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
     float pitchY = buttonBankY + buttonBankHeight + padMargin;
     float pitchCtrlX = 36;
     
-    float controlsY = pitchY + padMargin + SurgeLayout::surgeRoosterY;
-    float controlsHeight = SurgeLayout::orangeLine - controlsY - padMargin;
+    float controlsY = pitchY + padMargin + surgeRoosterY;
+    float controlsHeight = orangeLine - controlsY - padMargin;
     float controlHeightPer = controlsHeight / n_osc_params;
     
     void moduleBackground(NVGcontext *vg) {
         // The input triggers and output
         nvgBeginPath(vg);
 
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
-
         // Draw the output blue box
         float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
-        SurgeStyle::drawBlueIORect(
-            vg, x0 + ioMargin, SurgeLayout::orangeLine + ioMargin,
-            ioRegionWidth, box.size.y - SurgeLayout::orangeLine - 2 * ioMargin);
+        drawBlueIORect(
+            vg, x0 + ioMargin, orangeLine + ioMargin,
+            ioRegionWidth, box.size.y - orangeLine - 2 * ioMargin);
 
-        nvgFillColor(vg, SurgeStyle::backgroundGray());
-        nvgFontFaceId(vg, fontId);
+        nvgFillColor(vg, backgroundGray());
+        nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgSave(vg);
         nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
-                     SurgeLayout::orangeLine + ioMargin * 1.5);
+                     orangeLine + ioMargin * 1.5);
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgRotate(vg, M_PI / 2);
         nvgText(vg, 0, 0, "Output", NULL);
@@ -66,38 +59,38 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgText(vg, ll.x, ll.y, "Gain", NULL);
 
-        float pitchLY = pitchY + SurgeLayout::surgeRoosterY / 2.0;
+        float pitchLY = pitchY + surgeRoosterY / 2.0;
         nvgBeginPath(vg);
-        nvgFontFaceId(vg, fontId);
+        nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 15);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, SurgeStyle::surgeBlue() );
+        nvgFillColor(vg, surgeBlue() );
         nvgText(vg, padFromEdge, pitchLY, "Pitch", NULL );
 
-        float xt = pitchCtrlX + SurgeLayout::surgeRoosterX + SurgeLayout::portX + 2 * padMargin + 12;
+        float xt = pitchCtrlX + surgeRoosterX + portX + 2 * padMargin + 12;
 
         nvgBeginPath(vg);
-        nvgFontFaceId(vg, fontId);
+        nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, SurgeStyle::surgeBlue() );
+        nvgFillColor(vg, surgeBlue() );
         nvgText(vg, xt, pitchY + 2, "f", NULL );
 
         nvgBeginPath(vg);
-        nvgFontFaceId(vg, fontId);
+        nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, SurgeStyle::surgeBlue() );
-        nvgText(vg, xt, pitchY + SurgeLayout::surgeRoosterY - 4, "n", NULL );
+        nvgFillColor(vg, surgeBlue() );
+        nvgText(vg, xt, pitchY + surgeRoosterY - 4, "n", NULL );
 
         
         xt += 7 + padMargin;
-        SurgeStyle::drawTextBGRect(vg, xt, pitchY+6, box.size.x - padFromEdge - xt, SurgeLayout::surgeRoosterY-12 );
+        drawTextBGRect(vg, xt, pitchY+6, box.size.x - padFromEdge - xt, surgeRoosterY-12 );
             
         for (int i = 0; i < n_osc_params; ++i) {
             float yp = i * controlHeightPer + controlsY;
-            float xp = padFromEdge + 2 * padMargin + 2 * SurgeLayout::portX;
-            SurgeStyle::drawTextBGRect(vg, xp, yp, box.size.x - padFromEdge - xp, controlHeightPer - padMargin);
+            float xp = padFromEdge + 2 * padMargin + 2 * portX;
+            drawTextBGRect(vg, xp, yp, box.size.x - padFromEdge - xp, controlHeightPer - padMargin);
         }
     }
 
@@ -105,8 +98,8 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
         float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
         int xRes =
-            x0 + ioMargin + padFromEdge + (ctrl * (SurgeLayout::portX + 4));
-        int yRes = SurgeLayout::orangeLine + 1.5 * ioMargin;
+            x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
+        int yRes = orangeLine + 1.5 * ioMargin;
 
         return rack::Vec(xRes, yRes);
     }
@@ -168,11 +161,11 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
 #endif
         ));
     addInput(rack::createInput<rack::PJ301MPort>(
-                 rack::Vec( xp + SurgeLayout::surgeRoosterX + padMargin,
-                            pitchY + ( SurgeLayout::surgeRoosterY - SurgeLayout::portY ) / 2),
+                 rack::Vec( xp + surgeRoosterX + padMargin,
+                            pitchY + ( surgeRoosterY - portY ) / 2),
                  module, M::PITCH_CV));
-    addParam(rack::createParam<SurgeSwitch>(rack::Vec(xp + SurgeLayout::surgeRoosterX + SurgeLayout::portX + 2 * padMargin,
-                                                      pitchY + ( SurgeLayout::surgeRoosterY - 21 ) / 2),
+    addParam(rack::createParam<SurgeSwitch>(rack::Vec(xp + surgeRoosterX + portX + 2 * padMargin,
+                                                      pitchY + ( surgeRoosterY - 21 ) / 2),
                                             module, M::PITCH_0_IN_FREQ
 #if !RACK_V1
                                             ,0,1,0
@@ -180,18 +173,18 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                  ));
 
     addChild(TextDisplayLight::create(
-                 rack::Vec(xp + SurgeLayout::surgeRoosterX + SurgeLayout::portX + 3 * padMargin + 20,
+                 rack::Vec(xp + surgeRoosterX + portX + 3 * padMargin + 20,
                            pitchY + 3 ),
-                 rack::Vec(50, SurgeLayout::surgeRoosterY - 8 ),
+                 rack::Vec(50, surgeRoosterY - 8 ),
                  module ? &(module->pitch0DisplayCache) : nullptr,
                  14,
                  NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                 SurgeStyle::surgeWhite()
+                 surgeWhite()
                  ));
 
     for (int i = 0; i < n_osc_params; ++i) {
         float yp = i * controlHeightPer + controlsY;
-        float yctrl = yp + controlHeightPer / 2 - SurgeLayout::portY / 2 - padMargin/2;
+        float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin/2;
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padFromEdge, yctrl), module,
                                                    M::OSC_CTRL_PARAM_0 + i
 #if !RACK_V1
@@ -199,10 +192,10 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                                                    0, 1, 0.5
 #endif
                                                    ));
-        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + SurgeLayout::portX, yctrl), module,
+        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + portX, yctrl), module,
                                                      M::OSC_CTRL_CV_0 + i));
 
-        float xt = padFromEdge + 2 * padMargin + 2 * SurgeLayout::portX;
+        float xt = padFromEdge + 2 * padMargin + 2 * portX;
 
         addChild(TextDisplayLight::create(
                      rack::Vec(xt+2, yp + 0.5), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
@@ -211,7 +204,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
         addChild(TextDisplayLight::create(
                      rack::Vec(xt+2, yp+1 ), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
-                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeWhite()));
+                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, surgeWhite()));
     }
 }
 
