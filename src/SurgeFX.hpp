@@ -33,14 +33,14 @@ struct SurgeFX : virtual SurgeModuleCommon {
         NUM_PARAMS
     };
     enum InputIds {
-        INPUT_R_OR_MONO,
-        INPUT_L,
+        INPUT_L_OR_MONO,
+        INPUT_R,
 
         FX_PARAM_INPUT_0,
 
         NUM_INPUTS = FX_PARAM_INPUT_0 + NUM_FX_PARAMS
     };
-    enum OutputIds { OUTPUT_R_OR_MONO, OUTPUT_L, NUM_OUTPUTS };
+    enum OutputIds { OUTPUT_L_OR_MONO, OUTPUT_R, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
     ParamCache pc;
@@ -173,11 +173,21 @@ struct SurgeFX : virtual SurgeModuleCommon {
         float inpG = getParam(INPUT_GAIN);
         float outG = getParam(OUTPUT_GAIN);
 
+
+        float inl = inpG * getInput(INPUT_L_OR_MONO) / 10.0;
+        float inr = inpG * getInput(INPUT_R) / 10.0;
+
+        if( inputConnected(INPUT_L_OR_MONO) && ! inputConnected(INPUT_R) )
+        {
+            bufferL[bufferPos] = inl;
+            bufferR[bufferPos] = inl;
+        }
+        else
+        {
+            bufferL[bufferPos] = inl;
+            bufferR[bufferPos] = inr;
+        }
         
-        bufferR[bufferPos] = inpG * getInput(INPUT_R_OR_MONO) / 5.0;
-        bufferL[bufferPos] = inpG * getInput(INPUT_L) /
-                             5.0; // Surge works on a +/- 1; rack works on +/- 5
-        // FIXME - deal with MONO when L not hooked up
 
         bufferPos++;
         if (bufferPos >= BLOCK_SIZE) {
@@ -209,8 +219,18 @@ struct SurgeFX : virtual SurgeModuleCommon {
             bufferPos = 0;
         }
 
-        setOutput(OUTPUT_R_OR_MONO, outG * processedR[bufferPos] * 5.0);
-        setOutput(OUTPUT_L, outG * processedL[bufferPos] * 5.0);
+        float outl = outG * processedL[bufferPos] * 10;
+        float outr = outG * processedR[bufferPos] * 10;
+
+        if( outputConnected(OUTPUT_L_OR_MONO) && ! outputConnected(OUTPUT_R) )
+        {
+            setOutput(OUTPUT_L_OR_MONO, 0.5 * ( outl + outr ) );
+        }
+        else
+        {
+            setOutput(OUTPUT_L_OR_MONO, outl );
+            setOutput(OUTPUT_R, outr );
+        }
     }
 
     std::unique_ptr<Effect> surge_effect;

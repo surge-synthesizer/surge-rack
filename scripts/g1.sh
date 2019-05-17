@@ -12,10 +12,10 @@ fi
 
 RACK_DIR=${RACK_DIR} make -j 4 -k all || exit 2
 cp plugin.dylib ${RACK_DIR}/plugins/SurgeRack
-# cd ${RACK_DIR}
+cd ${RACK_DIR}
 # lldb -- ./Rack -d 
-# ./Rack -d 
-# exit 0
+./Rack -d 
+exit 0
 RACK_DIR=${RACK_DIR} make -j 4 -k dist || exit 2
 cp dist/SurgeRack-1.0.0-mac.zip ${RACK_DIR}/plugins
 cd ${RACK_DIR}/plugins
