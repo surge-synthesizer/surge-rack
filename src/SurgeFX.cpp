@@ -119,9 +119,9 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
     addChild(bg);
 
     addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 0),
-                                                 module, M::INPUT_R_OR_MONO));
+                                                 module, M::INPUT_L_OR_MONO));
     addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 1),
-                                                 module, M::INPUT_L));
+                                                 module, M::INPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(true, 2), module,
                                                M::INPUT_GAIN
 #if !RACK_V1
@@ -131,9 +131,9 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
                                                ));
 
     addOutput(rack::createOutput<rack::PJ301MPort>(
-        ioPortLocation(false, 0), module, M::OUTPUT_R_OR_MONO));
+        ioPortLocation(false, 0), module, M::OUTPUT_L_OR_MONO));
     addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(false, 1),
-                                                   module, M::OUTPUT_L));
+                                                   module, M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(false, 2), module,
                                                M::OUTPUT_GAIN
 #if !RACK_V1
