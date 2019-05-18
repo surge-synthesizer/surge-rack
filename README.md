@@ -14,11 +14,17 @@ is mac v1, so there is a good chance you can get it to build. If you see an erro
 
 ## What are the plugins provided and their state
 
+Our overall goal for our first release is to have all the stages exposed as modules which work with an acceptable
+front plate, but (1) are still monophonic and (2) don't support temposync for parameters, just absolute values.
+Here's how far we are along on that journey.
+
 <table>
 <tr><th>Plugin</th><th>Description</th><th>State</th></tr>
-<tr><td>SurgeFX</td><td>The surge FX layer; delay chorus and more</td><td>The first one we tried, so it is a mess and needs work</td></tr>
-<tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Good shape. No temposync/clock yet</td></tr>
-<tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Very good shape. Few pops and clicks but works well. Button bank UI not done</td></tr>
+<tr><td>SurgeFX (mulitple modules)</td>
+  <td>The surge FX stage is represented as a set of modules, one per effect.</td>
+  <td>The modules all work; most have a generic panel still</td></tr>
+<tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed</td></tr>
+<tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Very good shape. Few pops and clicks when changing osc type or changing unison count, but works well otherwise.</td></tr>
 <tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
 <tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Innumerable problems. Try at your own risk</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Works perfectly; terrible UI</td></tr>
