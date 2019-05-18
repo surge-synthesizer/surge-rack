@@ -28,7 +28,7 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
             vg, x0 + ioMargin, orangeLine + ioMargin,
             ioRegionWidth, box.size.y - orangeLine - 2 * ioMargin);
 
-        nvgFillColor(vg, backgroundGray());
+        nvgFillColor(vg, surgeWhite());
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgSave(vg);
