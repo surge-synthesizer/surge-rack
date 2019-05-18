@@ -300,6 +300,37 @@ struct SurgeStyle {
         return y + h;
     }
 
+    void centerRuledLabel( NVGcontext *vg, float x0, float y0, float w, const char* label ) {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, fontId(vg));
+        nvgFontSize(vg, 14);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
+        nvgFillColor( vg, surgeBlue());
+        nvgText( vg, x0 + w/2, y0, label, NULL );
+
+        float bounds[4];
+        nvgTextBounds( vg, x0 + w/2, y0, label, NULL, bounds );
+
+        float a, d, h;
+        nvgTextMetrics( vg, &a, &d, &h );
+        float yp = y0 + h + d;
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, x0, yp);
+        nvgLineTo(vg, bounds[0] - padMargin, yp);
+        nvgStrokeColor( vg, surgeBlue() );
+        nvgStrokeWidth( vg, 1 );
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, bounds[2] + padMargin, yp);
+        nvgLineTo(vg, x0 + w, yp);
+        nvgStrokeColor( vg, surgeBlue() );
+        nvgStrokeWidth( vg, 1 );
+        nvgStroke(vg);
+
+    }
+
     void simpleLabel( NVGcontext *vg, float x, float y, const char* label ) {
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));

@@ -278,10 +278,19 @@ struct SurgeButtonBank :
     //FIXME : override step in case I am changed from behind
 
     std::vector<std::string> cellLabels;
+    float normalizeTo = 0.0;
     void addLabel(std::string label) {
         cellLabels.push_back(label);
     }
 
+    int getSelectedCell() {
+        float pv = getPValue();
+        if( normalizeTo != 0 )
+            pv *= normalizeTo;
+        return (int)pv;
+    }
+    
+    
     float getPValue() {
 #if RACK_V1
         if( paramQuantity )
@@ -295,13 +304,16 @@ struct SurgeButtonBank :
     }
 
     void setPValue(float v) {
+        float apply = v;
+        if( normalizeTo != 0 )
+            apply = v / normalizeTo;
 #if RACK_V1        
         if( paramQuantity )
-            paramQuantity->setValue(v);
+            paramQuantity->setValue(apply);
 #else
-        value = v;
+        value = apply;
         if( module )
-            module->params[paramId].value = v;
+            module->params[paramId].value = apply;
 #endif        
 
     }

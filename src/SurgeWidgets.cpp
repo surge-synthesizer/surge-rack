@@ -195,8 +195,7 @@ void SurgeButtonBank::drawWidget(NVGcontext *vg)
     for(int c=0;c<cols;++c)
         for( int r=0;r<rows;++r)
         {
-            bool selected = false;
-            selected = (int)getPValue() == cell;
+            bool selected = ( getSelectedCell() == cell );
             
             auto px = r * bw; // remember we are already translated by box.pos.y
             auto py = c * bh;
