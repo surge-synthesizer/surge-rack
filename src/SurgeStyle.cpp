@@ -97,8 +97,8 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgBeginPath(vg);
     nvgMoveTo(vg, 0, h );
     nvgLineTo(vg, 0, 0 );
-    nvgLineTo(vg, w-1, 0 );
-    nvgLineTo(vg, w-1, h);
+    nvgLineTo(vg, w, 0 );
+    nvgLineTo(vg, w, h);
     nvgStrokeColor(vg, SurgeStyle::backgroundDarkGray());
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
@@ -109,9 +109,9 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgFill(vg);
 
     nvgBeginPath(vg);
-    nvgMoveTo(vg, w-1, orangeLine);
-    nvgLineTo(vg, w-1, h-1);
-    nvgLineTo(vg, 0, h-1 );
+    nvgMoveTo(vg, w, orangeLine);
+    nvgLineTo(vg, w, h);
+    nvgLineTo(vg, 0, h );
     nvgLineTo(vg, 0, orangeLine );
     nvgStrokeColor(vg, SurgeStyle::surgeOrangeMedium() );
     nvgStrokeWidth(vg, 1);
