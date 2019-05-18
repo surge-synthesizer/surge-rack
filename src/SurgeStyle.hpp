@@ -278,7 +278,7 @@ struct SurgeStyle {
     float fxGroupLabel( NVGcontext *vg, float y, const char* label, rack::Rect box ) {
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 12);
+        nvgFontSize(vg, 14);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
         nvgFillColor( vg, surgeBlue());
         nvgText( vg, padFromEdge, y, label, NULL );

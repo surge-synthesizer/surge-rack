@@ -2,25 +2,33 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
-    typedef SurgeFX<fxt_freqshift> M;
-    SurgeFreqShiftWidget(M *module);
+struct SurgeRotaryWidget : SurgeModuleWidgetCommon {
+    typedef SurgeFX<fxt_rotaryspeaker> M;
+    SurgeRotaryWidget(M *module);
 
     int ioRegionWidth = 105;
 
     float textHeight = 16;
     float xText = 50;
-    float ctrlHeight = portY + 3 * padMargin + textHeight;
+    float ctrlHeight = portY + 3 * padMargin + textHeight + 10;
     float divHeight = 14;
-    float yStart = padFromTop + 5;
+    float yStart = padFromTop + 20;
+    float y1Offset = 16 + padMargin + 20;
 
     void moduleBackground(NVGcontext *vg) {
 
         float y0 = yStart;
 
-        std::vector<std::string> lab = { "Left Shift", "Right Shift", "Delay", "Feedback", "Mix" };
-        for( int i=0; i<5; ++i )
+        std::vector<std::string> lab = { "Horn Rate", "Doppler", "Amp Mod" };
+        for( int i=0; i<3; ++i )
         {
+            if( i == 1 )
+            {
+                y0 += 20; // These should add up to y1Offset;
+                fxGroupLabel( vg, y0, "Depth", box );
+                y0 += 16 + padMargin;
+            }
+            
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 14);
@@ -43,10 +51,11 @@ struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
         }
         
         drawStackedInputOutputBackground(vg, box);
+
     }
 };
 
-SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
+SurgeRotaryWidget::SurgeRotaryWidget(SurgeRotaryWidget::M *module)
 #ifndef RACK_V1
     : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
 #else
@@ -58,7 +67,7 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
 #endif
 
     box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "fShift");
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "Rotary");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };
@@ -89,9 +98,12 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
 
                                                ));
 
-    for( int i=0; i<5; ++i )
+    for( int i=0; i<3; ++i )
     {
         float yp = yStart + i * ctrlHeight;
+        if( i >= 1 )
+            yp += y1Offset;
+        
         float xp = box.size.x - padFromEdge - padMargin - 2 * portX;
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xp,yp),
                                                    module, M::FX_PARAM_0 + i
@@ -119,10 +131,10 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
 
 
 #if RACK_V1
-auto mfreq = modelSurgeFXSet.insert(
-    rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>("SurgeFreqShift") );
+auto mrotary = modelSurgeFXSet.insert(
+    rack::createModel<SurgeRotaryWidget::M, SurgeRotaryWidget>("SurgeRotary") );
 #else
-auto mfreq = modelSurgeFXSet.insert(
-    rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>(
-        "Surge Team", "SurgeFreqShift", "SurgeFreqShift", rack::ENVELOPE_GENERATOR_TAG) );
+auto mrotary = modelSurgeFXSet.insert(
+    rack::createModel<SurgeRotaryWidget::M, SurgeRotaryWidget>(
+        "Surge Team", "SurgeRotary", "SurgeRotary", rack::ENVELOPE_GENERATOR_TAG) );
 #endif
