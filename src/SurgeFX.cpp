@@ -81,8 +81,8 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
         int pa = M::FX_PARAM_0 + i;
         int cv = M::FX_PARAM_INPUT_0 + i;
         addInput(rack::createInput<rack::PJ301MPort>(
-                     rack::Vec(padMargin, yPos), module, cv ));
-        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(2 * padMargin + portX, yPos), module,
+                     rack::Vec(2 * padMargin + portX, yPos), module, cv ));
+        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padMargin, yPos), module,
                                                    pa
 #if !RACK_V1
                                                    ,

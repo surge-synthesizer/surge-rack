@@ -134,7 +134,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     for (int i = M::A_PARAM; i <= M::R_PARAM; ++i) {
         int ipos = i - M::A_PARAM;
         addParam(rack::createParam<SurgeSmallKnob>(
-                     rack::Vec(x0 + portX + padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 3),
+                     rack::Vec(x0, ADSRYPos(ipos) + adsrTextH + padMargin + 3),
             module, i
 #if !RACK_V1
             ,
@@ -147,7 +147,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     for (int i = M::A_CV; i <= M::R_CV; ++i) {
         int ipos = i - M::A_CV;
         addInput(rack::createInput<rack::PJ301MPort>(
-            rack::Vec(x0, ADSRYPos(ipos) + adsrTextH + padMargin + 3), module,
+            rack::Vec(x0 + portX + padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 3), module,
             i));
     }
 
