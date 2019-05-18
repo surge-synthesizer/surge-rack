@@ -121,6 +121,8 @@ struct SurgeStyle {
     static float constexpr surgeKnobY = 24;
     static float constexpr surgeRoosterX = 34;
     static float constexpr surgeRoosterY = 34;
+    static float constexpr surgeSwitchX = 14;
+    static float constexpr surgeSwitchY = 21;
 
     /*
       Overall spacing

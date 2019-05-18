@@ -14,15 +14,24 @@ struct SurgeFXWidget : SurgeModuleWidgetCommon {
 
 
     void moduleBackground(NVGcontext *vg) {
-        int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
+        int textAreaWidth = box.size.x - 5 * padMargin - 2 * portX - surgeSwitchX;
 
         for( int i=0; i<nControls; ++i )
         {
-            SurgeStyle::drawTextBGRect(vg, 3*padMargin+2*portX, i*controlHeight + SCREW_WIDTH + padMargin,
-                                       box.size.x - 4*padMargin - 2 * portX, controlHeight-padMargin);
+            SurgeStyle::drawTextBGRect(vg, 4*padMargin+2*portX + surgeSwitchX, i*controlHeight + SCREW_WIDTH + padMargin,
+                                       textAreaWidth, controlHeight-padMargin);
         }
 
         drawLeftRightInputOutputBackground(vg, box);
+
+        drawBlueIORect(vg, box.size.x/2 - portX / 2 - padMargin, orangeLine + ioMargin,
+                       portX + 2 * padMargin, box.size.y - orangeLine - 2 * ioMargin );
+        nvgBeginPath(vg);
+        nvgFillColor(vg, surgeWhite() );
+        nvgFontFaceId(vg, fontId(vg) );
+        nvgFontSize(vg, 11);
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM );
+        nvgText(vg, box.size.x/2, box.size.y - ioMargin - 1.5, "clock cv", NULL );
     }
 
 };
@@ -39,7 +48,7 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
     setModule(module);
 #endif
 
-    box.size = rack::Vec(SCREW_WIDTH * 16, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 19, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, SurgeFXName<effectType>::getName());
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -71,10 +80,15 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 #endif
 
                                                ));
+
+    addInput(rack::createInput<rack::PJ301MPort>(
+                 rack::Vec(box.size.x/2 - portX/2, orangeLine + 1.5 * ioMargin),
+                 module, M::CLOCK_CV_INPUT));
+
     int parmMargin = 3;
 
     
-    int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
+    int textAreaWidth = box.size.x - 5 * padMargin - 2 * portX - surgeSwitchX;
     for( int i=0; i<nControls; ++i )
     {
         float yPos = i * controlHeight + SCREW_WIDTH + padMargin;
@@ -90,17 +104,28 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 #endif
                                                    ));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2, yPos),
+        if( module && module->canTempoSync(i) )
+        {
+            addParam(rack::createParam<SurgeSwitch>(rack::Vec(3 * padMargin + 2 * portX, yPos ), module,
+                                                    M::PARAM_TEMPOSYNC_0 + i
+#if !RACK_V1
+                                                    , 0, 1, 0
+#endif
+                         ));
+        }
+        
+        int tx = 4 * padMargin + 2 * portX + surgeSwitchX + 2;
+        addChild(TextDisplayLight::create(rack::Vec(tx, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->labelCache[i]) : nullptr,
                                           13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeOrange()));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2, yPos),
+        addChild(TextDisplayLight::create(rack::Vec(tx, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->groupCache[i]) : nullptr,
                                           9, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2 , yPos),
+        addChild(TextDisplayLight::create(rack::Vec(tx , yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
                                           module ? &(module->paramDisplayCache[i]) : nullptr,
                                           14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));

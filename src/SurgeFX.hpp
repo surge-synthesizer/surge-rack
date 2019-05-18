@@ -30,7 +30,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
         FX_EXTEND_0 = FX_PARAM_0 + NUM_FX_PARAMS,
         INPUT_GAIN = FX_EXTEND_0 + NUM_FX_PARAMS,
         OUTPUT_GAIN,
-        NUM_PARAMS
+        PARAM_TEMPOSYNC_0,
+        NUM_PARAMS = PARAM_TEMPOSYNC_0 + NUM_FX_PARAMS,
     };
     enum InputIds {
         INPUT_L_OR_MONO,
@@ -38,10 +39,14 @@ struct SurgeFX : virtual SurgeModuleCommon {
 
         FX_PARAM_INPUT_0,
 
-        NUM_INPUTS = FX_PARAM_INPUT_0 + NUM_FX_PARAMS
+        CLOCK_CV_INPUT = FX_PARAM_INPUT_0 + NUM_FX_PARAMS,
+        NUM_INPUTS
     };
     enum OutputIds { OUTPUT_L_OR_MONO, OUTPUT_R, NUM_OUTPUTS };
-    enum LightIds { NUM_LIGHTS };
+    enum LightIds {
+        CAN_TEMPOSYNC_0,
+        NUM_LIGHTS = CAN_TEMPOSYNC_0 + NUM_FX_PARAMS
+    };
 
     ParamCache pc;
     
@@ -159,6 +164,10 @@ struct SurgeFX : virtual SurgeModuleCommon {
         }
     }
 
+    bool canTempoSync(int i) {
+        return fxstorage->p[orderToParam[i]].can_temposync();
+    }
+    
     float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
     float processedL alignas(16)[BLOCK_SIZE], processedR
         alignas(16)[BLOCK_SIZE];
@@ -194,14 +203,52 @@ struct SurgeFX : virtual SurgeModuleCommon {
             std::memcpy(processedL, bufferL, BLOCK_SIZE * sizeof(float));
             std::memcpy(processedR, bufferR, BLOCK_SIZE * sizeof(float));
 
+            bool newBPM = false;
+            if( inputConnected(CLOCK_CV_INPUT) )
+            {
+#if RACK_V1                
+                newBPM = updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+#else
+                newBPM = updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), rack::engineGetSampleTime(), rack::engineGetSampleRate() );
+#endif                
+            }
+            else
+            {
+                // FIXME - only once please
+#if RACK_V1                
+                newBPM = updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
+#else
+                newBPM = updateBPMFromClockCV(1, rack::engineGetSampleTime(), rack::engineGetSampleRate() );
+#endif                
+            }
+            
+            if( newBPM )
+            {
+                INFO( "have new BPM %d %lf", inputConnected(CLOCK_CV_INPUT), lastBPM );
+            }
+
             for (int i = 0; i < n_fx_params; ++i) {
+                bool changed = newBPM;
                 if(pc.changed(FX_PARAM_0 + i, this))
+                {
+                    changed = true;
+                }
+                if( pc.changed(PARAM_TEMPOSYNC_0 + i, this) )
+                {
+                    changed = true;
+                    fxstorage->p[orderToParam[i]].temposync =
+                        getParam(PARAM_TEMPOSYNC_0 + i ) > 0.5;
+                }
+                if( changed )
                 {
                     fxstorage->p[orderToParam[i]].set_value_f01(
                         getParam(FX_PARAM_0 + i));
                     char txt[256];
                     fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
-                    
+                    if( getParam(PARAM_TEMPOSYNC_0 + i) > 0.5 )
+                    {
+                        snprintf( txt, 256, "%s @ %5.1lf bpm", txt, lastBPM );
+                    }
                     paramDisplayCache[i].reset(txt);
                 }
             }
