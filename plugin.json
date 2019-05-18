@@ -71,7 +71,12 @@
 			"description": "The Surge Conditioner",
 			"tags": [ "Effect" ]
 		},
-
+		{
+			"slug": "SurgeClock",
+			"name": "SurgeClock",
+			"description": "A utility clock generator",
+			"tags": [ "Clock Generator" ]
+		},
 		{
 			"slug": "SurgeADSR",
 			"name": "SurgeADSR",
