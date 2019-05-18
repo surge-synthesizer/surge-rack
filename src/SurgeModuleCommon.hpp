@@ -25,7 +25,7 @@ namespace fs = std::experimental::filesystem;
 namespace logger = rack::logger;
 #endif
 
-struct SurgeModuleCommon : virtual public rack::Module {
+struct SurgeModuleCommon : public rack::Module {
 #if RACK_V1
     SurgeModuleCommon() : rack::Module() {  }
 #else

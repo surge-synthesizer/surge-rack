@@ -131,6 +131,185 @@ struct SurgeStyle {
     static float constexpr orangeLine = 323;
     static float constexpr ioMargin = 7; // distance orange line to blue box
 
+    static float constexpr ioRegionWidth = 105;
+    
+
+    /*
+      Standard IO regiopn locations
+     */
+    rack::Vec ioPortLocation(bool input,
+                             int ctrl,
+                             rack::Rect box,
+                             int stackVertically = false
+        ) { // 0 is L; 1 is R; 2 is gain
+        if( stackVertically )
+        {
+            float x0 = (box.size.x - ioRegionWidth)/2;
+            float yRes = orangeLine + 1.5 * ioMargin;
+            float xRes = x0 + ioMargin + ctrl * (portX + 4);
+            if( input )
+            {
+                float boxHt = box.size.y - orangeLine - 2 * ioMargin;
+
+                yRes = orangeLine - 0.5 * ioMargin - boxHt;
+            }
+            return rack::Vec( xRes, yRes );
+        }
+        else
+        {
+            int x0 = 0;
+            if (!input)
+                x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
+            
+            int padFromEdge = input ? 17 : 5;
+            float xRes =
+                x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
+            float yRes = orangeLine + 1.5 * ioMargin;
+            
+            return rack::Vec(xRes, yRes);
+        }
+    }
+
+    void drawLeftRightInputOutputBackground( NVGcontext *vg, rack::Rect box ) {
+        for (int i = 0; i < 2; ++i) {
+            nvgBeginPath(vg);
+            int x0 = 0;
+            if (i == 1)
+                x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
+
+            SurgeStyle::drawBlueIORect(
+                vg, x0 + ioMargin, orangeLine + ioMargin,
+                ioRegionWidth,
+                box.size.y - orangeLine - 2 * ioMargin,
+                (i == 0) ? 0 : 1);
+
+            nvgFillColor(vg, surgeWhite());
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 12);
+            if (i == 0) {
+                nvgSave(vg);
+                nvgTranslate(vg, x0 + ioMargin + 2,
+                             orangeLine + ioMargin * 1.5);
+                nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+                nvgRotate(vg, -M_PI / 2);
+                nvgText(vg, 0, 0, "Input", NULL);
+                nvgRestore(vg);
+            } else {
+                nvgSave(vg);
+                nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
+                             orangeLine + ioMargin * 1.5);
+                nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+                nvgRotate(vg, M_PI / 2);
+                nvgText(vg, 0, 0, "Output", NULL);
+                nvgRestore(vg);
+            }
+            rack::Vec ll;
+            ll = ioPortLocation(i == 0, 0, box);
+            ll.y = box.size.y - ioMargin - 1.5;
+            ll.x += 24.6721 / 2;
+            nvgFontSize(vg, 11);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
+
+            ll = ioPortLocation(i == 0, 1, box);
+            ll.y = box.size.y - ioMargin - 1.5;
+            ll.x += 24.6721 / 2;
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "R", NULL);
+
+            ll = ioPortLocation(i == 0, 2, box);
+            ll.y = box.size.y - ioMargin - 1.5;
+            ll.x += 24.6721 / 2;
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "Gain", NULL);
+        }
+    }
+
+    void drawStackedInputOutputBackground( NVGcontext *vg, rack::Rect box ) {
+        for (int i = 0; i < 2; ++i) {
+            nvgBeginPath(vg);
+            float x0 = ( box.size.x - ioRegionWidth ) / 2;
+            float y0 = orangeLine + ioMargin;
+            float boxHt = box.size.y - orangeLine - 2 * ioMargin;
+            if( i == 0 )
+                y0 = orangeLine - boxHt - ioMargin;
+            
+            SurgeStyle::drawBlueIORect(
+                vg, x0, y0,
+                ioRegionWidth,
+                boxHt,
+                (i == 0) ? 0 : 1);
+
+            nvgFillColor(vg, surgeWhite());
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 12);
+            nvgSave(vg);
+            nvgTranslate(vg, x0 + ioRegionWidth - 2, y0 + ioMargin * 0.5 );
+            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+            nvgRotate(vg, M_PI / 2);
+            if (i == 0) {
+                nvgText(vg, 0, 0, "Input", NULL);
+            } else {
+                nvgText(vg, 0, 0, "Output", NULL);
+            }
+            nvgRestore(vg);
+            rack::Vec ll;
+            ll = ioPortLocation(i == 0, 0, box, true);
+            ll.y += boxHt - ioMargin;
+            ll.x += 24.6721 / 2;
+            nvgFontSize(vg, 11);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
+
+            ll = ioPortLocation(i == 0, 1, box, true);
+            ll.y += boxHt - ioMargin;
+            ll.x += 24.6721 / 2;
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "R", NULL);
+
+            ll = ioPortLocation(i == 0, 2, box, true);
+            ll.y += boxHt - ioMargin;
+            ll.x += 24.6721 / 2;
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, ll.x, ll.y, "Gain", NULL);
+        }
+    }
+
+    float fxGroupLabel( NVGcontext *vg, float y, const char* label, rack::Rect box ) {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, fontId(vg));
+        nvgFontSize(vg, 12);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
+        nvgFillColor( vg, surgeBlue());
+        nvgText( vg, padFromEdge, y, label, NULL );
+
+        float bounds[4];
+        nvgTextBounds( vg, padFromEdge, y, label, NULL, bounds );
+        float xp = bounds[ 2 ] + padMargin;
+
+        float a, d, h;
+        nvgTextMetrics( vg, &a, &d, &h );
+        float yp = y + h + d;
+        
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, xp, yp );
+        nvgLineTo(vg, box.size.x - padFromEdge, yp );
+        nvgStrokeColor( vg, surgeBlue() );
+        nvgStrokeWidth( vg, 1 );
+        nvgStroke( vg );
+        return y + h;
+    }
+
+    void simpleLabel( NVGcontext *vg, float x, float y, const char* label ) {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, fontId(vg));
+        nvgFontSize(vg, 12);
+        nvgFillColor(vg, surgeBlue() );
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP );
+        nvgText( vg, x, y, label, NULL );
+    }
+    
+
     
 };
 
