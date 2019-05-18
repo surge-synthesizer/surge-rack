@@ -21,6 +21,7 @@ extern std::set<rack::Model *> modelSurgeFXSet;
 extern rack::Model *modelSurgeADSR;
 extern rack::Model *modelSurgeOSC;
 extern rack::Model *modelSurgeWaveShaper;
+extern rack::Model *modelSurgeClock;
 extern rack::Model *modelSurgeWTOSC;
 extern rack::Model *modelSurgeVCF;
 extern rack::Model *modelSurgeLFO;

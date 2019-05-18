@@ -136,20 +136,24 @@ struct SurgeModuleCommon : public rack::Module {
 #endif        
 
 
-    float lastBPM = -1, lastClockCV = -100;;
+    float lastBPM = -1, lastClockCV = -100;
+    float dPhase = 0;
     inline bool updateBPMFromClockCV(float clockCV, float sampleTime, float sampleRate) {
         if( clockCV == lastClockCV ) return false;
 
         lastClockCV = clockCV;
         float clockTime = powf(2.0f, clockCV);
-        float dPhase = clockTime * sampleTime;
+        dPhase = clockTime * sampleTime;
         float samplesPerBeat = 1.0/dPhase;
         float secondsPerBeat = samplesPerBeat / sampleRate;
         float beatsPerMinute = 60.0 / secondsPerBeat;
         lastBPM = beatsPerMinute;
 
-        storage->temposyncratio = beatsPerMinute / 120.0;
-        storage->temposyncratio_inv = 1.f / storage->temposyncratio;
+        if( storage.get() )
+        {
+            storage->temposyncratio = beatsPerMinute / 120.0;
+            storage->temposyncratio_inv = 1.f / storage->temposyncratio;
+        }
         return true;
     }
 
