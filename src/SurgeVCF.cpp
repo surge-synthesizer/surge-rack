@@ -2,36 +2,22 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeVCFWidget : rack::ModuleWidget {
+struct SurgeVCFWidget : SurgeModuleWidgetCommon {
     typedef SurgeVCF M;
     SurgeVCFWidget(M *module);
 
-
     int fontId = -1;
     void moduleBackground(NVGcontext *vg) {
-        if (fontId < 0)
-            fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
-
-        nvgBeginPath(vg);
-        nvgFillColor(vg, nvgRGBA(255,0,0,255));
-        nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, 18);
-        nvgSave(vg);
-        nvgTranslate(vg, SCREW_WIDTH * 9, RACK_HEIGHT / 2.4 );
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-        nvgRotate(vg, -M_PI / 4);
-        nvgText(vg, 0, 0, "SurgeVCF", NULL );
-        nvgText(vg, 0, 22, "Under Construction", NULL);
-        nvgRestore(vg);
     }
 };
 
 SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module)
-    : rack::ModuleWidget(
 #ifndef RACK_V1
-          module
-#endif
-      ) {
+    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
+#else
+    : SurgeModuleWidgetCommon()
+#endif      
+{
 #ifdef RACK_V1
     setModule(module);
 #endif
@@ -42,6 +28,30 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module)
         this->moduleBackground(vg);
     };
     addChild(bg);
+
+    // FIXME - size obviously wrong
+    SurgeButtonBank *typeBank = SurgeButtonBank::create(rack::Vec( padFromEdge, SCREW_WIDTH + padFromEdge ),
+                                                        rack::Vec( 7 * SCREW_WIDTH - padFromEdge - padMargin, 5 * SCREW_WIDTH ),
+                                                        module, M::FILTER_TYPE, 3, 3 );
+    typeBank->addLabel( "lp12" );
+    typeBank->addLabel( "lp24" );
+    typeBank->addLabel( "lplad" );
+    typeBank->addLabel( "hp12" );
+    typeBank->addLabel( "hp24" );
+    typeBank->addLabel( "bp" );
+    typeBank->addLabel( "notch" );
+    typeBank->addLabel( "comb" );
+    typeBank->addLabel( "s&h" );
+    addParam( typeBank );
+
+    SurgeButtonBank *subTypeBank = SurgeButtonBank::create(rack::Vec( padFromEdge + 8 * SCREW_WIDTH, SCREW_WIDTH + padFromEdge ),
+                                                        rack::Vec( 7 * SCREW_WIDTH / 3.0, 5 * SCREW_WIDTH ),
+                                                        module, M::FILTER_SUBTYPE, 1, 3 );
+    subTypeBank->addLabel("SVF");
+    subTypeBank->addLabel("Rough");
+    subTypeBank->addLabel("Smooth");
+    addParam(subTypeBank);
+        
 }
 
 #if RACK_V1
