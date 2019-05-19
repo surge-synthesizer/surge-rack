@@ -12,15 +12,9 @@ struct SurgeVCFWidget : SurgeModuleWidgetCommon {
 };
 
 SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "VCF");
@@ -54,11 +48,5 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module)
         
 }
 
-#if RACK_V1
 rack::Model *modelSurgeVCF =
     rack::createModel<SurgeVCFWidget::M, SurgeVCFWidget>("SurgeVCF");
-#else
-rack::Model *modelSurgeVCF =
-    rack::createModel<SurgeVCFWidget::M, SurgeVCFWidget>(
-        "Surge Team", "SurgeVCF", "SurgeVCF", rack::ENVELOPE_GENERATOR_TAG);
-#endif

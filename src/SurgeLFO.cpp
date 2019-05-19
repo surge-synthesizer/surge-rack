@@ -90,15 +90,9 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
 };
 
 SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 18, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "LFO");
@@ -135,9 +129,6 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
     addParam(rack::createParam<SurgeSwitchFull>( rack::Vec( padFromEdge + padMargin + buttonBankW,
                                                             SCREW_WIDTH + padMargin + (buttonBankHeight-21)/2.0),
                                                  module, M::RATE_PARAM + 6
-#ifndef RACK_V1
-                                                 ,0,1,0
-#endif
                  ));
     
     // Vector is param #, x, y
@@ -155,10 +146,6 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
                      rack::Vec(x0 + portX + padMargin, y0 + labelH), module, M::RATE_CV + pn ));
         
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(x0, y0+labelH), module, M::RATE_PARAM + pn
-#if !RACK_V1
-                                                   ,
-                                                   0, 1, 0.5
-#endif
                                                    ));
 
         
@@ -182,10 +169,6 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
                      rack::Vec(2 * padMargin + portX , yPos), module, cv ));
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padMargin , yPos), module,
                                                    pa
-#if !RACK_V1
-                                                   ,
-                                                   0, 1, 0.5
-#endif
                                                    ));
         addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2 , yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
@@ -201,11 +184,5 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
 
 }
 
-#if RACK_V1
 rack::Model *modelSurgeLFO =
     rack::createModel<SurgeLFOWidget::M, SurgeLFOWidget>("SurgeLFO");
-#else
-rack::Model *modelSurgeLFO =
-    rack::createModel<SurgeLFOWidget::M, SurgeLFOWidget>(
-        "Surge Team", "SurgeLFO", "SurgeLFO", rack::ENVELOPE_GENERATOR_TAG);
-#endif

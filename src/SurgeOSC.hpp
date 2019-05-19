@@ -30,7 +30,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     ParamCache pc;
     ParamValueStateSaver knobSaver;
     
-#if RACK_V1
     SurgeOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(OUTPUT_GAIN, 0, 1, 1);
@@ -41,12 +40,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             configParam(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
         setupSurge();
     }
-#else
-    SurgeOSC()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "OSC"; }
     
@@ -162,11 +155,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
 
     int lastUnison = -1;
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         if (processPosition >= BLOCK_SIZE_OS) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".

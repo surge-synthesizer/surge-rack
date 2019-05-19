@@ -38,7 +38,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     ParamCache pc;
     
-#if RACK_V1
     SurgeWTOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(OUTPUT_GAIN, 0, 1, 1);
@@ -52,12 +51,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         configParam(WT_OR_WINDOW,0,1,0);
         setupSurge();
     }
-#else
-    SurgeWTOSC()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "WTOSC"; }
     
@@ -172,11 +165,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     int lastUnison = -1;
     
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         if (processPosition >= BLOCK_SIZE_OS) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
@@ -195,8 +184,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             
             if( pc.changed(WT_OR_WINDOW, this) )
             {
-                INFO( "[SurgeRack] changed WT or Window" );
-
                 knobSaver.storeParams( (int)pc.get(WT_OR_WINDOW), OSC_CTRL_PARAM_0, OSC_CTRL_PARAM_0 + n_osc_params, this );
                 
                 int toWhat = ot_wavetable;
@@ -250,7 +237,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
             if( pc.changedAndIsNonZero(LOAD_WT, this) || firstRespawnIsFromJSON )
             {
-                INFO( "[SurgeRack] WTOSC Loading WT %d", wtIdx );
+                rack::INFO( "[SurgeRack] WTOSC Loading WT %d", wtIdx );
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
                 surge_osc->init(72);

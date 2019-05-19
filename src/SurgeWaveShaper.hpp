@@ -11,19 +11,12 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     enum OutputIds { SIGNAL_OUT, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
-#if RACK_V1
     SurgeWaveShaper() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(MODE_PARAM, 0, n_ws_type - 1, 0);
         configParam(DRIVE_PARAM, -24.0, 24.0, 0); // ct_decibel_narrow
         setupSurge();
     }
-#else
-    SurgeWaveShaper()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "WS"; }
     
@@ -57,11 +50,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
         }
     }
 
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         if ((int)getParam(MODE_PARAM) != (int)pc.get(MODE_PARAM)) {
             swapWS((int)getParam(MODE_PARAM));

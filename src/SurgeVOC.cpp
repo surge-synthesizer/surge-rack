@@ -2,7 +2,7 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeVOCWidget : rack::ModuleWidget {
+struct SurgeVOCWidget : SurgeModuleWidgetCommon {
     typedef SurgeVOC M;
     SurgeVOCWidget(M *module);
 
@@ -27,14 +27,9 @@ struct SurgeVOCWidget : rack::ModuleWidget {
 };
 
 SurgeVOCWidget::SurgeVOCWidget(SurgeVOCWidget::M *module)
-    : rack::ModuleWidget(
-#ifndef RACK_V1
-          module
-#endif
-      ) {
-#ifdef RACK_V1
+    : SurgeModuleWidgetCommon()
+{
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "VOC");
@@ -44,11 +39,5 @@ SurgeVOCWidget::SurgeVOCWidget(SurgeVOCWidget::M *module)
     addChild(bg);
 }
 
-#if RACK_V1
 rack::Model *modelSurgeVOC =
     rack::createModel<SurgeVOCWidget::M, SurgeVOCWidget>("SurgeVOC");
-#else
-rack::Model *modelSurgeVOC =
-    rack::createModel<SurgeVOCWidget::M, SurgeVOCWidget>(
-        "Surge Team", "SurgeVOC", "SurgeVOC", rack::ENVELOPE_GENERATOR_TAG);
-#endif

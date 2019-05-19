@@ -1,11 +1,6 @@
 #include "SurgeStyle.hpp"
 #include "rack.hpp"
-#ifndef RACK_V1
-#include "widgets.hpp"
-#endif
-#ifdef RACK_V1
 #include "svg.hpp"
-#endif
 
 int SurgeStyle::fid = -1;
 int SurgeStyle::fidcond = -1;
@@ -14,25 +9,16 @@ int SurgeStyle::fidcond = -1;
 ** These are purposefully not exposed
 */
 namespace SurgeInternal {
-#ifdef RACK_V1
+
 typedef std::shared_ptr<rack::Svg> svg_t;
-#else
-typedef std::shared_ptr<rack::SVG> svg_t;
-#endif
+    
 static svg_t surgeLogoBlue = nullptr, surgeLogoWhite = nullptr;
 static svg_t getSurgeLogo(bool whiteVersion) {
     if (surgeLogoBlue == nullptr) {
-#if RACK_V1
         surgeLogoBlue = rack::APP->window->loadSvg(
             rack::asset::plugin(pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
         surgeLogoWhite = rack::APP->window->loadSvg(
             rack::asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
-#else
-        surgeLogoBlue = rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
-        surgeLogoWhite = rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
-#endif
     }
     if (whiteVersion)
         return surgeLogoWhite;
@@ -141,15 +127,7 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
         nvgSave(vg);
         nvgTranslate(vg, x0, 2);
         nvgScale(vg, scaleFactor, scaleFactor);
-#if RACK_V1
         rack::svgDraw(vg, logoSvg->handle);
-#else
-        // This is so unsatisfying but v6 doesn't expose svgDraw as a public API
-        // point so fake it with a temp widget
-        rack::SVGWidget w;
-        w.setSVG(logoSvg);
-        w.draw(vg);
-#endif
         nvgRestore(vg);
     }
         

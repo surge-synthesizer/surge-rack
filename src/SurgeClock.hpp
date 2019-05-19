@@ -10,17 +10,11 @@ struct SurgeClock : virtual public SurgeModuleCommon {
     enum OutputIds { CLOCK_CV_OUT, GATE_OUT, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
-#if RACK_V1
     SurgeClock() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(CLOCK_CV, -2, 6, 1);
         configParam(PULSE_WIDTH, 0.01, 0.99, 0.5);
     }
-#else
-    SurgeClock()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-    }
-#endif
 
     virtual std::string getName() override { return "CLOCK"; }
     
@@ -29,18 +23,11 @@ struct SurgeClock : virtual public SurgeModuleCommon {
     float phase = 0;
     float lastPulse = -1;
 
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         bool newBPM = false;
-#if RACK_V1                
         newBPM = updateBPMFromClockCV(getParam(CLOCK_CV), args.sampleTime, args.sampleRate );
-#else
-        newBPM = updateBPMFromClockCV(getParam(CLOCK_CV), rack::engineGetSampleTime(), rack::engineGetSampleRate() );
-#endif
+
         if( newBPM )
         {
             char txt[256];

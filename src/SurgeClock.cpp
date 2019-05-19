@@ -48,15 +48,9 @@ struct SurgeClockWidget : SurgeModuleWidgetCommon {
 };
 
 SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 3, RACK_HEIGHT);
     topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * portY;
@@ -73,10 +67,6 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
     addParam(rack::createParam<SurgeKnobRooster>(
         rack::Vec(box.size.x / 2 - surgeRoosterX / 2, bpmKnob + textHeight + padMargin),
         module, M::CLOCK_CV
-#if !RACK_V1
-        ,
-        -2, 6, 1
-#endif
         ));
 
     addChild(TextDisplayLight::create(
@@ -91,10 +81,6 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
     addParam(rack::createParam<SurgeKnobRooster>(
         rack::Vec(box.size.x / 2 - surgeRoosterX / 2, pwmKnob + textHeight + padMargin),
         module, M::PULSE_WIDTH
-#if !RACK_V1
-        ,
-        0.01, 0.99, 0.5
-#endif
         ));
 
     addChild(TextDisplayLight::create(
@@ -118,13 +104,6 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
         M::GATE_OUT));
 }
 
-#if RACK_V1
 rack::Model *modelSurgeClock =
     rack::createModel<SurgeClockWidget::M, SurgeClockWidget>(
         "SurgeClock");
-#else
-rack::Model *modelSurgeClock =
-    rack::createModel<SurgeClockWidget::M, SurgeClockWidget>(
-        "Surge Team", "SurgeClock", "SurgeClock",
-        rack::ENVELOPE_GENERATOR_TAG);
-#endif

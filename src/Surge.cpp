@@ -7,14 +7,6 @@ rack::Plugin *pluginInstance;
 void init(rack::Plugin *p) {
     pluginInstance = p;
 
-#ifndef RACK_V1
-    p->slug = "SurgeRack";
-#ifdef VERSION
-    p->version = TOSTRING(VERSION);
-#endif
-    p->website = "https://github.com/surge-synthesizer/surge-rack";
-#endif
-
     for( auto m : modelSurgeFXSet )
         p->addModel(m);
     

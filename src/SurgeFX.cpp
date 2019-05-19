@@ -38,15 +38,9 @@ struct SurgeFXWidget : SurgeModuleWidgetCommon {
 
 template <int effectType>
 SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 19, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, SurgeFXName<effectType>::getName());
@@ -62,10 +56,6 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
                                                  module, M::INPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(true, 2, box), module,
                                                M::INPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
                                                ));
 
     addOutput(rack::createOutput<rack::PJ301MPort>(
@@ -74,10 +64,6 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
                                                    module, M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(false, 2, box), module,
                                                M::OUTPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
 
                                                ));
 
@@ -98,19 +84,12 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
                      rack::Vec(2 * padMargin + portX, yPos), module, cv ));
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padMargin, yPos), module,
                                                    pa
-#if !RACK_V1
-                                                   ,
-                                                   0, 1, 0.5
-#endif
                                                    ));
 
         if( module && module->canTempoSync(i) )
         {
             addParam(rack::createParam<SurgeSwitch>(rack::Vec(3 * padMargin + 2 * portX, yPos ), module,
                                                     M::PARAM_TEMPOSYNC_0 + i
-#if !RACK_V1
-                                                    , 0, 1, 0
-#endif
                          ));
         }
         
@@ -134,14 +113,8 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 }
 
 
-#if RACK_V1
 #define CREATE_FX( type, name ) auto v ## type = modelSurgeFXSet.insert( \
         rack::createModel<SurgeFXWidget< type >::M, SurgeFXWidget< type >>(name));
-#else
-#define CREATE_FX( type, name ) auto v ## type = modelSurgeFXSet.insert( \
-        rack::createModel<SurgeFXWidget< type >::M, SurgeFXWidget< type >>( \
-            "Surge Team", name, name, rack::EFFECT_TAG));
-#endif
 
 // FIXME: Eventually each of these get their own panel and this list drops to 0
 CREATE_FX( fxt_delay, "SurgeDelay" );

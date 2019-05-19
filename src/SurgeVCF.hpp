@@ -22,19 +22,12 @@ struct SurgeVCF :  public SurgeModuleCommon {
 
     ParamCache pc;
 
-#if RACK_V1
     SurgeVCF() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(FILTER_TYPE, 0, 9, 0 );
         configParam(FILTER_SUBTYPE, 0, 3, 0 );
         setupSurge();
     }
-#else
-    SurgeVCF()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "VCF"; }
 
@@ -48,17 +41,13 @@ struct SurgeVCF :  public SurgeModuleCommon {
     }
 
 
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         if( pc.changed(FILTER_SUBTYPE,this) || pc.changed(FILTER_TYPE,this) )
         {
             filter = GetQFPtrFilterUnit((int)getParam(FILTER_TYPE) + 1, (int)getParam(FILTER_SUBTYPE));
             CM.Reset();
-            INFO( "FILTER is %x", (size_t)filter);
+            rack::INFO( "FILTER is %x", (size_t)filter);
         }
         pc.update(this);
 

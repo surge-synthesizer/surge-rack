@@ -9,13 +9,13 @@ the Surge slack which is detailed at [the surge readme](https://github.com/surge
 panels and DSP code and streaming fragility. There is no guarantee that the code here will work, 
 will compile, or will save and load a patch from session to session or version to version.**
 
-That being said, we do run a v0.6.2 build in continuous integration against every PR, and our primary development
-is mac v1, so there is a good chance you can get it to build. If you see an error please raise a github issue.
+As of May 19, the weekend of the dev release of Rack 1.0, we have stopped supporting 0.6.2 and now have a
+1.0 only codebase. Mode details on this are below.
 
 ## What are the plugins provided and their state
 
 Our overall goal for our first release is to have all the stages exposed as modules which work with an acceptable
-front plate, but (1) are still monophonic and (2) don't support temposync for parameters, just absolute values.
+front plate, are full "phase2/3" rack 1.0 modules, but are still monophonic.
 Here's how far we are along on that journey.
 
 <table>
@@ -41,11 +41,6 @@ your formatting pleasure also.
 
 We've started writing a [basic code setup guide](docs/arch.md).
 
-## Rack Versions
-
-The code builds with either RACK 0.6.2 or RACK 1.0, inasmuch as it builds at all. The Makefile
-automatically detects which one you have, assuming that if you are using 0.6.2 you are using the
-Rack SDK and if you are using 1.0 you have checked out the v1 branch.
 
 ### Before you build
 
@@ -60,74 +55,66 @@ https://vcvrack.com/manual/Building.html
 If you have never built a rack plugin before, let us again suggest hopping on our slack in case you 
 get stuck. We build every commit windows, mac, and linux against V0.6.2 and regularly develop against v1.
 
-### Rack 0.6.2
+### Download Rack 1.0 and the Rack 1.0 SDK
 
-Basically build against the Rack SDK as normal. The azure-pipelines.yml shows you how to do this. 
-Here's an example.
+[This post from Andrew](https://community.vcvrack.com/t/rack-v1-development-blog/1149/501?u=baconpaul) explains
+how to download Rack.
 
-On Windows: start a MSYS2 64. On Linux and Mac start a terminal of your choosing.
 
-**Very first time you build**
+### Build the Plugins if you are already set up to develop Rack
 
-```
-mkdir directory-of-your-choosing
-cd directory-of-your-choosing
-curl -o Rack-SDK.zip  https://vcvrack.com/downloads/Rack-SDK-0.6.2.zip
-unzip Rack-SDK.zip
-git clone https://github.com/surge-synthesizer/surge-rack
-cd surge-rack
-git submodule update --init --recursive
-RACK_DIR=../Rack-SDK make dist
-```
-
-and you should get a built plugin. Move the plugin zip to your rack documents folder and restart rack.
-
-**Subsequent changes**
-
-```
-cd directory-of-your-choosing/surge-rack
-(change code as desired)
-RACK_DIR=../Rack-SDK make dist
-```
-
-and you should get a built plugin. Move the plugin zip to your rack documents folder and restart rack.
-
-### Rack 1.0
-
-Rack 1.0 still isn't stable. But it's what @baconpaul is developing against for now so it should work.
-Inasmuch as any of this alpha software works yet!
+Presuming you have RACK_DIR set it's standard, just you need a git submodule
 
 **First Time**
 
 ```
 cd (working directory)
-git clone https://github.com/VCVRack/Rack.git
-cd Rack
-git checkout v1-gpl
-git submodule update --init --recursive
-make dep
-make
-cd plugins
-git clone https://github.com/VCVRack/Fundamental.git
-cd Fundamental
-git checkout v1
-make dist
-cd ..
 git clone https://github.com/surge-synthesizer/surge-rack.git 
 cd surge-rack
 git submodule update --init --recursive
 make dist
-cd ../..
-make run
 ```
+
+This will result in a .zip file which you can place in your working directory
 
 **Subsequent Changes**
 
 ```
 cd (working directory)/Rack/plugins/surge-rack
 (change code)
-make dist && ( cd ../.. ; make run )
+make dist
 ```
+
+### Using the scripts/buildutil.sh
+
+Like `build-osx.sh` in surge, I wrote a little script to make a clean area, do builds, etc... and actually
+download and run rack 1.0 configured in a way you want. The script is `scripts/buildutil.sh`. Here's a sample session. 
+You can set a variable `RACK_INSTALL_DIR` for the working copy if you want. Read the script to understand it really.
+
+**First Time Only**
+
+```
+cd (working directory)
+git clone https://github.com/surge-synthesizer/surge-rack.git 
+cd surge-rack
+git submodule update --init --recursive
+./scripts/buildutil.sh --get-rack
+```
+
+You know have rack and surge-rack ready to go
+
+**Build and run**
+
+```
+./scripts/buildutil.sh --build
+./scripts/buildutil.sh --install
+./scripts/buildutil.sh --run
+```
+
+there is also the shortcut `scripts/buildinstall.sh --bir` to do all 3; or `scripts/buildinstall.sh --br` to build and 
+run and only install the dll (not assets).
+
+
 
 ## Updating your working copy
 
@@ -157,3 +144,22 @@ git fetch usptream
 git reset upstream/master --hard
 git push origin
 ```
+
+
+## What about rack 0.6.2
+
+For a while, when we weren't sure whether surge-rack would finish before rack 1.0, we were building these
+plugins for both versions with a spaghetti hell of ifdefs. We stopped that on May 19, but we checkpointed
+the code at the `checkpoint/last_working_062` branch if you want to check it out.
+
+Here at surge-rack we are super supportive of 1.0, think it is great, and appreciate the hard work. We plan to
+be 1.0 only. If for some reason you would like to backport to 0.6.2, please get in touch and we can talk about
+pull requests onto that branch.
+
+## License and Copyright
+
+This software is licensed under the Gnu Public License v3. It is a derived work of both Surge (which is GPL3)
+and VCVRack 1.0 (which is VCV3). It contains the Encode font which is licensed under OpenFontLicense 1.1.
+Copyright to this software is held by the authors with authorship indicated by the github transaction log.
+
+Copyright 2019, Various authors.

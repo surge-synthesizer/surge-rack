@@ -47,15 +47,9 @@ struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
 };
 
 SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "fShift");
@@ -70,10 +64,6 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
                                                  module, M::INPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(true, 2, box, true), module,
                                                M::INPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
                                                ));
 
     addOutput(rack::createOutput<rack::PJ301MPort>(
@@ -82,10 +72,6 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
                                                    module, M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(false, 2, box, true), module,
                                                M::OUTPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
 
                                                ));
 
@@ -95,10 +81,6 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
         float xp = box.size.x - padFromEdge - padMargin - 2 * portX;
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xp,yp),
                                                    module, M::FX_PARAM_0 + i
-#if !RACK_V1
-                                                   ,
-                                                   0, 1, 1
-#endif
                      ));
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + portX + padMargin, yp ),
                                                      module, M::FX_PARAM_INPUT_0 + i ) );
@@ -118,11 +100,5 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
 }
 
 
-#if RACK_V1
 auto mfreq = modelSurgeFXSet.insert(
     rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>("SurgeFreqShift") );
-#else
-auto mfreq = modelSurgeFXSet.insert(
-    rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>(
-        "Surge Team", "SurgeFreqShift", "SurgeFreqShift", rack::ENVELOPE_GENERATOR_TAG) );
-#endif

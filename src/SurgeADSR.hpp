@@ -5,9 +5,6 @@
 #include "rack.hpp"
 #include <cstring>
 
-#if !RACK_V1
-#include "dsp/digital.hpp"
-#endif
 
 struct SurgeADSR : virtual public SurgeModuleCommon {
     enum ParamIds {
@@ -42,16 +39,11 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         NUM_LIGHTS
     };
 
-#if RACK_V1
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
-#else
-    rack::SchmittTrigger envGateTrigger, envRetrig;
-#endif
 
     StringCache adsrStrings[4];
     ParamCache pc;
 
-#if RACK_V1
     SurgeADSR() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = A_PARAM; i <= R_PARAM; ++i)
@@ -62,12 +54,6 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         configParam(R_S_PARAM, 0, 2, 0);
         setupSurge();
     }
-#else
-    SurgeADSR()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "ADSR"; }
 
@@ -102,11 +88,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     int lastStep = 0;
     float output0, output1;
     
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         if (lastStep == BLOCK_SIZE)
             lastStep = 0;
