@@ -111,6 +111,6 @@ SurgeRotaryWidget::SurgeRotaryWidget(SurgeRotaryWidget::M *module)
     
 }
 
+auto mrotary = addFX(
+		     rack::createModel<SurgeRotaryWidget::M, SurgeRotaryWidget>("SurgeRotary"), fxt_rotaryspeaker );
 
-auto mrotary = modelSurgeFXSet.insert(
-    rack::createModel<SurgeRotaryWidget::M, SurgeRotaryWidget>("SurgeRotary") );

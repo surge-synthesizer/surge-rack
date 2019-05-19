@@ -99,6 +99,5 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
     
 }
 
-
-auto mfreq = modelSurgeFXSet.insert(
-    rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>("SurgeFreqShift") );
+auto mfreq = addFX(
+		   rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>("SurgeFreqShift"), fxt_freqshift );

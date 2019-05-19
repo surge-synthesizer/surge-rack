@@ -91,6 +91,7 @@ endif
 
 ifdef ARCH_WIN
 SOURCES += $(SRL)/filesystem/filesystem.cpp
+LDFLAGS += -lWinmm
 endif
 
 ifdef ARCH_LIN

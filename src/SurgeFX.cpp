@@ -113,8 +113,8 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 }
 
 
-#define CREATE_FX( type, name ) auto v ## type = modelSurgeFXSet.insert( \
-        rack::createModel<SurgeFXWidget< type >::M, SurgeFXWidget< type >>(name));
+#define CREATE_FX( type, name ) auto v ## type = addFX( \
+     rack::createModel<SurgeFXWidget< type >::M, SurgeFXWidget< type >>(name), type);
 
 // FIXME: Eventually each of these get their own panel and this list drops to 0
 CREATE_FX( fxt_delay, "SurgeDelay" );

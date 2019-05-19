@@ -8,13 +8,15 @@
 
 extern rack::Plugin *pluginInstance;
 
-extern std::set<rack::Model *> modelSurgeFXSet;
-
+extern rack::Model *modelSurgeClock;
 extern rack::Model *modelSurgeADSR;
+
 extern rack::Model *modelSurgeOSC;
 extern rack::Model *modelSurgeWaveShaper;
-extern rack::Model *modelSurgeClock;
+
 extern rack::Model *modelSurgeWTOSC;
 extern rack::Model *modelSurgeVCF;
 extern rack::Model *modelSurgeLFO;
 extern rack::Model *modelSurgeVOC;
+
+extern int addFX(rack::Model *, int type);
