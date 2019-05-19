@@ -1,21 +1,38 @@
 #include "Surge.hpp"
+#include "SurgeStorage.h"
 
-std::set<rack::Model *> modelSurgeFXSet;
+rack::Model **fxModels = nullptr;
+int addFX(rack::Model *m, int type)
+{
+   rack::INFO( "[SurgeRack] adding FX %d", type );
+   if( fxModels == nullptr ) {
+     fxModels = new rack::Model *[num_fxtypes];
+     for( auto i=0; i<num_fxtypes; ++i )
+       fxModels[i] = nullptr;
+   }
+   fxModels[type] = m;
+   return type;
+}
 
 rack::Plugin *pluginInstance;
 
 void init(rack::Plugin *p) {
     pluginInstance = p;
+    rack::INFO( "[SurgeRack] init" );
 
-    for( auto m : modelSurgeFXSet )
-        p->addModel(m);
-    
+    p->addModel(modelSurgeClock);
     p->addModel(modelSurgeADSR);
+
     p->addModel(modelSurgeOSC);
     p->addModel(modelSurgeWaveShaper);
-    p->addModel(modelSurgeClock);
+
     p->addModel(modelSurgeWTOSC);
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeLFO);
     p->addModel(modelSurgeVOC);
+
+    if( fxModels != nullptr )
+      for( auto i=0; i<num_fxtypes; ++i )
+	if( fxModels[i] != nullptr )
+	  p->addModel(fxModels[i]);
 }

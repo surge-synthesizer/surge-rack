@@ -68,6 +68,11 @@ run_rack()
     fi
 }
 
+clean()
+{
+    RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make clean
+}
+
 build_surge()
 {
     RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make -j 4 all
@@ -118,6 +123,9 @@ case $command in
         install_surge
         run_rack
         ;;
+    --clean)
+	clean
+	;;
     *)
         help_message
         ;;
