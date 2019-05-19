@@ -54,7 +54,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
     StringCache labelCache[NUM_FX_PARAMS];
     StringCache groupCache[NUM_FX_PARAMS];
 
-#if RACK_V1
     SurgeFX() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
@@ -65,12 +64,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
         
         setupSurge();
     }
-#else
-    SurgeFX()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return SurgeFXName<effectNum>::getName(); }
 
@@ -173,11 +166,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
         alignas(16)[BLOCK_SIZE];
     int bufferPos = BLOCK_SIZE - 1;
 
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         float inpG = getParam(INPUT_GAIN);
         float outG = getParam(OUTPUT_GAIN);
@@ -206,27 +195,14 @@ struct SurgeFX : virtual SurgeModuleCommon {
             bool newBPM = false;
             if( inputConnected(CLOCK_CV_INPUT) )
             {
-#if RACK_V1                
                 newBPM = updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
-#else
-                newBPM = updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), rack::engineGetSampleTime(), rack::engineGetSampleRate() );
-#endif                
             }
             else
             {
                 // FIXME - only once please
-#if RACK_V1                
                 newBPM = updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
-#else
-                newBPM = updateBPMFromClockCV(1, rack::engineGetSampleTime(), rack::engineGetSampleRate() );
-#endif                
             }
             
-            if( newBPM )
-            {
-                INFO( "have new BPM %d %lf", inputConnected(CLOCK_CV_INPUT), lastBPM );
-            }
-
             for (int i = 0; i < n_fx_params; ++i) {
                 bool changed = newBPM;
                 if(pc.changed(FX_PARAM_0 + i, this))

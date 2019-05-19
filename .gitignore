@@ -4,5 +4,6 @@ standalone/bld/*
 dist/
 plugin.dylib
 plugin.so
+plugin.dll
 standalone/exe_*
 pynb/.ipynb_checkpoints/*

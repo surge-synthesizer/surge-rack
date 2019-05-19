@@ -5,10 +5,6 @@
 #include "rack.hpp"
 #include <cstring>
 
-#if !RACK_V1
-#include "dsp/digital.hpp"
-#endif
-
 struct SurgeLFO : virtual public SurgeModuleCommon {
     enum ParamIds {
         RATE_PARAM,
@@ -55,29 +51,18 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         NUM_LIGHTS
     };
 
-#if RACK_V1
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
-#else
-    rack::SchmittTrigger envGateTrigger, envRetrig;
-#endif
 
     ParamCache pc;
 
     std::vector<std::shared_ptr<RackSurgeParamBinding>> pb;
     
-#if RACK_V1
     SurgeLFO() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = DEL_PARAM; i <= R_PARAM; ++i)
             configParam(i, 0, 1, 0.5);
         setupSurge();
     }
-#else
-    SurgeLFO()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "LFO"; }
     
@@ -110,11 +95,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     int lastStep = 0;
     float output0, output1;
     
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
         if (lastStep == BLOCK_SIZE)
             lastStep = 0;

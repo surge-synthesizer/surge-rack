@@ -106,18 +106,9 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
 };
 
 SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
-    : SurgeModuleWidgetCommon(
-#if !RACK_V1
-          module
-#endif
-      )
-#if !RACK_V1
-    , rack::ModuleWidget(module) // why do I need this gcc? SMWC calls it.
-#endif    
+    : SurgeModuleWidgetCommon()
 {
-#if RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 12, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "OSC");
@@ -132,10 +123,6 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                                                    M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(2), module,
                                                M::OUTPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
                                                ));
 
     // Improve this API
@@ -155,10 +142,6 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
     int xp = pitchCtrlX;
     addParam(rack::createParam<SurgeKnobRooster>(
                  rack::Vec(xp, pitchY), module, M::PITCH_0
-#if !RACK_V1
-        ,
-        1, 127, 72
-#endif
         ));
     addInput(rack::createInput<rack::PJ301MPort>(
                  rack::Vec( xp + surgeRoosterX + padMargin,
@@ -167,9 +150,6 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
     addParam(rack::createParam<SurgeSwitch>(rack::Vec(xp + surgeRoosterX + portX + 2 * padMargin,
                                                       pitchY + ( surgeRoosterY - 21 ) / 2),
                                             module, M::PITCH_0_IN_FREQ
-#if !RACK_V1
-                                            ,0,1,0
-#endif
                  ));
 
     addChild(TextDisplayLight::create(
@@ -187,10 +167,6 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
         float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin/2;
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padFromEdge, yctrl), module,
                                                    M::OSC_CTRL_PARAM_0 + i
-#if !RACK_V1
-                                                   ,
-                                                   0, 1, 0.5
-#endif
                                                    ));
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + portX, yctrl), module,
                                                      M::OSC_CTRL_CV_0 + i));
@@ -208,11 +184,5 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
     }
 }
 
-#if RACK_V1
 rack::Model *modelSurgeOSC =
     rack::createModel<SurgeOSCWidget::M, SurgeOSCWidget>("SurgeOSC");
-#else
-rack::Model *modelSurgeOSC =
-    rack::createModel<SurgeOSCWidget::M, SurgeOSCWidget>(
-        "Surge Team", "SurgeOSC", "SurgeOSC", rack::ENVELOPE_GENERATOR_TAG);
-#endif

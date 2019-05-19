@@ -19,17 +19,10 @@ struct SurgeVOC : virtual public SurgeModuleCommon {
 
     ParamCache pc;
 
-#if RACK_V1
     SurgeVOC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         setupSurge();
     }
-#else
-    SurgeVOC()
-        : SurgeModuleCommon(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
-        setupSurge();
-    }
-#endif
 
     virtual std::string getName() override { return "VOC"; }
 
@@ -38,11 +31,7 @@ struct SurgeVOC : virtual public SurgeModuleCommon {
     }
 
 
-#if RACK_V1
     void process(const typename rack::Module::ProcessArgs &args) override
-#else
-    void step() override
-#endif
     {
     }
 };

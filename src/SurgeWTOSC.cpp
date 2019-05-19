@@ -133,18 +133,9 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
 };
 
 SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
-    : SurgeModuleWidgetCommon(
-#if !RACK_V1
-          module
-#endif
-      )
-#if !RACK_V1
-    , rack::ModuleWidget(module) // why do I need this gcc? SMWC calls it.
-#endif    
+    : SurgeModuleWidgetCommon()
 {
-#if RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WTOSC");
@@ -159,20 +150,12 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                                                    M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(2), module,
                                                M::OUTPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
                                                ));
 
 
     int xp = pitchCtrlX;
     addParam(rack::createParam<SurgeKnobRooster>(
                  rack::Vec(xp, pitchY), module, M::PITCH_0
-#if !RACK_V1
-        ,
-        1, 127, 72
-#endif
         ));
     addInput(rack::createInput<rack::PJ301MPort>(
                  rack::Vec( xp + surgeRoosterX + padMargin,
@@ -181,9 +164,6 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
     addParam(rack::createParam<SurgeSwitch>(rack::Vec(xp + surgeRoosterX + portX + 2 * padMargin,
                                                       pitchY + ( surgeRoosterY - 21 ) / 2),
                                             module, M::PITCH_0_IN_FREQ
-#if !RACK_V1
-                                            ,0,1,0
-#endif
                  ));
 
     addChild(TextDisplayLight::create(
@@ -200,10 +180,6 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
         float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin/2;
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padFromEdge, yctrl), module,
                                                    M::OSC_CTRL_PARAM_0 + i
-#if !RACK_V1
-                                                   ,
-                                                   0, 1, 0.5
-#endif
                                                    ));
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + portX, yctrl), module,
                                                      M::OSC_CTRL_CV_0 + i));
@@ -234,29 +210,17 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
 
     addParam(rack::createParam<SurgeKnobRooster>(
                  rack::Vec(colOneEnd + padFromEdge, wtSelY + 40), module, M::CATEGORY_IDX
-#if !RACK_V1
-        ,
-                 0,1,0
-#endif
         ));
 
 
     addParam(rack::createParam<SurgeKnobRooster>(
                  rack::Vec(colOneEnd + padFromEdge + padMargin + surgeRoosterX, wtSelY + 40),
                  module, M::WT_IN_CATEGORY_IDX
-#if !RACK_V1
-                 ,
-                 0,1,0
-#endif
                  ));
 
     addParam(rack::createParam<rack::CKD6>(
                  rack::Vec(colOneEnd + padFromEdge + 2*padMargin + 2*surgeRoosterX, wtSelY + 40),
                  module, M::LOAD_WT
-#if !RACK_V1
-                 ,
-                 0,1,0
-#endif
                  ));
 
     addChild(rack::createLight<rack::SmallLight<rack::GreenLight>>(
@@ -283,11 +247,5 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
  
 }
 
-#if RACK_V1
 rack::Model *modelSurgeWTOSC =
     rack::createModel<SurgeWTOSCWidget::M, SurgeWTOSCWidget>("SurgeWTOSC");
-#else
-rack::Model *modelSurgeWTOSC =
-    rack::createModel<SurgeWTOSCWidget::M, SurgeWTOSCWidget>(
-        "Surge Team", "SurgeWTOSC", "SurgeWTOSC", rack::ENVELOPE_GENERATOR_TAG);
-#endif

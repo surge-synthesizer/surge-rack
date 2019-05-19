@@ -48,15 +48,9 @@ struct SurgeWaveShaperWidget : SurgeModuleWidgetCommon {
 };
 
 SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 3, RACK_HEIGHT);
     topOfInput = box.size.y - 5 * padMargin - 3 * labelHeight - 2 * portY;
@@ -89,10 +83,6 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     addParam(rack::createParam<SurgeKnobRooster>(
         rack::Vec(box.size.x / 2 - surgeRoosterX / 2, yPos),
         module, M::DRIVE_PARAM
-#if !RACK_V1
-        ,
-        -24.0, 0, 24.0
-#endif
         ));
     yPos += surgeRoosterY + 2 * padMargin;
     addInput(rack::createInput<rack::PJ301MPort>(
@@ -125,13 +115,6 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
         M::SIGNAL_OUT));
 }
 
-#if RACK_V1
 rack::Model *modelSurgeWaveShaper =
     rack::createModel<SurgeWaveShaperWidget::M, SurgeWaveShaperWidget>(
         "SurgeWaveShaper");
-#else
-rack::Model *modelSurgeWaveShaper =
-    rack::createModel<SurgeWaveShaperWidget::M, SurgeWaveShaperWidget>(
-        "Surge Team", "SurgeWaveShaper", "SurgeWaveShaper",
-        rack::ENVELOPE_GENERATOR_TAG);
-#endif

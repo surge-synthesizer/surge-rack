@@ -21,27 +21,8 @@ namespace fs = std::experimental::filesystem;
 #include <map>
 #include <vector>
 
-#if RACK_V1
-namespace logger = rack::logger;
-#endif
-
 struct SurgeModuleCommon : public rack::Module {
-#if RACK_V1
     SurgeModuleCommon() : rack::Module() {  }
-#else
-    SurgeModuleCommon(int NUM_P, int NUM_I, int NUM_O, int NUM_L)
-        : rack::Module(NUM_P, NUM_I, NUM_O, NUM_L) {
-
-        if (this->params.size() == 0) {
-            // FIXME - for some reason the base class constructor isn't called
-            // reliably through the templates in V6
-            this->params.resize(NUM_P);
-            this->inputs.resize(NUM_I);
-            this->outputs.resize(NUM_O);
-            this->lights.resize(NUM_L);
-        }
-    }
-#endif
 
     std::string getVersion() {
         char version[1024];
@@ -62,18 +43,14 @@ struct SurgeModuleCommon : public rack::Module {
     }
 
     void showVersion() {
-        INFO( "[SurgeRack] Instance: Module=%s Version=%s", getName().c_str(), getVersion().c_str() );
+        rack::INFO( "[SurgeRack] Instance: Module=%s Version=%s", getName().c_str(), getVersion().c_str() );
     }
 
     virtual std::string getName() = 0;
     
     virtual void onSampleRateChange() override {
-#if RACK_V1
         float sr = rack::APP->engine->getSampleRate();
-#else
-        float sr = rack::engineGetSampleRate();
-#endif
-        INFO("[SurgeRack] Setting SampleRate to %lf", sr);
+        rack::INFO("[SurgeRack] Setting SampleRate to %lf", sr);
         samplerate = sr;
         dsamplerate = sr;
         samplerate_inv = 1.0 / sr;
@@ -85,23 +62,18 @@ struct SurgeModuleCommon : public rack::Module {
 
     void setupSurgeCommon() {
         std::string dataPath;
-#if RACK_V1
         dataPath = rack::asset::plugin(pluginInstance, "surge-data/");
-#else
-        dataPath = "";
-#endif
 
         showVersion();
         storage.reset(new SurgeStorage(dataPath));
 
-        INFO("[SurgeRack] SurgeStorage::dataPath = %s", storage->datapath.c_str());
-        INFO("[SurgeRack] SurgeStorage::userDataPath = %s", storage->userDataPath.c_str());
-        INFO("[SurgeRack] SurgeStorage::wt_list.size() = %d", storage->wt_list.size());
+        rack::INFO("[SurgeRack] SurgeStorage::dataPath = %s", storage->datapath.c_str());
+        rack::INFO("[SurgeRack] SurgeStorage::userDataPath = %s", storage->userDataPath.c_str());
+        rack::INFO("[SurgeRack] SurgeStorage::wt_list.size() = %d", storage->wt_list.size());
 
         onSampleRateChange();
     }
 
-#if RACK_V1
     virtual void onAdd() override {
         if(model && model->presetPaths.size() == 0)
         {
@@ -112,13 +84,13 @@ struct SurgeModuleCommon : public rack::Module {
             fs::path presetPath = fs::path( presetDir.c_str() );
             if( ! fs::is_directory( presetPath ) )
             {
-                INFO( "[SurgeRack] %s has no factory plugins", getName().c_str() );
+                rack::INFO( "[SurgeRack] %s has no factory plugins", getName().c_str() );
                 return;
             }
-            INFO( "[SurgeRack] %s loading presets from %s", getName().c_str(), presetDir.c_str() );
+            rack::INFO( "[SurgeRack] %s loading presets from %s", getName().c_str(), presetDir.c_str() );
             for( auto &d : fs::directory_iterator( presetDir ) )
             {
-                INFO( "[SurgeRack] %s preset '%s'", getName().c_str(), d.path().generic_string().c_str() );
+                rack::INFO( "[SurgeRack] %s preset '%s'", getName().c_str(), d.path().generic_string().c_str() );
                 names.push_back( d.path().generic_string().c_str());
             }
 
@@ -133,7 +105,6 @@ struct SurgeModuleCommon : public rack::Module {
             //model->presetPaths.push_back(rack::asset::plugin(pluginInstance, "res/presets/ADSR/Two.vcvm" ) );
         }
     }
-#endif        
 
 
     float lastBPM = -1, lastClockCV = -100;
@@ -157,60 +128,33 @@ struct SurgeModuleCommon : public rack::Module {
         return true;
     }
 
+    // These are vestigal shortcuts from when this code supported 0.6.2 and 1.0
     inline float getParam(int id) {
-#if RACK_V1
         return this->params[id].getValue();
-#else
-        return this->params[id].value;
-#endif
     }
 
     inline void setParam(int id, float v) {
-#if RACK_V1
         this->params[id].setValue(v);
-#else
-        this->params[id].value = v;
-#endif
     }
 
     inline float getInput(int id) {
-#if RACK_V1
         return this->inputs[id].getVoltage();
-#else
-        return this->inputs[id].value;
-#endif
     }
 
     inline void setOutput(int id, float v) {
-#if RACK_V1
         this->outputs[id].setVoltage(v);
-#else
-        this->outputs[id].value = v;
-#endif
     }
 
     inline void setLight(int id, float val) {
-#if RACK_V1
         this->lights[id].setBrightness(val);
-#else
-        this->lights[id].value = val;
-#endif
     }
 
     inline bool inputConnected(int id) {
-#if RACK_V1
         return this->inputs[id].isConnected();
-#else
-        return this->inputs[id].active;
-#endif        
     }
 
     inline bool outputConnected(int id) {
-#if RACK_V1
         return this->outputs[id].isConnected();
-#else
-        return this->outputs[id].active;
-#endif        
     }
 
     void copyScenedataSubset(int scene, int start, int end) {
@@ -264,7 +208,6 @@ struct SurgeModuleCommon : public rack::Module {
         comment = comchar;
     }
     
-#if RACK_V1
     virtual json_t *dataToJson() override {
         json_t *rootJ = makeCommonDataJson();
         return rootJ;
@@ -272,16 +215,6 @@ struct SurgeModuleCommon : public rack::Module {
     virtual void dataFromJson(json_t *rootJ) override {
         readCommonDataJson(rootJ);
     }
-#else
-    virtual json_t *toJson() override {
-        json_t *rootJ = makeCommonDataJson();
-        return rootJ;
-    }
-
-    virtual void fromJson( json_t *rootJ ) override {
-        readCommonDataJson(rootJ);
-    }
-#endif    
 
 };
 
@@ -326,11 +259,7 @@ struct ParamCache {
 
     void update(rack::Module *m) {
         for (auto i = 0; i < np; ++i) {
-#if RACK_V1
             cache[i] = m->params[i].getValue();
-#else
-            cache[i] = m->params[i].value;
-#endif
         }
     }
 

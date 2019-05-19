@@ -20,11 +20,8 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget {
         InternalBDW(rack::Rect box_, drawfn_t draw_) : drawf(draw_) {
             box = box_;
         }
-#if RACK_V1
+
         void draw(const DrawArgs &args) override { drawf(args.vg); }
-#else
-        void draw(NVGcontext *vg) override { drawf(vg); }
-#endif
     };
 
     InternalBDW *kid = nullptr;
@@ -60,11 +57,7 @@ struct SurgeRackBG : public rack::TransparentWidget {
     }
 };
 
-#if RACK_V1
 struct TextDisplayLight : public rack::widget::Widget
-#else
-struct TextDisplayLight : public rack::Component
-#endif
 {
     typedef std::function<std::string()> stringGetter_t;
     typedef std::function<bool()> stringDirtyGetter_t;
@@ -83,7 +76,6 @@ struct TextDisplayLight : public rack::Component
             [this](NVGcontext *vg) { this->drawChars(vg); }));
     }
 
-#if RACK_V1
     void step() override {
         if (dirtyfn()) {
             for (auto w : children) {
@@ -94,18 +86,6 @@ struct TextDisplayLight : public rack::Component
         }
         rack::widget::Widget::step();
     }
-#else
-    void draw(NVGcontext *vg) override {
-        if (dirtyfn()) {
-            for (auto w : children) {
-                if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w)) {
-                    fw->dirty = true;
-                }
-            }
-        }
-        rack::Component::draw(vg);
-    }
-#endif
 
     std::string font = SurgeStyle::fontFace();
     int fontId = -1;
@@ -173,104 +153,58 @@ struct TextDisplayLight : public rack::Component
 
 struct SurgeSmallKnob : rack::RoundKnob {
     SurgeSmallKnob() {
-#if RACK_V1
         setSvg(rack::APP->window->loadSvg(
             rack::asset::plugin(pluginInstance, "res/vectors/surgeKnob.svg")));
-#else
-        setSVG(rack::SVG::load(
-            rack::assetPlugin(pluginInstance, "res/vectors/surgeKnob.svg")));
-#endif
     }
 };
 
 struct SurgeKnob : rack::RoundKnob {
     SurgeKnob() {
-#if RACK_V1
         setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
-#else
-        setSVG(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
-#endif
     }
 };
 
 struct SurgeKnobRooster : rack::RoundKnob {
     SurgeKnobRooster() {
-#if RACK_V1
         setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/surgeKnobRooster.svg")));
-#else
-        setSVG(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/surgeKnobRooster.svg")));
-#endif
+
         shadow->box.size = rack::Vec(24, 24);
         shadow->box.pos = rack::Vec(5, 9.5);
     }
 };
 
 struct SurgeSwitch :
-#if RACK_V1
     rack::app::SvgSwitch
-#else
-    rack::SVGSwitch,
-    rack::ToggleSwitch
-#endif
 {
     SurgeSwitch() {
-#if RACK_V1
         addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
         addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
-#else
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
-#endif
     }
 };
 
 struct SurgeSwitchFull :
-#if RACK_V1
     rack::app::SvgSwitch
-#else
-    rack::SVGSwitch,
-    rack::ToggleSwitch
-#endif
 {
     SurgeSwitchFull() {
-#if RACK_V1
         addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
         addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
-#else
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
-        addFrame(rack::SVG::load(rack::assetPlugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
-#endif
     }
 };
 
 struct SurgeButtonBank :
-#if RACK_V1
     public virtual rack::app::ParamWidget
-#else
-    public virtual rack::ParamWidget
-#endif
 {
     int rows, cols, fontSize;
     BufferedDrawFunctionWidget *bdw = nullptr;
     
     SurgeButtonBank() :
-#if RACK_V1
         rack::app::ParamWidget()
-#else
-        rack::ParamWidget()
-#endif
         {
         }
 
@@ -292,30 +226,17 @@ struct SurgeButtonBank :
     
     
     float getPValue() {
-#if RACK_V1
         if( paramQuantity )
             return paramQuantity->getValue();
         return -2;
-#else
-        if( module )
-            return module->params[paramId].value;
-        return -2;
-#endif
     }
 
     void setPValue(float v) {
         float apply = v;
         if( normalizeTo != 0 )
             apply = v / normalizeTo;
-#if RACK_V1        
         if( paramQuantity )
             paramQuantity->setValue(apply);
-#else
-        value = apply;
-        if( module )
-            module->params[paramId].value = apply;
-#endif        
-
     }
     
     int fontId = -1;
@@ -336,7 +257,6 @@ struct SurgeButtonBank :
 
     }
         
-#if RACK_V1    
     void onButton(const rack::event::Button &e) override {
         if(e.action == GLFW_PRESS)
             buttonPressedAt(e.pos.x,e.pos.y);
@@ -346,19 +266,6 @@ struct SurgeButtonBank :
         if( bdw )
             bdw->dirty = true;
     }
-#else
-    virtual void onMouseDown(rack::EventMouseDown &e) override {
-        buttonPressedAt(e.pos.x,e.pos.y);
-    }
-    
-    virtual void onChange(rack::EventChange &e) override {
-        if(module)
-            module->params[paramId].value = value;
-        if( bdw )
-            bdw->dirty = true;
-    }
-
-#endif    
     
     static SurgeButtonBank* create(rack::Vec pos, rack::Vec size,
                                    SurgeModuleCommon *module, int paramId,
@@ -373,15 +280,8 @@ struct SurgeButtonBank :
         res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0), size, [res](NVGcontext *vg) { res->drawWidget(vg); } );
         res->addChild(res->bdw);
 
-#if RACK_V1        
         if( module )
             res->paramQuantity = module->paramQuantities[paramId];
-#else
-        res->module = module;
-        res->paramId = paramId;
-        res->setLimits(0,rows*cols-1);
-        res->setDefaultValue(0);
-#endif        
 
         return res;
     }

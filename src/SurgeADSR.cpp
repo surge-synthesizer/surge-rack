@@ -92,17 +92,9 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
 
 SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     : SurgeModuleWidgetCommon(
-#ifndef RACK_V1
-          module
-#endif
         )
-#if !RACK_V1
-    , rack::ModuleWidget(module) // why do I need this gcc? SMWC calls it.
-#endif    
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 7, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "ADSR");
@@ -136,11 +128,6 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
         addParam(rack::createParam<SurgeSmallKnob>(
                      rack::Vec(x0, ADSRYPos(ipos) + adsrTextH + padMargin + 3),
             module, i
-#if !RACK_V1
-            ,
-            0, 1, 0.5
-#endif
-
             ));
     }
 
@@ -159,11 +146,6 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
         addParam(rack::createParam<rack::CKSSThree>(
                      rack::Vec(x0 + 2 * portX + 3 * padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
             module, i
-#if !RACK_V1
-            ,
-            0, 2, 0
-#endif
-
             ));
         addChild(rack::createLight<rack::SmallLight<rack::GreenLight>>(
             rack::Vec(x0 + 60 + 14 + padMargin,
@@ -173,18 +155,8 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
 
     addParam(rack::createParam<SurgeSwitchFull>(
         rack::Vec(box.size.x / 2 - 7, modeYPos), module, M::MODE_PARAM
-#if !RACK_V1
-        ,
-        0, 1, 0
-#endif
         ));
 }
 
-#if RACK_V1
 rack::Model *modelSurgeADSR =
     rack::createModel<SurgeADSRWidget::M, SurgeADSRWidget>("SurgeADSR");
-#else
-rack::Model *modelSurgeADSR =
-    rack::createModel<SurgeADSRWidget::M, SurgeADSRWidget>(
-        "Surge Team", "SurgeADSR", "SurgeADSR", rack::ENVELOPE_GENERATOR_TAG);
-#endif

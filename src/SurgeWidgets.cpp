@@ -4,10 +4,6 @@
 #include <execinfo.h>
 #endif
 
-#if RACK_V1
-namespace logger = rack::logger;
-#endif
-
 void stackToInfo()
 {
 #if MAC
@@ -15,7 +11,7 @@ void stackToInfo()
     int i, frames = backtrace(callstack, 128);
     char** strs = backtrace_symbols(callstack, frames);
     for (i = 0; i < frames; ++i) {
-        INFO( "[SurgeRack] StackTrace[%3d]: %s", i, strs[i] );
+        rack::INFO( "[SurgeRack] StackTrace[%3d]: %s", i, strs[i] );
     }
     free(strs);
 #endif

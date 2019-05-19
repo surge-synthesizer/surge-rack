@@ -1,19 +1,9 @@
 RACK_DIR ?= ../..
 
-ifneq ("$(wildcard $(RACK_DIR)/helper.py)","")
-	RACK_VERSION=1
-	RACK_FLAG=-DRACK_V1
-	RACK_GO=(cd ~/dev/VCVRack/V1/Rack && make run)
-	SURGE_RACK_BASE_VERSION=1.0-alpha
-else
-	RACK_VERSION=062
-	RACK_FLAG=-DRACK_V062
-	SLUG=SurgeRack
-	VERSION=0.6.0
-	RACK_GO=	unzip -o dist/$(SLUG)-$(VERSION)-$(ARCH).zip -d ~/Documents/Rack/plugins && (cd ~/Documents/Rack && /Applications/Rack.app/Contents/MacOS/Rack ) 
-	SURGE_RACK_BASE_VERSION=0.6-alpha
-endif
+RACK_VERSION=1
+RACK_FLAG=-DRACK_V1
 
+SURGE_RACK_BASE_VERSION=1.0-alpha
 SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
 SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
@@ -133,7 +123,7 @@ include $(RACK_DIR)/plugin.mk
 
 # Add Surge Specific make flags based on architecture
 ifdef ARCH_MAC
-	# Obvioulsy get rid of this one day
+# Obvioulsy get rid of this one day
 	FLAGS += 	-Wno-undefined-bool-conversion \
 	-Wno-unused-variable \
 	-Wno-reorder \
@@ -176,21 +166,8 @@ issue_blurb:	dist
 	@echo "* Transaction: " `git rev-parse HEAD`
 	@echo "* Branch: " `git rev-parse --abbrev-ref HEAD`
 
-install_local:	dist
-	unzip -o dist/$(SLUG)-$(VERSION)-$(ARCH).zip -d ~/Documents/Rack/plugins
-
-run_local:	install_local
-	/Applications/Rack.app/Contents/MacOS/Rack
-
 missing_symbols:	dist
 	nm plugin.dylib  | grep " U " | c++filt
-
-
-go:	dist
-	$(RACK_GO)
-
-dbg:	dist
-	(cd ~/dev/VCVRack/V1/Rack && make && lldb -- ./Rack -d)
 
 # Special target since we don't have zip on azure (fix this later)
 win-dist: all build/surge-data

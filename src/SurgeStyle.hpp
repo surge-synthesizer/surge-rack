@@ -13,11 +13,8 @@ struct InternalFontMgr {
     static std::map<std::string, int> fontMap;
     static int get(NVGcontext *vg, std::string resName) {
         if (fontMap.find(resName) == fontMap.end()) {
-#ifdef RACK_V1
             std::string fontPath = rack::asset::plugin(pluginInstance, resName);
-#else
-            std::string fontPath = rack::assetPlugin(pluginInstance, resName);
-#endif
+
             fontMap[resName] =
                 nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
         }
@@ -345,8 +342,4 @@ struct SurgeStyle {
 
     
 };
-
-#ifndef RACK_V1
-using rack::INFO_LEVEL;
-#endif
 
