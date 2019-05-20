@@ -6,9 +6,9 @@ int addFX(rack::Model *m, int type)
 {
    rack::INFO( "[SurgeRack] adding FX %d", type );
    if( fxModels == nullptr ) {
-     fxModels = new rack::Model *[num_fxtypes];
-     for( auto i=0; i<num_fxtypes; ++i )
-       fxModels[i] = nullptr;
+       fxModels = new rack::Model *[num_fxtypes];
+       for( auto i=0; i<num_fxtypes; ++i )
+           fxModels[i] = nullptr;
    }
    fxModels[type] = m;
    return type;
@@ -29,10 +29,9 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeWTOSC);
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeLFO);
-    p->addModel(modelSurgeVOC);
 
     if( fxModels != nullptr )
-      for( auto i=0; i<num_fxtypes; ++i )
-	if( fxModels[i] != nullptr )
-	  p->addModel(fxModels[i]);
+        for( auto i=0; i<num_fxtypes; ++i )
+            if( fxModels[i] != nullptr )
+                p->addModel(fxModels[i]);
 }
