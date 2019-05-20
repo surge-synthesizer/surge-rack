@@ -59,9 +59,20 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
     ParamValueStateSaver knobSaver;
 
+    std::vector<int> catOrderSkipEmpty;
+    
     virtual void setupSurge() {
         pc.resize(NUM_PARAMS);
         setupSurgeCommon();
+
+        for( auto ci : storage->wtCategoryOrdering )
+        {
+            PatchCategory pc = storage->wt_category[ci];
+            if( pc.numberOfPatchesInCatgory != 0 )
+            {
+                catOrderSkipEmpty.push_back(ci);
+            }
+        }
 
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
         for (int i = 0; i < n_osc_params; ++i) {
@@ -122,7 +133,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         ** nothing between them.
         */
         setupStorageRanges((Parameter *)oscstorage, &(oscstorage->retrigger));
-
+        
         pc.update(this);
     }
 
@@ -149,7 +160,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     }
 
     int wtIdx = 0;
-    StringCache wtCategoryName, wtItemName;
+    StringCache wtCategoryName;
+
+    StringCache wtItemName[7]; // 3 on each side
 
     void updateWtIdx() {
         int priorWtIdx = wtIdx;
@@ -157,40 +170,54 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         /*
         ** FIXME: So many ways to make this calculate less (like stash int of patchIdx and stuf
         */
-        int catIdx = getParam(CATEGORY_IDX) * storage->wtCategoryOrdering.size();
-        if( catIdx == storage->wtCategoryOrdering.size() ) catIdx --;
+        int catIdx = getParam(CATEGORY_IDX) * catOrderSkipEmpty.size();
+        if( catIdx >= catOrderSkipEmpty.size() ) catIdx --;
 
-        PatchCategory cat = storage->wt_category[storage->wtCategoryOrdering[catIdx]];
+        PatchCategory cat = storage->wt_category[catOrderSkipEmpty[catIdx]];
         
         wtCategoryName.reset( cat.name );
 
         int patchIdx = getParam(WT_IN_CATEGORY_IDX) * cat.numberOfPatchesInCatgory;
         if( patchIdx == cat.numberOfPatchesInCatgory ) patchIdx--;
 
-        int catO = storage->wtCategoryOrdering[catIdx];
+        int catO = catOrderSkipEmpty[catIdx];
         int counted = 0;
         Patch p;
         bool found = false;
+        int firstCount = -1, lastCount = 0;;
         for( auto pci : storage->wtOrdering )
         {
-            if( storage->wt_list[pci].category == catO && counted++ == patchIdx )
+            if( storage->wt_list[pci].category == catO )
             {
-                p = storage->wt_list[pci];
-                found = true;
-                wtIdx = pci;
-                break;
+
+                int countDiff = counted++ - patchIdx;
+                if( countDiff == 0 )
+                {
+                    p = storage->wt_list[pci];
+                    found = true;
+                    wtIdx = pci;
+                }
+                countDiff += 3;
+
+                if( countDiff >= 7 )
+                    break;
+                if( countDiff >= 0 )
+                {
+                    if( firstCount < 0 ) firstCount = countDiff;
+                    lastCount = countDiff;
+                    wtItemName[countDiff].resetCheck(storage->wt_list[pci].name);
+                }
             }
         }
 
-        if (found)
-            wtItemName.reset( p.name );
-        else
-            wtItemName.reset( "ERROR" );
-        if( wtIdx != priorWtIdx )
-        {
-            rack::INFO( "wtIDX after update is %d", wtIdx );
-            rack::INFO( "cn=%s in=%s", wtCategoryName.value.c_str(), wtItemName.value.c_str() );
-        }
+        for( int i=0; i<firstCount; ++i )
+            wtItemName[i].resetCheck( "-" );
+        for( int i=lastCount+1; i<7; ++i )
+            wtItemName[i].resetCheck( "-" );
+        
+        if (!found)
+            for( int i=0; i<7; ++i )
+                wtItemName[i].resetCheck( "ERROR" );
     }
 
     int lastUnison = -1;

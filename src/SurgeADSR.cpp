@@ -62,18 +62,10 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
             drawTextBGRect(vg, padFromEdge * 2 + 12, ADSRYPos(i) + 1,
                                        box.size.x - padFromEdge * 3 - 20,
                                        adsrTextH);
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, padFromEdge  + 5, ADSRYPos(i) + 20 + padMargin);
 
-            nvgLineTo(vg, padFromEdge  + 5,
-                      ADSRYPos(i) + adsrTextH + padMargin + 3 +
-                          portY / 2);
-            nvgLineTo(vg, (i == 2) ? 55 : 85,
-                      ADSRYPos(i) + adsrTextH + padMargin + 3 +
-                          portY / 2);
+            dropRightLine(vg, padFromEdge + 5, ADSRYPos(i) + 20 + padMargin,
+                          (i==2)? 55 : 85, ADSRYPos(i) + adsrTextH + padMargin + 3 + portY / 2 );
 
-            nvgStrokeColor(vg, surgeBlue());
-            nvgStroke(vg);
         }
 
         nvgBeginPath(vg);

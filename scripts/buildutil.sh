@@ -73,12 +73,12 @@ clean()
     RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make clean
 }
 
-build_surge()
+build_module()
 {
     RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make -j 4 all
 }
 
-install_surge()
+install_module()
 {
     RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make dist
     mkdir -p $RACK_INSTALL_DIR/User/plugins
@@ -87,11 +87,12 @@ install_surge()
     unzip *zip
 }
 
-install_surge_light()
+install_module_light()
 {
+    slug=`jq -r '{slug} | .[]' plugin.json `
     RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make all
-    mkdir -p $RACK_INSTALL_DIR/User/plugins/SurgeRack
-    cp $plugin $RACK_INSTALL_DIR/User/plugins/SurgeRack
+    mkdir -p $RACK_INSTALL_DIR/User/plugins/${slug}
+    cp $plugin $RACK_INSTALL_DIR/User/plugins/${slug}
 }
 
 make_images()
@@ -99,9 +100,9 @@ make_images()
         pushd $RACK_INSTALL_DIR
         "$RACK_INSTALL_DIR/Rack.app/Contents/MacOS/Rack" -u "$RACK_INSTALL_DIR/User" -p 2
         popd
-        
+        slug=`jq -r '{slug} | .[]' plugin.json `
         mkdir -p ./docs/screenshots
-        mv ${RACK_INSTALL_DIR}/User/screenshots/SurgeRack/*.png ./docs/screenshots
+        mv ${RACK_INSTALL_DIR}/User/screenshots/${slug}/*.png ./docs/screenshots
 }
 
 
@@ -115,22 +116,22 @@ case $command in
         get_rack
         ;;
     --build)
-        build_surge
+        build_module
         ;;
     --install)
-        install_surge
+        install_module
         ;;
     --run)
         run_rack
         ;;
     --br)
-        build_surge
-        install_surge_light
+        build_module
+        install_module_light
         run_rack
         ;;
     --bir)
-        build_surge
-        install_surge
+        build_module
+        install_module
         run_rack
         ;;
     --images)
