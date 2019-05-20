@@ -70,12 +70,35 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         }
         surge_osc.reset(spawn_osc(ot_wavetable, storage.get(), oscstorage,
                                   storage->getPatch().scenedata[0]));
+
+        /*
+        ** FIXME: This is a foul hack we should work around. Something about the surge synth
+        ** initialization path sets up wavetables in a way which means you can load any wt
+        ** you want, but in surge-rack if you haven't loadeed a 512 wide wavetable once 
+        ** you get odd behavior. See issue #124.
+        **
+        ** I should really fix that in surge proper but to get shipping for now, I'm just
+        ** going to do the gross thing of finding "sawtooth reso" in our list and loading that at
+        ** init time befire clobbering
+        */
+        oscstorage->wt.queue_id = 0;
+        for( int i=0; i<storage->wt_list.size(); ++i )
+        {
+            if( storage->wt_list[i].name == "sawtooth reso" )
+            {
+                oscstorage->wt.queue_id = i;
+                break;
+            }
+        }
+        storage->perform_queued_wtloads();
         surge_osc->init(72.0);
+
         surge_osc->init_ctrltypes();
         surge_osc->init_default_values();
 
         updateWtIdx();
         oscstorage->wt.queue_id = wtIdx;
+        rack::INFO( "[SurgeRack] A::WTOSC Loading WT %d", wtIdx );
         storage->perform_queued_wtloads();
         surge_osc->init(72.0);
 
@@ -125,10 +148,12 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     }
 
-    int wtIdx;
+    int wtIdx = 0;
     StringCache wtCategoryName, wtItemName;
 
     void updateWtIdx() {
+        int priorWtIdx = wtIdx;
+        
         /*
         ** FIXME: So many ways to make this calculate less (like stash int of patchIdx and stuf
         */
@@ -161,6 +186,11 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             wtItemName.reset( p.name );
         else
             wtItemName.reset( "ERROR" );
+        if( wtIdx != priorWtIdx )
+        {
+            rack::INFO( "wtIDX after update is %d", wtIdx );
+            rack::INFO( "cn=%s in=%s", wtCategoryName.value.c_str(), wtItemName.value.c_str() );
+        }
     }
 
     int lastUnison = -1;
@@ -202,6 +232,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 surge_osc->init_default_values();
                 
                 oscstorage->wt.queue_id = wtIdx;
+                rack::INFO( "[SurgeRack] B::WTOSC Loading WT %d", wtIdx );
                 storage->perform_queued_wtloads();
                 surge_osc->init(72);
                 
@@ -237,7 +268,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
             if( pc.changedAndIsNonZero(LOAD_WT, this) || firstRespawnIsFromJSON )
             {
-                rack::INFO( "[SurgeRack] WTOSC Loading WT %d", wtIdx );
+                rack::INFO( "[SurgeRack] C::WTOSC Loading WT %d", wtIdx );
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
                 surge_osc->init(72);
