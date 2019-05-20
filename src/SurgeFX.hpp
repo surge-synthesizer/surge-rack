@@ -22,6 +22,15 @@ template<> struct SurgeFXName<fxt_reverb2> { static std::string getName() { retu
 template<> struct SurgeFXName<fxt_freqshift> { static std::string getName() { return "FREQSHIFT"; } };
 template<> struct SurgeFXName<fxt_chorus4> { static std::string getName() { return "CHORUS"; } };
 template<> struct SurgeFXName<fxt_conditioner> { static std::string getName() { return "CONDITION"; } };
+template<> struct SurgeFXName<fxt_vocoder> { static std::string getName() { return "VOC"; } };
+
+template<int effectNum>
+struct SurgeFXTraits
+{
+    static bool constexpr hasModulatorSignal = false;
+};
+
+template<> struct SurgeFXTraits<fxt_vocoder> { static bool constexpr hasModulatorSignal = true; };
 
 template<int effectNum>
 struct SurgeFX : virtual SurgeModuleCommon {
@@ -31,7 +40,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
         INPUT_GAIN = FX_EXTEND_0 + NUM_FX_PARAMS,
         OUTPUT_GAIN,
         PARAM_TEMPOSYNC_0,
-        NUM_PARAMS = PARAM_TEMPOSYNC_0 + NUM_FX_PARAMS,
+        MODULATOR_GAIN = PARAM_TEMPOSYNC_0 + NUM_FX_PARAMS,
+        NUM_PARAMS
     };
     enum InputIds {
         INPUT_L_OR_MONO,
@@ -40,6 +50,10 @@ struct SurgeFX : virtual SurgeModuleCommon {
         FX_PARAM_INPUT_0,
 
         CLOCK_CV_INPUT = FX_PARAM_INPUT_0 + NUM_FX_PARAMS,
+
+        MODULATOR_L_OR_MONO,
+        MODULATOR_R,
+        
         NUM_INPUTS
     };
     enum OutputIds { OUTPUT_L_OR_MONO, OUTPUT_R, NUM_OUTPUTS };
@@ -61,6 +75,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
         }
         configParam(INPUT_GAIN, 0, 1, 1);
         configParam(OUTPUT_GAIN, 0, 1, 1);
+        configParam(MODULATOR_GAIN, 0, 1, 1 );
         
         setupSurge();
     }
@@ -99,13 +114,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
         for (auto i = 0; i < BLOCK_SIZE; ++i) {
             bufferL[i] = 0.0f;
             bufferR[i] = 0.0f;
-            processedL[i] = 0.0f;
-            processedR[i] = 0.0f;
-        }
-
-        for (auto i = 0; i < BLOCK_SIZE; ++i) {
-            bufferL[i] = 0.0f;
-            bufferR[i] = 0.0f;
+            modulatorL[i] = 0.0f;
+            modulatorR[i] = 0.0f;
             processedL[i] = 0.0f;
             processedR[i] = 0.0f;
         }
@@ -162,6 +172,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
     }
     
     float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
+    float modulatorL alignas(16)[BLOCK_SIZE], modulatorR alignas(16)[BLOCK_SIZE];
     float processedL alignas(16)[BLOCK_SIZE], processedR
         alignas(16)[BLOCK_SIZE];
     int bufferPos = BLOCK_SIZE - 1;
@@ -185,13 +196,36 @@ struct SurgeFX : virtual SurgeModuleCommon {
             bufferL[bufferPos] = inl;
             bufferR[bufferPos] = inr;
         }
-        
+
+        if( SurgeFXTraits<effectNum>::hasModulatorSignal )
+        {
+            float mg = getParam(MODULATOR_GAIN);
+            float ml = mg * getInput(MODULATOR_L_OR_MONO);
+            float mr = mg * getInput(MODULATOR_R);
+            if( inputConnected(MODULATOR_L_OR_MONO) && ! inputConnected(MODULATOR_R) )
+            {
+                modulatorL[bufferPos] = ml;
+                modulatorR[bufferPos] = ml;
+            }
+            else
+            {
+                modulatorL[bufferPos] = ml;
+                modulatorR[bufferPos] = mr;
+            }
+        }
 
         bufferPos++;
         if (bufferPos >= BLOCK_SIZE) {
             std::memcpy(processedL, bufferL, BLOCK_SIZE * sizeof(float));
             std::memcpy(processedR, bufferR, BLOCK_SIZE * sizeof(float));
 
+            if( SurgeFXTraits<effectNum>::hasModulatorSignal )
+            {
+                std::memcpy( storage->audio_in_nonOS[ 0 ], modulatorL, BLOCK_SIZE * sizeof(float) );
+                std::memcpy( storage->audio_in_nonOS[ 1 ], modulatorR, BLOCK_SIZE * sizeof(float) );
+            }
+            
+            
             bool newBPM = false;
             if( inputConnected(CLOCK_CV_INPUT) )
             {

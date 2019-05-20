@@ -169,7 +169,7 @@ struct SurgeStyle {
         }
     }
 
-    void drawLeftRightInputOutputBackground( NVGcontext *vg, rack::Rect box ) {
+    void drawLeftRightInputOutputBackground( NVGcontext *vg, rack::Rect box, std::string inputName = "Input" ) {
         for (int i = 0; i < 2; ++i) {
             nvgBeginPath(vg);
             int x0 = 0;
@@ -191,7 +191,7 @@ struct SurgeStyle {
                              orangeLine + ioMargin * 1.5);
                 nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
                 nvgRotate(vg, -M_PI / 2);
-                nvgText(vg, 0, 0, "Input", NULL);
+                nvgText(vg, 0, 0, inputName.c_str(), NULL);
                 nvgRestore(vg);
             } else {
                 nvgSave(vg);
@@ -224,7 +224,7 @@ struct SurgeStyle {
         }
     }
 
-    void drawStackedInputOutputBackground( NVGcontext *vg, rack::Rect box ) {
+    void drawStackedInputOutputBackground( NVGcontext *vg, rack::Rect box, std::string inputName = "Input" ) {
         for (int i = 0; i < 2; ++i) {
             nvgBeginPath(vg);
             float x0 = ( box.size.x - ioRegionWidth ) / 2;
@@ -247,7 +247,7 @@ struct SurgeStyle {
             nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
             nvgRotate(vg, M_PI / 2);
             if (i == 0) {
-                nvgText(vg, 0, 0, "Input", NULL);
+                nvgText(vg, 0, 0, inputName.c_str(), NULL);
             } else {
                 nvgText(vg, 0, 0, "Output", NULL);
             }

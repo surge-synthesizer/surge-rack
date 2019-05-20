@@ -29,7 +29,7 @@ Here's how far we are along on that journey.
 <tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Innumerable problems. Try at your own risk</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Works perfectly; terrible UI</td></tr>
 <tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
-<tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>which doesn't yet exist in rack</td></tr>
+<tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>
 </table>
 
 ## Developing these plugins
