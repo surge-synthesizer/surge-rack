@@ -94,6 +94,16 @@ install_surge_light()
     cp $plugin $RACK_INSTALL_DIR/User/plugins/SurgeRack
 }
 
+make_images()
+{
+        pushd $RACK_INSTALL_DIR
+        "$RACK_INSTALL_DIR/Rack.app/Contents/MacOS/Rack" -u "$RACK_INSTALL_DIR/User" -p 2
+        popd
+        
+        mkdir -p ./docs/screenshots
+        mv ${RACK_INSTALL_DIR}/User/screenshots/SurgeRack/*.png ./docs/screenshots
+}
+
 
 command="$1"
 
@@ -123,9 +133,12 @@ case $command in
         install_surge
         run_rack
         ;;
+    --images)
+        make_images
+        ;;
     --clean)
-	clean
-	;;
+	    clean
+	    ;;
     *)
         help_message
         ;;
