@@ -26,7 +26,7 @@ Here's how far we are along on that journey.
 <tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed</td></tr>
 <tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Very good shape. Few pops and clicks when changing osc type or changing unison count, but works well otherwise.</td></tr>
 <tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
-<tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Innumerable problems. Try at your own risk</td></tr>
+<tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Works well; need to fill that UI gap with WT info</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Works perfectly; terrible UI</td></tr>
 <tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
 <tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>
