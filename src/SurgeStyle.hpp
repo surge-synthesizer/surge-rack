@@ -169,8 +169,9 @@ struct SurgeStyle {
         }
     }
 
-    void drawLeftRightInputOutputBackground( NVGcontext *vg, rack::Rect box, std::string inputName = "Input" ) {
-        for (int i = 0; i < 2; ++i) {
+    void drawLeftRightInputOutputBackground( NVGcontext *vg, rack::Rect box, std::string inputName = "Input",
+                                             bool doIn = true, bool doOut=true ) {
+        for (int i = (doIn?0:1); i < (doOut?2:1); ++i) {
             nvgBeginPath(vg);
             int x0 = 0;
             if (i == 1)
@@ -338,7 +339,18 @@ struct SurgeStyle {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP );
         nvgText( vg, x, y, label, NULL );
     }
-    
+
+    void dropRightLine(NVGcontext *vg, float x0, float y0, float x1, float y1) {
+        int radius = 3;
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, x0, y0);
+        nvgLineTo(vg, x0, y1-radius);
+        nvgArcTo(vg, x0, y1, x0+radius, y1, radius);
+        nvgLineTo(vg, x1, y1);
+        nvgStrokeColor(vg, surgeBlue());
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+    }
 
     
 };

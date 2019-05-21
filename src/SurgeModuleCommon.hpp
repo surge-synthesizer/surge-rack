@@ -240,6 +240,10 @@ struct StringCache {
         dirty = true;
     }
 
+    void resetCheck(std::string s) {
+        if( s != value ) reset( s );
+    }
+    
 };
 
 struct ParamCache {

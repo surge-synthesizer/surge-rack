@@ -16,58 +16,36 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
     float controlHeightPer = controlsHeight / n_osc_params;
 
     float colOneEnd = surgeRoosterX + portX + 2 * padMargin + 14 + pitchCtrlX + padFromEdge;
+    float wtSelY = pitchY + 113;
+
+    float catitlodsz = ( SCREW_WIDTH * 18 - colOneEnd ) / 3;
     
+
     void moduleBackground(NVGcontext *vg) {
         // The input triggers and output
         nvgBeginPath(vg);
 
-        // Draw the output blue box
-        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
-        drawBlueIORect(
-            vg, x0 + ioMargin, orangeLine + ioMargin,
-            ioRegionWidth, box.size.y - orangeLine - 2 * ioMargin);
-
-        nvgFillColor(vg, surgeWhite() );
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 12);
-        nvgSave(vg);
-        nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2,
-                     orangeLine + ioMargin * 1.5);
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgRotate(vg, M_PI / 2);
-        nvgText(vg, 0, 0, "Output", NULL);
-        nvgRestore(vg);
-
-        rack::Vec ll;
-        ll = ioPortLocation(0);
-        ll.y = box.size.y - ioMargin - 1.5;
-        ll.x += 24.6721 / 2;
-        nvgFontSize(vg, 11);
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
-
-        ll = ioPortLocation(1);
-        ll.y = box.size.y - ioMargin - 1.5;
-        ll.x += 24.6721 / 2;
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgText(vg, ll.x, ll.y, "R", NULL);
-
-        ll = ioPortLocation(2);
-        ll.y = box.size.y - ioMargin - 1.5;
-        ll.x += 24.6721 / 2;
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgText(vg, ll.x, ll.y, "Gain", NULL);
-
-        float pitchLY = pitchY + surgeRoosterY / 2.0 + portY/2 + padMargin/2;
+        drawLeftRightInputOutputBackground(vg, box, "", false, true);
+        
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 15);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT );
         nvgFillColor(vg, surgeBlue() );
-        nvgText(vg, padFromEdge, pitchLY, "Pitch", NULL );
+        nvgText(vg, padFromEdge + 10, pitchY + surgeRoosterY / 2, "Pitch", NULL );
+
+        float bounds[4];
+        nvgTextBounds( vg, padFromEdge + 10, pitchY + surgeRoosterY / 2, "Pitc", NULL, bounds );
 
         float xt = pitchCtrlX + surgeRoosterX + portX + 2 * padMargin + 12;
 
+        nvgBeginPath(vg);
+        float bmx = (bounds[2]-bounds[0])/2.0 + bounds[ 0 ];
+        dropRightLine(vg, bmx, bounds[3], xt, pitchY + surgeRoosterY + padMargin + portY/2);
+        
+        drawTextBGRect(vg, pitchCtrlX, pitchY+surgeRoosterY + padMargin,
+                       surgeRoosterX + portX + 2 * padMargin + 14, portY );
+            
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
@@ -82,42 +60,33 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgFillColor(vg, surgeBlue() );
         nvgText(vg, xt, pitchY + surgeRoosterY - 4, "n", NULL );
 
-        
         xt += 7 + padMargin;
-        drawTextBGRect(vg, pitchCtrlX, pitchY+surgeRoosterY + padMargin,
-                                   surgeRoosterX + portX + 2 * padMargin + 14, portY );
-            
+        
         for (int i = 0; i < n_osc_params; ++i) {
             float yp = i * controlHeightPer + controlsY;
             float xp = padFromEdge + 2 * padMargin + 2 * portX;
             drawTextBGRect(vg, xp, yp, colOneEnd - padFromEdge - xp, controlHeightPer - padMargin);
         }
 
-        // OSC picker side
-        nvgBeginPath(vg);
-        nvgFontFaceId(vg,fontId(vg));
-        nvgFontSize(vg,12);
-        nvgFillColor(vg, nvgRGB(255,0,0));
-        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgText(vg, colOneEnd + padFromEdge, SCREW_WIDTH + padFromEdge, "WT PICKER UI ALPHA", NULL );
+        auto xpf = [this](int i) { return this->colOneEnd + this->catitlodsz * ( i + 0.5 );  };
+        std::vector<std::string> cil = { "Cat", "WT", "Load" };
+        for( int i=0; i<3; ++i )
+        {
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg,fontId(vg));
+            nvgFontSize(vg,12);
+            nvgFillColor(vg, surgeBlue());
+            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
+            nvgText(vg, xpf(i), wtSelY - 14, cil[i].c_str(), NULL );
+        }
+                
 
-
-        nvgBeginPath(vg);
-        nvgFontFaceId(vg,fontId(vg));
-        nvgFontSize(vg,12);
-        nvgFillColor(vg, surgeBlue());
-        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgText(vg, colOneEnd + padFromEdge, SCREW_WIDTH + padFromEdge + 20 + 50, "cat", NULL );
-        nvgText(vg, colOneEnd + padFromEdge + surgeRoosterX + padMargin, SCREW_WIDTH + padFromEdge + 20 + 50, "wt", NULL );
-        nvgText(vg, colOneEnd + padFromEdge + 2*surgeRoosterX + 2*padMargin, SCREW_WIDTH + padFromEdge + 20 + 50, "load", NULL );
-
-
-        auto yTPos = SCREW_WIDTH + padFromEdge + 40 + surgeRoosterY + padMargin + 50;
+        auto yTPos = wtSelY + surgeRoosterY + padMargin;
         drawTextBGRect(vg, colOneEnd + padFromEdge, yTPos,
                                    box.size.x - colOneEnd - 2 * padFromEdge, 20 );
         yTPos += 20 + padMargin;
         drawTextBGRect(vg, colOneEnd + padFromEdge, yTPos,
-                                   box.size.x - colOneEnd - 2 * padFromEdge, 20 );
+                                   box.size.x - colOneEnd - 2 * padFromEdge, 124 );
         
     }
 
@@ -137,7 +106,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
 {
     setModule(module);
 
-    box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 18, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WTOSC");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -196,8 +165,9 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                      15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, surgeWhite()));
     }
 
-    SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(colOneEnd+padFromEdge, pitchY + 20),
-                                                     rack::Vec(box.size.x - colOneEnd - 2 * padFromEdge, 40),
+    float c2w = (box.size.x - colOneEnd) / 2 + colOneEnd;
+    SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(c2w - 100/2, pitchY),
+                                                     rack::Vec(100, 25),
                                                      module, M::WT_OR_WINDOW,
                                                      2, 1, 13 );
 
@@ -206,44 +176,55 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
     
     addParam(bank);
 
-    float wtSelY = pitchY + 50;
-
+    auto xpf = [this](int i) { return this->colOneEnd + this->catitlodsz * ( i + 0.5 ) - this->surgeRoosterX / 2.0; };
+    
     addParam(rack::createParam<SurgeKnobRooster>(
-                 rack::Vec(colOneEnd + padFromEdge, wtSelY + 40), module, M::CATEGORY_IDX
+                 rack::Vec(xpf(0), wtSelY), module, M::CATEGORY_IDX
         ));
 
 
     addParam(rack::createParam<SurgeKnobRooster>(
-                 rack::Vec(colOneEnd + padFromEdge + padMargin + surgeRoosterX, wtSelY + 40),
+                 rack::Vec(xpf(1), wtSelY),
                  module, M::WT_IN_CATEGORY_IDX
                  ));
 
     addParam(rack::createParam<rack::CKD6>(
-                 rack::Vec(colOneEnd + padFromEdge + 2*padMargin + 2*surgeRoosterX, wtSelY + 40),
+                 rack::Vec(xpf(2), wtSelY + 4),
                  module, M::LOAD_WT
                  ));
 
-    addChild(rack::createLight<rack::SmallLight<rack::GreenLight>>(
-                 rack::Vec(colOneEnd + padFromEdge + 3*padMargin + 3*surgeRoosterX, wtSelY + 37),
+    addChild(rack::createLight<rack::SmallLight<rack::RedLight>>(
+                 rack::Vec(xpf(2) + 27, wtSelY+1),
                  module, M::NEEDS_LOAD
                  ));
 
 
     auto xTPos = colOneEnd + padMargin;
-    auto yTPos = SCREW_WIDTH + padFromEdge + 40 + surgeRoosterY + padMargin + 50;
+    auto yTPos = wtSelY + surgeRoosterY + padMargin;
     addChild(TextDisplayLight::create(
                  rack::Vec(xTPos + 4, yTPos),
                  rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
                  module ? &(module->wtCategoryName) : nullptr,
-                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite()));
+                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, surgeWhite()));
 
-    yTPos += 20 + padMargin;
-    addChild(TextDisplayLight::create(
-                 rack::Vec(xTPos + 4, yTPos),
-                 rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
-                 module ? &(module->wtItemName) : nullptr,
-                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite()));
+    for( int i=0; i<7; ++i )
+    {
+        if( i == 0 ) yTPos += 22 + padMargin;
+        else if( i == 4 ) yTPos += 16 + padMargin;
+        else yTPos += 14 + padMargin;
 
+        float fs = 15 - ( i - 3 ) * ( i - 3 ) / 3.0;
+        float colR = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);
+        float colG = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);
+        float colB = 255 - ( i - 3 ) * ( i - 3 ) * 8 - (i!=3?50:0);
+        NVGcolor col = nvgRGB(colR, colG, colB );
+
+        addChild(TextDisplayLight::create(
+                     rack::Vec(xTPos + 4, yTPos),
+                     rack::Vec(box.size.x - xTPos - 2 * padMargin, (i == 3 ? 16 : 14) ),
+                     module ? &(module->wtItemName[i]) : nullptr,
+                     fs, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, col ));
+    }
  
 }
 

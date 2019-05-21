@@ -38,14 +38,10 @@ struct SurgeRotaryWidget : SurgeModuleWidgetCommon {
 
             float a, d, h;
             nvgTextMetrics( vg, &a, &d, &h );
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, padFromEdge + 10, y0 + portY / 2 + h/2 + padMargin);
-            nvgLineTo(vg, padFromEdge + 10, y0 + portY + 1.5 * padMargin + textHeight / 2);
-            nvgLineTo(vg, xText + padFromEdge, y0 + portY + 1.5 * padMargin + textHeight / 2);
-            nvgStrokeColor(vg, surgeBlue());
-            nvgStrokeWidth(vg, 1 );
-            nvgStroke(vg);
 
+            dropRightLine( vg, padFromEdge + 10, y0 + portY / 2 + h / 2 + padMargin,
+                           xText + padFromEdge, y0 + portY + 1.5 * padMargin + textHeight / 2);
+            
             drawTextBGRect( vg, xText, y0 + portY + 1.5 * padMargin, box.size.x - xText - padFromEdge, textHeight );
             y0 += ctrlHeight;
         }
