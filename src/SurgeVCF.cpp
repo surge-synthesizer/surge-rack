@@ -6,8 +6,16 @@ struct SurgeVCFWidget : SurgeModuleWidgetCommon {
     typedef SurgeVCF M;
     SurgeVCFWidget(M *module);
 
-    int fontId = -1;
     void moduleBackground(NVGcontext *vg) {
+        drawLeftRightInputOutputBackground(vg, box);
+
+        nvgBeginPath(vg);
+        nvgFillColor(vg, nvgRGBA(255,0,0,255));
+        nvgFontFaceId(vg, fontId(vg));
+        nvgFontSize(vg, 20 );
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
+        nvgText( vg, box.size.x/2, 200, "DO NOT USE", NULL );
+        nvgText( vg, box.size.x/2, 230, "STILL IN DEV", NULL );
     }
 };
 
@@ -45,7 +53,25 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module)
     subTypeBank->addLabel("Rough");
     subTypeBank->addLabel("Smooth");
     addParam(subTypeBank);
-        
+
+
+    addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 0, box),
+                                                 module, M::INPUT_L_OR_MONO));
+    addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 1, box),
+                                                 module, M::INPUT_R));
+    addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(true, 2, box), module,
+                                               M::INPUT_GAIN
+                                               ));
+
+    addOutput(rack::createOutput<rack::PJ301MPort>(
+                  ioPortLocation(false, 0, box), module, M::OUTPUT_L_OR_MONO));
+    addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(false, 1, box),
+                                                   module, M::OUTPUT_R));
+    addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(false, 2, box), module,
+                                               M::OUTPUT_GAIN
+
+                                               ));
+
 }
 
 rack::Model *modelSurgeVCF =
