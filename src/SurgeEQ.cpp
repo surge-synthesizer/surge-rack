@@ -6,7 +6,7 @@ struct SurgeEQWidget : SurgeModuleWidgetCommon {
     typedef SurgeFX<fxt_eq> M;
     SurgeEQWidget(M *module);
 
-    int SCREW_COUNT=17;
+    int SCREW_COUNT=16;
     float bandRegion = SCREW_WIDTH * SCREW_COUNT / 3.0;
     int nBands = 3;
     int bandY0 = SCREW_WIDTH + padFromEdge + 15;
@@ -129,9 +129,9 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
                                                module, M::FX_PARAM_0 + 9 ));
     addInput(rack::createInput<rack::PJ301MPort>(rack::Vec( box.size.x / 4 + portX + padMargin, masterGainY + labelHeight + padMargin),
                                                  module, M::FX_PARAM_INPUT_0 + 9 ));
-    addChild(TextDisplayLight::create( rack::Vec( box.size.x/4 + 2 * portX + 2 * padMargin,
+    addChild(TextDisplayLight::create( rack::Vec( box.size.x/4 + 2 * portX + 3 * padMargin,
                                                   masterGainY + labelHeight + padMargin + ( portY-textHeight)/2),
-                                       rack::Vec(box.size.x/2 - 2 * portX - 2 * padMargin, textHeight ),
+                                       rack::Vec(box.size.x/2 - 2 * portX - 3 * padMargin, textHeight ),
                                        module ? &(module->paramDisplayCache[9]) : nullptr,
                                        12, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite() ) );
 
