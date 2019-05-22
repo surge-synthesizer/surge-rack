@@ -331,12 +331,12 @@ struct SurgeStyle {
 
     }
 
-    void simpleLabel( NVGcontext *vg, float x, float y, const char* label ) {
+    void simpleLabel( NVGcontext *vg, float x, float y, const char* label, int al = NVG_ALIGN_LEFT | NVG_ALIGN_TOP, int fs = 12 ) {
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 12);
+        nvgFontSize(vg, fs);
         nvgFillColor(vg, surgeBlue() );
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP );
+        nvgTextAlign(vg, al );
         nvgText( vg, x, y, label, NULL );
     }
 

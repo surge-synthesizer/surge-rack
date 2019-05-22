@@ -97,18 +97,33 @@ def ct_amplitude(f):
     return (f - minv) / (maxv - minv)
 
 
+def ct_decibel(f):
+    minv = -48
+    maxv = 48
+    return (f - minv) / (maxv - minv)
+
+
+def ct_bandwidth(f):
+    minv = 0
+    maxv = 5
+    return (f - minv) / (maxv - minv)
+
+
 def ct_freq_audible(f):
     minv = -60
     maxv = 70
     return (f - minv) / (maxv - minv)
 
 
-def applyRow(data, row, index, xform):
+def applyRow(data, row, index, xform, default=0):
     rowIdx = "p" + str(index)
     tsRow = "p" + str(index) + "_temposync"
 
     if rowIdx in row:
         data["params"][index]["value"] = xform(float(row[rowIdx]))
+    else:
+        data["params"][index]["value"] = xform(float(default))
+
     if tsRow in row:
         data["params"][index + 12 + 2]["value"] = float(row[tsRow])
 
@@ -158,16 +173,40 @@ def writeDelay(row):
     savePreset(data, "DELAY", row["name"])
 
 
+def writeEq(row):
+    data = basedata()
+    data["model"] = "SurgeEQ"
+
+    applyRow(data, row, 0, ct_decibel)
+    applyRow(data, row, 1, ct_freq_audible)
+    applyRow(data, row, 2, ct_bandwidth)
+
+    applyRow(data, row, 3, ct_decibel)
+    applyRow(data, row, 4, ct_freq_audible)
+    applyRow(data, row, 5, ct_bandwidth)
+
+    applyRow(data, row, 6, ct_decibel)
+    applyRow(data, row, 7, ct_freq_audible)
+    applyRow(data, row, 8, ct_bandwidth)
+
+    applyRow(data, row, 9, ct_decibel)
+
+    savePreset(data, "EQ", row["name"])
+
+
 for child in fx:
     if child.tag == "type":
         parseType(child)
 
 
-for s in snapshots["4"]:
-    writeRotary(s)
+# for s in snapshots["4"]:
+#    writeRotary(s)
 
-for s in snapshots["3"]:
-    writePhaser(s)
+# for s in snapshots["3"]:
+#    writePhaser(s)
 
-for s in snapshots["1"]:
-    writeDelay(s)
+# for s in snapshots["1"]:
+#    writeDelay(s)
+
+for s in snapshots["6"]:
+    writeEq(s)

@@ -2,11 +2,9 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
-    typedef SurgeFX<fxt_freqshift> M;
-    SurgeFreqShiftWidget(M *module);
-
-    int ioRegionWidth = 105;
+struct SurgeEQWidget : SurgeModuleWidgetCommon {
+    typedef SurgeFX<fxt_eq> M;
+    SurgeEQWidget(M *module);
 
     void moduleBackground(NVGcontext *vg) {
 
@@ -18,7 +16,7 @@ struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
         nvgTranslate(vg, SCREW_WIDTH * 9, RACK_HEIGHT / 2.4 );
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         nvgRotate(vg, -M_PI / 4);
-        nvgText(vg, 0, 0, "SurgeFreqShift", NULL );
+        nvgText(vg, 0, 0, "SurgeEQ", NULL );
         nvgText(vg, 0, 22, "Under Construction", NULL);
         nvgRestore(vg);
 
@@ -30,10 +28,10 @@ struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
             M *mc = dynamic_cast<M *>(module);
             if( mc )
             {
-                INFO( "[SurgeRack][FX Blank %s]", mc->getName().c_str() );
+                rack::INFO( "[SurgeRack][FX Blank %s]", mc->getName().c_str() );
                 for( int i=0; i<n_fx_params; ++i )
                 {
-                    INFO( "  %d '%s'/'%s' = '%s'", i,
+                    rack::INFO( "  %d '%s'/'%s' = '%s'", i,
                           mc->groupCache[i].getValue().c_str(),
                           mc->labelCache[i].getValue().c_str(),
                           mc->paramDisplayCache[i].getValue().c_str() );
@@ -43,19 +41,13 @@ struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
     }
 };
 
-SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
-#ifndef RACK_V1
-    : SurgeModuleWidgetCommon( module ), rack::ModuleWidget( module )
-#else
+SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
     : SurgeModuleWidgetCommon()
-#endif      
 {
-#ifdef RACK_V1
     setModule(module);
-#endif
 
     box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "FreqShift");
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "EQ");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };
@@ -66,33 +58,16 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
     addInput(rack::createInput<rack::PJ301MPort>(ioPortLocation(true, 1, box),
                                                  module, M::INPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(true, 2, box), module,
-                                               M::INPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
-                                               ));
+                                               M::INPUT_GAIN));
 
     addOutput(rack::createOutput<rack::PJ301MPort>(
                   ioPortLocation(false, 0, box), module, M::OUTPUT_L_OR_MONO));
     addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(false, 1, box),
                                                    module, M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(false, 2, box), module,
-                                               M::OUTPUT_GAIN
-#if !RACK_V1
-                                               ,
-                                               0, 1, 1
-#endif
-
-                                               ));
+                                               M::OUTPUT_GAIN));
 
 }
 
-#if RACK_V1
-auto mfreq = modelSurgeFXSet.insert(
-    rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>("SurgeFreqShift") );
-#else
-auto mfreq = modelSurgeFXSet.insert(
-    rack::createModel<SurgeFreqShiftWidget::M, SurgeFreqShiftWidget>(
-        "Surge Team", "SurgeFreqShift", "SurgeFreqShift", rack::ENVELOPE_GENERATOR_TAG) );
-#endif
+auto meq = addFX(
+    rack::createModel<SurgeEQWidget::M, SurgeEQWidget>("SurgeEQ"), fxt_eq );
