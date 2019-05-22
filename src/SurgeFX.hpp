@@ -36,8 +36,7 @@ template<int effectNum>
 struct SurgeFX : virtual SurgeModuleCommon {
     enum ParamIds {
         FX_PARAM_0 = 0,
-        FX_EXTEND_0 = FX_PARAM_0 + NUM_FX_PARAMS,
-        INPUT_GAIN = FX_EXTEND_0 + NUM_FX_PARAMS,
+        INPUT_GAIN = FX_PARAM_0 + NUM_FX_PARAMS,
         OUTPUT_GAIN,
         PARAM_TEMPOSYNC_0,
         MODULATOR_GAIN = PARAM_TEMPOSYNC_0 + NUM_FX_PARAMS,
@@ -72,6 +71,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
             configParam(FX_PARAM_0 + i, 0, 1, 0 );
+            configParam(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
         }
         configParam(INPUT_GAIN, 0, 1, 1);
         configParam(OUTPUT_GAIN, 0, 1, 1);
