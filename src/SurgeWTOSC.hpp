@@ -56,7 +56,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     
     StringCache pitch0DisplayCache;
     
-    StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
+    StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params], wtInfoCache[3];
     ParamValueStateSaver knobSaver;
 
     std::vector<int> catOrderSkipEmpty;
@@ -109,9 +109,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
         updateWtIdx();
         oscstorage->wt.queue_id = wtIdx;
-        rack::INFO( "[SurgeRack] A::WTOSC Loading WT %d", wtIdx );
         storage->perform_queued_wtloads();
         surge_osc->init(72.0);
+        updateWtLabels();
 
         processPosition = BLOCK_SIZE_OS + 1;
         oscstorage->type.val.i = 2;
@@ -138,6 +138,18 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     }
 
     int processPosition = BLOCK_SIZE_OS + 1;
+
+    void updateWtLabels() {
+        Patch p = storage->wt_list[wtIdx];
+        PatchCategory pc = storage->wt_category[p.category];
+        wtInfoCache[0].reset(pc.name);
+        wtInfoCache[1].reset(p.name);
+
+        char txt[256];
+        snprintf(txt, 256, "%d tbl of %d samples",
+                 oscstorage->wt.n_tables, oscstorage->wt.size );
+        wtInfoCache[2].reset(txt);
+    }
     
     void updatePitchCache() {
         char txt[ 1024 ];
@@ -259,9 +271,10 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 surge_osc->init_default_values();
                 
                 oscstorage->wt.queue_id = wtIdx;
-                rack::INFO( "[SurgeRack] B::WTOSC Loading WT %d", wtIdx );
                 storage->perform_queued_wtloads();
                 surge_osc->init(72);
+                updateWtLabels();
+
                 
                 for (auto i = 0; i < n_osc_params; ++i) {
                     setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
@@ -295,10 +308,10 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
             if( pc.changedAndIsNonZero(LOAD_WT, this) || firstRespawnIsFromJSON )
             {
-                rack::INFO( "[SurgeRack] C::WTOSC Loading WT %d", wtIdx );
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
                 surge_osc->init(72);
+                updateWtLabels();
             }
 
             if( wtIdx != oscstorage->wt.current_id )

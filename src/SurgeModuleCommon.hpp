@@ -24,9 +24,9 @@ namespace fs = std::experimental::filesystem;
 struct SurgeModuleCommon : public rack::Module {
     SurgeModuleCommon() : rack::Module() {  }
 
-    std::string getVersion() {
+    std::string getBuildInfo() {
         char version[1024];
-        snprintf(version, 1023, "%s: %s.%s.%s",
+        snprintf(version, 1023, "os:%s pluggit:%s surgegit:%s buildtime=%s %s",
 #if WINDOWS
                  "win",
 #endif
@@ -36,21 +36,21 @@ struct SurgeModuleCommon : public rack::Module {
 #if LINUX
                  "linux",
 #endif
-                 TOSTRING(SURGE_RACK_BASE_VERSION),
                  TOSTRING(SURGE_RACK_PLUG_VERSION),
-                 TOSTRING(SURGE_RACK_SURGE_VERSION));
+                 TOSTRING(SURGE_RACK_SURGE_VERSION),
+                 __DATE__, __TIME__
+            );
         return std::string(version);
     }
 
-    void showVersion() {
-        rack::INFO( "[SurgeRack] Instance: Module=%s Version=%s", getName().c_str(), getVersion().c_str() );
+    void showBuildInfo() {
+        rack::INFO( "[SurgeRack] Instance: Module=%s BuildInfo=%s", getName().c_str(), getBuildInfo().c_str() );
     }
 
     virtual std::string getName() = 0;
     
     virtual void onSampleRateChange() override {
         float sr = rack::APP->engine->getSampleRate();
-        rack::INFO("[SurgeRack] Setting SampleRate to %lf", sr);
         samplerate = sr;
         dsamplerate = sr;
         samplerate_inv = 1.0 / sr;
@@ -64,12 +64,12 @@ struct SurgeModuleCommon : public rack::Module {
         std::string dataPath;
         dataPath = rack::asset::plugin(pluginInstance, "surge-data/");
 
-        showVersion();
+        showBuildInfo();
         storage.reset(new SurgeStorage(dataPath));
 
         rack::INFO("[SurgeRack] SurgeStorage::dataPath = %s", storage->datapath.c_str());
-        rack::INFO("[SurgeRack] SurgeStorage::userDataPath = %s", storage->userDataPath.c_str());
-        rack::INFO("[SurgeRack] SurgeStorage::wt_list.size() = %d", storage->wt_list.size());
+        rack::INFO("            SurgeStorage::userDataPath = %s", storage->userDataPath.c_str());
+        rack::INFO("            SurgeStorage::wt_list.size() = %d", storage->wt_list.size());
 
         onSampleRateChange();
     }
@@ -84,13 +84,11 @@ struct SurgeModuleCommon : public rack::Module {
             fs::path presetPath = fs::path( presetDir.c_str() );
             if( ! fs::is_directory( presetPath ) )
             {
-                rack::INFO( "[SurgeRack] %s has no factory plugins", getName().c_str() );
                 return;
             }
             rack::INFO( "[SurgeRack] %s loading presets from %s", getName().c_str(), presetDir.c_str() );
             for( auto &d : fs::directory_iterator( presetDir ) )
             {
-                rack::INFO( "[SurgeRack] %s preset '%s'", getName().c_str(), d.path().generic_string().c_str() );
                 names.push_back( d.path().generic_string().c_str());
             }
 
@@ -195,7 +193,7 @@ struct SurgeModuleCommon : public rack::Module {
     virtual json_t *makeCommonDataJson() {
         json_t *rootJ = json_object();
         json_object_set_new( rootJ, "comment", json_string( comment.c_str() ) );
-        json_object_set_new( rootJ, "buildVersion", json_string( getVersion().c_str() ) );
+        json_object_set_new( rootJ, "buildInfo", json_string( getBuildInfo().c_str() ) );
         return rootJ;
     }
 
