@@ -16,8 +16,10 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
     float controlAreaHeight = orangeLine - padMargin - topControl;
     int   nControls = M::R_PARAM - M::RATE_PARAM + 1;
     float controlHeight = controlAreaHeight / nControls;
-    float textAreaWidth = SCREW_WIDTH * 15 - 4 * padMargin - 2 * portX;
+    float textAreaWidth = SCREW_WIDTH * 15 - 4 * padMargin - 2 * portX - 20;
 
+    float clockPad = 12;
+    
     float oldColStart = SCREW_WIDTH * 18;
     
     float inputXPos(int which) {
@@ -31,12 +33,14 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
         return orangeLine + ioMargin + padMargin;
     }
 
-    float topBoxW = SCREW_WIDTH * 8.2;
+    float topBoxW = SCREW_WIDTH * 6;
     float boxLayerY0 = SCREW_WIDTH + padMargin * 2 + buttonBankHeight;
     float boxLayerH = 50;
     float labelH = 16;
     float UIW = SCREW_WIDTH * 18;
     float buttonBankW = SCREW_WIDTH * 15;
+
+    float envPos = 6 * controlHeight + topControl + 5;;
     
     void moduleBackground(NVGcontext *vg) {
         float ioyb = orangeLine + ioMargin;
@@ -62,27 +66,39 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgText( vg, UIW - SCREW_WIDTH * 1.2, SCREW_WIDTH + padMargin, "uni", NULL );
         nvgText( vg, UIW - SCREW_WIDTH * 1.2, SCREW_WIDTH + padMargin + 11, "bi", NULL );
-        
-        centerRuledLabel( vg, padFromEdge, boxLayerY0, topBoxW, "Rate" );
-        drawTextBGRect(vg, padMargin*2 + padFromEdge + 2 * portX, boxLayerY0 + labelH + 2, topBoxW - 2 * padMargin - 2 * portX, portY - 4 );
-        
-        centerRuledLabel( vg, UIW - padFromEdge - topBoxW, boxLayerY0, topBoxW, "Magnitude" );
-        drawTextBGRect(vg, UIW - padFromEdge - topBoxW + padMargin*2 + 2 * portX,
-                       boxLayerY0 + labelH + 2, topBoxW - 2 * padMargin - 2 * portX, portY - 4 );
-        
-        centerRuledLabel( vg, padFromEdge, boxLayerY0 + boxLayerH, topBoxW, "Phase" );
-        drawTextBGRect(vg, padMargin*2 + padFromEdge + 2 * portX,
-                       boxLayerY0 + boxLayerH + labelH + 2, topBoxW - 2 * padMargin - 2 * portX, portY - 4 );
 
-        centerRuledLabel( vg, UIW - padFromEdge - topBoxW, boxLayerY0 + boxLayerH, topBoxW, "Deform" );
-        drawTextBGRect(vg, UIW - padFromEdge - topBoxW + padMargin*2 + 2 * portX,
-                       boxLayerY0 + boxLayerH + labelH + 2, topBoxW - 2 * padMargin - 2 * portX, portY - 4 );
+        // Rate section spans
+        centerRuledLabel( vg, padFromEdge, boxLayerY0, box.size.x - 2 * padFromEdge, "Rate" );
+        drawTextBGRect(vg, box.size.x / 2 + padMargin, boxLayerY0 + labelH + 2, box.size.x/2 - 2 * padMargin, portY - 2 );
+        drawBlueIORect(vg, padFromEdge, boxLayerY0 + labelH, portX + 2 * padMargin + clockPad, portY + 2 * padMargin);
+
+        nvgBeginPath(vg);
+        nvgSave(vg);
+        nvgFontFaceId(vg, fontId(vg));
+        nvgFontSize(vg, 12);
+        nvgTranslate(vg, padMargin + padFromEdge + portX + clockPad - 10,  boxLayerY0 + labelH );
+        nvgRotate( vg, M_PI/2 );
+        nvgFillColor(vg, surgeWhite() );
+        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
+        nvgText(vg, padMargin, 0, "clk cv", NULL );
+        nvgRestore(vg);
+        
+        
+        // Below it we get these guys in threes
+        std::vector<std::string> l = { "Magnitude", "Phase", "Deform" };
+        for( int i=0; i<3; ++i )
+        {
+            int xpos = padFromEdge + i * box.size.x / 3;
+            int ypos = boxLayerY0 + boxLayerH;
+            centerRuledLabel( vg, xpos, ypos, topBoxW - 2 * padFromEdge, l[i].c_str() );
+            drawTextBGRect(vg, xpos, ypos + labelH + portY + 2*padMargin, box.size.x/3 - 2 * padFromEdge, 14 );
+        }
         
 
-        centerRuledLabel( vg, padFromEdge, 6 * controlHeight + topControl, UIW - 2 * padFromEdge, "Envelope (in progress)" );
+        centerRuledLabel( vg, padFromEdge, envPos, UIW - 2 * padFromEdge, "Envelope" );
         for( int i=7; i<nControls; ++i )
         {
-            drawTextBGRect(vg, 3*padMargin+2*portX, i*controlHeight + topControl,
+            drawTextBGRect(vg, 3*padMargin+2*portX + 20 , i*controlHeight + topControl,
                                        textAreaWidth, controlHeight-padMargin);
         }
         
@@ -132,50 +148,79 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
                  ));
     
     // Vector is param #, x, y
-    std::vector<std::vector<float>> rmpd = { { 0, padFromEdge, boxLayerY0 },
-                                             { 3, UIW - padFromEdge - topBoxW, boxLayerY0 },
-                                             { 2, padFromEdge, boxLayerY0 + boxLayerH },
-                                             { 4, UIW - padFromEdge - topBoxW, boxLayerY0 + boxLayerH } };
-    for( auto pxy : rmpd )
-    {
-        int pn = (int)pxy[ 0 ];
-        float x0 = pxy[1];
-        float y0 = pxy[2];
+    // Add the rate inputs
+    float rateTop = boxLayerY0 + labelH + 2;
+    float xPos = padFromEdge + padMargin;
+    addInput(rack::createInput<rack::PJ301MPort>(
+                 rack::Vec(xPos, rateTop), module, M::CLOCK_CV_INPUT ) );
+    xPos += portX + padMargin + clockPad + 18;
+    addParam(rack::createParam<SurgeSmallKnob>(
+                 rack::Vec(xPos, rateTop), module, M::RATE_PARAM ) );
+    xPos += portX + padMargin;
+    addInput(rack::createInput<rack::PJ301MPort>(
+                 rack::Vec(xPos, rateTop), module, M::RATE_CV ) );
 
-        addInput(rack::createInput<rack::PJ301MPort>(
-                     rack::Vec(x0 + portX + padMargin, y0 + labelH), module, M::RATE_CV + pn ));
-        
-        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(x0, y0+labelH), module, M::RATE_PARAM + pn
-                                                   ));
+    xPos += portX + padMargin;
+    addParam(rack::createParam<SurgeSwitch>(rack::Vec(xPos, rateTop + 2), module,
+                                            M::RATE_TS));
 
-        
-        addChild(TextDisplayLight::create(rack::Vec(x0 + 2 * portX + 3 * padMargin, y0 + labelH + 2),
-                                          rack::Vec(topBoxW - 2 * portX, portY - 4 ),
-                                          module ? &(module->pb[pn]->valCache) : nullptr,
-                                          12, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, surgeWhite()));
-    }
+    addChild(TextDisplayLight::create(rack::Vec( box.size.x / 2 + 2 * padMargin, rateTop ),
+                                      rack::Vec( box.size.x / 2 - 3 * padMargin, portY-2 ),
+                                      module ? &(module->pb[0]->valCache) : nullptr,
+                                      14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, surgeWhite() ) );
     
+    
+    std::vector<float> mpd = { 3, 2, 4 };
+    for( int i=0; i<3; ++i )
+    {
+        int xpos = padFromEdge + i * box.size.x / 3;
+        float xc0 = xpos + box.size.x / 6 - padFromEdge - portX - padMargin/2;
+        int ypos = boxLayerY0 + boxLayerH;
+
+        ypos += labelH + 2;
+
+        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xc0, ypos), module, M::RATE_PARAM + mpd[i]));
+        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xc0 + portX + padMargin, ypos), module, M::RATE_CV + mpd[i] ));
+
+        
+        addChild(TextDisplayLight::create(rack::Vec(xpos, ypos - 2 + portY + 2*padMargin ),
+                                          rack::Vec(box.size.x/3 - 2 * padFromEdge, 14 ),
+                                          module ? &(module->pb[mpd[i]]->valCache) : nullptr,
+                                          12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, surgeWhite()));
+    }
+
+    addChild(rack::createLight<rack::SmallLight<rack::BlueLight>>(rack::Vec(box.size.x/2 + 25, envPos),
+                                                                  module,
+                                                                  M::ENV_LIGHT));
     
     /* End CLEAN UI */
-    
+    std::vector<std::string> el = { "Del", "A", "H", "D", "S", "R" };
     
     int XX = SCREW_WIDTH * 15;
+    int ts = M::DEL_TS;
     for( int i=7; i<nControls; ++i )
     {
         float yPos = i * controlHeight + topControl;
         int pa = M::RATE_PARAM + i;
         int cv = M::RATE_CV + i;
+
         addInput(rack::createInput<rack::PJ301MPort>(
                      rack::Vec(2 * padMargin + portX , yPos), module, cv ));
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padMargin , yPos), module,
                                                    pa
                                                    ));
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2 , yPos),
+        if( pa != M::S_PARAM )
+        {
+            addParam(rack::createParam<SurgeSwitch>(rack::Vec(2 * portX + 3 * padMargin, yPos), module,
+                                                    ts++));
+        }
+
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 20 + 2 , yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->pb[i]->nameCache) : nullptr,
                                           14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, surgeOrange()));
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 2 , yPos),
+        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 20 + 2 , yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
                                           module ? &(module->pb[i]->valCache) : nullptr,
                                           14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, surgeWhite()));

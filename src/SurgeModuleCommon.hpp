@@ -281,18 +281,19 @@ struct ParamCache {
 */
 struct RackSurgeParamBinding {
     Parameter *p;
-    int param_id, cv_id;
+    int param_id, cv_id, ts_id;
 
     StringCache valCache;
     StringCache nameCache;
 
     bool forceRefresh = false;
-
+    bool tsbpmLabel = false;
     
     RackSurgeParamBinding(Parameter *_p, int _param_id, int _cv_id) {
         this->p = _p;
         this->cv_id = _cv_id;
         this->param_id = _param_id;
+        this->ts_id = -1;
         valCache.reset( "value" );
         nameCache.reset( "name" );
         forceRefresh = true;
@@ -301,13 +302,25 @@ struct RackSurgeParamBinding {
     ~RackSurgeParamBinding() {
     }
 
+    void setTemposync(int i, bool label) {
+        ts_id = i;
+        tsbpmLabel = label;
+    }
+    
     void update(const ParamCache &pc, SurgeModuleCommon *m) {
         bool paramChanged = false;
-        if(pc.changed(param_id,m) || forceRefresh)
+        if(pc.changed(param_id,m) || (ts_id >= 0 && pc.changed(ts_id, m) ) || forceRefresh)
         {
             char txt[1024];
             p->set_value_f01(m->getParam(param_id));
+            if( ts_id >= 0 )
+                p->temposync = m->getParam(ts_id) > 0.5;
+            
             p->get_display(txt, false, 0);
+            if( tsbpmLabel && ts_id >= 0 && m->getParam(ts_id) > 0.5 )
+            {
+                snprintf(txt, 1024, "%s @ %5.1lf bpm", txt, m->lastBPM );
+            }
             valCache.reset(txt);
             paramChanged = true;
         }
