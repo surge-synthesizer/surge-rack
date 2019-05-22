@@ -16,11 +16,20 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         UNIPOLAR_PARAM,
         
         DEL_PARAM,
+        H_PARAM,  // that order comes from LFOStorage. I agree it is wierd but it is what it is
         A_PARAM,
-        H_PARAM,
         D_PARAM,
         S_PARAM,
         R_PARAM,
+
+        RATE_TS,
+
+        DEL_TS,
+        H_TS,
+        A_TS,
+        D_TS,
+        S_TS,
+        R_TS,
 
         NUM_PARAMS
     };
@@ -37,17 +46,19 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         UNIPOLAR_CV,
         
         DEL_CV,
-        A_CV,
         H_CV,
+        A_CV,
         D_CV,
         S_CV,
         R_CV,
 
+        CLOCK_CV_INPUT,
+        
         NUM_INPUTS
     };
     enum OutputIds { OUTPUT_ENV, NUM_OUTPUTS };
     enum LightIds {
-
+        ENV_LIGHT,
         NUM_LIGHTS
     };
 
@@ -59,8 +70,25 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     
     SurgeLFO() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        for (int i = DEL_PARAM; i <= R_PARAM; ++i)
-            configParam(i, 0, 1, 0.5);
+
+        configParam(RATE_PARAM,0,1,0.2);
+        configParam(SHAPE_PARAM,0,1,0);
+        configParam(START_PHASE_PARAM,0,1,0);
+        configParam(MAGNITUDE_PARAM,0,1,1);
+        configParam(DEFORM_PARAM,0,1,0.5);
+        configParam(TRIGMODE_PARAM,0,1,0);
+        configParam(UNIPOLAR_PARAM,0,1,0);
+        
+        configParam(DEL_PARAM,0,1,0);
+        configParam(A_PARAM,0,1,0.2);
+        configParam(H_PARAM,0,1,0.1);
+        configParam(D_PARAM,0,1,0.2);
+        configParam(S_PARAM,0,1,0.7);
+        configParam(R_PARAM,0,1,0.3);
+
+        for( int i=RATE_TS; i<=DEL_TS; ++i )
+            configParam(i,0,1,0);
+        
         setupSurge();
     }
 
@@ -72,6 +100,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         surge_lfo.reset(new LfoModulationSource());
         surge_ss.reset(new StepSequencerStorage());
         lfostorage = &(storage->getPatch().scene[0].lfo[0]);
+
         surge_lfo->assign(storage.get(), lfostorage,
                           storage->getPatch().scenedata[0], nullptr, surge_ss.get());
 
@@ -82,6 +111,14 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
             pb.push_back(std::shared_ptr<RackSurgeParamBinding>(new RackSurgeParamBinding(p0, i, RATE_CV + (i-RATE_PARAM))));
             p0++;
         }
+        pb[RATE_PARAM]->setTemposync(RATE_TS, true);
+
+        int tsSpread = DEL_TS - DEL_PARAM;
+        for( int i=DEL_PARAM; i<=R_PARAM; ++i )
+        {
+            if( i == S_PARAM ) tsSpread--;
+            else pb[i]->setTemposync(i+tsSpread, false);
+        }
         
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
         pc.resize(NUM_PARAMS);
@@ -91,7 +128,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     std::unique_ptr<StepSequencerStorage> surge_ss;
     LFOStorage *lfostorage;
 
-    bool wasGated = true; // assume we run open
+    bool wasGated = true, wasGateConnected=false; // assume we run open
     int lastStep = 0;
     float output0, output1;
     
@@ -103,6 +140,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         if (lastStep == 0) {
             bool inNewAttack = false;
             if (inputConnected(GATE_IN) && envGateTrigger.process(getInput(GATE_IN))) {
+                lfostorage->trigmode.val.i = lm_keytrigger;
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
                 surge_lfo->attack();
                 inNewAttack = true;
@@ -111,6 +149,17 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
             if (inputConnected(RETRIG_IN) && envRetrig.process(getInput(RETRIG_IN))) {
                 surge_lfo->retrigger_EG = true;
             }
+
+            if( inputConnected(CLOCK_CV_INPUT) )
+            {
+                updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+            }
+            else
+            {
+                // FIXME - only once please
+                updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
+            }
+            
 
             for(auto binding : pb)
                 binding->update(pc, this);
@@ -130,6 +179,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
 
             if( isGateConnected )
             {
+                setLight(ENV_LIGHT, 10.0);
                 /*
                 ** We have to undertake no action if:
                 **   isGateConnected && wasGated && isGated -> hooked up and open still
@@ -142,20 +192,28 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
                     wasGated = false;
                     surge_lfo->release();
                 }
+                wasGateConnected = true;
             }
             else
             {
+                setLight(ENV_LIGHT, 0.0);
                 /*
                 ** In this case we want to act as if we are always gated.
                 ** So if wasGated is false we need to attack and never release.
                 */
+                // Trickily we want to verride sustain here
+                lfostorage->sustain.set_value_f01(1.0);
+                
                 if( ! wasGated )
                 {
+                    lfostorage->trigmode.val.i = lm_freerun;
+
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     surge_lfo->attack();
                     inNewAttack = true;
                     wasGated = true;
                 }
+                wasGateConnected = false;
             }
 
             copyScenedataSubset(0, storage_id_start, storage_id_end);
