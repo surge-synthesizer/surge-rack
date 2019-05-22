@@ -49,10 +49,9 @@ jobs:
     displayName: Get Surge SubModule
 
   - bash: |
-      which g++
-      g++ --version
-    displayName: Dump Windows Versions
-    condition: variables.isWindows
+      ./scripts/resetversion.sh
+    displayName: Update Version in plugins.json
+
 
   - bash: |
       export RACK_DIR=$AGENT_TEMPDIRECTORY/Rack-SDK
@@ -123,7 +122,7 @@ jobs:
 
   - bash: |
      ls -l $(Build.ArtifactStagingDirectory)
-     export EXTEND_TAG=`date "+%Y%m%d-%H%M"`-`git rev-parse --short HEAD`
+     export EXTEND_TAG=`date "+%Y%m%d"`
      for file in $(Build.ArtifactStagingDirectory)/*.zip; do mv "$file" "${file/.zip/-${EXTEND_TAG}.zip}"; done
      ls -l $(Build.ArtifactStagingDirectory)         
     displayName: Tag asset names with Date
