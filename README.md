@@ -16,7 +16,8 @@ As of May 19, the weekend of the dev release of Rack 1.0, we have stopped suppor
 
 Our overall goal for our first release is to have all the stages exposed as modules which work with an acceptable
 front plate, are full "phase2/3" rack 1.0 modules, but are still monophonic.
-Here's how far we are along on that journey.
+Here's how far we are along on that journey. "Completed" doesn't mean bug free; it means monophonic, clean front
+panel, works as expected except in a couple of edge cases which are documented in github issues.
 
 <table>
 <tr><th>Plugin</th><th>Description</th><th>State</th></tr>
@@ -24,9 +25,9 @@ Here's how far we are along on that journey.
   <td>The surge FX stage is represented as a set of modules, one per effect.</td>
   <td>The modules all work; most have a generic panel still</td></tr>
 <tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed</td></tr>
-<tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Very good shape. Few pops and clicks when changing osc type or changing unison count, but works well otherwise.</td></tr>
+<tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Completed</td></tr>
 <tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
-<tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Works well; need to fill that UI gap with WT info</td></tr>
+<tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Completed</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Works perfectly; terrible UI</td></tr>
 <tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
 <tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>

@@ -9,6 +9,8 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
     int ioRegionWidth = 105;
 
     float pitchY = SCREW_WIDTH + padFromEdge;
+    float infoPos0 = pitchY + 25 + padMargin;
+    
     float pitchCtrlX = padFromEdge + 2 * padMargin + 2 * portX;
     
     float controlsY = pitchY + 2 * padMargin + surgeRoosterY + portY;
@@ -68,6 +70,11 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
             drawTextBGRect(vg, xp, yp, colOneEnd - padFromEdge - xp, controlHeightPer - padMargin);
         }
 
+        centerRuledLabel( vg, colOneEnd + padFromEdge, infoPos0, box.size.x - colOneEnd - 2 * padFromEdge, "Current WT" );
+        drawTextBGRect( vg, colOneEnd + padFromEdge, infoPos0 + 14 + padMargin,
+                        box.size.x - colOneEnd - 2 * padFromEdge, 50 );
+        
+        
         auto xpf = [this](int i) { return this->colOneEnd + this->catitlodsz * ( i + 0.5 );  };
         std::vector<std::string> cil = { "Cat", "WT", "Load" };
         for( int i=0; i<3; ++i )
@@ -176,6 +183,19 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
     
     addParam(bank);
 
+    for( int i=0; i<3; ++i )
+    {
+        int xp = colOneEnd + padMargin + padFromEdge;
+        int yp = infoPos0 + 14 + padMargin + 2.5 + i * 15;
+        addChild(TextDisplayLight::create(
+                     rack::Vec(xp, yp),
+                     rack::Vec(box.size.x - colOneEnd - 2 * padMargin, 15 ),
+                     module ? &(module->wtInfoCache[i]) : nullptr,
+                     13, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite() ));
+
+        
+    }
+    
     auto xpf = [this](int i) { return this->colOneEnd + this->catitlodsz * ( i + 0.5 ) - this->surgeRoosterX / 2.0; };
     
     addParam(rack::createParam<SurgeKnobRooster>(
