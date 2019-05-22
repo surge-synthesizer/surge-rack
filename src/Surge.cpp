@@ -4,7 +4,6 @@
 rack::Model **fxModels = nullptr;
 int addFX(rack::Model *m, int type)
 {
-   rack::INFO( "[SurgeRack] adding FX %d", type );
    if( fxModels == nullptr ) {
        fxModels = new rack::Model *[num_fxtypes];
        for( auto i=0; i<num_fxtypes; ++i )
