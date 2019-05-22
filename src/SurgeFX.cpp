@@ -118,7 +118,6 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 
 // FIXME: Eventually each of these get their own panel and this list drops to 0
 CREATE_FX( fxt_delay, "SurgeDelay" );
-CREATE_FX( fxt_eq, "SurgeEQ" );
 CREATE_FX( fxt_phaser, "SurgePhaser" );
 CREATE_FX( fxt_distortion, "SurgeDistort" );
 CREATE_FX( fxt_reverb, "SurgeReverb" );
