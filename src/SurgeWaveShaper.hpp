@@ -30,7 +30,6 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     }
 
     int processPosition = 0;
-    float wsMul = 1.0;
     float inBuffer alignas(16)[4], outBuffer alignas(16)[4];
 
     void swapWS(int i) {
@@ -38,10 +37,6 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
             wsPtr = nullptr;
         else
             wsPtr = GetQFPtrWaveshaper(i);
-
-        wsMul = 10.0;
-        if (i == 0 || i == wst_digi)
-            wsMul = 1.0;
 
         for (int i = 0; i < 4; ++i) {
             inBuffer[i] = 0;
@@ -75,8 +70,8 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
                 _mm_store_ps(outBuffer, out);
                 processPosition = 0;
             }
-            inBuffer[processPosition] = getInput(SIGNAL_IN);
-            setOutput(SIGNAL_OUT, outBuffer[processPosition] * wsMul);
+            inBuffer[processPosition] = getInput(SIGNAL_IN) * RACK_TO_SURGE_OSC_MUL;
+            setOutput(SIGNAL_OUT, outBuffer[processPosition] * SURGE_TO_RACK_OSC_MUL);
             processPosition++;
         }
     }

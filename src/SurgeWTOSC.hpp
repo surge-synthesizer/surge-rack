@@ -335,7 +335,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             {
                 for (int i = 0; i < n_scene_params; ++i) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
-                                                   getInput(OSC_CTRL_CV_0 + i) / 10.0);
+                                                   getInput(OSC_CTRL_CV_0 + i) * RACK_TO_SURGE_CV_MUL );
                 }
 
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
@@ -350,17 +350,17 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
         {
             // Special mono mode
-            float output = (avgl + avgr) * 5.0 * getParam(OUTPUT_GAIN);
+            float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
             setOutput(OUTPUT_L, output);
         }
         else
         {
             if( outputConnected(OUTPUT_L) )
-                setOutput(OUTPUT_L, avgl * 10 *
+                setOutput(OUTPUT_L, avgl * SURGE_TO_RACK_OSC_MUL *
                           getParam(OUTPUT_GAIN));
             
             if( outputConnected(OUTPUT_R) )
-                setOutput(OUTPUT_R, avgr * 10 *
+                setOutput(OUTPUT_R, avgr * SURGE_TO_RACK_OSC_MUL *
                           getParam(OUTPUT_GAIN));
         }
 

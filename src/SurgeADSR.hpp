@@ -133,13 +133,13 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
             adsrstorage->r_s.val.i = (int)getParam(R_S_PARAM);
 
             adsrstorage->a.set_value_f01(getParam(A_PARAM) +
-                                         getInput(A_CV) / 10.0);
+                                         getInput(A_CV) * RACK_TO_SURGE_CV_MUL );
             adsrstorage->d.set_value_f01(getParam(D_PARAM) +
-                                         getInput(D_CV) / 10.0);
+                                         getInput(D_CV) * RACK_TO_SURGE_CV_MUL);
             adsrstorage->s.set_value_f01(getParam(S_PARAM) +
-                                         getInput(S_CV) / 10.0);
+                                         getInput(S_CV) * RACK_TO_SURGE_CV_MUL);
             adsrstorage->r.set_value_f01(getParam(R_PARAM) +
-                                         getInput(R_CV) / 10.0);
+                                         getInput(R_CV) * RACK_TO_SURGE_CV_MUL);
 
             copyScenedataSubset(0, storage_id_start, storage_id_end);
             surge_envelope->process_block();
