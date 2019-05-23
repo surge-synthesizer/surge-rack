@@ -235,6 +235,6 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         lastStep++;
         float frac = 1.0 * lastStep / BLOCK_SIZE;
         float outputI = output0 * (1.0-frac) + output1 * frac;
-        setOutput(OUTPUT_ENV, outputI * 10.0);
+        setOutput(OUTPUT_ENV, outputI * SURGE_TO_RACK_OSC_MUL);
     }
 };

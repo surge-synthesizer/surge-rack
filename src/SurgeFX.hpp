@@ -183,8 +183,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
         float outG = getParam(OUTPUT_GAIN);
 
 
-        float inl = inpG * getInput(INPUT_L_OR_MONO) / 10.0;
-        float inr = inpG * getInput(INPUT_R) / 10.0;
+        float inl = inpG * getInput(INPUT_L_OR_MONO) * RACK_TO_SURGE_OSC_MUL;
+        float inr = inpG * getInput(INPUT_R) * RACK_TO_SURGE_OSC_MUL;
 
         if( inputConnected(INPUT_L_OR_MONO) && ! inputConnected(INPUT_R) )
         {
@@ -266,8 +266,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
 
             for (int i = 0; i < n_fx_params; ++i) {
                 fxstorage->p[orderToParam[i]].set_value_f01(
-                    getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i)) /
-                    10.0 );
+                    getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i)) * RACK_TO_SURGE_CV_MUL );
             }
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
@@ -276,8 +275,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
             bufferPos = 0;
         }
 
-        float outl = outG * processedL[bufferPos] * 10;
-        float outr = outG * processedR[bufferPos] * 10;
+        float outl = outG * processedL[bufferPos] * SURGE_TO_RACK_OSC_MUL;
+        float outr = outG * processedR[bufferPos] * SURGE_TO_RACK_OSC_MUL;
 
         if( outputConnected(OUTPUT_L_OR_MONO) && ! outputConnected(OUTPUT_R) )
         {

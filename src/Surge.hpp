@@ -6,6 +6,20 @@
 #define SCREW_WIDTH 15
 #define RACK_HEIGHT 380
 
+// https://vcvrack.com/manual/VoltageStandards.html
+#define RACK_CV_MAX_LEVEL 10
+#define SURGE_CV_MAX_LEVEL 1
+
+#define RACK_OSC_MAX_LEVEL 5
+#define SURGE_OSC_PEAK_TO_PEAK 2
+#define SURGE_OSC_MAX_LEVEL 1
+
+#define SURGE_TO_RACK_OSC_MUL 5
+#define RACK_TO_SURGE_OSC_MUL 0.2
+
+#define SURGE_TO_RACK_CV_MUL 10
+#define RACK_TO_SURGE_CV_MUL 0.1
+
 extern rack::Plugin *pluginInstance;
 
 extern rack::Model *modelSurgeClock;
