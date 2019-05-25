@@ -319,7 +319,9 @@ struct RackSurgeParamBinding {
             p->get_display(txt, false, 0);
             if( tsbpmLabel && ts_id >= 0 && m->getParam(ts_id) > 0.5 )
             {
-                snprintf(txt, 1024, "%s @ %5.1lf bpm", txt, m->lastBPM );
+  	        char ntxt[1024];
+                snprintf(ntxt, 1024, "%s @ %5.1lf bpm", txt, m->lastBPM );
+		strcpy(txt, ntxt);
             }
             valCache.reset(txt);
             paramChanged = true;

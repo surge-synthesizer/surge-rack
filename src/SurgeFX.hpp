@@ -257,7 +257,9 @@ struct SurgeFX : virtual SurgeModuleCommon {
                     fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
                     if( getParam(PARAM_TEMPOSYNC_0 + i) > 0.5 )
                     {
-                        snprintf( txt, 256, "%s @ %5.1lf bpm", txt, lastBPM );
+		        char ntxt[256];
+                        snprintf( ntxt, 256, "%s @ %5.1lf bpm", txt, lastBPM );
+			strcpy(txt, ntxt);
                     }
                     paramDisplayCache[i].reset(txt);
                 }
