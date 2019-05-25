@@ -20,13 +20,10 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
 
     virtual std::string getName() override { return "WS"; }
     
-    ParamCache pc;
     StringCache dbGainCache;
 
     virtual void setupSurge() {
-        setupSurgeCommon();
-
-        pc.resize(NUM_PARAMS);
+        setupSurgeCommon(NUM_PARAMS);
     }
 
     int processPosition = 0;

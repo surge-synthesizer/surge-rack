@@ -21,6 +21,46 @@ namespace fs = std::experimental::filesystem;
 #include <map>
 #include <vector>
 
+/*
+** Bind a surge parameter to a param/cv_id combo. If you only have a knob (no cv) set the cv_id to -1
+*/
+struct SurgeRackParamBinding;
+struct SurgeModuleCommon;
+
+struct ParamCache {
+    std::vector<float> cache;
+    int np;
+    ParamCache() {
+        np = 0;
+        resize(np);
+    }
+
+    void resize(int n) {
+        np = n;
+        cache.resize(n);
+        for (int i = 0; i < n; ++i)
+            cache[i] = /* float min */ -1328142.0;
+    }
+
+    void update(rack::Module *m) {
+        for (auto i = 0; i < np; ++i) {
+            cache[i] = m->params[i].getValue();
+        }
+    }
+
+    float get(int i) const { return cache[i]; }
+
+    bool changed(int i, rack::Module *m) const { return cache[i] != m->params[i].getValue(); }
+    bool changedInt(int i, rack::Module *m) const { return (int)cache[i] != (int)m->params[i].getValue(); }
+    bool changedAndIsNonZero(int i, rack::Module *m) const {
+        auto r = m->params[i].getValue();
+        return cache[i] != r && r > 0.5;
+    }
+};
+
+
+
+
 struct SurgeModuleCommon : public rack::Module {
     SurgeModuleCommon() : rack::Module() {  }
 
@@ -60,19 +100,10 @@ struct SurgeModuleCommon : public rack::Module {
         storage->init_tables();
     }
 
-    void setupSurgeCommon() {
-        std::string dataPath;
-        dataPath = rack::asset::plugin(pluginInstance, "surge-data/");
-
-        showBuildInfo();
-        storage.reset(new SurgeStorage(dataPath));
-
-        rack::INFO("[SurgeRack] SurgeStorage::dataPath = %s", storage->datapath.c_str());
-        rack::INFO("            SurgeStorage::userDataPath = %s", storage->userDataPath.c_str());
-        rack::INFO("            SurgeStorage::wt_list.size() = %d", storage->wt_list.size());
-
-        onSampleRateChange();
-    }
+    void setupSurgeCommon(int NUM_PARAMS);
+    
+    std::vector<std::shared_ptr<SurgeRackParamBinding>> pb;
+    ParamCache pc;
 
     virtual void onAdd() override {
         if(model && model->presetPaths.size() == 0)
@@ -244,42 +275,8 @@ struct StringCache {
     
 };
 
-struct ParamCache {
-    std::vector<float> cache;
-    int np;
-    ParamCache() {
-        np = 0;
-        resize(np);
-    }
 
-    void resize(int n) {
-        np = n;
-        cache.resize(n);
-        for (int i = 0; i < n; ++i)
-            cache[i] = /* float min */ -1328142.0;
-    }
-
-    void update(rack::Module *m) {
-        for (auto i = 0; i < np; ++i) {
-            cache[i] = m->params[i].getValue();
-        }
-    }
-
-    float get(int i) const { return cache[i]; }
-
-    bool changed(int i, SurgeModuleCommon *m) const { return cache[i] != m->getParam(i); }
-    bool changedInt(int i, SurgeModuleCommon *m) const { return (int)cache[i] != (int)m->getParam(i); }
-    bool changedAndIsNonZero(int i, SurgeModuleCommon *m) const {
-        auto r = m->getParam(i);
-        return cache[i] != r && r > 0.5;
-    }
-};
-
-
-/*
-** Bind a surge parameter to a param/cv_id combo. If you only have a knob (no cv) set the cv_id to -1
-*/
-struct RackSurgeParamBinding {
+struct SurgeRackParamBinding {
     Parameter *p;
     int param_id, cv_id, ts_id;
 
@@ -289,7 +286,7 @@ struct RackSurgeParamBinding {
     bool forceRefresh = false;
     bool tsbpmLabel = false;
     
-    RackSurgeParamBinding(Parameter *_p, int _param_id, int _cv_id) {
+    SurgeRackParamBinding(Parameter *_p, int _param_id, int _cv_id) {
         this->p = _p;
         this->cv_id = _cv_id;
         this->param_id = _param_id;
@@ -299,7 +296,7 @@ struct RackSurgeParamBinding {
         forceRefresh = true;
     }
 
-    ~RackSurgeParamBinding() {
+    ~SurgeRackParamBinding() {
     }
 
     void setTemposync(int i, bool label) {
@@ -307,33 +304,7 @@ struct RackSurgeParamBinding {
         tsbpmLabel = label;
     }
     
-    void update(const ParamCache &pc, SurgeModuleCommon *m) {
-        bool paramChanged = false;
-        if(pc.changed(param_id,m) || (ts_id >= 0 && pc.changed(ts_id, m) ) || forceRefresh)
-        {
-            char txt[1024];
-            p->set_value_f01(m->getParam(param_id));
-            if( ts_id >= 0 )
-                p->temposync = m->getParam(ts_id) > 0.5;
-            
-            p->get_display(txt, false, 0);
-            if( tsbpmLabel && ts_id >= 0 && m->getParam(ts_id) > 0.5 )
-            {
-  	        char ntxt[1024];
-                snprintf(ntxt, 1024, "%s @ %5.1lf bpm", txt, m->lastBPM );
-		strcpy(txt, ntxt);
-            }
-            valCache.reset(txt);
-            paramChanged = true;
-        }
-        if(forceRefresh)
-        {
-            nameCache.reset(p->get_name());
-        }
-
-        if( paramChanged || forceRefresh || m->inputConnected(cv_id) )
-            p->set_value_f01(m->getParam(param_id) + m->getInput(cv_id) / 10.0);
-    }
+    void update(const ParamCache &pc, SurgeModuleCommon *m);
 };
 
 struct ParamValueStateSaver {
@@ -362,6 +333,14 @@ struct ParamValueStateSaver {
             m->setParam(pair.first, pair.second );
         }
     }
+};
+
+
+struct SurgeRackParamQuantity : rack::engine::ParamQuantity
+{
+    void setDisplayValueString(std::string s) override;
+	std::string getLabel() override;
+    std::string getDisplayValueString() override;
 };
 
 // This comes from surge unitconversion.h which is not used anywhere; but also which doesn't compile

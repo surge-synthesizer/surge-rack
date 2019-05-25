@@ -36,8 +36,6 @@ struct SurgeVCF :  public SurgeModuleCommon {
     };
     enum LightIds { NUM_LIGHTS };
 
-    ParamCache pc;
-
     SurgeVCF() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(FILTER_TYPE, 0, 9, 0 );
@@ -54,8 +52,7 @@ struct SurgeVCF :  public SurgeModuleCommon {
     virtual std::string getName() override { return "VCF"; }
 
     virtual void setupSurge() {
-        pc.resize(NUM_PARAMS);
-        setupSurgeCommon();
+        setupSurgeCommon(NUM_PARAMS);
         resetBuffers();
     }
 

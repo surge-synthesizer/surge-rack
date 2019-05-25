@@ -27,7 +27,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     enum OutputIds { OUTPUT_L, OUTPUT_R, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
-    ParamCache pc;
     ParamValueStateSaver knobSaver;
     
     SurgeOSC() : SurgeModuleCommon() {
@@ -50,8 +49,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     StringCache paramNameCache[n_osc_params], paramValueCache[n_osc_params];
 
     virtual void setupSurge() {
-        pc.resize(NUM_PARAMS);
-        setupSurgeCommon();
+        setupSurgeCommon(NUM_PARAMS);
 
         oscConfigurations.push_back(std::pair<int, std::string>(ot_classic, "Classic"));
         oscConfigurations.push_back(std::pair<int, std::string>(ot_sinus, "Sine"));
