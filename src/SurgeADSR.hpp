@@ -42,7 +42,6 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
 
     StringCache adsrStrings[4];
-    ParamCache pc;
 
     SurgeADSR() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -58,7 +57,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     virtual std::string getName() override { return "ADSR"; }
 
     virtual void setupSurge() {
-        setupSurgeCommon();
+        setupSurgeCommon(NUM_PARAMS);
 
         surge_envelope.reset(new AdsrEnvelope());
         adsrstorage = &(storage->getPatch().scene[0].adsr[0]);
@@ -77,7 +76,6 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         adsrstorage->r_s.val.i = 0;
 
         setupStorageRanges(&(adsrstorage->a), &(adsrstorage->mode));
-        pc.resize(NUM_PARAMS);
 
     }
 

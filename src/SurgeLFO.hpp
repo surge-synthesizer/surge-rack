@@ -64,30 +64,29 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
 
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
 
-    ParamCache pc;
 
-    std::vector<std::shared_ptr<RackSurgeParamBinding>> pb;
-    
     SurgeLFO() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam(RATE_PARAM,0,1,0.2);
-        configParam(SHAPE_PARAM,0,1,0);
-        configParam(START_PHASE_PARAM,0,1,0);
-        configParam(MAGNITUDE_PARAM,0,1,1);
-        configParam(DEFORM_PARAM,0,1,0.5);
-        configParam(TRIGMODE_PARAM,0,1,0);
-        configParam(UNIPOLAR_PARAM,0,1,0);
+        configParam<SurgeRackParamQuantity>(RATE_PARAM,0,1,0.2);
+        configParam<SurgeRackParamQuantity>(SHAPE_PARAM,0,1,0);
+        configParam<SurgeRackParamQuantity>(START_PHASE_PARAM,0,1,0);
+        configParam<SurgeRackParamQuantity>(MAGNITUDE_PARAM,0,1,1);
+        configParam<SurgeRackParamQuantity>(DEFORM_PARAM,0,1,0.5);
+        configParam<SurgeRackParamQuantity>(TRIGMODE_PARAM,0,1,0);
+        configParam<SurgeRackParamQuantity>(UNIPOLAR_PARAM,0,1,0);
         
-        configParam(DEL_PARAM,0,1,0);
-        configParam(A_PARAM,0,1,0.2);
-        configParam(H_PARAM,0,1,0.1);
-        configParam(D_PARAM,0,1,0.2);
-        configParam(S_PARAM,0,1,0.7);
-        configParam(R_PARAM,0,1,0.3);
+        configParam<SurgeRackParamQuantity>(DEL_PARAM,0,1,0);
+        configParam<SurgeRackParamQuantity>(A_PARAM,0,1,0.2);
+        configParam<SurgeRackParamQuantity>(H_PARAM,0,1,0.1);
+        configParam<SurgeRackParamQuantity>(D_PARAM,0,1,0.2);
+        configParam<SurgeRackParamQuantity>(S_PARAM,0,1,0.7);
+        configParam<SurgeRackParamQuantity>(R_PARAM,0,1,0.3);
 
-        for( int i=RATE_TS; i<=DEL_TS; ++i )
-            configParam(i,0,1,0);
+        for( int i=RATE_TS; i<=R_TS; ++i )
+        {
+            configParam<SurgeRackParamQuantity>(i,0,1,0, "Activate TempoSync" );
+        }
         
         setupSurge();
     }
@@ -95,10 +94,11 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     virtual std::string getName() override { return "LFO"; }
     
     virtual void setupSurge() {
-        setupSurgeCommon();
+        setupSurgeCommon(NUM_PARAMS);
 
         surge_lfo.reset(new LfoModulationSource());
         surge_ss.reset(new StepSequencerStorage());
+        
         lfostorage = &(storage->getPatch().scene[0].lfo[0]);
 
         surge_lfo->assign(storage.get(), lfostorage,
@@ -108,7 +108,8 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         for( int i=RATE_PARAM; i<= R_PARAM; ++i )
         {
             p0->temposync = false;
-            pb.push_back(std::shared_ptr<RackSurgeParamBinding>(new RackSurgeParamBinding(p0, i, RATE_CV + (i-RATE_PARAM))));
+            rack::INFO("Setting shared ptr at %d size=%d", i, pb.size() );
+            pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p0, i, RATE_CV + (i-RATE_PARAM)));
             p0++;
         }
         pb[RATE_PARAM]->setTemposync(RATE_TS, true);
@@ -162,7 +163,8 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
             
 
             for(auto binding : pb)
-                binding->update(pc, this);
+                if(binding)
+                    binding->update(pc, this);
             
             pc.update(this);
 

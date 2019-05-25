@@ -36,8 +36,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         NUM_LIGHTS
     };
 
-    ParamCache pc;
-    
     SurgeWTOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(OUTPUT_GAIN, 0, 1, 1);
@@ -62,8 +60,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     std::vector<int> catOrderSkipEmpty;
     
     virtual void setupSurge() {
-        pc.resize(NUM_PARAMS);
-        setupSurgeCommon();
+        setupSurgeCommon(NUM_PARAMS);
 
         for( auto ci : storage->wtCategoryOrdering )
         {

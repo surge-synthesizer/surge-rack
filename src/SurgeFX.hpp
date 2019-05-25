@@ -61,8 +61,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
         NUM_LIGHTS = CAN_TEMPOSYNC_0 + NUM_FX_PARAMS
     };
 
-    ParamCache pc;
-    
     StringCache paramDisplayCache[NUM_FX_PARAMS];
     StringCache labelCache[NUM_FX_PARAMS];
     StringCache groupCache[NUM_FX_PARAMS];
@@ -83,9 +81,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
     virtual std::string getName() override { return SurgeFXName<effectNum>::getName(); }
 
     void setupSurge() {
-        pc.resize(NUM_PARAMS);
-        
-        setupSurgeCommon();
+        setupSurgeCommon(NUM_PARAMS);
 
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = effectNum;
