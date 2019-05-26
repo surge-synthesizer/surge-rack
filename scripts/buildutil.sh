@@ -75,7 +75,7 @@ clean()
 
 build_module()
 {
-    RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make -j 4 all
+    RACK_DIR=$RACK_INSTALL_DIR/Rack-SDK make -k -j 4 all
 }
 
 install_module()

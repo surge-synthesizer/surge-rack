@@ -108,7 +108,6 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         for( int i=RATE_PARAM; i<= R_PARAM; ++i )
         {
             p0->temposync = false;
-            rack::INFO("Setting shared ptr at %d size=%d", i, pb.size() );
             pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p0, i, RATE_CV + (i-RATE_PARAM)));
             p0++;
         }

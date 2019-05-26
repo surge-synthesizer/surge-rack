@@ -110,8 +110,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
         addChild(TextDisplayLight::create(
             rack::Vec(padFromEdge * 2 + 15, ADSRYPos(i) +2),
             rack::Vec(box.size.x - padFromEdge * 3 - 20, adsrTextH),
-            module ? module->adsrStrings[i].getValue : []() { return "null"; },
-            module ? module->adsrStrings[i].getDirty : []() { return false; },
+            module ? &(module->pb[M::A_PARAM + i]->valCache ) : nullptr,
             13, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, surgeWhite()));
     }
 

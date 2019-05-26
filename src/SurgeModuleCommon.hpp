@@ -280,13 +280,35 @@ struct SurgeRackParamBinding {
     Parameter *p;
     int param_id, cv_id, ts_id;
 
+    typedef enum UpdateType
+    {
+        FLOAT,
+        INT,
+        BOOL,
+        BOOL_NOT
+    } UpdateType;
+
+
+    UpdateType updateType;
     StringCache valCache;
     StringCache nameCache;
 
     bool forceRefresh = false;
     bool tsbpmLabel = false;
     
-    SurgeRackParamBinding(Parameter *_p, int _param_id, int _cv_id) {
+    SurgeRackParamBinding(UpdateType t, Parameter *_p, int _param_id, int _cv_id = -1) {
+        this->updateType = t;
+        this->p = _p;
+        this->cv_id = _cv_id;
+        this->param_id = _param_id;
+        this->ts_id = -1;
+        valCache.reset( "value" );
+        nameCache.reset( "name" );
+        forceRefresh = true;
+    }
+
+    SurgeRackParamBinding(Parameter *_p, int _param_id, int _cv_id = -1) {
+        this->updateType = FLOAT;
         this->p = _p;
         this->cv_id = _cv_id;
         this->param_id = _param_id;
@@ -303,8 +325,28 @@ struct SurgeRackParamBinding {
         ts_id = i;
         tsbpmLabel = label;
     }
+
+    void update(const ParamCache &pc, SurgeModuleCommon *m) {
+        switch( updateType )
+        {
+        case FLOAT:
+            updateFloat(pc, m);
+            break;
+        case BOOL:
+            updateBool(pc, m, false);
+            break;
+        case BOOL_NOT:
+            updateBool(pc, m, true);
+            break;
+        case INT:
+            updateInt(pc, m);
+            break;
+        }
+    }
     
-    void update(const ParamCache &pc, SurgeModuleCommon *m);
+    void updateFloat(const ParamCache &pc, SurgeModuleCommon *m);
+    void updateInt(const ParamCache &pc, SurgeModuleCommon *m);
+    void updateBool(const ParamCache &pc, SurgeModuleCommon *m, bool n);
 };
 
 struct ParamValueStateSaver {

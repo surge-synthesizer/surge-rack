@@ -41,16 +41,14 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
     rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
 
-    StringCache adsrStrings[4];
-
     SurgeADSR() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = A_PARAM; i <= R_PARAM; ++i)
-            configParam(i, 0, 1, 0.5);
-        configParam(MODE_PARAM, 0, 1, 0);
-        configParam(A_S_PARAM, 0, 2, 0);
-        configParam(D_S_PARAM, 0, 2, 0);
-        configParam(R_S_PARAM, 0, 2, 0);
+            configParam<SurgeRackParamQuantity>(i, 0, 1, 0.5);
+        configParam<SurgeRackParamQuantity>(MODE_PARAM, 0, 1, 0);
+        configParam<SurgeRackParamQuantity>(A_S_PARAM, 0, 2, 0);
+        configParam<SurgeRackParamQuantity>(D_S_PARAM, 0, 2, 0);
+        configParam<SurgeRackParamQuantity>(R_S_PARAM, 0, 2, 0);
         setupSurge();
     }
 
@@ -66,17 +64,31 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
         adsrstorage->mode.val.b = false;
 
-        adsrstorage->a.temposync = false;
-        adsrstorage->d.temposync = false;
-        adsrstorage->s.temposync = false;
-        adsrstorage->r.temposync = false;
-
-        adsrstorage->a_s.val.i = 0;
-        adsrstorage->d_s.val.i = 0;
-        adsrstorage->r_s.val.i = 0;
-
         setupStorageRanges(&(adsrstorage->a), &(adsrstorage->mode));
 
+        /*
+        ** I ordered params differently than storage so need 3 loops
+        */
+        Parameter *p0 = &(adsrstorage->a);
+        for( int i=A_PARAM; i<=R_PARAM; ++i )
+        {
+            p0->temposync = false;
+            pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p0, i, A_CV + ( i - A_PARAM ) ) );
+            p0++;
+        }
+
+        p0 = &(adsrstorage->mode);
+        pb[MODE_PARAM] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(SurgeRackParamBinding::BOOL_NOT,
+                                                                                          p0, MODE_PARAM));
+        
+        p0 = &(adsrstorage->a_s);
+        for( int i=A_S_PARAM; i<R_S_PARAM; ++i )
+        {
+            pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(SurgeRackParamBinding::INT,
+                                                                                     p0, i));
+            p0++;
+        }
+        
     }
 
     std::unique_ptr<AdsrEnvelope> surge_envelope;
@@ -103,18 +115,6 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
                 surge_envelope->retrigger();
             }
 
-            for (int i = 0; i < 4; ++i) {
-                Parameter *adsr = &(adsrstorage->a);
-                Parameter *p = &(adsr[i]);
-                if (pc.changed(A_PARAM + i, this)) {
-                    char txt[1024];
-                    p->set_value_f01(getParam(A_PARAM + i));
-                    p->get_display(txt, false, 0);
-                    adsrStrings[i].reset(txt);
-                }
-            }
-            pc.update(this);
-
             bool gated = getInput(GATE_IN) >= 1.f;
             if (gated)
                 wasGated = true;
@@ -125,22 +125,14 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
             setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
 
-            adsrstorage->mode.val.b = (getParam(MODE_PARAM) < 0.5);
-            adsrstorage->a_s.val.i = (int)getParam(A_S_PARAM);
-            adsrstorage->d_s.val.i = (int)getParam(D_S_PARAM);
-            adsrstorage->r_s.val.i = (int)getParam(R_S_PARAM);
-
-            adsrstorage->a.set_value_f01(getParam(A_PARAM) +
-                                         getInput(A_CV) * RACK_TO_SURGE_CV_MUL );
-            adsrstorage->d.set_value_f01(getParam(D_PARAM) +
-                                         getInput(D_CV) * RACK_TO_SURGE_CV_MUL);
-            adsrstorage->s.set_value_f01(getParam(S_PARAM) +
-                                         getInput(S_CV) * RACK_TO_SURGE_CV_MUL);
-            adsrstorage->r.set_value_f01(getParam(R_PARAM) +
-                                         getInput(R_CV) * RACK_TO_SURGE_CV_MUL);
-
+            for(auto binding : pb)
+                if(binding)
+                    binding->update(pc, this);
+            pc.update(this);
             copyScenedataSubset(0, storage_id_start, storage_id_end);
+            
             surge_envelope->process_block();
+            
             if( inNewAttack )
             {
                 output0 = surge_envelope->get_output();
