@@ -156,7 +156,10 @@ std::string SurgeRackParamQuantity::getDisplayValueString() {
             case ct_decibel_extra_narrow:
 
             case ct_detuning:
+            case ct_bandwidth:
 
+            case ct_freq_shift:
+                
                 return pbn->valCache.value;
                 
             default:
@@ -231,6 +234,8 @@ void SurgeRackParamQuantity::setDisplayValueString(std::string s) {
             case ct_decibel_fmdepth:
             case ct_decibel_narrow:
             case ct_decibel_extra_narrow:
+            case ct_bandwidth:
+            case ct_freq_shift:
             {
                 float entered = std::stof(s);
                 newValue = entered;
