@@ -380,6 +380,8 @@ struct ParamValueStateSaver {
 
 struct SurgeRackParamQuantity : rack::engine::ParamQuantity
 {
+    int ts_companion = -2;
+    
     void setDisplayValueString(std::string s) override;
 	std::string getLabel() override;
     std::string getDisplayValueString() override;

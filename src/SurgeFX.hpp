@@ -61,19 +61,18 @@ struct SurgeFX : virtual SurgeModuleCommon {
         NUM_LIGHTS = CAN_TEMPOSYNC_0 + NUM_FX_PARAMS
     };
 
-    StringCache paramDisplayCache[NUM_FX_PARAMS];
-    StringCache labelCache[NUM_FX_PARAMS];
     StringCache groupCache[NUM_FX_PARAMS];
 
     SurgeFX() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
-            configParam(FX_PARAM_0 + i, 0, 1, 0 );
-            configParam(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
+            configParam<SurgeRackParamQuantity>(FX_PARAM_0 + i, 0, 1, 0 );
+            configParam<SurgeRackParamQuantity>(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
         }
-        configParam(INPUT_GAIN, 0, 1, 1);
-        configParam(OUTPUT_GAIN, 0, 1, 1);
-        configParam(MODULATOR_GAIN, 0, 1, 1 );
+
+        configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");
+        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
+        configParam(MODULATOR_GAIN, 0, 1, 1, "Modulator Gain" );
         
         setupSurge();
     }
@@ -101,8 +100,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
             // Set up the parametres based on the thingy
             for( int i=0; i<n_fx_params; ++i )
             {
-                int o = orderToParam[ i ];
-                setParam(FX_PARAM_0 + i, fxstorage->p[o].get_value_f01() );
+                setParam(FX_PARAM_0 + i, pb[i]->p->get_value_f01() );
             }
         }
         
@@ -136,18 +134,20 @@ struct SurgeFX : virtual SurgeModuleCommon {
                 [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
                     return a.second < b.second;
                 });
-            orderToParam.clear();
+            int idx = FX_PARAM_0;
             for (auto a : orderTrack) {
-                orderToParam.push_back(a.first);
-                int idx = orderToParam.size() - 1;
-                labelCache[idx].reset(fxstorage->p[a.first].get_name());
+                Parameter *p =  &(fxstorage->p[a.first]);
+                pb[idx] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p, idx,
+                                                                                           idx + FX_PARAM_INPUT_0 - FX_PARAM_0));
+                pb[idx]->setTemposync(PARAM_TEMPOSYNC_0 + idx - FX_PARAM_0, true );
+                idx++;
             }
         }
 
         // I hate having to use this API so much...
         for (auto i = 0; i < n_fx_params; ++i) {
-            int fpos = fxstorage->p[orderToParam[i]].posy +
-                       10 * fxstorage->p[orderToParam[i]].posy_offset;
+            int fpos = pb[i]->p->posy +
+                       10 * pb[i]->p->posy_offset;
             for (auto j = 0; j < n_fx_params; ++j) {
                 if (surge_effect->group_label(j) &&
                     162 + 8 + 10 * surge_effect->group_label_ypos(j) <
@@ -157,14 +157,10 @@ struct SurgeFX : virtual SurgeModuleCommon {
                 }
             }
         }
-
-        for (auto i = 0; i < NUM_FX_PARAMS; ++i) {
-            paramDisplayCache[i].reset("");
-        }
     }
 
     bool canTempoSync(int i) {
-        return fxstorage->p[orderToParam[i]].can_temposync();
+        return pb[i]->p->can_temposync();
     }
     
     float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
@@ -229,43 +225,13 @@ struct SurgeFX : virtual SurgeModuleCommon {
             }
             else
             {
-                // FIXME - only once please
                 newBPM = updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
             }
-            
-            for (int i = 0; i < n_fx_params; ++i) {
-                bool changed = newBPM;
-                if(pc.changed(FX_PARAM_0 + i, this))
-                {
-                    changed = true;
-                }
-                if( pc.changed(PARAM_TEMPOSYNC_0 + i, this) )
-                {
-                    changed = true;
-                    fxstorage->p[orderToParam[i]].temposync =
-                        getParam(PARAM_TEMPOSYNC_0 + i ) > 0.5;
-                }
-                if( changed )
-                {
-                    fxstorage->p[orderToParam[i]].set_value_f01(
-                        getParam(FX_PARAM_0 + i));
-                    char txt[256];
-                    fxstorage->p[orderToParam[i]].get_display(txt, false, 0);
-                    if( getParam(PARAM_TEMPOSYNC_0 + i) > 0.5 )
-                    {
-		        char ntxt[256];
-                        snprintf( ntxt, 256, "%s @ %5.1lf bpm", txt, lastBPM );
-			strcpy(txt, ntxt);
-                    }
-                    paramDisplayCache[i].reset(txt);
-                }
-            }
-            pc.update(this);
 
-            for (int i = 0; i < n_fx_params; ++i) {
-                fxstorage->p[orderToParam[i]].set_value_f01(
-                    getParam(FX_PARAM_0 + i) + (getInput(FX_PARAM_INPUT_0 + i)) * RACK_TO_SURGE_CV_MUL );
-            }
+            for(auto binding : pb)
+                if(binding)
+                    binding->update(pc, this);
+            pc.update(this);
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
             surge_effect->process_ringout(processedL, processedR, true);
@@ -289,5 +255,4 @@ struct SurgeFX : virtual SurgeModuleCommon {
 
     std::unique_ptr<Effect> surge_effect;
     FxStorage *fxstorage;
-    std::vector<int> orderToParam;
 };

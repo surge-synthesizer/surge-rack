@@ -84,7 +84,7 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
         addChild(TextDisplayLight::create(
                      rack::Vec(xText + padMargin, yp + portY + 1.5 * padMargin),
                      rack::Vec(box.size.x - xText - 2 * padMargin, textHeight),
-                     module ? &(module->paramDisplayCache[i]) : nullptr,
+                     module ? &(module->pb[i]->valCache) : nullptr,
                      12,
                      NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
                      surgeWhite()
