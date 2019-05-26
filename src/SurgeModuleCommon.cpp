@@ -1,7 +1,7 @@
 #include "SurgeModuleCommon.hpp"
 #include <string>
 
-void SurgeRackParamBinding::update(const ParamCache &pc, SurgeModuleCommon *m)
+void SurgeRackParamBinding::updateFloat(const ParamCache &pc, SurgeModuleCommon *m)
 {
     bool paramChanged = false;
     if(pc.changed(param_id,m) || (ts_id >= 0 && pc.changed(ts_id, m) ) || forceRefresh)
@@ -26,8 +26,58 @@ void SurgeRackParamBinding::update(const ParamCache &pc, SurgeModuleCommon *m)
         nameCache.reset(p->get_name());
     }
     
-    if( paramChanged || forceRefresh || m->inputConnected(cv_id) )
+    if( paramChanged || forceRefresh || (cv_id >= 0 && m->inputConnected(cv_id)) )
         p->set_value_f01(m->getParam(param_id) + m->getInput(cv_id) / 10.0);
+}
+
+void SurgeRackParamBinding::updateBool(const ParamCache &pc, SurgeModuleCommon *m, bool notIt)
+{
+    bool paramChanged = false;
+    if(pc.changed(param_id,m) || forceRefresh)
+    {
+        char txt[1024];
+
+        bool current = m->getParam(param_id) > 0.5;
+        if( notIt ) current = ! current;
+
+        if( ( current != p->val.b ) || forceRefresh )
+        {
+            p->val.b = current;
+            p->get_display(txt, false, 0);
+            valCache.reset(txt);
+            paramChanged = true;
+        }
+    }
+
+    if(forceRefresh)
+    {
+        nameCache.reset(p->get_name());
+    }
+}
+
+
+void SurgeRackParamBinding::updateInt(const ParamCache &pc, SurgeModuleCommon *m)
+{
+    bool paramChanged = false;
+    if(pc.changed(param_id,m) || forceRefresh)
+    {
+        char txt[1024];
+
+        int current = (int)m->getParam(param_id);
+
+        if( ( current != p->val.i ) || forceRefresh )
+        {
+            p->val.i = current;
+            p->get_display(txt, false, 0);
+            valCache.reset(txt);
+            paramChanged = true;
+        }
+    }
+
+    if(forceRefresh)
+    {
+        nameCache.reset(p->get_name());
+    }
 }
 
 void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS) 
