@@ -96,7 +96,7 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
         int tx = 4 * padMargin + 2 * portX + surgeSwitchX + 2;
         addChild(TextDisplayLight::create(rack::Vec(tx, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
-                                          module ? &(module->labelCache[i]) : nullptr,
+                                          module ? &(module->pb[i]->nameCache) : nullptr,
                                           13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeOrange()));
 
         addChild(TextDisplayLight::create(rack::Vec(tx, yPos),
@@ -106,7 +106,7 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
 
         addChild(TextDisplayLight::create(rack::Vec(tx , yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
-                                          module ? &(module->paramDisplayCache[i]) : nullptr,
+                                          module ? &(module->pb[i]->valCache) : nullptr,
                                           14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));
         
     }

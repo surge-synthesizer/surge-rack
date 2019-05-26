@@ -107,8 +107,20 @@ std::string SurgeRackParamQuantity::getLabel() {
         {
             return p->nameCache.value;
         }
+        if( ts_companion == -2 )
+        {
+            for( auto srpb : mc->pb )
+                if(srpb.get() && srpb->ts_id == paramId)
+                    ts_companion = srpb->param_id;
+            if( ts_companion == -2 ) ts_companion = -1; // only check once
+        }
+        if( ts_companion >= 0 )
+        {
+            char txt[1024];
+            snprintf(txt, 1024, "TempoSync %s", mc->pb[ts_companion]->nameCache.value.c_str() );
+            return txt;
+        }
     }
-    rack::INFO( "GETLABEL defaulting for %s", label.c_str() );
     return ParamQuantity::getLabel();
 }
 
@@ -132,6 +144,19 @@ std::string SurgeRackParamQuantity::getDisplayValueString() {
                 
             case ct_percent:
             case ct_percent_bidirectional:
+            case ct_amplitude:
+            case ct_freq_hpf:
+            case ct_freq_audible:
+
+            case ct_decibel:
+            case ct_decibel_attenuation:
+            case ct_decibel_attenuation_large:
+            case ct_decibel_fmdepth:
+            case ct_decibel_narrow:
+            case ct_decibel_extra_narrow:
+
+            case ct_detuning:
+
                 return pbn->valCache.value;
                 
             default:
@@ -182,6 +207,45 @@ void SurgeRackParamQuantity::setDisplayValueString(std::string s) {
                 foundValue = true;
             }
             break;
+            case ct_amplitude:
+            {
+                // amp_to_db is 18 * log2(v) so the inverse is pow(2, inp/18)
+                float entered = std::stof(s);
+                newValue = pow(2.0, entered/18.0 );
+                foundValue = true;
+            }
+            break;
+            case ct_freq_hpf:
+            case ct_freq_audible:
+            {
+                // o = 440 * 2 ^ ( v/12 ) is the string; so v = 12 * log2( o / 440 )
+                float entered = std::stof(s);
+                newValue = 12.0 * log2f( entered / 440.0 );
+                foundValue = true;
+            }
+            break;
+            
+            case ct_decibel:
+            case ct_decibel_attenuation:
+            case ct_decibel_attenuation_large:
+            case ct_decibel_fmdepth:
+            case ct_decibel_narrow:
+            case ct_decibel_extra_narrow:
+            {
+                float entered = std::stof(s);
+                newValue = entered;
+                foundValue = true;
+            }
+            break;
+            // 13 and 33
+
+            case ct_detuning:
+            {
+                float entered = std::stof(s);
+                newValue = entered / 100.0;
+                foundValue = true;
+            }
+            
             default:
                 break;
             }

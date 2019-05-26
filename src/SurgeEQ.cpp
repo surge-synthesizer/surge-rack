@@ -55,22 +55,6 @@ struct SurgeEQWidget : SurgeModuleWidgetCommon {
         drawTextBGRect( vg, box.size.x/4 + 2 * portX + 2 * padMargin, masterGainY + labelHeight + padMargin + ( portY-textHeight)/2,
                         box.size.x/2 - 2 * portX - 2 * padMargin, textHeight );
 
-        
-        if( module )
-        {
-            M *mc = dynamic_cast<M *>(module);
-            if( mc )
-            {
-                rack::INFO( "[SurgeRack][FX Blank %s]", mc->getName().c_str() );
-                for( int i=0; i<n_fx_params; ++i )
-                {
-                    rack::INFO( "  %d '%s'/'%s' = '%s'", i,
-                          mc->groupCache[i].getValue().c_str(),
-                          mc->labelCache[i].getValue().c_str(),
-                          mc->paramDisplayCache[i].getValue().c_str() );
-                }
-            }
-        }
     }
 };
 
@@ -119,7 +103,7 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
             yPos += portY + padMargin;
             addChild(TextDisplayLight::create(rack::Vec( i * bandRegion + padFromEdge, yPos ),
                                               rack::Vec( bandRegion - 2 * padFromEdge, textHeight ),
-                                              module ? &(module->paramDisplayCache[parImd]) : nullptr,
+                                              module ? &(module->pb[parImd]->valCache) : nullptr,
                                               12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, surgeWhite() ) );
 
         }
@@ -132,7 +116,7 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
     addChild(TextDisplayLight::create( rack::Vec( box.size.x/4 + 2 * portX + 3 * padMargin,
                                                   masterGainY + labelHeight + padMargin + ( portY-textHeight)/2),
                                        rack::Vec(box.size.x/2 - 2 * portX - 3 * padMargin, textHeight ),
-                                       module ? &(module->paramDisplayCache[9]) : nullptr,
+                                       module ? &(module->pb[9]->valCache) : nullptr,
                                        12, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite() ) );
 
     
