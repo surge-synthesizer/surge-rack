@@ -18,8 +18,6 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
     float controlHeight = controlAreaHeight / nControls;
     float textAreaWidth = SCREW_WIDTH * 15 - 4 * padMargin - 2 * portX - 20;
 
-    float clockPad = 12;
-    
     float oldColStart = SCREW_WIDTH * 18;
     
     float inputXPos(int which) {
@@ -70,18 +68,8 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
         // Rate section spans
         centerRuledLabel( vg, padFromEdge, boxLayerY0, box.size.x - 2 * padFromEdge, "Rate" );
         drawTextBGRect(vg, box.size.x / 2 + padMargin, boxLayerY0 + labelH + 2, box.size.x/2 - 2 * padMargin, portY - 2 );
-        drawBlueIORect(vg, padFromEdge, boxLayerY0 + labelH, portX + 2 * padMargin + clockPad, portY + 2 * padMargin);
 
-        nvgBeginPath(vg);
-        nvgSave(vg);
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 12);
-        nvgTranslate(vg, padMargin + padFromEdge + portX + clockPad - 10,  boxLayerY0 + labelH );
-        nvgRotate( vg, M_PI/2 );
-        nvgFillColor(vg, surgeWhite() );
-        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-        nvgText(vg, padMargin, 0, "clk cv", NULL );
-        nvgRestore(vg);
+        clockBackground(vg, padFromEdge, boxLayerY0 + labelH);
         
         
         // Below it we get these guys in threes

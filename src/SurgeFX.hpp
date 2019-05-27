@@ -221,11 +221,11 @@ struct SurgeFX : virtual SurgeModuleCommon {
             bool newBPM = false;
             if( inputConnected(CLOCK_CV_INPUT) )
             {
-                newBPM = updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+                updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
             }
             else
             {
-                newBPM = updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
+                updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
             }
 
             for(auto binding : pb)

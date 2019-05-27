@@ -12,34 +12,42 @@ struct SurgeRotaryWidget : SurgeModuleWidgetCommon {
     float xText = 50;
     float ctrlHeight = portY + 3 * padMargin + textHeight + 10;
     float divHeight = 14;
-    float yStart = padFromTop + 20;
-    float y1Offset = 16 + padMargin + 20;
+    float yStart = padFromTop + 45;
+    float y1Offset = 16 + padMargin + 10;
+    float clockX = padFromEdge;
+    float clockY = padFromTop + padFromEdge;
 
     void moduleBackground(NVGcontext *vg) {
 
         float y0 = yStart;
 
+        clockBackground(vg, box.size.x - padFromEdge - clockW, clockY);
+        
         std::vector<std::string> lab = { "Horn Rate", "Doppler", "Amp Mod" };
         for( int i=0; i<3; ++i )
         {
             if( i == 1 )
             {
-                y0 += 20; // These should add up to y1Offset;
+                y0 += 10; // These should add up to y1Offset;
                 fxGroupLabel( vg, y0, "Depth", box );
                 y0 += 16 + padMargin;
             }
+
+            float labelY = y0 + portY / 2;
+            if( i == 0 )
+                labelY = clockY + (portY + 2 * padMargin)/2;
             
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 14);
             nvgFillColor(vg, surgeBlue() );
             nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE );
-            nvgText( vg, padFromEdge, y0 + portY / 2, lab[i].c_str(), NULL );
+            nvgText( vg, padFromEdge, labelY, lab[i].c_str(), NULL );
 
             float a, d, h;
             nvgTextMetrics( vg, &a, &d, &h );
 
-            dropRightLine( vg, padFromEdge + 10, y0 + portY / 2 + h / 2 + padMargin,
+            dropRightLine( vg, padFromEdge + 10, labelY + h / 2 + padMargin,
                            xText + padFromEdge, y0 + portY + 1.5 * padMargin + textHeight / 2);
             
             drawTextBGRect( vg, xText, y0 + portY + 1.5 * padMargin, box.size.x - xText - padFromEdge, textHeight );
@@ -87,12 +95,25 @@ SurgeRotaryWidget::SurgeRotaryWidget(SurgeRotaryWidget::M *module)
             yp += y1Offset;
         
         float xp = box.size.x - padFromEdge - padMargin - 2 * portX;
+        if( i == 0 )
+            xp -= 14 + padMargin;
+        
         addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xp,yp),
                                                    module, M::FX_PARAM_0 + i
                      ));
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + portX + padMargin, yp ),
                                                      module, M::FX_PARAM_INPUT_0 + i ) );
 
+        if( i == 0 )
+        {
+            addParam(rack::createParam<SurgeSwitch>(rack::Vec( xp + portX * 2 + padMargin * 2, yp + 3),
+                                                    module, M::PARAM_TEMPOSYNC_0 ) );
+            if( module && module->pb[M::FX_PARAM_0] != nullptr )
+            {
+                module->pb[M::FX_PARAM_0]->tsbpmLabel = false;
+            }
+        }
+        
         addChild(TextDisplayLight::create(
                      rack::Vec(xText + padMargin, yp + portY + 1.5 * padMargin),
                      rack::Vec(box.size.x - xText - 2 * padMargin, textHeight),
@@ -104,7 +125,11 @@ SurgeRotaryWidget::SurgeRotaryWidget(SurgeRotaryWidget::M *module)
 
 
     }
-    
+
+    addInput(rack::createInput<rack::PJ301MPort>(
+                 rack::Vec(box.size.x - 2*padMargin - clockW  + padMargin, clockY + padMargin),
+                 module, M::CLOCK_CV_INPUT));
+
 }
 
 auto mrotary = addFX(
