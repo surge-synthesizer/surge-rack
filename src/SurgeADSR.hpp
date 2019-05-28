@@ -19,6 +19,10 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         D_S_PARAM,
         R_S_PARAM,
 
+        A_TEMPOSYNC,
+        D_TEMPOSYNC,
+        R_TEMPOSYNC,
+
         NUM_PARAMS
     };
     enum InputIds {
@@ -29,6 +33,8 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         D_CV,
         S_CV,
         R_CV,
+
+        CLOCK_CV_INPUT,
 
         NUM_INPUTS
     };
@@ -49,6 +55,9 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         configParam<SurgeRackParamQuantity>(A_S_PARAM, 0, 2, 0);
         configParam<SurgeRackParamQuantity>(D_S_PARAM, 0, 2, 0);
         configParam<SurgeRackParamQuantity>(R_S_PARAM, 0, 2, 0);
+
+        for( int i= A_TEMPOSYNC; i <= R_TEMPOSYNC; ++i )
+            configParam<SurgeRackParamQuantity>(i, 0, 1, 0 );
         setupSurge();
     }
 
@@ -74,6 +83,10 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         {
             p0->temposync = false;
             pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p0, i, A_CV + ( i - A_PARAM ) ) );
+            if( i != S_PARAM )
+            {
+                pb[i]->setTemposync(i + A_TEMPOSYNC - A_PARAM - ( i == R_PARAM ? 1 : 0 ), false );
+            }
             p0++;
         }
 
@@ -124,6 +137,16 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
             }
 
             setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
+
+            if( inputConnected(CLOCK_CV_INPUT) )
+            {
+                updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+            }
+            else
+            {
+                // FIXME - only once please
+                updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
+            }
 
             for(auto binding : pb)
                 if(binding)

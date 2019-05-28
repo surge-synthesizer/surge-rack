@@ -10,8 +10,12 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
     int adsrSpace = 10;
     int adsrTextH = 18;
 
-    int modeYPos = 35;
+    int modeYPos = 30;
+    int modeXOff = 23;
 
+    int clockX = 2* padFromEdge;
+    int clockY = SCREW_WIDTH + 2* padFromEdge;
+    
     float inputXPos(int which) {
         float xSize = box.size.x - 2 * padFromEdge;
         float perI = xSize / 3.0;
@@ -24,11 +28,13 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
     }
 
     float ADSRYPos(int which) {
-        int endOfIn = modeYPos + 21 + padMargin; // what is that 21
+        int endOfIn = modeYPos + 23 + padMargin; // what is that 21
         return endOfIn + (adsrHeight + adsrSpace) * which + 12;
     }
 
     void moduleBackground(NVGcontext *vg) {
+        clockBackground(vg, clockX, clockY );
+        
         // The input triggers and output
         float ioyb = orangeLine + ioMargin;
         drawBlueIORect(
@@ -64,7 +70,7 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
                                        adsrTextH);
 
             dropRightLine(vg, padFromEdge + 5, ADSRYPos(i) + 20 + padMargin,
-                          (i==2)? 55 : 85, ADSRYPos(i) + adsrTextH + padMargin + 3 + portY / 2 );
+                          (i==2)? 55 : 95, ADSRYPos(i) + adsrTextH + padMargin + 3 + portY / 2 );
 
         }
 
@@ -73,12 +79,12 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
         nvgFontSize(vg, 12);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
         nvgFillColor(vg, surgeBlue());
-        nvgText(vg, box.size.x / 2 - 9, modeYPos + 21 / 2.0, "Mode", NULL);
+        nvgText(vg, box.size.x - modeXOff - padMargin, modeYPos + 21 / 2.0, "Mode", NULL);
 
-        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT);
-        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 - 5, "Digi", NULL);
-        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        nvgText(vg, box.size.x / 2 + 9, modeYPos + 21 / 2.0 + 5, "Anlg", NULL);
+        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
+        nvgText(vg, box.size.x - modeXOff + 7, modeYPos - padMargin, "Digi", NULL);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
+        nvgText(vg, box.size.x - modeXOff + 7, modeYPos + 20 + padMargin, "Anlg", NULL);
     }
 };
 
@@ -88,7 +94,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
 {
     setModule(module);
 
-    box.size = rack::Vec(SCREW_WIDTH * 7, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "ADSR");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -129,23 +135,37 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
             i));
     }
 
+    for (int i = M::A_TEMPOSYNC; i <= M::R_TEMPOSYNC; ++i) {
+        int ipos = i - M::A_TEMPOSYNC;
+        if( i == M::R_TEMPOSYNC )
+            ipos++;
+        
+        addParam(rack::createParam<SurgeSwitch>(
+            rack::Vec(x0 + 2 * portX + 2 * padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 3), module,
+            i));
+    }
+
     for (int i = M::A_S_PARAM; i <= M::R_S_PARAM; ++i) {
         int ipos = i - M::A_S_PARAM;
         if (i == M::R_S_PARAM)
             ipos++;
 
         addParam(rack::createParam<rack::CKSSThree>(
-                     rack::Vec(x0 + 2 * portX + 3 * padMargin, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
+                     rack::Vec(x0 + 2 * portX + 4 * padMargin + 10, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
             module, i
             ));
         addChild(rack::createLight<rack::SmallLight<rack::GreenLight>>(
-            rack::Vec(x0 + 60 + 14 + padMargin,
+            rack::Vec(x0 + 60 + 14 + 10 + 2 * padMargin,
                       ADSRYPos(ipos) + adsrTextH + padMargin),
             module, M::DIGI_LIGHT));
     }
 
+    addInput(rack::createInput<rack::PJ301MPort>(
+                 rack::Vec(clockX + padMargin, clockY + padMargin ),
+                 module, M::CLOCK_CV_INPUT));
+
     addParam(rack::createParam<SurgeSwitchFull>(
-        rack::Vec(box.size.x / 2 - 7, modeYPos), module, M::MODE_PARAM
+        rack::Vec(box.size.x - modeXOff, modeYPos), module, M::MODE_PARAM
         ));
 }
 
