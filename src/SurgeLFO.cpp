@@ -39,7 +39,28 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
     float buttonBankW = SCREW_WIDTH * 15;
 
     float envPos = 6 * controlHeight + topControl + 5;;
+
+    std::vector<std::string> envlabel = { "Delay", "Att", "Hold", "Decay", "Sus", "Rel" };
+    std::vector<int> elOff = { 0, 2, 1, 3, 4, 5, 6 };
+
+    rack::Vec envPoint(int i) {
+        int col = i % 2;
+        int row = i / 2;
+
+        float segHeight = ( orangeLine - envPos - 15 - padMargin ) / 3.0;
+        
+        float xp = (col == 0 ? padFromEdge : box.size.x / 2.0 + padMargin) + 5;
+        float yp = segHeight * row + envPos + 15 + padMargin;
+        return rack::Vec(xp,yp);
+    }
     
+    rack::Vec envSize(int i) {
+        return rack::Vec( ( box.size.x - 2 * padFromEdge - 2 * padMargin ) / 2.0 - 10,
+                          ( orangeLine - envPos - 15 - padMargin ) / 3.0 - padMargin );
+    }
+
+    float envXOff = 20;
+
     void moduleBackground(NVGcontext *vg) {
         float ioyb = orangeLine + ioMargin;
         auto xb0 = inputXPos(0) - padMargin;
@@ -84,11 +105,48 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
         
 
         centerRuledLabel( vg, padFromEdge, envPos, UIW - 2 * padFromEdge, "Envelope" );
-        for( int i=7; i<nControls; ++i )
+
+        for( int i=0; i<6; ++i )
         {
-            drawTextBGRect(vg, 3*padMargin+2*portX + 20 , i*controlHeight + topControl,
-                                       textAreaWidth, controlHeight-padMargin);
+            rack::Vec p = envPoint(i);
+            rack::Vec s = envSize(i);
+
+            // Obviously kill this when we are done
+            //nvgBeginPath(vg);
+            //nvgRect(vg, p.x, p.y, s.x, s.y );
+            //nvgFillColor(vg, nvgRGB( 255, i * 40, 255 ) );
+            //nvgFill(vg);
+            //nvgStrokeColor( vg, nvgRGB( 0, 0, 0 ) );
+            //nvgStroke(vg);
+
+            // OK so rotated text
+            nvgBeginPath(vg);
+            nvgSave(vg);
+            nvgTranslate(vg, p.x + padMargin + 14, p.y );
+            nvgRotate(vg, M_PI / 2.0 );
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 13);
+            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
+            nvgFillColor(vg, surgeBlue() );
+            nvgText( vg, 0, 0, envlabel[i].c_str(), NULL );
+
+            float bounds[4];
+            nvgTextBounds( vg, 0, 0, envlabel[i].c_str(), NULL, bounds );
+            nvgRestore(vg);
+
+            // so a bit tricky
+            float linesx = p.x + padMargin + 14 - bounds[3] / 2.0;
+            float linesy  = p.y + bounds[2] + 2;
+
+            float rx = p.x + envXOff;
+            float ry = p.y + padMargin + portY;
+            float sx = s.x - envXOff; //s.x - rx - padMargin;
+            float sy = s.y - padMargin - portY; // s.y - ry - padMargin;
+
+            dropRightLine(vg, linesx, linesy, rx + 2, ry + sy / 2 );
+            drawTextBGRect(vg, rx, ry, sx, sy );
         }
+        
         
     }
 };
@@ -182,39 +240,35 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
                                                                   M::ENV_LIGHT));
     
     /* End CLEAN UI */
-    std::vector<std::string> el = { "Del", "A", "H", "D", "S", "R" };
-    
-    int XX = SCREW_WIDTH * 15;
-    int ts = M::DEL_TS;
     for( int i=7; i<nControls; ++i )
     {
-        float yPos = i * controlHeight + topControl;
-        int pa = M::RATE_PARAM + i;
-        int cv = M::RATE_CV + i;
+        int idx = 7 + elOff[i-7];
+        int pa = M::RATE_PARAM + idx;
+        int cv = M::RATE_CV + idx;
+        int ts = M::DEL_TS + elOff[i-7] - (pa >= M::S_PARAM ? 1 : 0 );
 
+        rack::Vec ep = envPoint(i-7);
+        rack::Vec es = envSize(i-7);
+        float xstart = ep.x + envXOff;
+        
+        
+        
         addInput(rack::createInput<rack::PJ301MPort>(
-                     rack::Vec(2 * padMargin + portX , yPos), module, cv ));
-        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padMargin , yPos), module,
+                     rack::Vec(xstart + 2* padMargin + portX, ep.y), module, cv ));
+        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xstart + padMargin, ep.y), module,
                                                    pa
                                                    ));
         if( pa != M::S_PARAM )
         {
-            addParam(rack::createParam<SurgeSwitch>(rack::Vec(2 * portX + 3 * padMargin, yPos), module,
-                                                    ts++));
+            addParam(rack::createParam<SurgeSwitch>(rack::Vec(xstart + 2 * portX + 3 * padMargin, ep.y), module,
+                                                    ts));
         }
 
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 20 + 2 , yPos),
-                                          rack::Vec(textAreaWidth, controlHeight - padMargin),
-                                          module ? &(module->pb[i]->nameCache) : nullptr,
-                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, surgeOrange()));
-
-        addChild(TextDisplayLight::create(rack::Vec(3 * padMargin + 2 * portX + 20 + 2 , yPos),
+        addChild(TextDisplayLight::create(rack::Vec(xstart + padMargin, ep.y + portY + padMargin  ),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
-                                          module ? &(module->pb[i]->valCache) : nullptr,
-                                          14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, surgeWhite()));
-        
+                                          module ? &(module->pb[idx]->valCache) : nullptr,
+                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, surgeWhite()));
     }
-
 }
 
 rack::Model *modelSurgeLFO =
