@@ -278,19 +278,35 @@ struct SurgeStyle {
         }
     }
 
-    void clockBackground(NVGcontext *vg, float x, float y) {
-        drawBlueIORect(vg, x, y, portX + 2 * padMargin + clockPad, portY + 2 * padMargin);
+    void clockBackground(NVGcontext *vg, float x, float y, bool vertical = false) {
+        if( vertical )
+        {
+            drawBlueIORect(vg, x, y, portX + 2 * padMargin, portY + 2 * padMargin + clockPad);
 
-        nvgBeginPath(vg);
-        nvgSave(vg);
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 12);
-        nvgTranslate(vg, x + padMargin + portX + clockPad - 10, y );
-        nvgRotate( vg, M_PI/2 );
-        nvgFillColor(vg, surgeWhite() );
-        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-        nvgText(vg, padMargin, 0, "clk cv", NULL );
-        nvgRestore(vg);
+            nvgBeginPath(vg);
+            nvgSave(vg);
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 12);
+            nvgFillColor(vg, surgeWhite() );
+            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
+            nvgText(vg, x + + portX / 2 + padMargin, y + padMargin, "clk cv", NULL );
+            nvgRestore(vg);
+        }
+        else
+        {
+            drawBlueIORect(vg, x, y, portX + 2 * padMargin + clockPad, portY + 2 * padMargin);
+            
+            nvgBeginPath(vg);
+            nvgSave(vg);
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 12);
+            nvgTranslate(vg, x + padMargin + portX + clockPad - 10, y );
+            nvgRotate( vg, M_PI/2 );
+            nvgFillColor(vg, surgeWhite() );
+            nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
+            nvgText(vg, padMargin, 0, "clk cv", NULL );
+            nvgRestore(vg);
+        }
         
 
     }
