@@ -23,7 +23,26 @@ panel, works as expected except in a couple of edge cases which are documented i
 <tr><th>Plugin</th><th>Description</th><th>State</th></tr>
 <tr><td>SurgeFX (mulitple modules)</td>
   <td>The surge FX stage is represented as a set of modules, one per effect.</td>
-  <td>The modules all work; most have a generic panel still</td></tr>
+  <td>
+    <b>Completed</b>
+    <p>
+      <ul>
+        <li>Chorus
+        <li>EQ
+        <li>Frequency Shifter
+        <li>Rotary Speaker
+        <li>Vocoder
+    </ul>
+    <b>Completed Audio, Generic Panel</b>
+    <p>
+      <ul>
+        <li>Delay
+        <li>Phaser
+        <li>Distortion
+        <li>Reverb and Reverb2
+        <li>Conditioner
+    </ul>
+  </td></tr>
 <tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed</td></tr>
 <tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Completed</td></tr>
 <tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
@@ -31,8 +50,10 @@ panel, works as expected except in a couple of edge cases which are documented i
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Completed</td></tr>
 <tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>
 <tr><td>SurgeBiquad</td><td>A single element of the Surge filter cascade</td><td>Completed</td></tr>
-<tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
 </table>
+
+In addition to this list, we intend more filter configurations (the QuadFilter and FilterBank) as well as most likely
+a direct Surge patch player.
 
 ## Developing these plugins
 
