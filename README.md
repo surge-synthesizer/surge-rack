@@ -29,8 +29,9 @@ panel, works as expected except in a couple of edge cases which are documented i
 <tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
 <tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Completed</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Completed</td></tr>
-<tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
 <tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>
+<tr><td>SurgeBiquad</td><td>A single element of the Surge filter cascade</td><td>Completed</td></tr>
+<tr><td>SurgeVCF</td><td>The amazingly amazing Surge Filters</td><td>which don't yet exist in rack</td></tr>
 </table>
 
 ## Developing these plugins

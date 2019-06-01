@@ -24,12 +24,15 @@ extern rack::Plugin *pluginInstance;
 
 extern rack::Model *modelSurgeClock;
 extern rack::Model *modelSurgeADSR;
+extern rack::Model *modelSurgeLFO;
 
 extern rack::Model *modelSurgeOSC;
+extern rack::Model *modelSurgeWTOSC;
 extern rack::Model *modelSurgeWaveShaper;
 
-extern rack::Model *modelSurgeWTOSC;
+
 extern rack::Model *modelSurgeVCF;
-extern rack::Model *modelSurgeLFO;
+extern rack::Model *modelSurgeBiquad;
+
 
 extern int addFX(rack::Model *, int type);

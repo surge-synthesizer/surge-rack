@@ -26,9 +26,11 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeWaveShaper);
 
     p->addModel(modelSurgeWTOSC);
-    p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeLFO);
 
+    p->addModel(modelSurgeVCF);
+    p->addModel(modelSurgeBiquad);
+    
     if( fxModels != nullptr )
         for( auto i=0; i<num_fxtypes; ++i )
             if( fxModels[i] != nullptr )
