@@ -137,6 +137,14 @@ endif
 
 ifdef ARCH_LIN
 	FLAGS += -DLINUX -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
+	FLAGS += -Wno-nonnull-compare \
+	-Wno-sign-compare \
+	-Wno-char-subscripts \
+	-Wno-unused-variable \
+	-Wno-unused-but-set-variable \
+	-Wno-reorder \
+	-Wno-multichar
+
 	FLAGS += -Isurge/src/linux
 endif
 

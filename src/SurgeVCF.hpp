@@ -126,7 +126,6 @@ struct SurgeVCF :  public SurgeModuleCommon {
         }
 
         float inpG = getParam(INPUT_GAIN);
-        float outG = getParam(OUTPUT_GAIN);
 
         float inl = inpG * getInput(INPUT_L_OR_MONO) * RACK_TO_SURGE_OSC_MUL;
         float inr = inpG * getInput(INPUT_R) * RACK_TO_SURGE_OSC_MUL;
@@ -143,6 +142,7 @@ struct SurgeVCF :  public SurgeModuleCommon {
         }
 
 #if 0
+	float outG = getParam(OUTPUT_GAIN);
         if( ! outputConnected(OUTPUT_R) )
         {
             setOutput(OUTPUT_L_OR_MONO, outG * (outBufferR[processPos] + outBufferL[processPos]) * 5 );

@@ -217,8 +217,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
                 std::memcpy( storage->audio_in_nonOS[ 1 ], modulatorR, BLOCK_SIZE * sizeof(float) );
             }
             
-            
-            bool newBPM = false;
             if( inputConnected(CLOCK_CV_INPUT) )
             {
                 updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );

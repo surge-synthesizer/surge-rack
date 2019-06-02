@@ -32,7 +32,6 @@ void SurgeRackParamBinding::updateFloat(const ParamCache &pc, SurgeModuleCommon 
 
 void SurgeRackParamBinding::updateBool(const ParamCache &pc, SurgeModuleCommon *m, bool notIt)
 {
-    bool paramChanged = false;
     if(pc.changed(param_id,m) || forceRefresh)
     {
         char txt[1024];
@@ -45,7 +44,6 @@ void SurgeRackParamBinding::updateBool(const ParamCache &pc, SurgeModuleCommon *
             p->val.b = current;
             p->get_display(txt, false, 0);
             valCache.reset(txt);
-            paramChanged = true;
         }
     }
 
@@ -58,7 +56,6 @@ void SurgeRackParamBinding::updateBool(const ParamCache &pc, SurgeModuleCommon *
 
 void SurgeRackParamBinding::updateInt(const ParamCache &pc, SurgeModuleCommon *m)
 {
-    bool paramChanged = false;
     if(pc.changed(param_id,m) || forceRefresh)
     {
         char txt[1024];
@@ -70,7 +67,6 @@ void SurgeRackParamBinding::updateInt(const ParamCache &pc, SurgeModuleCommon *m
             p->val.i = current;
             p->get_display(txt, false, 0);
             valCache.reset(txt);
-            paramChanged = true;
         }
     }
 

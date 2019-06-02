@@ -108,8 +108,6 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
     addOutput(rack::createOutput<rack::PJ301MPort>(
         rack::Vec(inputXPos(2), inputYPos(2)), module, M::OUTPUT_ENV));
 
-    int envStart = padFromTop + 24.6 * 2 + 15 + padFromTop + 30;
-    int envHeight = 40;
     int x0 = 18;
 
     for (int i = 0; i < 4; ++i) {

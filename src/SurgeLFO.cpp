@@ -248,10 +248,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
         int ts = M::DEL_TS + elOff[i-7] - (pa >= M::S_PARAM ? 1 : 0 );
 
         rack::Vec ep = envPoint(i-7);
-        rack::Vec es = envSize(i-7);
         float xstart = ep.x + envXOff;
-        
-        
         
         addInput(rack::createInput<rack::PJ301MPort>(
                      rack::Vec(xstart + 2* padMargin + portX, ep.y), module, cv ));

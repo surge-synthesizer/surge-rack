@@ -174,19 +174,6 @@ void SurgeButtonBank::drawWidget(NVGcontext *vg)
     auto bw = (box.size.x-1.0) / rows;
     auto bh = (box.size.y-1.0) / cols;
 
-    NVGcolor unselT = nvgRGB(0xdd, 0xda, 0xc0);
-    NVGcolor unselM = nvgRGB(0xff, 0xfd, 0xd0);
-    NVGcolor unselB = nvgRGB(0xcc, 0xc7, 0xa0);
-
-    NVGcolor selT = SurgeStyle::surgeOrangeMedium();
-    NVGcolor selM = SurgeStyle::surgeOrange();
-    NVGcolor selB = SurgeStyle::surgeOrangeMedium();
-
-    /* nvgBeginPath(vg);
-    nvgRoundedRect( vg, 0, 0, box.size.x, box.size.y, 3 );
-    nvgFillColor(vg, nvgRGB(0,0,0));
-    nvgFill(vg); */
-    
     int cell = 0;
     for(int c=0;c<cols;++c)
         for( int r=0;r<rows;++r)

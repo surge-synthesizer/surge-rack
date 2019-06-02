@@ -117,9 +117,6 @@ SurgeVOCWidget<effectType>::SurgeVOCWidget(SurgeVOCWidget<effectType>::M *module
                                                module, M::MODULATOR_GAIN));
 
 
-    int parmMargin = 3;
-
-    
     int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
     for( int i=0; i<nControls; ++i )
     {

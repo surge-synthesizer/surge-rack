@@ -90,7 +90,6 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
         {
             int parImd = i * 3 + j;
             int pa = M::FX_PARAM_0 + parImd;
-            int ca = M::FX_PARAM_INPUT_0 + parImd;
 
             float xPosCtr = bandRegion * ( i + 0.5 );
             float yPos = bandY0 + bandLOffset + j * bandCHeight + labelHeight + padMargin;
