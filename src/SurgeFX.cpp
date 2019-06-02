@@ -71,9 +71,6 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
                  rack::Vec(box.size.x/2 - portX/2, orangeLine + 1.5 * ioMargin),
                  module, M::CLOCK_CV_INPUT));
 
-    int parmMargin = 3;
-
-    
     int textAreaWidth = box.size.x - 5 * padMargin - 2 * portX - surgeSwitchX;
     for( int i=0; i<nControls; ++i )
     {
