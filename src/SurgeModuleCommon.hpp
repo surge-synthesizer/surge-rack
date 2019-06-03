@@ -327,26 +327,31 @@ struct SurgeRackParamBinding {
     }
 
     void update(const ParamCache &pc, SurgeModuleCommon *m) {
+        update(pc, 0, m);
+    }
+    
+    
+    void update(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m) {
         switch( updateType )
         {
         case FLOAT:
-            updateFloat(pc, m);
+            updateFloat(pc, polyChannel, m);
             break;
         case BOOL:
-            updateBool(pc, m, false);
+            updateBool(pc, polyChannel, m, false);
             break;
         case BOOL_NOT:
-            updateBool(pc, m, true);
+            updateBool(pc, polyChannel, m, true);
             break;
         case INT:
-            updateInt(pc, m);
+            updateInt(pc, polyChannel, m);
             break;
         }
     }
     
-    void updateFloat(const ParamCache &pc, SurgeModuleCommon *m);
-    void updateInt(const ParamCache &pc, SurgeModuleCommon *m);
-    void updateBool(const ParamCache &pc, SurgeModuleCommon *m, bool n);
+    void updateFloat(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m);
+    void updateInt(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m);
+    void updateBool(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m, bool n);
 };
 
 struct ParamValueStateSaver {

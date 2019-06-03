@@ -1,7 +1,7 @@
 #include "SurgeModuleCommon.hpp"
 #include <string>
 
-void SurgeRackParamBinding::updateFloat(const ParamCache &pc, SurgeModuleCommon *m)
+void SurgeRackParamBinding::updateFloat(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m)
 {
     bool paramChanged = false;
     if(pc.changed(param_id,m) || (ts_id >= 0 && pc.changed(ts_id, m) ) || forceRefresh)
@@ -27,10 +27,10 @@ void SurgeRackParamBinding::updateFloat(const ParamCache &pc, SurgeModuleCommon 
     }
     
     if( paramChanged || forceRefresh || (cv_id >= 0 && m->inputConnected(cv_id)) )
-        p->set_value_f01(m->getParam(param_id) + m->getInput(cv_id) / 10.0);
+        p->set_value_f01(m->getParam(param_id) + m->inputs[cv_id].getPolyVoltage(polyChannel) / 10.0);
 }
 
-void SurgeRackParamBinding::updateBool(const ParamCache &pc, SurgeModuleCommon *m, bool notIt)
+void SurgeRackParamBinding::updateBool(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m, bool notIt)
 {
     if(pc.changed(param_id,m) || forceRefresh)
     {
@@ -54,7 +54,7 @@ void SurgeRackParamBinding::updateBool(const ParamCache &pc, SurgeModuleCommon *
 }
 
 
-void SurgeRackParamBinding::updateInt(const ParamCache &pc, SurgeModuleCommon *m)
+void SurgeRackParamBinding::updateInt(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m)
 {
     if(pc.changed(param_id,m) || forceRefresh)
     {

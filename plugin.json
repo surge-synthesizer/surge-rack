@@ -80,8 +80,8 @@
 		{
 			"slug": "SurgeADSR",
 			"name": "SurgeADSR",
-			"description": "The Surge ADSR envelope generator",
-			"tags": [ "Envelope generator" ]
+			"description": "ADSR envelope generator with various modes",
+			"tags": [ "Envelope generator", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeOSC",
@@ -118,7 +118,13 @@
 			"name": "SurgeVOC",
 			"description": "The Surge Vocoder Effect",
 			"tags": [ "Vocoder" ]
-		}
+		},
+        {
+            "slug" : "SurgeBiquad",
+            "name": "SurgeBiquad",
+            "description": "The single BiQuad filter stage of the Surge FilterBank",
+            "tags": [ "VCF" ]
+        }
 
 	]
 }

@@ -6,6 +6,8 @@
 #define SCREW_WIDTH 15
 #define RACK_HEIGHT 380
 
+#define MAX_POLY 16
+
 // https://vcvrack.com/manual/VoltageStandards.html
 #define RACK_CV_MAX_LEVEL 10
 #define SURGE_CV_MAX_LEVEL 1
