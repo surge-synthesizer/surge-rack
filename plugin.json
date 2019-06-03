@@ -93,7 +93,7 @@
 			"slug": "SurgeWaveShaper",
 			"name": "SurgeWaveShaper",
 			"description": "The Surge waveshapers",
-			"tags": [ "Waveshaper" ]
+			"tags": [ "Waveshaper", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeWTOSC",
