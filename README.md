@@ -45,7 +45,7 @@ panel, works as expected except in a couple of edge cases which are documented i
   </td></tr>
 <tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed; Polyphonic on Gate input</td></tr>
 <tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Completed</td></tr>
-<tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
+<tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed; Polyphonic</td></tr>
 <tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Completed</td></tr>
 <tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Completed</td></tr>
 <tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>

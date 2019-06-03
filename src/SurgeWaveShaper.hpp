@@ -24,10 +24,12 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
 
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
+        for( int i=0; i<MAX_POLY; ++i )
+            processPosition[i] = 0;
     }
 
-    int processPosition = 0;
-    float inBuffer alignas(16)[4], outBuffer alignas(16)[4];
+    int processPosition[MAX_POLY];
+    float inBuffer alignas(16)[MAX_POLY][4], outBuffer alignas(16)[MAX_POLY][4];
 
     void swapWS(int i) {
         if (i == 0)
@@ -35,10 +37,13 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
         else
             wsPtr = GetQFPtrWaveshaper(i);
 
-        for (int i = 0; i < 4; ++i) {
-            inBuffer[i] = 0;
-            outBuffer[i] = 0;
-            processPosition = 0;
+        for(int c=0; c<MAX_POLY; ++c )
+        {
+            for (int i = 0; i < 4; ++i) {
+                inBuffer[c][i] = 0;
+                outBuffer[c][i] = 0;
+            }
+            processPosition[c] = 0;
         }
     }
 
@@ -54,22 +59,27 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
         }
         pc.update(this);
 
-        float drive = db_to_linear(getParam(DRIVE_PARAM));
+        int nChan = std::max(1, inputs[SIGNAL_IN].getChannels());
+        outputs[SIGNAL_OUT].setChannels(nChan);
+        for( int i=0; i<nChan; ++i )
+        {
+            float drive = db_to_linear(getParam(DRIVE_PARAM) + inputs[DRIVE_CV].getPolyVoltage(i));
 
-        if (wsPtr == nullptr) {
-            setOutput(SIGNAL_OUT, getInput(SIGNAL_IN));
-        } else {
-            if (processPosition == 4) {
-                __m128 in, driveM, out;
-                in = _mm_load_ps(inBuffer);
-                driveM = _mm_set1_ps(drive);
-                out = wsPtr(in, driveM);
-                _mm_store_ps(outBuffer, out);
-                processPosition = 0;
+            if (wsPtr == nullptr) {
+                outputs[SIGNAL_OUT].setVoltage(inputs[SIGNAL_IN].getVoltage(i),i);
+            } else {
+                if (processPosition[i] == 4) {
+                    __m128 in, driveM, out;
+                    in = _mm_load_ps(inBuffer[i]);
+                    driveM = _mm_set1_ps(drive);
+                    out = wsPtr(in, driveM);
+                    _mm_store_ps(outBuffer[i], out);
+                    processPosition[i] = 0;
+                }
+                inBuffer[i][processPosition[i]] = inputs[SIGNAL_IN].getVoltage(i) * RACK_TO_SURGE_OSC_MUL;
+                outputs[SIGNAL_OUT].setVoltage( outBuffer[i][processPosition[i]] * SURGE_TO_RACK_OSC_MUL, i);
+                processPosition[i]++;
             }
-            inBuffer[processPosition] = getInput(SIGNAL_IN) * RACK_TO_SURGE_OSC_MUL;
-            setOutput(SIGNAL_OUT, outBuffer[processPosition] * SURGE_TO_RACK_OSC_MUL);
-            processPosition++;
         }
     }
 
