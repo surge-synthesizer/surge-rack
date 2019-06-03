@@ -16,7 +16,7 @@ As of May 19, the weekend of the dev release of Rack 1.0, we have stopped suppor
 
 Our overall goal for our first release is to have all the stages exposed as modules which work with an acceptable
 front plate, are full "phase2/3" rack 1.0 modules, but are still monophonic.
-Here's how far we are along on that journey. "Completed" doesn't mean bug free; it means monophonic, clean front
+Here's how far we are along on that journey. "Completed" doesn't mean bug free; it means monophonic (unless noted), clean front
 panel, works as expected except in a couple of edge cases which are documented in github issues.
 
 <table>
@@ -43,7 +43,7 @@ panel, works as expected except in a couple of edge cases which are documented i
         <li>Conditioner
     </ul>
   </td></tr>
-<tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed</td></tr>
+<tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed; Polyphonic on Gate input</td></tr>
 <tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Completed</td></tr>
 <tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed</td></tr>
 <tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Completed</td></tr>
