@@ -41,11 +41,11 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     enum OutputIds { OUTPUT_ENV, NUM_OUTPUTS };
     enum LightIds {
         DIGI_LIGHT,
-
+        POLY_CHAN_LIGHT,
         NUM_LIGHTS
     };
 
-    rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
+    rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
 
     SurgeADSR() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -66,10 +66,15 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
 
-        surge_envelope.reset(new AdsrEnvelope());
+        surge_envelopes.resize(MAX_POLY);
         adsrstorage = &(storage->getPatch().scene[0].adsr[0]);
-        surge_envelope->init(storage.get(), adsrstorage,
-                             storage->getPatch().scenedata[0], nullptr);
+
+        for( int i=0; i<MAX_POLY; ++i )
+        {
+            surge_envelopes[i].reset(new AdsrEnvelope());
+            surge_envelopes[i]->init(storage.get(), adsrstorage,
+                                 storage->getPatch().scenedata[0], nullptr);
+        }
 
         adsrstorage->mode.val.b = false;
 
@@ -102,42 +107,28 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
             p0++;
         }
         
+        wasGated.resize(MAX_POLY); std::fill(wasGated.begin(), wasGated.end(), false );
+        everGated.resize(MAX_POLY); std::fill(everGated.begin(), everGated.end(), false );
+        lastStep.resize(MAX_POLY); std::fill(lastStep.begin(), lastStep.end(), 0 );
+        output0.resize(MAX_POLY); std::fill(output0.begin(), output0.end(), 0 );
+        output1.resize(MAX_POLY); std::fill(output1.begin(), output1.end(), 0 );
     }
 
-    std::unique_ptr<AdsrEnvelope> surge_envelope;
+    std::vector<std::unique_ptr<AdsrEnvelope>> surge_envelopes;
     ADSRStorage *adsrstorage;
 
-    bool wasGated = false;
-    int lastStep = 0;
-    float output0, output1;
+    std::vector<bool> wasGated, everGated;
+    std::vector<int> lastStep;
+    std::vector<float> output0, output1;
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        if (lastStep == BLOCK_SIZE)
-            lastStep = 0;
-
-        bool inNewAttack = false;
-        if (envGateTrigger.process(getInput(GATE_IN))) {
-            lastStep = 0;
-            surge_envelope->attack();
-            inNewAttack = true;
-        }
-
-        if (lastStep == 0) {
-            if (envRetrig.process(getInput(RETRIG_IN))) {
-                surge_envelope->retrigger();
-            }
-
-            bool gated = getInput(GATE_IN) >= 1.f;
-            if (gated)
-                wasGated = true;
-            if (wasGated && !gated) {
-                wasGated = false;
-                surge_envelope->release();
-            }
-
-            setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
-
+        int nChan = std::max(1, inputs[GATE_IN].getChannels() );
+        lights[POLY_CHAN_LIGHT].setBrightness(nChan);
+        outputs[OUTPUT_ENV].setChannels(nChan);
+        
+        if( lastStep[0] == 0 )
+        {
             if( inputConnected(CLOCK_CV_INPUT) )
             {
                 updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
@@ -147,32 +138,65 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
                 // FIXME - only once please
                 updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
             }
-
-            for(auto binding : pb)
-                if(binding)
-                    binding->update(pc, this);
-            pc.update(this);
-            copyScenedataSubset(0, storage_id_start, storage_id_end);
-            
-            surge_envelope->process_block();
-            
-            if( inNewAttack )
-            {
-                output0 = surge_envelope->get_output();
-                surge_envelope->process_block();
-                output1 = surge_envelope->get_output();
-            }
-            else
-            {
-                output0 = output1;
-                output1 = surge_envelope->get_output();
-            }
-                            
         }
 
-        lastStep++;
-        float frac = 1.0 * lastStep / BLOCK_SIZE;
-        float outputI = output0 * (1.0-frac) + output1 * frac;
-        setOutput(OUTPUT_ENV, outputI * 10.0);
+
+        for( int i=0; i<nChan; ++i )
+        {
+            if (lastStep[i] == BLOCK_SIZE)
+                lastStep[i] = 0;
+            
+            bool inNewAttack = false;
+            if (envGateTrigger[i].process(inputs[GATE_IN].getVoltage(i))) {
+                lastStep[i] = 0;
+                surge_envelopes[i]->attack();
+                everGated[i] = true;
+                inNewAttack = true;
+            }
+            
+            if (lastStep[i] == 0) {
+                if (envRetrig[i].process(inputs[RETRIG_IN].getPolyVoltage(i))) {
+                    surge_envelopes[i]->retrigger();
+                }
+                
+                bool gated = inputs[GATE_IN].getVoltage(i) >= 1.f;
+                if (gated)
+                    wasGated[i] = true;
+                if (wasGated[i] && !gated) {
+                    wasGated[i] = false;
+                    surge_envelopes[i]->release();
+                }
+                
+                setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
+                
+                for(auto binding : pb)
+                    if(binding)
+                        binding->update(pc, i, this);
+                pc.update(this);
+                copyScenedataSubset(0, storage_id_start, storage_id_end);
+                
+                surge_envelopes[i]->process_block();
+                
+                if( inNewAttack )
+                {
+                    output0[i] = surge_envelopes[i]->get_output();
+                    surge_envelopes[i]->process_block();
+                    output1[i] = surge_envelopes[i]->get_output();
+                }
+                else
+                {
+                    output0[i] = output1[i];
+                    output1[i] = surge_envelopes[i]->get_output();
+                }
+                
+            }
+
+            lastStep[i]++;
+            float frac = 1.0 * lastStep[i] / BLOCK_SIZE;
+            float outputI = output0[i] * (1.0-frac) + output1[i] * frac;
+            if( ! everGated[i] ) outputI = 0.f;
+            
+            outputs[OUTPUT_ENV].setVoltage(outputI * 10.0, i);
+        }
     }
 };
