@@ -2,7 +2,6 @@
 
 trigger:
 - master
-- azure-test
 
 pr:
 - master
@@ -14,17 +13,17 @@ jobs:
       mac10:
         imageName: 'macos-10.13'
         isMac: true
-        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.ddf06a9.zip
+        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.439b3f6.zip
         artifactMatrixID: 'SURGERACK_ZIP_MACOS_10' 
       windows10:
         imageName: 'vs2017-win2016'
         isWindows: true
-        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.ddf06a9.zip
+        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.439b3f6.zip
         artifactMatrixID: 'SURGERACK_ZIP_WINDOWS_10'  
       linux10:
         imageName: 'ubuntu-16.04'
         isLinux: true
-        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.ddf06a9.zip
+        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.439b3f6.zip
         artifactMatrixID: 'SURGERACK_ZIP_LINUX_10'  
 
   pool:
