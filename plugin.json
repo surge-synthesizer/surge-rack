@@ -15,61 +15,61 @@
 			"slug": "SurgeDelay",
 			"name": "SurgeDelay",
 			"description": "The Surge Delay effect",
-			"tags": [ "Effect", "Delay" ]
+			"tags": [ "Effect", "Polyphonic", "Delay" ]
 		},
 		{
 			"slug": "SurgeChorus",
 			"name": "SurgeChorus",
 			"description": "The Surge Chorus effect",
-			"tags": [ "Effect", "Chorus" ]
+			"tags": [ "Effect", "Polyphonic", "Chorus" ]
 		},
 		{
 			"slug": "SurgeEQ",
 			"name": "SurgeEQ",
 			"description": "The Surge Equalizer",
-			"tags": [ "Effect", "Equalizer" ]
+			"tags": [ "Effect", "Polyphonic", "Equalizer" ]
 		},
 		{
 			"slug": "SurgePhaser",
 			"name": "SurgePhaser",
 			"description": "The Surge Phaser",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeRotary",
 			"name": "SurgeRotary",
 			"description": "The Surge Rotary",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeDistort",
 			"name": "SurgeDistort",
 			"description": "The Surge Distort",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeReverb",
 			"name": "SurgeReverb",
 			"description": "The Surge Reverb",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeReverb2",
 			"name": "SurgeReverb2",
 			"description": "The Surge Reverb2",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeFreqShift",
 			"name": "SurgeFreqShift",
 			"description": "The Surge FreqShift",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeConditioner",
 			"name": "SurgeConditioner",
 			"description": "The Surge Conditioner",
-			"tags": [ "Effect" ]
+			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeClock",
@@ -117,7 +117,7 @@
 			"slug": "SurgeVOC",
 			"name": "SurgeVOC",
 			"description": "The Surge Vocoder Effect",
-			"tags": [ "Vocoder" ]
+			"tags": [ "Vocoder", "Polyphonic" ]
 		},
         {
             "slug" : "SurgeBiquad",

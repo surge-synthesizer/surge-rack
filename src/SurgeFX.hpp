@@ -175,8 +175,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
         float outG = getParam(OUTPUT_GAIN);
 
 
-        float inl = inpG * getInput(INPUT_L_OR_MONO) * RACK_TO_SURGE_OSC_MUL;
-        float inr = inpG * getInput(INPUT_R) * RACK_TO_SURGE_OSC_MUL;
+        float inl = inpG * inputs[INPUT_L_OR_MONO].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+        float inr = inpG * inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
         if( inputConnected(INPUT_L_OR_MONO) && ! inputConnected(INPUT_R) )
         {
