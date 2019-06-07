@@ -166,14 +166,6 @@ struct SurgeModuleCommon : public rack::Module {
         this->params[id].setValue(v);
     }
 
-    inline float getInput(int id) {
-        return this->inputs[id].getVoltage();
-    }
-
-    inline void setOutput(int id, float v) {
-        this->outputs[id].setVoltage(v);
-    }
-
     inline void setLight(int id, float val) {
         this->lights[id].setBrightness(val);
     }
@@ -185,7 +177,7 @@ struct SurgeModuleCommon : public rack::Module {
     inline bool outputConnected(int id) {
         return this->outputs[id].isConnected();
     }
-
+    
     void copyScenedataSubset(int scene, int start, int end) {
         int s = storage->getPatch().scene_start[scene];
         for(int i=start; i<end; ++i )

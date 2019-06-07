@@ -48,7 +48,7 @@ struct SurgeClock : virtual public SurgeModuleCommon {
             phase -= 1;
         float gate = ( phase > getParam(PULSE_WIDTH) ) ? 0 : RACK_CV_MAX_LEVEL;
 
-        setOutput(CLOCK_CV_OUT,getParam(CLOCK_CV));
-        setOutput(GATE_OUT, gate);
+        outputs[CLOCK_CV_OUT].setVoltage(getParam(CLOCK_CV));
+        outputs[GATE_OUT].setVoltage(gate);
     }
 };

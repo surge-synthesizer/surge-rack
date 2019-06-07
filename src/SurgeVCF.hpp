@@ -127,8 +127,8 @@ struct SurgeVCF :  public SurgeModuleCommon {
 
         float inpG = getParam(INPUT_GAIN);
 
-        float inl = inpG * getInput(INPUT_L_OR_MONO) * RACK_TO_SURGE_OSC_MUL;
-        float inr = inpG * getInput(INPUT_R) * RACK_TO_SURGE_OSC_MUL;
+        float inl = inpG * inputs[INPUT_L_OR_MONO].getVoltage() * RACK_TO_SURGE_OSC_MUL;
+        float inr = inpG * inputs[INPUT_R].getVoltage() * RACK_TO_SURGE_OSC_MUL;
 
         if( inputConnected(INPUT_L_OR_MONO) && ! inputConnected(INPUT_R) )
         {

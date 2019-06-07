@@ -139,20 +139,20 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
 
         if (lastStep == 0) {
             bool inNewAttack = false;
-            if (inputConnected(GATE_IN) && envGateTrigger.process(getInput(GATE_IN))) {
+            if (inputConnected(GATE_IN) && envGateTrigger.process(inputs[GATE_IN].getVoltage())) {
                 lfostorage->trigmode.val.i = lm_keytrigger;
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
                 surge_lfo->attack();
                 inNewAttack = true;
             }
 
-            if (inputConnected(RETRIG_IN) && envRetrig.process(getInput(RETRIG_IN))) {
+            if (inputConnected(RETRIG_IN) && envRetrig.process(inputs[RETRIG_IN].getVoltage())) {
                 surge_lfo->retrigger_EG = true;
             }
 
             if( inputConnected(CLOCK_CV_INPUT) )
             {
-                updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+                updateBPMFromClockCV(inputs[CLOCK_CV_INPUT].getVoltage(), args.sampleTime, args.sampleRate );
             }
             else
             {
@@ -176,7 +176,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
             */
 
             bool isGateConnected = inputConnected(GATE_IN);
-            bool isGated = getInput(GATE_IN) >= 1.f;
+            bool isGated = inputs[GATE_IN].getVoltage() >= 1.f;
 
             if( isGateConnected )
             {
@@ -236,6 +236,6 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         lastStep++;
         float frac = 1.0 * lastStep / BLOCK_SIZE;
         float outputI = output0 * (1.0-frac) + output1 * frac;
-        setOutput(OUTPUT_ENV, outputI * SURGE_TO_RACK_OSC_MUL);
+        outputs[OUTPUT_ENV].setVoltage(outputI * SURGE_TO_RACK_OSC_MUL);
     }
 };

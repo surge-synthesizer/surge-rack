@@ -68,7 +68,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         }
 
         auto config = oscConfigurations[configNum];
-        respawn(config.first);
+        respawn(config.first, 0);
         oscNameCache.reset(config.second);
 
 
@@ -84,7 +84,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
 
     int processPosition = BLOCK_SIZE_OS + 1;
-    bool firstRespawnIsFromJSON = false;
     
     void updatePitchCache() {
         char txt[ 1024 ];
@@ -106,44 +105,62 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
     }
     
-    void respawn(int i) {
-        for (int i = 0; i < n_osc_params; ++i) {
-            oscstorage->p[i].set_name("-");
-            oscstorage->p[i].set_type(ct_none);
+    void respawn(int i, int idx) {
+        rack::INFO( "RESPAWN: type=%d idx=%d firstR=%d", i, idx, firstRespawnIsFromJSON );
+        if( idx == 0 )
+        {
+            for (int i = 0; i < n_osc_params; ++i) {
+                oscstorage->p[i].set_name("-");
+                oscstorage->p[i].set_type(ct_none);
+            }
+            surge_osc.resize(MAX_POLY);
         }
-        surge_osc.reset(spawn_osc(i, storage.get(), oscstorage,
-                                  storage->getPatch().scenedata[0]));
-        surge_osc->init(72.0);
-        surge_osc->init_ctrltypes();
-        surge_osc->init_default_values();
+        
+        surge_osc[idx].reset(spawn_osc(i, storage.get(), oscstorage,
+                                       storage->getPatch().scenedata[0]));
+        surge_osc[idx]->init(72.0);
+        surge_osc[idx]->init_ctrltypes();
+
+        if( idx == 0 )
+            surge_osc[idx]->init_default_values();
+        
         processPosition = BLOCK_SIZE_OS + 1;
         oscstorage->type.val.i = i;
-        for (auto i = 0; i < n_osc_params; ++i) {
-            if( ! firstRespawnIsFromJSON )
-            {
-                /*
-                ** I"m not coming from JSON - so use the params I see
-                */
-                if( oscstorage->p[i].ctrltype == ct_none )
+        if( idx == 0 )
+        {
+            for (auto i = 0; i < n_osc_params; ++i) {
+                if( ! firstRespawnIsFromJSON )
                 {
-                    setParam(OSC_CTRL_PARAM_0 + 0, 0.0 );
+                    /*
+                    ** I"m not coming from JSON - so use the params I see
+                    */
+                    if( oscstorage->p[i].ctrltype == ct_none )
+                    {
+                        setParam(OSC_CTRL_PARAM_0 + 0, 0.0 );
+                    }
+                    else
+                    {
+                        setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
+                    }
                 }
                 else
                 {
-                    setParam(OSC_CTRL_PARAM_0 + i, oscstorage->p[i].get_value_f01());
+                    /*
+                    ** I am coming from JSON so use the params I have
+                    */
+                    oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                 }
+                paramNameCache[i].reset(oscstorage->p[i].get_name());
+                char txt[256];
+                oscstorage->p[i].get_display(txt, false, 0);
+                paramValueCache[i].reset(txt);
             }
-            else
-            {
-                /*
-                ** I am coming from JSON so use the params I have
-                */
+        }
+        else
+        {
+            for (auto i = 0; i < n_osc_params; ++i) {
                 oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
             }
-            paramNameCache[i].reset(oscstorage->p[i].get_name());
-            char txt[256];
-            oscstorage->p[i].get_display(txt, false, 0);
-            paramValueCache[i].reset(txt);
         }
         firstRespawnIsFromJSON = false;
 
@@ -153,8 +170,37 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
 
     int lastUnison = -1;
+    int lastNChan = -1;
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        int nChan = std::max(1, inputs[PITCH_CV].getChannels());
+        outputs[OUTPUT_L].setChannels(nChan);
+        outputs[OUTPUT_R].setChannels(nChan);
+        if( nChan != lastNChan )
+        {
+            for( int i=0; i<nChan; i++ )
+            {
+                if( surge_osc[i] == nullptr )
+                {
+                    rack::INFO( "Spawing oscilattor at %d", i );
+                    auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
+
+                    respawn(conf.first, i);
+                }
+            }
+            
+            for( int i=nChan; i < MAX_POLY; ++i )
+            {
+                if( surge_osc[i] != nullptr )
+                {
+                    rack::INFO( "Cleaning up oscilator at %d", i );
+                    surge_osc[i].reset(nullptr);
+                }
+            }
+            lastNChan = nChan;
+        }
+            
+        
         if (processPosition >= BLOCK_SIZE_OS) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
             processPosition = 0;
@@ -164,7 +210,10 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 knobSaver.storeParams( (int)pc.get(OSC_TYPE), OSC_CTRL_PARAM_0, OSC_CTRL_PARAM_0 + n_osc_params, this );
                 
                 auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
-                respawn(conf.first);
+                for( int c=0; c<nChan; ++c )
+                {
+                    respawn(conf.first, c);
+                }
                 oscNameCache.reset(conf.second);
                 respawned = true;
                 
@@ -195,57 +244,61 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             if( respawned )
                 lastUnison = oscstorage->p[n_osc_params-1].val.i;
 
-            /*
-            ** Unison is special; in surge it is "per voice" and we have one
-            ** voice here; so in classic mode if unison changes, then go ahead
-            ** and re-init
-            */
-            if((int)getParam(OSC_TYPE) == 0 &&
-               pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
-               oscstorage->p[n_osc_params-1].val.i != lastUnison
-                )
+            for( int c=0; c<nChan; ++c)
             {
-                lastUnison = oscstorage->p[n_osc_params-1].val.i;
-                surge_osc->init(72.0);
-            }
-
-            pc.update(this);
-            if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
-            {
-                for (int i = 0; i < n_scene_params; ++i) {
-                    oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
-                                                   getInput(OSC_CTRL_CV_0 + i) * RACK_TO_SURGE_CV_MUL );
+                /*
+                ** Unison is special; in surge it is "per voice" and we have one
+                ** voice here; so in classic mode if unison changes, then go ahead
+                ** and re-init
+                */
+                if((int)getParam(OSC_TYPE) == 0 &&
+                   pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
+                   oscstorage->p[n_osc_params-1].val.i != lastUnison
+                    )
+                {
+                    lastUnison = oscstorage->p[n_osc_params-1].val.i;
+                    surge_osc[c]->init(72.0);
                 }
 
-                copyScenedataSubset(0, storage_id_start, storage_id_end);
-                float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
-                surge_osc->process_block(
-                    pitch0 + getInput(PITCH_CV) * 12.0, 0, true);
+                pc.update(this);
+                if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
+                {
+                    for (int i = 0; i < n_scene_params; ++i) {
+                        oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
+                                                       inputs[OSC_CTRL_CV_0 + i].getPolyVoltage(c) * RACK_TO_SURGE_CV_MUL );
+                    }
+                    
+                    copyScenedataSubset(0, storage_id_start, storage_id_end);
+                    float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
+                    surge_osc[c]->process_block(
+                        pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
+                }
             }
         }
 
-        float avgl = (surge_osc->output[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
-        float avgr = (surge_osc->outputR[processPosition] + surge_osc->outputR[processPosition+1]) * 0.5;
-        if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
+        for( int c=0; c<nChan; ++c )
         {
-            // Special mono mode
-            float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
-            setOutput(OUTPUT_L, output);
+            float avgl = (surge_osc[c]->output[processPosition] + surge_osc[c]->output[processPosition+1]) * 0.5;
+            float avgr = (surge_osc[c]->outputR[processPosition] + surge_osc[c]->outputR[processPosition+1]) * 0.5;
+            if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
+            {
+                // Special mono mode
+                float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
+                outputs[OUTPUT_L].setVoltage(output,c);
+            }
+            else
+            {
+                if( outputConnected(OUTPUT_L) )
+                    outputs[OUTPUT_L].setVoltage(avgl * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
+                
+                if( outputConnected(OUTPUT_R) )
+                    outputs[OUTPUT_R].setVoltage(avgr * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
+            }
         }
-        else
-        {
-            if( outputConnected(OUTPUT_L) )
-                setOutput(OUTPUT_L, avgl * SURGE_TO_RACK_OSC_MUL *
-                          getParam(OUTPUT_GAIN));
             
-            if( outputConnected(OUTPUT_R) )
-                setOutput(OUTPUT_R, avgr * SURGE_TO_RACK_OSC_MUL *
-                          getParam(OUTPUT_GAIN));
-        }
-
         processPosition += 2; // that's why the call it block_size _OS (oversampled)
     }
 
-    std::unique_ptr<Oscillator> surge_osc;
+    std::vector<std::unique_ptr<Oscillator>> surge_osc;
     OscillatorStorage *oscstorage;
 };

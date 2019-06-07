@@ -131,7 +131,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         {
             if( inputConnected(CLOCK_CV_INPUT) )
             {
-                updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+                updateBPMFromClockCV(inputs[CLOCK_CV_INPUT].getVoltage(), args.sampleTime, args.sampleRate );
             }
             else
             {

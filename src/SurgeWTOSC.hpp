@@ -332,13 +332,13 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             {
                 for (int i = 0; i < n_scene_params; ++i) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
-                                                   getInput(OSC_CTRL_CV_0 + i) * RACK_TO_SURGE_CV_MUL );
+                                                   inputs[OSC_CTRL_CV_0 + i].getVoltage() * RACK_TO_SURGE_CV_MUL );
                 }
 
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
                 float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
                 surge_osc->process_block(
-                    pitch0 + getInput(PITCH_CV) * 12.0, 0, true);
+                    pitch0 + inputs[PITCH_CV].getVoltage() * 12.0, 0, true);
             }
         }
 
@@ -348,16 +348,16 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         {
             // Special mono mode
             float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
-            setOutput(OUTPUT_L, output);
+            outputs[OUTPUT_L].setVoltage(output);
         }
         else
         {
             if( outputConnected(OUTPUT_L) )
-                setOutput(OUTPUT_L, avgl * SURGE_TO_RACK_OSC_MUL *
-                          getParam(OUTPUT_GAIN));
+                outputs[OUTPUT_L].setVoltage( avgl * SURGE_TO_RACK_OSC_MUL *
+                                              getParam(OUTPUT_GAIN));
             
             if( outputConnected(OUTPUT_R) )
-                setOutput(OUTPUT_R, avgr * SURGE_TO_RACK_OSC_MUL *
+                outputs[OUTPUT_R].setVoltage(avgr * SURGE_TO_RACK_OSC_MUL *
                           getParam(OUTPUT_GAIN));
         }
 
