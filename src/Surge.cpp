@@ -28,7 +28,7 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeWTOSC);
     p->addModel(modelSurgeLFO);
 
-    p->addModel(modelSurgeVCF);
+    // p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeBiquad);
     
     if( fxModels != nullptr )

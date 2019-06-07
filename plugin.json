@@ -102,12 +102,6 @@
 			"tags": [ "VCO" ]
 		},
 		{
-			"slug": "SurgeVCF",
-			"name": "SurgeVCF",
-			"description": "The Surge Filter",
-			"tags": [ "VCF" ]
-		},
-		{
 			"slug": "SurgeLFO",
 			"name": "SurgeLFO",
 			"description": "The Surge LFO",
@@ -123,7 +117,7 @@
             "slug" : "SurgeBiquad",
             "name": "SurgeBiquad",
             "description": "The single BiQuad filter stage of the Surge FilterBank",
-            "tags": [ "VCF" ]
+            "tags": [ "VCF", "Polyphonic" ]
         }
 
 	]
