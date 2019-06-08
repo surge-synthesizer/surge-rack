@@ -192,8 +192,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
         if( SurgeFXTraits<effectNum>::hasModulatorSignal )
         {
             float mg = getParam(MODULATOR_GAIN);
-            float ml = mg * getInput(MODULATOR_L_OR_MONO);
-            float mr = mg * getInput(MODULATOR_R);
+            float ml = mg * inputs[MODULATOR_L_OR_MONO].getVoltageSum();
+            float mr = mg * inputs[MODULATOR_R].getVoltageSum();
             if( inputConnected(MODULATOR_L_OR_MONO) && ! inputConnected(MODULATOR_R) )
             {
                 modulatorL[bufferPos] = ml;
@@ -219,7 +219,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
             
             if( inputConnected(CLOCK_CV_INPUT) )
             {
-                updateBPMFromClockCV(getInput(CLOCK_CV_INPUT), args.sampleTime, args.sampleRate );
+                updateBPMFromClockCV(inputs[CLOCK_CV_INPUT].getVoltage(), args.sampleTime, args.sampleRate );
             }
             else
             {
@@ -242,12 +242,12 @@ struct SurgeFX : virtual SurgeModuleCommon {
 
         if( outputConnected(OUTPUT_L_OR_MONO) && ! outputConnected(OUTPUT_R) )
         {
-            setOutput(OUTPUT_L_OR_MONO, 0.5 * ( outl + outr ) );
+            outputs[OUTPUT_L_OR_MONO].setVoltage( 0.5 * ( outl + outr ) );
         }
         else
         {
-            setOutput(OUTPUT_L_OR_MONO, outl );
-            setOutput(OUTPUT_R, outr );
+            outputs[OUTPUT_L_OR_MONO].setVoltage( outl );
+            outputs[OUTPUT_R].setVoltage( outr );
         }
     }
 

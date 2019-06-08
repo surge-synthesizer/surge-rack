@@ -87,7 +87,7 @@
 			"slug": "SurgeOSC",
 			"name": "SurgeOSC",
 			"description": "The Surge Oscillators",
-			"tags": ["VCO"]
+			"tags": ["VCO", "Polyphonic"]
 		},
 		{
 			"slug": "SurgeWaveShaper",
