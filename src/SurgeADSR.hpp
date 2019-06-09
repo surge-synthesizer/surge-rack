@@ -4,6 +4,7 @@
 #include "dsp/AdsrEnvelope.h"
 #include "rack.hpp"
 #include <cstring>
+#include <simd/vector.hpp>
 
 
 struct SurgeADSR : virtual public SurgeModuleCommon {
@@ -41,7 +42,6 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
     enum OutputIds { OUTPUT_ENV, NUM_OUTPUTS };
     enum LightIds {
         DIGI_LIGHT,
-        POLY_CHAN_LIGHT,
         NUM_LIGHTS
     };
 
@@ -109,25 +109,28 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         
         wasGated.resize(MAX_POLY); std::fill(wasGated.begin(), wasGated.end(), false );
         everGated.resize(MAX_POLY); std::fill(everGated.begin(), everGated.end(), false );
-        lastStep.resize(MAX_POLY); std::fill(lastStep.begin(), lastStep.end(), 0 );
-        output0.resize(MAX_POLY); std::fill(output0.begin(), output0.end(), 0 );
-        output1.resize(MAX_POLY); std::fill(output1.begin(), output1.end(), 0 );
+        lastStep = BLOCK_SIZE;
+
+        for( int i=0; i<4; ++i )
+        {
+            output0[i] = rack::simd::float_4::zero();
+            output1[i] = rack::simd::float_4::zero();
+        }
     }
 
     std::vector<std::unique_ptr<AdsrEnvelope>> surge_envelopes;
     ADSRStorage *adsrstorage;
 
     std::vector<bool> wasGated, everGated;
-    std::vector<int> lastStep;
-    std::vector<float> output0, output1;
+    int lastStep;
+    rack::simd::float_4 output0[4], output1[4];
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = std::max(1, inputs[GATE_IN].getChannels() );
-        lights[POLY_CHAN_LIGHT].setBrightness(nChan);
         outputs[OUTPUT_ENV].setChannels(nChan);
         
-        if( lastStep[0] == 0 )
+        if( lastStep == 0 )
         {
             if( inputConnected(CLOCK_CV_INPUT) )
             {
@@ -135,26 +138,33 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
             }
             else
             {
-                // FIXME - only once please
-                updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
+                if( lastBPM == -1 )
+                    updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
             }
         }
 
+        setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
 
-        for( int i=0; i<nChan; ++i )
-        {
-            if (lastStep[i] == BLOCK_SIZE)
-                lastStep[i] = 0;
+        if (lastStep == BLOCK_SIZE)
+            lastStep = 0;
+        
+        if (lastStep == 0) {
+            // copy output1 onto output0
+            for( int i=0; i<4; ++i)
+                output0[i] = output1[i];
+
+            float ts[16];
+            memset(ts, 0, 16 * sizeof(float));
             
-            bool inNewAttack = false;
-            if (envGateTrigger[i].process(inputs[GATE_IN].getVoltage(i))) {
-                lastStep[i] = 0;
-                surge_envelopes[i]->attack();
-                everGated[i] = true;
-                inNewAttack = true;
-            }
-            
-            if (lastStep[i] == 0) {
+            for( int i=0; i<nChan; ++i )
+            {
+                bool inNewAttack = false;
+                if (envGateTrigger[i].process(inputs[GATE_IN].getVoltage(i))) {
+                    surge_envelopes[i]->attack();
+                    everGated[i] = true;
+                    inNewAttack = true;
+                }
+
                 if (envRetrig[i].process(inputs[RETRIG_IN].getPolyVoltage(i))) {
                     surge_envelopes[i]->retrigger();
                 }
@@ -166,37 +176,40 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
                     wasGated[i] = false;
                     surge_envelopes[i]->release();
                 }
-                
-                setLight(DIGI_LIGHT, (getParam(MODE_PARAM) > 0.5) ? 1.0 : 0);
-                
+
                 for(auto binding : pb)
                     if(binding)
                         binding->update(pc, i, this);
-                pc.update(this);
-                copyScenedataSubset(0, storage_id_start, storage_id_end);
-                
-                surge_envelopes[i]->process_block();
-                
-                if( inNewAttack )
-                {
-                    output0[i] = surge_envelopes[i]->get_output();
-                    surge_envelopes[i]->process_block();
-                    output1[i] = surge_envelopes[i]->get_output();
-                }
-                else
-                {
-                    output0[i] = output1[i];
-                    output1[i] = surge_envelopes[i]->get_output();
-                }
-                
-            }
 
-            lastStep[i]++;
-            float frac = 1.0 * lastStep[i] / BLOCK_SIZE;
-            float outputI = output0[i] * (1.0-frac) + output1[i] * frac;
-            if( ! everGated[i] ) outputI = 0.f;
-            
-            outputs[OUTPUT_ENV].setVoltage(outputI * 10.0, i);
+                copyScenedataSubset(0, storage_id_start, storage_id_end);
+
+                if( everGated[i] )
+                {
+                    surge_envelopes[i]->process_block();
+                    
+                    if( inNewAttack )
+                    {
+                        // This is infrequent so do the painful direct addressing
+                        output0[i/4].s[i%4] = surge_envelopes[i]->get_output();
+                        surge_envelopes[i]->process_block();
+                    }
+                    
+                    ts[i] = surge_envelopes[i]->get_output();
+                }
+            } // end channel loop
+
+            for( int i=0; i<4; ++i )
+                output1[i] = rack::simd::float_4::load(ts + i * 4);
+
+            pc.update(this);
+        }
+
+        float frac = 1.0 * lastStep / BLOCK_SIZE;
+        lastStep ++;
+        for( int i=0; i<nChan; i += 4 )
+        {
+            rack::simd::float_4 outputI = ( output0[i/4] * (1.0-frac) + output1[i/4] * frac ) * 10.0;
+            outputI.store(outputs[OUTPUT_ENV].getVoltages(i));
         }
     }
 };

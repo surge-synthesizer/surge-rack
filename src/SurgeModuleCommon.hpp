@@ -339,6 +339,7 @@ struct SurgeRackParamBinding {
             updateInt(pc, polyChannel, m);
             break;
         }
+        forceRefresh = false;
     }
     
     void updateFloat(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m);
