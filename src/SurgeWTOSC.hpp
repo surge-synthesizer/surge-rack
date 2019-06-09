@@ -330,7 +330,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             pc.update(this);
             if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
             {
-                for (int i = 0; i < n_scene_params; ++i) {
+                for (int i = 0; i < n_osc_params; ++i) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
                                                    inputs[OSC_CTRL_CV_0 + i].getVoltage() * RACK_TO_SURGE_CV_MUL );
                 }

@@ -182,7 +182,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             {
                 if( surge_osc[i] == nullptr )
                 {
-                    rack::INFO( "Spawing oscilattor at %d", i );
                     auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
 
                     respawn(conf.first, i);
@@ -193,7 +192,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             {
                 if( surge_osc[i] != nullptr )
                 {
-                    rack::INFO( "Cleaning up oscilator at %d", i );
                     surge_osc[i].reset(nullptr);
                 }
             }
@@ -234,6 +232,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
                     pc.get(OSC_CTRL_PARAM_0 + i) || respawned) {
+                    if( i == 0 ) rack::INFO( "SET01 A" );
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);
@@ -244,6 +243,16 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             if( respawned )
                 lastUnison = oscstorage->p[n_osc_params-1].val.i;
 
+            bool newUnison = false;
+            if((int)getParam(OSC_TYPE) == 0 &&
+               pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
+               oscstorage->p[n_osc_params-1].val.i != lastUnison
+                )
+            {
+                lastUnison = oscstorage->p[n_osc_params-1].val.i;
+                newUnison = true;
+            }
+            
             for( int c=0; c<nChan; ++c)
             {
                 /*
@@ -251,21 +260,19 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 ** voice here; so in classic mode if unison changes, then go ahead
                 ** and re-init
                 */
-                if((int)getParam(OSC_TYPE) == 0 &&
-                   pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
-                   oscstorage->p[n_osc_params-1].val.i != lastUnison
-                    )
-                {
-                    lastUnison = oscstorage->p[n_osc_params-1].val.i;
+                if( newUnison ) {
                     surge_osc[c]->init(72.0);
                 }
 
-                pc.update(this);
                 if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
                 {
-                    for (int i = 0; i < n_scene_params; ++i) {
-                        oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
-                                                       inputs[OSC_CTRL_CV_0 + i].getPolyVoltage(c) * RACK_TO_SURGE_CV_MUL );
+                    for (int i = 0; i < n_osc_params; ++i) {
+                        if( pc.changed(OSC_CTRL_PARAM_0 + i, this) ||
+                            inputs[OSC_CTRL_CV_0 + i].isConnected() )
+                        {
+                            oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
+                                                           inputs[OSC_CTRL_CV_0 + i].getPolyVoltage(c) * RACK_TO_SURGE_CV_MUL );
+                        }
                     }
                     
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
@@ -274,6 +281,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                         pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
                 }
             }
+            pc.update(this);
         }
 
         for( int c=0; c<nChan; ++c )
