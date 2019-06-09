@@ -62,7 +62,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         NUM_LIGHTS
     };
 
-    rack::dsp::SchmittTrigger envGateTrigger, envRetrig;
+    rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
 
 
     SurgeLFO() : SurgeModuleCommon() {
@@ -96,13 +96,17 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
 
-        surge_lfo.reset(new LfoModulationSource());
+        surge_lfo.resize(MAX_POLY);
+        for( int i=0; i<MAX_POLY; ++i )
+            surge_lfo[i].reset(new LfoModulationSource());
+        
         surge_ss.reset(new StepSequencerStorage());
         
         lfostorage = &(storage->getPatch().scene[0].lfo[0]);
 
-        surge_lfo->assign(storage.get(), lfostorage,
-                          storage->getPatch().scenedata[0], nullptr, surge_ss.get());
+        for( int i=0; i<MAX_POLY; ++i )
+            surge_lfo[i]->assign(storage.get(), lfostorage,
+                                 storage->getPatch().scenedata[0], nullptr, surge_ss.get());
 
         Parameter *p0 = &(lfostorage->rate);
         for( int i=RATE_PARAM; i<= R_PARAM; ++i )
@@ -122,120 +126,141 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
         pc.resize(NUM_PARAMS);
+
+        for( int i=0; i<MAX_POLY; ++i )
+        {
+            lastStep[i] = BLOCK_SIZE;
+            wasGated[i]= true;
+            wasGateConnected[i] = false;
+        }
     }
 
-    std::unique_ptr<LfoModulationSource> surge_lfo;
+    std::vector<std::unique_ptr<LfoModulationSource>> surge_lfo;
     std::unique_ptr<StepSequencerStorage> surge_ss;
     LFOStorage *lfostorage;
 
-    bool wasGated = true, wasGateConnected=false; // assume we run open
-    int lastStep = 0;
-    float output0, output1;
+    bool wasGated[MAX_POLY], wasGateConnected[MAX_POLY]; // assume we run open
+    int lastStep[MAX_POLY];
+    float output0[MAX_POLY], output1[MAX_POLY];
+    int lastNChan = -1;
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        if (lastStep == BLOCK_SIZE)
-            lastStep = 0;
-
-        if (lastStep == 0) {
-            bool inNewAttack = false;
-            if (inputConnected(GATE_IN) && envGateTrigger.process(inputs[GATE_IN].getVoltage())) {
-                lfostorage->trigmode.val.i = lm_keytrigger;
-                copyScenedataSubset(0, storage_id_start, storage_id_end);
-                surge_lfo->attack();
-                inNewAttack = true;
-            }
-
-            if (inputConnected(RETRIG_IN) && envRetrig.process(inputs[RETRIG_IN].getVoltage())) {
-                surge_lfo->retrigger_EG = true;
-            }
-
-            if( inputConnected(CLOCK_CV_INPUT) )
-            {
-                updateBPMFromClockCV(inputs[CLOCK_CV_INPUT].getVoltage(), args.sampleTime, args.sampleRate );
-            }
-            else
-            {
-                // FIXME - only once please
-                updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
-            }
-            
-
-            for(auto binding : pb)
-                if(binding)
-                    binding->update(pc, this);
-            
-            pc.update(this);
-
-            /*
-            ** OK so now there's a couple of things in the gate state
-            **
-            ** wasGated -> was the last step gated
-            ** isGateConnected -> is there anyone hooked up to the gate input 
-            ** isGated  -> Is the gate input true
-            */
-
-            bool isGateConnected = inputConnected(GATE_IN);
-            bool isGated = inputs[GATE_IN].getVoltage() >= 1.f;
-
-            if( isGateConnected )
-            {
-                setLight(ENV_LIGHT, 10.0);
-                /*
-                ** We have to undertake no action if:
-                **   isGateConnected && wasGated && isGated -> hooked up and open still
-                **   isGateConnected && !wasGated && !isGated -> hooked up and closed still
-                */
-                if( isGated /* && !wasGated */ )
-                    wasGated = true;
-                if( wasGated && !isGated )
-                {
-                    wasGated = false;
-                    surge_lfo->release();
-                }
-                wasGateConnected = true;
-            }
-            else
-            {
-                setLight(ENV_LIGHT, 0.0);
-                /*
-                ** In this case we want to act as if we are always gated.
-                ** So if wasGated is false we need to attack and never release.
-                */
-                // Trickily we want to verride sustain here
-                lfostorage->sustain.set_value_f01(1.0);
-                
-                if( ! wasGated )
-                {
-                    lfostorage->trigmode.val.i = lm_freerun;
-
-                    copyScenedataSubset(0, storage_id_start, storage_id_end);
-                    surge_lfo->attack();
-                    inNewAttack = true;
-                    wasGated = true;
-                }
-                wasGateConnected = false;
-            }
-
-            copyScenedataSubset(0, storage_id_start, storage_id_end);
-            surge_lfo->process_block();
-            if( inNewAttack )
-            {
-                output0 = surge_lfo->get_output();
-                surge_lfo->process_block();
-                output1 = surge_lfo->get_output();
-            }
-            else
-            {
-                output0 = output1;
-                output1 = surge_lfo->get_output();
-            }
-                            
+        int nChan = std::max(1, inputs[GATE_IN].getChannels());
+        outputs[OUTPUT_ENV].setChannels(nChan);
+        if( nChan != lastNChan )
+        {
+            lastNChan = nChan;
+            for( int i=nChan; i < MAX_POLY; ++i )
+                lastStep[i] = BLOCK_SIZE;
+        }
+        
+        if( inputConnected(CLOCK_CV_INPUT) )
+        {
+            updateBPMFromClockCV(inputs[CLOCK_CV_INPUT].getVoltage(), args.sampleTime, args.sampleRate );
+        }
+        else
+        {
+            // FIXME - only once please
+            updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
         }
 
-        lastStep++;
-        float frac = 1.0 * lastStep / BLOCK_SIZE;
-        float outputI = output0 * (1.0-frac) + output1 * frac;
-        outputs[OUTPUT_ENV].setVoltage(outputI * SURGE_TO_RACK_OSC_MUL);
+        for( int c=0; c<nChan; ++c)
+        {
+            if (lastStep[c] == BLOCK_SIZE)
+                lastStep[c] = 0;
+            
+            if (lastStep[c] == 0) {
+                bool inNewAttack = false;
+                if (inputConnected(GATE_IN) && envGateTrigger[c].process(inputs[GATE_IN].getVoltage(c))) {
+                    lfostorage->trigmode.val.i = lm_keytrigger;
+                    copyScenedataSubset(0, storage_id_start, storage_id_end);
+                    surge_lfo[c]->attack();
+                    inNewAttack = true;
+                }
+                
+                if (inputConnected(RETRIG_IN) && envRetrig[c].process(inputs[RETRIG_IN].getPolyVoltage(c))) {
+                    surge_lfo[c]->retrigger_EG = true;
+                }
+                
+
+                for(auto binding : pb)
+                    if(binding)
+                        binding->update(pc, c, this);
+            
+                /*
+                ** OK so now there's a couple of things in the gate state
+                **
+                ** wasGated -> was the last step gated
+                ** isGateConnected -> is there anyone hooked up to the gate input 
+                ** isGated  -> Is the gate input true
+                */
+                
+                bool isGateConnected = inputConnected(GATE_IN);
+                bool isGated = inputs[GATE_IN].getVoltage(c) >= 1.f;
+                
+                if( isGateConnected )
+                {
+                    if( c == 0 )
+                        setLight(ENV_LIGHT, 10.0);
+                    /*
+                    ** We have to undertake no action if:
+                    **   isGateConnected && wasGated && isGated -> hooked up and open still
+                    **   isGateConnected && !wasGated && !isGated -> hooked up and closed still
+                    */
+                    if( isGated /* && !wasGated */ )
+                        wasGated[c] = true;
+                    if( wasGated[c] && !isGated )
+                    {
+                        wasGated[c] = false;
+                        surge_lfo[c]->release();
+                    }
+                    wasGateConnected[c] = true;
+                }
+                else
+                {
+                    if( c == 0 )
+                        setLight(ENV_LIGHT, 0.0);
+                    /*
+                    ** In this case we want to act as if we are always gated.
+                    ** So if wasGated is false we need to attack and never release.
+                    */
+                    // Trickily we want to verride sustain here
+                    lfostorage->sustain.set_value_f01(1.0);
+                    
+                    if( ! wasGated[c] )
+                    {
+                        lfostorage->trigmode.val.i = lm_freerun;
+                        
+                        copyScenedataSubset(0, storage_id_start, storage_id_end);
+                        surge_lfo[c]->attack();
+                        inNewAttack = true;
+                        wasGated[c] = true;
+                    }
+                    wasGateConnected[c] = false;
+                }
+                
+                copyScenedataSubset(0, storage_id_start, storage_id_end);
+                surge_lfo[c]->process_block();
+                if( inNewAttack )
+                {
+                    output0[c] = surge_lfo[c]->get_output();
+                    surge_lfo[c]->process_block();
+                    output1[c] = surge_lfo[c]->get_output();
+                }
+                else
+                {
+                    output0[c] = output1[c];
+                    output1[c] = surge_lfo[c]->get_output();
+                }
+                
+            }
+            
+            float frac = 1.0 * lastStep[c] / BLOCK_SIZE;
+            float outputI = output0[c] * (1.0-frac) + output1[c] * frac;
+            outputs[OUTPUT_ENV].setVoltage(outputI * SURGE_TO_RACK_OSC_MUL, c);
+            lastStep[c]++;
+        }
+        pc.update(this);
     }
 };
