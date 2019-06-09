@@ -76,14 +76,29 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     float lastfr = -1, lastq = -1;
 
     StringCache pStrings[3];
+    int updateCoeffEvery = BLOCK_SIZE;
+    int lastCoeffUpdate = BLOCK_SIZE;
+    int lastChans = -1;
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = inputs[INPUT_L_OR_MONO].getChannels();
+        if( outputs[OUTPUT_L_OR_MONO].isConnected() || outputs[OUTPUT_R].isConnected())
+        {
+            outputs[OUTPUT_L_OR_MONO].setChannels(nChan);
+            outputs[OUTPUT_R].setChannels(nChan);
+        }
+        else
+            return;
+
+        if( nChan != lastChans )
+        {
+            lastChans = nChan;
+            lastCoeffUpdate = BLOCK_SIZE;
+        }
+        
         float inpG = getParam(INPUT_GAIN);
         float outG = getParam(OUTPUT_GAIN);
-        outputs[OUTPUT_L_OR_MONO].setChannels(nChan);
-        outputs[OUTPUT_R].setChannels(nChan);
 
         if( pc.changed( FREQ_KNOB, this ) )
         {
@@ -99,79 +114,86 @@ struct SurgeBiquad :  public SurgeModuleCommon {
             pStrings[1].reset( tmp );
         }
         
-        if( pc.changed( FILTER_TYPE, this ) || pc.changed( THIRD_KNOB, this ) )
+        if( pc.changed( FILTER_TYPE, this ) )
         {
-            if( (int)getParam(FILTER_TYPE) == peakEQ )
+            lastCoeffUpdate = BLOCK_SIZE;
+            if(pc.changed( THIRD_KNOB, this ) )
             {
-                char tmp[256];
-                snprintf(tmp, 256, "%5.2f dB", 48 * ( getParam(THIRD_KNOB) - 0.5 ) );
-                pStrings[2].reset(tmp);
-            }
-            else
-            {
-                pStrings[2].resetCheck( "-" );
+                if( (int)getParam(FILTER_TYPE) == peakEQ )
+                {
+                    char tmp[256];
+                    snprintf(tmp, 256, "%5.2f dB", 48 * ( getParam(THIRD_KNOB) - 0.5 ) );
+                    pStrings[2].reset(tmp);
+                }
+                else
+                {
+                    pStrings[2].resetCheck( "-" );
+                }
             }
         }
         
-        pc.update( this );
-
         FilterTypesFromBiquad type = (FilterTypesFromBiquad)getParam(FILTER_TYPE);
 
+        bool needCoeffUpdate =
+            (pc.changed(FREQ_KNOB,this) || inputs[FREQ_CV].isConnected() ) ||
+            (pc.changed(RESO_KNOB,this) || inputs[RESO_CV].isConnected() ) ||
+            ((pc.changed(THIRD_KNOB,this) || inputs[THIRD_CV].isConnected() ) && type == peakEQ);
+        
         for( int i=0; i<nChan; ++i )
         {
             float inl = inpG * inputs[INPUT_L_OR_MONO].getVoltage(i) * RACK_TO_SURGE_OSC_MUL;
             float inr = inpG * inputs[INPUT_R].getPolyVoltage(i) * RACK_TO_SURGE_OSC_MUL;
-            
-            float fr = getParam(FREQ_KNOB) + inputs[FREQ_CV].getPolyVoltage(i) * 12.0 ; // +/- 5 -> +/- 60
-            float res = getParam(RESO_KNOB) + inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
-            float xtra = getParam(THIRD_KNOB) + inputs[THIRD_CV].getPolyVoltage(i) / 10.0;
-            
-            float lightValue = 0;
-            
             if( inputConnected(INPUT_L_OR_MONO) && ! inputConnected(INPUT_R) )
             {
                 inr = inl;
             }
             
-            switch(type)
+            if( lastCoeffUpdate == BLOCK_SIZE && needCoeffUpdate )
             {
-            case LP:
-                biquad[i]->coeff_LP(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case LP2B:
-                biquad[i]->coeff_LP2B(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case HP:
-                biquad[i]->coeff_HP(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case BP:
-                biquad[i]->coeff_BP(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case BP2A:
-                biquad[i]->coeff_BP2A(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case PKA:
-                biquad[i]->coeff_PKA(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case NOTCH:
-                biquad[i]->coeff_NOTCH(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case APF:
-                biquad[i]->coeff_APF(biquad[i]->calc_omega(fr/12), res);
-                break;
-            case peakEQ:
-            {
-                float gain = 48 * ( xtra - 0.5 );
-                lightValue = 10;
-                biquad[i]->coeff_peakEQ(biquad[i]->calc_omega(fr/12), res, gain);
-                break;
+                float fr = getParam(FREQ_KNOB) + inputs[FREQ_CV].getPolyVoltage(i) * 12.0 ; // +/- 5 -> +/- 60
+                float res = getParam(RESO_KNOB) + inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
+                float xtra = getParam(THIRD_KNOB) + inputs[THIRD_CV].getPolyVoltage(i) / 10.0;
+                
+                float lightValue = 0;
+                
+                switch(type)
+                {
+                case LP:
+                    biquad[i]->coeff_LP(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case LP2B:
+                    biquad[i]->coeff_LP2B(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case HP:
+                    biquad[i]->coeff_HP(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case BP:
+                    biquad[i]->coeff_BP(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case BP2A:
+                    biquad[i]->coeff_BP2A(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case PKA:
+                    biquad[i]->coeff_PKA(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case NOTCH:
+                    biquad[i]->coeff_NOTCH(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case APF:
+                    biquad[i]->coeff_APF(biquad[i]->calc_omega(fr/12), res);
+                    break;
+                case peakEQ:
+                {
+                    float gain = 48 * ( xtra - 0.5 );
+                    lightValue = 10;
+                    biquad[i]->coeff_peakEQ(biquad[i]->calc_omega(fr/12), res, gain);
+                    break;
+                }
+                
+                default:
+                    biquad[i]->coeff_HP(biquad[i]->calc_omega(fr/12),res);
+                }
             }
-            
-            default:
-                biquad[i]->coeff_HP(biquad[i]->calc_omega(fr/12),res);
-            }
-            
-            
             
             
             float outl, outr;
@@ -187,6 +209,10 @@ struct SurgeBiquad :  public SurgeModuleCommon {
                 outputs[OUTPUT_R].setVoltage( outG * outr * 5, i );
             }
         }
+        if( lastCoeffUpdate == BLOCK_SIZE )
+            lastCoeffUpdate = 0;
+        lastCoeffUpdate ++;
+        pc.update( this );
     }
 
     std::vector<std::unique_ptr<BiquadFilter>> biquad;
