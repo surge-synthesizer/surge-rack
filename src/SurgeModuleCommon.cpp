@@ -79,7 +79,7 @@ void SurgeRackParamBinding::updateInt(const ParamCache &pc, int polyChannel, Sur
 void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS) 
 {
     std::string dataPath;
-    dataPath = rack::asset::plugin(pluginInstance, "surge-data/");
+    dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
     
     showBuildInfo();
     storage.reset(new SurgeStorage(dataPath));
