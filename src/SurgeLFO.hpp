@@ -127,11 +127,18 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
         pc.resize(NUM_PARAMS);
 
+        lastStep = BLOCK_SIZE;
+
         for( int i=0; i<MAX_POLY; ++i )
         {
-            lastStep[i] = BLOCK_SIZE;
             wasGated[i]= true;
             wasGateConnected[i] = false;
+        }
+
+        for( int i=0; i<4; ++i )
+        {
+            output0[i] = rack::simd::float_4::zero();
+            output1[i] = rack::simd::float_4::zero();
         }
     }
 
@@ -140,8 +147,8 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     LFOStorage *lfostorage;
 
     bool wasGated[MAX_POLY], wasGateConnected[MAX_POLY]; // assume we run open
-    int lastStep[MAX_POLY];
-    float output0[MAX_POLY], output1[MAX_POLY];
+    int lastStep = BLOCK_SIZE;
+    rack::simd::float_4 output0[4], output1[4];
     int lastNChan = -1;
     
     void process(const typename rack::Module::ProcessArgs &args) override
@@ -152,7 +159,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         {
             lastNChan = nChan;
             for( int i=nChan; i < MAX_POLY; ++i )
-                lastStep[i] = BLOCK_SIZE;
+                lastStep = BLOCK_SIZE;
         }
         
         if( inputConnected(CLOCK_CV_INPUT) )
@@ -161,16 +168,21 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         }
         else
         {
-            // FIXME - only once please
-            updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
+            if( lastBPM == -1 )
+                updateBPMFromClockCV(1, args.sampleTime, args.sampleRate );
         }
 
-        for( int c=0; c<nChan; ++c)
-        {
-            if (lastStep[c] == BLOCK_SIZE)
-                lastStep[c] = 0;
+        if (lastStep == BLOCK_SIZE)
+            lastStep = 0;
             
-            if (lastStep[c] == 0) {
+        if (lastStep == 0) {
+            for( int i=0; i<4; ++i)
+                output0[i] = output1[i];
+
+            float ts[16];
+            
+            for( int c=0; c<nChan; ++c)
+            {
                 bool inNewAttack = false;
                 if (inputConnected(GATE_IN) && envGateTrigger[c].process(inputs[GATE_IN].getVoltage(c))) {
                     lfostorage->trigmode.val.i = lm_keytrigger;
@@ -244,23 +256,24 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
                 surge_lfo[c]->process_block();
                 if( inNewAttack )
                 {
-                    output0[c] = surge_lfo[c]->get_output();
+                    // Do the painful thing in the infrequent case
+                    output0[c/4].s[c%4] = surge_lfo[c]->get_output();
                     surge_lfo[c]->process_block();
-                    output1[c] = surge_lfo[c]->get_output();
                 }
-                else
-                {
-                    output0[c] = output1[c];
-                    output1[c] = surge_lfo[c]->get_output();
-                }
-                
+                ts[c] = surge_lfo[c]->get_output();
             }
+            for( int i=0; i<4; ++i )
+                output1[i] = rack::simd::float_4::load(ts + i * 4);
             
-            float frac = 1.0 * lastStep[c] / BLOCK_SIZE;
-            float outputI = output0[c] * (1.0-frac) + output1[c] * frac;
-            outputs[OUTPUT_ENV].setVoltage(outputI * SURGE_TO_RACK_OSC_MUL, c);
-            lastStep[c]++;
+            pc.update(this);
         }
-        pc.update(this);
+
+        float frac = 1.0 * lastStep / BLOCK_SIZE;
+        lastStep++;
+        for( int c=0; c<nChan; c += 4 )
+        {
+            rack::simd::float_4 outputI = ( output0[c/4] * (1.0-frac) + output1[c/4] * frac ) * SURGE_TO_RACK_OSC_MUL;
+            outputI.store(outputs[OUTPUT_ENV].getVoltages(c));
+        }
     }
 };
