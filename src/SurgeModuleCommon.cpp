@@ -80,6 +80,17 @@ void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS)
 {
     std::string dataPath;
     dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
+    std::string cxml = dataPath + "configuration.xml";
+    FILE *cxmlF = fopen(cxml.c_str(), "r");
+    if( cxmlF )
+    {
+        fclose(cxmlF);
+    }
+    else
+    {
+        dataPath = rack::asset::plugin(pluginInstance, "surge-data/" );
+    }
+
     
     showBuildInfo();
     storage.reset(new SurgeStorage(dataPath));
