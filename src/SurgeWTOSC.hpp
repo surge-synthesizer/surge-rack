@@ -233,12 +233,31 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     }
 
     int lastUnison = -1;
+    int lastNChan = -1;
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        /*rack::INFO( "lastUnison=%d punison=%d paramUnison=%lf",
+                    lastUnison,
+                    oscstorage->p[n_osc_params-1].val.i,
+                    getParam(OSC_CTRL_PARAM_0 + n_osc_params - 1));*/
+
         int nChan = std::max(1, inputs[PITCH_CV].getChannels());
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
+        if( nChan != lastNChan )
+        {
+            /*
+            ** re-init new voices so they can get all the latest settings like unison
+            */
+            copyScenedataSubset(0, storage_id_start, storage_id_end);
+
+            for( int i=std::max(0,lastNChan); i<nChan; ++i )
+            {
+                surge_osc[i]->init(72);
+            }
+            lastNChan = nChan;
+        }
 
         if (processPosition >= BLOCK_SIZE_OS) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
@@ -280,7 +299,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 storage->perform_queued_wtloads();
                 // Is this needed?
                 for( int c=0; c<nChan; ++c )
+                {
                     surge_osc[c]->init(72);
+                }
                 updateWtLabels();
 
                 
@@ -319,7 +340,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
                 for( int c=0; c<nChan; ++c )
+                {
                     surge_osc[c]->init(72);
+                }
                 updateWtLabels();
             }
 
@@ -333,13 +356,11 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             }
         
 
+            bool initBeforeProcess = false;
             if(oscstorage->p[n_osc_params-1].val.i != lastUnison)
             {
-                lastUnison = oscstorage->p[n_osc_params-1].val.i;
-                for( int c=0; c<nChan; ++c )
-                {
-                    surge_osc[c]->init(72.0);
-                }
+                rack::INFO( "reset last unison from %d to %d", lastUnison, oscstorage->p[n_osc_params-1].val.i );
+                initBeforeProcess = true;
             }
             
             pc.update(this);
@@ -354,9 +375,15 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
+                    if( initBeforeProcess )
+                    {
+                        surge_osc[c]->init(pitch0);
+                    }
+                    
                     surge_osc[c]->process_block(
                         pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
                 }
+                lastUnison = oscstorage->p[n_osc_params-1].val.i;
             }
         }
 
