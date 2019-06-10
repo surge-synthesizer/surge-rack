@@ -2,12 +2,12 @@
 	"slug": "SurgeRack",
 	"name": "Surge for Rack",
 	"version": "1.alpha.LOCALBUILD",
-	"license": "GPL-3.0",
+	"license": "GPL-3.0-or-later",
 	"author": "The Surge Team",
 	"authorEmail": "",
-	"authorUrl": "",
+	"authorUrl": "https://github.com/surge-synthesizer/",
 	"pluginUrl": "https://surge-synthesizer.github.io/",
-	"manualUrl": "",
+	"manualUrl": "https://surge-synthesizer.github.io/rack_manual/",
 	"sourceUrl": "https://github.com/surge-synthesizer/surge-rack/",
 	"donateUrl": "",
 	"modules": [
@@ -99,7 +99,7 @@
 			"slug": "SurgeWTOSC",
 			"name": "SurgeWTOSC",
 			"description": "The Surge WaveTable collection",
-			"tags": [ "VCO" ]
+			"tags": [ "VCO", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeLFO",
