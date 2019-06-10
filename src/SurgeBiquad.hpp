@@ -71,6 +71,16 @@ struct SurgeBiquad :  public SurgeModuleCommon {
             biquad[i].reset(new BiquadFilter(storage.get()));
             biquad[i]->coeff_instantize();
         }
+
+        char tmp[256];
+
+        snprintf(tmp, 256, "%8.2f Hz", 440.0 * pow(2.0, getParam(FREQ_KNOB) / 12.0 ) );
+        pStrings[0].reset(tmp);
+
+        snprintf(tmp, 256, "%7.5f", getParam(RESO_KNOB) );
+        pStrings[1].reset( tmp );
+        
+        pStrings[2].reset("-");
     }
 
     float lastfr = -1, lastq = -1;
@@ -82,32 +92,35 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        int nChan = inputs[INPUT_L_OR_MONO].getChannels();
-        if( outputs[OUTPUT_L_OR_MONO].isConnected() || outputs[OUTPUT_R].isConnected())
-        {
-            outputs[OUTPUT_L_OR_MONO].setChannels(nChan);
-            outputs[OUTPUT_R].setChannels(nChan);
-        }
-        else
-            return;
+        int nChan = std::max(1,inputs[INPUT_L_OR_MONO].getChannels());
 
+        if( ! ( outputs[OUTPUT_L_OR_MONO].isConnected() || outputs[OUTPUT_R].isConnected()) )
+        {
+            nChan = 1;
+        }
+
+        outputs[OUTPUT_L_OR_MONO].setChannels(nChan);
+        outputs[OUTPUT_R].setChannels(nChan);
+
+        bool forceUpdate = false;
         if( nChan != lastChans )
         {
             lastChans = nChan;
             lastCoeffUpdate = BLOCK_SIZE;
+            forceUpdate = true;
         }
         
         float inpG = getParam(INPUT_GAIN);
         float outG = getParam(OUTPUT_GAIN);
 
-        if( pc.changed( FREQ_KNOB, this ) )
+        if( pc.changed( FREQ_KNOB, this ) || forceUpdate )
         {
             char tmp[256];
             snprintf(tmp, 256, "%8.2f Hz", 440.0 * pow(2.0, getParam(FREQ_KNOB) / 12.0 ) );
             pStrings[0].reset(tmp);
         }
         
-        if( pc.changed( RESO_KNOB, this ) )
+        if( pc.changed( RESO_KNOB, this ) || forceUpdate )
         {
             char tmp[256];
             snprintf(tmp, 256, "%7.5f", getParam(RESO_KNOB) );
@@ -117,28 +130,34 @@ struct SurgeBiquad :  public SurgeModuleCommon {
         if( pc.changed( FILTER_TYPE, this ) )
         {
             lastCoeffUpdate = BLOCK_SIZE;
-            if(pc.changed( THIRD_KNOB, this ) )
-            {
-                if( (int)getParam(FILTER_TYPE) == peakEQ )
-                {
-                    char tmp[256];
-                    snprintf(tmp, 256, "%5.2f dB", 48 * ( getParam(THIRD_KNOB) - 0.5 ) );
-                    pStrings[2].reset(tmp);
-                }
-                else
-                {
-                    pStrings[2].resetCheck( "-" );
-                }
-            }
+            forceUpdate = true;
         }
         
+        if( pc.changed( THIRD_KNOB, this ) || forceUpdate )
+        {
+            if( (int)getParam(FILTER_TYPE) == peakEQ )
+            {
+                char tmp[256];
+                snprintf(tmp, 256, "%5.2f dB", 48 * ( getParam(THIRD_KNOB) - 0.5 ) );
+                pStrings[2].reset(tmp);
+            }
+            else
+            {
+                pStrings[2].resetCheck( "-" );
+            }
+        }
+
         FilterTypesFromBiquad type = (FilterTypesFromBiquad)getParam(FILTER_TYPE);
 
         bool needCoeffUpdate =
+            pc.changedInt(FILTER_TYPE,this) ||
             (pc.changed(FREQ_KNOB,this) || inputs[FREQ_CV].isConnected() ) ||
             (pc.changed(RESO_KNOB,this) || inputs[RESO_CV].isConnected() ) ||
-            ((pc.changed(THIRD_KNOB,this) || inputs[THIRD_CV].isConnected() ) && type == peakEQ);
-        
+            ((pc.changed(THIRD_KNOB,this) || inputs[THIRD_CV].isConnected() ) && type == peakEQ) ||
+            forceUpdate;
+
+        pc.update( this );
+
         for( int i=0; i<nChan; ++i )
         {
             float inl = inpG * inputs[INPUT_L_OR_MONO].getVoltage(i) * RACK_TO_SURGE_OSC_MUL;
@@ -212,7 +231,6 @@ struct SurgeBiquad :  public SurgeModuleCommon {
         if( lastCoeffUpdate == BLOCK_SIZE )
             lastCoeffUpdate = 0;
         lastCoeffUpdate ++;
-        pc.update( this );
     }
 
     std::vector<std::unique_ptr<BiquadFilter>> biquad;
