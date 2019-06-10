@@ -175,8 +175,6 @@ issue_blurb:	dist
 	@echo "* Transaction: " `git rev-parse HEAD`
 	@echo "* Branch: " `git rev-parse --abbrev-ref HEAD`
 
-missing_symbols:	dist
-	nm plugin.dylib  | grep " U " | c++filt
 
 # Special target since we don't have zip on azure (fix this later)
 win-dist: all build/surge-data

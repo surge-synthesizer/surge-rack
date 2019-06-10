@@ -76,8 +76,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             oscstorage->p[i].set_name("-");
             oscstorage->p[i].set_type(ct_none);
         }
-        surge_osc.reset(spawn_osc(ot_wavetable, storage.get(), oscstorage,
-                                  storage->getPatch().scenedata[0]));
 
         /*
         ** FIXME: This is a foul hack we should work around. Something about the surge synth
@@ -89,25 +87,31 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         ** going to do the gross thing of finding "sawtooth reso" in our list and loading that at
         ** init time befire clobbering
         */
-        oscstorage->wt.queue_id = 0;
-        for( int i=0; i<storage->wt_list.size(); ++i )
+        for( int c=0; c<MAX_POLY; ++c)
         {
-            if( storage->wt_list[i].name == "sawtooth reso" )
+            surge_osc[c].reset(spawn_osc(ot_wavetable, storage.get(), oscstorage,
+                                         storage->getPatch().scenedata[0]));
+            
+            oscstorage->wt.queue_id = 0;
+            for( int i=0; i<storage->wt_list.size(); ++i )
             {
-                oscstorage->wt.queue_id = i;
-                break;
+                if( storage->wt_list[i].name == "sawtooth reso" )
+                {
+                    oscstorage->wt.queue_id = i;
+                    break;
+                }
             }
+            storage->perform_queued_wtloads();
+            surge_osc[c]->init(72.0);
+            
+            surge_osc[c]->init_ctrltypes();
+            surge_osc[c]->init_default_values();
         }
-        storage->perform_queued_wtloads();
-        surge_osc->init(72.0);
-
-        surge_osc->init_ctrltypes();
-        surge_osc->init_default_values();
 
         updateWtIdx();
         oscstorage->wt.queue_id = wtIdx;
         storage->perform_queued_wtloads();
-        surge_osc->init(72.0);
+        surge_osc[0]->init(72.0);
         updateWtLabels();
 
         processPosition = BLOCK_SIZE_OS + 1;
@@ -170,7 +174,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     int wtIdx = 0;
     StringCache wtCategoryName;
-
     StringCache wtItemName[7]; // 3 on each side
 
     void updateWtIdx() {
@@ -233,6 +236,10 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        int nChan = std::max(1, inputs[PITCH_CV].getChannels());
+        outputs[OUTPUT_L].setChannels(nChan);
+        outputs[OUTPUT_R].setChannels(nChan);
+
         if (processPosition >= BLOCK_SIZE_OS) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
             processPosition = 0;
@@ -261,15 +268,19 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     oscstorage->p[i].set_type(ct_none);
                 }
 
-                surge_osc.reset(spawn_osc(toWhat, storage.get(), oscstorage,
-                                          storage->getPatch().scenedata[0]));
-                surge_osc->init(72.0);
-                surge_osc->init_ctrltypes();
-                surge_osc->init_default_values();
-                
+                for( int c=0; c<MAX_POLY; ++c )
+                {
+                    surge_osc[c].reset(spawn_osc(toWhat, storage.get(), oscstorage,
+                                              storage->getPatch().scenedata[0]));
+                    surge_osc[c]->init(72.0);
+                    surge_osc[c]->init_ctrltypes();
+                    surge_osc[c]->init_default_values();
+                }
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
-                surge_osc->init(72);
+                // Is this needed?
+                for( int c=0; c<nChan; ++c )
+                    surge_osc[c]->init(72);
                 updateWtLabels();
 
                 
@@ -307,7 +318,8 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             {
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
-                surge_osc->init(72);
+                for( int c=0; c<nChan; ++c )
+                    surge_osc[c]->init(72);
                 updateWtLabels();
             }
 
@@ -324,47 +336,56 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             if(oscstorage->p[n_osc_params-1].val.i != lastUnison)
             {
                 lastUnison = oscstorage->p[n_osc_params-1].val.i;
-                surge_osc->init(72.0);
+                for( int c=0; c<nChan; ++c )
+                {
+                    surge_osc[c]->init(72.0);
+                }
             }
             
             pc.update(this);
             if( outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R) )
             {
-                for (int i = 0; i < n_osc_params; ++i) {
-                    oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
-                                                   inputs[OSC_CTRL_CV_0 + i].getVoltage() * RACK_TO_SURGE_CV_MUL );
-                }
+                for( int c=0; c<nChan; ++c )
+                {
+                    for (int i = 0; i < n_osc_params; ++i) {
+                        oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
+                                                       inputs[OSC_CTRL_CV_0 + i].getPolyVoltage(c) * RACK_TO_SURGE_CV_MUL );
+                    }
 
-                copyScenedataSubset(0, storage_id_start, storage_id_end);
-                float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
-                surge_osc->process_block(
-                    pitch0 + inputs[PITCH_CV].getVoltage() * 12.0, 0, true);
+                    copyScenedataSubset(0, storage_id_start, storage_id_end);
+                    float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
+                    surge_osc[c]->process_block(
+                        pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
+                }
             }
         }
 
-        float avgl = (surge_osc->output[processPosition] + surge_osc->output[processPosition+1]) * 0.5;
-        float avgr = (surge_osc->outputR[processPosition] + surge_osc->outputR[processPosition+1]) * 0.5;
-        if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
+        for( int c=0; c<nChan; ++c )
         {
-            // Special mono mode
-            float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
-            outputs[OUTPUT_L].setVoltage(output);
-        }
-        else
-        {
-            if( outputConnected(OUTPUT_L) )
-                outputs[OUTPUT_L].setVoltage( avgl * SURGE_TO_RACK_OSC_MUL *
-                                              getParam(OUTPUT_GAIN));
-            
-            if( outputConnected(OUTPUT_R) )
-                outputs[OUTPUT_R].setVoltage(avgr * SURGE_TO_RACK_OSC_MUL *
-                          getParam(OUTPUT_GAIN));
+            float avgl = (surge_osc[c]->output[processPosition] + surge_osc[c]->output[processPosition+1]) * 0.5;
+            float avgr = (surge_osc[c]->outputR[processPosition] + surge_osc[c]->outputR[processPosition+1]) * 0.5;
+            if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
+            {
+                // Special mono mode
+                float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
+                outputs[OUTPUT_L].setVoltage(output, c);
+            }
+            else
+            {
+                if( outputConnected(OUTPUT_L) )
+                    outputs[OUTPUT_L].setVoltage( avgl * SURGE_TO_RACK_OSC_MUL *
+                                                  getParam(OUTPUT_GAIN), c);
+                
+                if( outputConnected(OUTPUT_R) )
+                    outputs[OUTPUT_R].setVoltage(avgr * SURGE_TO_RACK_OSC_MUL *
+                                                 getParam(OUTPUT_GAIN), c);
+            }
         }
 
         processPosition += 2; // that's why the call it block_size _OS (oversampled)
         firstRespawnIsFromJSON = false;
     }
 
-    std::unique_ptr<Oscillator> surge_osc;
+    std::unique_ptr<Oscillator> surge_osc[MAX_POLY];
     OscillatorStorage *oscstorage;
 };
