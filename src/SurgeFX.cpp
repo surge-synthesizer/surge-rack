@@ -118,5 +118,5 @@ CREATE_FX( fxt_delay, "SurgeDelay" );
 CREATE_FX( fxt_phaser, "SurgePhaser" );
 CREATE_FX( fxt_distortion, "SurgeDistort" );
 CREATE_FX( fxt_reverb, "SurgeReverb" );
-CREATE_FX( fxt_reverb2, "SurgeReverb2" );
+// CREATE_FX( fxt_reverb2, "SurgeReverb2" );
 CREATE_FX( fxt_conditioner, "SurgeConditioner" );
