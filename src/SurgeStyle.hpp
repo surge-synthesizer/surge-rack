@@ -336,10 +336,10 @@ struct SurgeStyle {
         return y + h;
     }
 
-    void centerRuledLabel( NVGcontext *vg, float x0, float y0, float w, const char* label ) {
+    void centerRuledLabel( NVGcontext *vg, float x0, float y0, float w, const char* label, int size = 14 ) {
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 14);
+        nvgFontSize(vg, size);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
         nvgFillColor( vg, surgeBlue());
         nvgText( vg, x0 + w/2, y0, label, NULL );

@@ -115,6 +115,8 @@ build/surge-data:
 	cp surge/resources/data/windows.wt build/surge-data
 	cp -R surge/resources/data/wavetables build/surge-data/wavetables
 	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty
+	cp -R surge/resources/data/patches_factory build/surge-data/patches_factory
+	cp -R surge/resources/data/patches_3rdparty build/surge-data/patches_3rdparty	
 
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md build/surge-data
 

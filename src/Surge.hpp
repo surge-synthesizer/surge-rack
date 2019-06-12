@@ -32,6 +32,7 @@ extern rack::Model *modelSurgeOSC;
 extern rack::Model *modelSurgeWTOSC;
 extern rack::Model *modelSurgeWaveShaper;
 
+extern rack::Model *modelSurgePatchPlayer;
 
 extern rack::Model *modelSurgeVCF;
 extern rack::Model *modelSurgeBiquad;

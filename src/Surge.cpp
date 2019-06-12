@@ -23,9 +23,11 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeADSR);
 
     p->addModel(modelSurgeOSC);
+    p->addModel(modelSurgeWTOSC);
     p->addModel(modelSurgeWaveShaper);
 
-    p->addModel(modelSurgeWTOSC);
+    p->addModel(modelSurgePatchPlayer);
+    
     p->addModel(modelSurgeLFO);
 
     // p->addModel(modelSurgeVCF);

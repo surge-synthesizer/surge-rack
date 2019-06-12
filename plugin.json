@@ -112,7 +112,14 @@
             "name": "SurgeBiquad",
             "description": "A single BiQuad filter stage of the Surge FilterBank",
             "tags": [ "VCF", "Polyphonic" ]
+        },
+        {
+            "slug" : "SurgePatchPlayer",
+            "name": "SurgePatchPlayer",
+            "description": "A full instance of the Surge plugin able to play the patches in your environment",
+            "tags": [ "Synth voice", "Polyphonic" ]
         }
+
 
 	]
 }
