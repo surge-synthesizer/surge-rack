@@ -143,6 +143,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     void updateWtLabels() {
         Patch p = storage->wt_list[wtIdx];
         PatchCategory pc = storage->wt_category[p.category];
+        // Thinking of changing these? Remember we stream them into JSON below so be careful
         wtInfoCache[0].reset(pc.name);
         wtInfoCache[1].reset(p.name);
 
@@ -383,8 +384,8 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     surge_osc[c]->process_block(
                         pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
                 }
-                lastUnison = oscstorage->p[n_osc_params-1].val.i;
             }
+            lastUnison = oscstorage->p[n_osc_params-1].val.i;
         }
 
         for( int c=0; c<nChan; ++c )
@@ -415,4 +416,59 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     std::unique_ptr<Oscillator> surge_osc[MAX_POLY];
     OscillatorStorage *oscstorage;
+
+    virtual json_t *dataToJson() override {
+        json_t *rootJ = makeCommonDataJson();
+        json_object_set_new( rootJ, "wtCategoryName", json_string(wtInfoCache[0].value.c_str()));
+        json_object_set_new( rootJ, "wtItemName", json_string(wtInfoCache[1].value.c_str()) );
+        return rootJ;
+    }
+    
+    virtual void dataFromJson(json_t *rootJ) override {
+        readCommonDataJson(rootJ);
+        // So do we have the values and if so do a reset of index
+        json_t *jcat = json_object_get(rootJ, "wtCategoryName" );
+        json_t *jwt = json_object_get(rootJ, "wtItemName" );
+        if( jcat && jwt )
+        {
+            std::string cat = json_string_value(jcat);
+            std::string wt  = json_string_value(jwt);
+
+            rack::INFO( "Restored %s / %s", cat.c_str(), wt.c_str() );
+            int newIdx = -1;
+            int idxInCat = 0;
+            for( auto pci : storage->wtOrdering )
+            {
+                if( storage->wt_category[storage->wt_list[pci].category].name == cat )
+                {
+                    if(storage->wt_list[pci].name == wt)
+                    {
+                        newIdx = pci;
+                    }
+                    if( newIdx < 0 ) idxInCat ++;
+                }
+            }
+            if( newIdx < 0 ) idxInCat = 0; // the wavetable has been removed;
+            
+            int catIdx = -1;
+            int catPos = 0;
+            for( auto idx : catOrderSkipEmpty )
+            {
+                if( storage->wt_category[idx].name == cat )
+                {
+                    catIdx = idx;
+                }
+                if( catIdx < 0 ) catPos ++;
+            }
+            if( catIdx < 0 ) catPos = 0; // the category has been removed
+            
+            params[CATEGORY_IDX].setValue(catPos * 1.0 / catOrderSkipEmpty.size() );
+            params[WT_IN_CATEGORY_IDX].setValue(idxInCat * 1.0 / storage->wt_category[storage->wt_list[newIdx].category].numberOfPatchesInCatgory);
+            params[LOAD_WT].setValue(10.0);
+            updateWtIdx();
+        }
+
+
+    }
+
 };
