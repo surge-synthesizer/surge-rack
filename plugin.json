@@ -14,62 +14,56 @@
 		{
 			"slug": "SurgeDelay",
 			"name": "SurgeDelay",
-			"description": "The Surge Delay effect",
+			"description": "The Surge stereo delay effect",
 			"tags": [ "Effect", "Polyphonic", "Delay" ]
 		},
 		{
 			"slug": "SurgeChorus",
 			"name": "SurgeChorus",
-			"description": "The Surge Chorus effect",
+			"description": "The Surge chorus effect",
 			"tags": [ "Effect", "Polyphonic", "Chorus" ]
 		},
 		{
 			"slug": "SurgeEQ",
 			"name": "SurgeEQ",
-			"description": "The Surge Equalizer",
+			"description": "The Surge 3-band equalizer",
 			"tags": [ "Effect", "Polyphonic", "Equalizer" ]
 		},
 		{
 			"slug": "SurgePhaser",
 			"name": "SurgePhaser",
-			"description": "The Surge Phaser",
-			"tags": [ "Effect", "Polyphonic" ]
+			"description": "The Surge phaser",
+			"tags": [ "Effect", "Polyphonic", "Phaser" ]
 		},
 		{
 			"slug": "SurgeRotary",
 			"name": "SurgeRotary",
-			"description": "The Surge Rotary",
+			"description": "The Surge rotary speaker emulation effect",
 			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeDistort",
 			"name": "SurgeDistort",
-			"description": "The Surge Distort",
-			"tags": [ "Effect", "Polyphonic" ]
+			"description": "The Surge distortion effect",
+			"tags": [ "Effect", "Polyphonic", "Distortion", "Waveshaper" ]
 		},
 		{
 			"slug": "SurgeReverb",
 			"name": "SurgeReverb",
-			"description": "The Surge Reverb",
-			"tags": [ "Effect", "Polyphonic" ]
-		},
-		{
-			"slug": "SurgeReverb2",
-			"name": "SurgeReverb2",
-			"description": "The Surge Reverb2",
-			"tags": [ "Effect", "Polyphonic" ]
+			"description": "The Surge reverb",
+			"tags": [ "Effect", "Polyphonic", "Reverb" ]
 		},
 		{
 			"slug": "SurgeFreqShift",
 			"name": "SurgeFreqShift",
-			"description": "The Surge FreqShift",
+			"description": "The Surge frequency shifter",
 			"tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeConditioner",
 			"name": "SurgeConditioner",
-			"description": "The Surge Conditioner",
-			"tags": [ "Effect", "Polyphonic" ]
+			"description": "The Surge conditioner/limiter effect",
+			"tags": [ "Effect", "Polyphonic", "Limiter", "EQ" ]
 		},
 		{
 			"slug": "SurgeClock",
@@ -80,13 +74,13 @@
 		{
 			"slug": "SurgeADSR",
 			"name": "SurgeADSR",
-			"description": "ADSR envelope generator with various modes",
+			"description": "The Surge ADSR envelope generator with various modes",
 			"tags": [ "Envelope generator", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeOSC",
 			"name": "SurgeOSC",
-			"description": "The Surge Oscillators",
+			"description": "The Surge classic oscillators, including square, saw, sine, FM and niose",
 			"tags": ["VCO", "Polyphonic"]
 		},
 		{
@@ -98,7 +92,7 @@
 		{
 			"slug": "SurgeWTOSC",
 			"name": "SurgeWTOSC",
-			"description": "The Surge WaveTable collection",
+			"description": "The Surge WaveTable collection with a pair of interpolating oscillators",
 			"tags": [ "VCO", "Polyphonic" ]
 		},
 		{
@@ -110,13 +104,13 @@
 		{
 			"slug": "SurgeVOC",
 			"name": "SurgeVOC",
-			"description": "The Surge Vocoder Effect",
+			"description": "The Surge vocoder",
 			"tags": [ "Vocoder", "Polyphonic" ]
 		},
         {
             "slug" : "SurgeBiquad",
             "name": "SurgeBiquad",
-            "description": "The single BiQuad filter stage of the Surge FilterBank",
+            "description": "A single BiQuad filter stage of the Surge FilterBank",
             "tags": [ "VCF", "Polyphonic" ]
         }
 
