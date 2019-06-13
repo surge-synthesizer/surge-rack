@@ -1,4 +1,4 @@
-# Build against RACK 0.6.2 
+# Build against RACK 1.0
 
 trigger:
 - master
@@ -13,17 +13,17 @@ jobs:
       mac10:
         imageName: 'macos-10.13'
         isMac: true
-        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.439b3f6.zip
+        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.b4bd09a.zip
         artifactMatrixID: 'SURGERACK_ZIP_MACOS_10' 
       windows10:
         imageName: 'vs2017-win2016'
         isWindows: true
-        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.439b3f6.zip
+        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.b4bd09a.zip
         artifactMatrixID: 'SURGERACK_ZIP_WINDOWS_10'  
       linux10:
         imageName: 'ubuntu-16.04'
         isLinux: true
-        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.439b3f6.zip
+        sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.dev.b4bd09a.zip
         artifactMatrixID: 'SURGERACK_ZIP_LINUX_10'  
 
   pool:
@@ -118,14 +118,7 @@ jobs:
     displayName: Tag asset names with Date
 
   - bash: |
-     echo "## Automatically Generated SurgeRack Release" > $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
-     echo >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
-     date >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
-     echo >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
-     openssl md5 $(Build.ArtifactStagingDirectory)/*.zip >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
-     echo >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md 
-     echo "Most recent commits:" >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
-     git log --pretty=oneline | head -5 >> $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
+     scripts/release-notes.sh > $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
     displayName: Fake up release notes
 
   - task: GitHubRelease@0
