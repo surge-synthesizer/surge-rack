@@ -72,7 +72,8 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
     
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
-        surge_synth.reset(new SurgeSynthesizer(new HeadlessPluginLayerProxy()));
+        surge_synth.reset(new SurgeSynthesizer(new HeadlessPluginLayerProxy(), storage->datapath));
+
         storage.reset(&(surge_synth->storage));
         storage->refresh_patchlist();
         
