@@ -3,7 +3,7 @@ RACK_DIR ?= ../..
 RACK_VERSION=1
 RACK_FLAG=-DRACK_V1
 
-SURGE_RACK_BASE_VERSION=1.0-alpha
+SURGE_RACK_BASE_VERSION=1.beta1
 SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
 SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
