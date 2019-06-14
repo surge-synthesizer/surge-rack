@@ -135,22 +135,6 @@ struct SurgeChorusWidget : SurgeModuleWidgetCommon {
         clockBackground(vg, padFromEdge, cp.pos.y, true);
         
         drawStackedInputOutputBackground(vg, box);
-
-        if( module )
-        {
-            M *mc = dynamic_cast<M *>(module);
-            if( mc )
-            {
-                rack::INFO( "[SurgeRack][FX Blank %s]", mc->getName().c_str() );
-                for( int i=0; i<n_fx_params; ++i )
-                {
-                    rack::INFO( "  %d '%s'/'%s' = '%s'", i,
-                          mc->groupCache[i].getValue().c_str(),
-                          mc->pb[i]->nameCache.getValue().c_str(),
-                          mc->pb[i]->valCache.getValue().c_str() );
-                }
-            }
-        }
     }
 };
 
