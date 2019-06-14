@@ -29,7 +29,7 @@ def parseType(typeel, prefix=""):
 def basedata():
     data = {}
     data["plugin"] = "SurgeRack"
-    data["version"] = "1.alpha.LOCALBUILD"
+    data["version"] = "1.beta1.LOCALBUILD"
     data["model"] = ""
     data["params"] = []
     for i in range(27):
