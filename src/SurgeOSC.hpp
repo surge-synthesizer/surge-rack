@@ -106,7 +106,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
     
     void respawn(int i, int idx) {
-        rack::INFO( "RESPAWN: type=%d idx=%d firstR=%d", i, idx, firstRespawnIsFromJSON );
         if( idx == 0 )
         {
             for (int i = 0; i < n_osc_params; ++i) {
@@ -232,7 +231,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
                     pc.get(OSC_CTRL_PARAM_0 + i) || respawned) {
-                    if( i == 0 ) rack::INFO( "SET01 A" );
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);

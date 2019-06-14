@@ -266,7 +266,6 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
             {
                 updateBPMFromClockCV(thisClockCV, args.sampleTime, args.sampleRate );
                 lastClockCV = thisClockCV;
-                rack::INFO( "Reetting BPM to %lf %lf", thisClockCV, lastBPM );
                                 
                 surge_synth->time_data.tempo = lastBPM;
             }
@@ -327,7 +326,6 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
             }
             if( needsMPE != surge_synth->mpeEnabled )
             {
-                rack::INFO( "toggling MPE to %d", needsMPE );
                 surge_synth->mpeEnabled = needsMPE;
             }
 
@@ -402,7 +400,6 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
             std::string cat = json_string_value(jcat);
             std::string patch  = json_string_value(jpatch);
 
-            rack::INFO( "Restored '%s' / '%s'", cat.c_str(), patch.c_str() );
             int catIdx = -1;
             int catPos = 0;
             for( auto idx : catOrderSkipEmpty )
@@ -434,8 +431,6 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
             params[CATEGORY_IDX].setValue(catPos * 1.0 / catOrderSkipEmpty.size() );
             params[PATCH_IN_CATEGORY_IDX].setValue(idxInCat * 1.0 / storage->patch_category[storage->patch_list[newIdx].category].numberOfPatchesInCatgory);
             params[LOAD_PATCH].setValue(10.0);
-            rack::INFO( "About to update patch index with %lf %lf", params[CATEGORY_IDX].getValue(),
-                        params[PATCH_IN_CATEGORY_IDX].getValue());
             updatePatchIdx();
         }
 

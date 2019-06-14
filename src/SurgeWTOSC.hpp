@@ -238,11 +238,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        /*rack::INFO( "lastUnison=%d punison=%d paramUnison=%lf",
-                    lastUnison,
-                    oscstorage->p[n_osc_params-1].val.i,
-                    getParam(OSC_CTRL_PARAM_0 + n_osc_params - 1));*/
-
         int nChan = std::max(1, inputs[PITCH_CV].getChannels());
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
@@ -360,7 +355,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             bool initBeforeProcess = false;
             if(oscstorage->p[n_osc_params-1].val.i != lastUnison)
             {
-                rack::INFO( "reset last unison from %d to %d", lastUnison, oscstorage->p[n_osc_params-1].val.i );
                 initBeforeProcess = true;
             }
             
@@ -434,7 +428,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             std::string cat = json_string_value(jcat);
             std::string wt  = json_string_value(jwt);
 
-            rack::INFO( "Restored %s / %s", cat.c_str(), wt.c_str() );
             int newIdx = -1;
             int idxInCat = 0;
             for( auto pci : storage->wtOrdering )
