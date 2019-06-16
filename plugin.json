@@ -96,6 +96,12 @@
 			"tags": [ "VCO", "Polyphonic" ]
 		},
 		{
+			"slug": "SurgeNoise",
+			"name": "SurgeNoise",
+			"description": "The Surge correlated noise channel",
+			"tags": [ "Noise" ]
+		},
+		{
 			"slug": "SurgeLFO",
 			"name": "SurgeLFO",
 			"description": "The Surge LFO",

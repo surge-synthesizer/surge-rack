@@ -30,6 +30,7 @@ extern rack::Model *modelSurgeLFO;
 
 extern rack::Model *modelSurgeOSC;
 extern rack::Model *modelSurgeWTOSC;
+extern rack::Model *modelSurgeNoise;
 extern rack::Model *modelSurgeWaveShaper;
 
 extern rack::Model *modelSurgePatchPlayer;
