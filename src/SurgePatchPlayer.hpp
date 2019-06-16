@@ -76,7 +76,6 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
 
         storage.reset(&(surge_synth->storage));
         storage->refresh_patchlist();
-        
         for( auto ci : storage->patchCategoryOrdering )
         {
             PatchCategory pc = storage->patch_category[ci];
@@ -107,6 +106,14 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
     }
 
     void loadPatch() {
+        if( storage->patch_list.size() == 0 )
+        {
+            patchInfoCache[0].reset( "Error" );
+            patchInfoCache[1].reset( "No Patches Loaded from Plugin" );
+            patchInfoCache[2].reset( "did you 'make dist'?" );
+            return;
+        }
+        
         loadedPatchIdx = patchIdx;
         surge_synth->loadPatch(loadedPatchIdx);
         
@@ -126,6 +133,9 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
     StringCache patchItemName[7]; // 3 on each side
 
     void updatePatchIdx() {
+        if( storage->patch_category.size() == 0 )
+            return;
+        
         int priorPatchIdx = patchIdx;
         
         /*
@@ -398,6 +408,12 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
         json_t *jpatch = json_object_get(rootJ, "patchItemName" );
         if( jcat && jpatch )
         {
+            if( storage->patch_category.size() == 0 )
+            {
+                rack::WARN( "Found no patches present in dataFromJSON; ignoring saved state" );
+                return;
+            }
+            
             std::string cat = json_string_value(jcat);
             std::string patch  = json_string_value(jpatch);
 
@@ -426,7 +442,10 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
                     if( newIdx < 0 ) idxInCat ++;
                 }
             }
-            if( newIdx < 0 ) idxInCat = 0; // the wavetable has been removed;
+            if( newIdx < 0 ) {
+                idxInCat = 0; // the wavetable has been removed;
+                newIdx = 0;
+            }
             
             
             params[CATEGORY_IDX].setValue(catPos * 1.0 / catOrderSkipEmpty.size() );

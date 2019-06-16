@@ -141,6 +141,14 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     int processPosition = BLOCK_SIZE_OS + 1;
 
     void updateWtLabels() {
+        if( storage->wt_category.size() == 0 )
+        {
+            wtInfoCache[0].reset( "Error" );
+            wtInfoCache[1].reset( "No WT found in plugin data" );
+            wtInfoCache[2].reset( "did you 'make dist'?" );
+            return;
+        }
+        
         Patch p = storage->wt_list[wtIdx];
         PatchCategory pc = storage->wt_category[p.category];
         // Thinking of changing these? Remember we stream them into JSON below so be careful
@@ -178,6 +186,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     StringCache wtItemName[7]; // 3 on each side
 
     void updateWtIdx() {
+        if( storage->wt_category.size() == 0 )
+            return;
+            
         int priorWtIdx = wtIdx;
         
         /*
@@ -428,6 +439,12 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             std::string cat = json_string_value(jcat);
             std::string wt  = json_string_value(jwt);
 
+            if( storage->wt_category.size() == 0 )
+            {
+                rack::WARN( "Found no wavetables present in dataFromJSON; ignoring saved state" );
+                return;
+            }
+
             int newIdx = -1;
             int idxInCat = 0;
             for( auto pci : storage->wtOrdering )
@@ -441,7 +458,11 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     if( newIdx < 0 ) idxInCat ++;
                 }
             }
-            if( newIdx < 0 ) idxInCat = 0; // the wavetable has been removed;
+            if( newIdx < 0 )
+            {
+                idxInCat = 0; // the wavetable has been removed;
+                newIdx = 0;
+            }
             
             int catIdx = -1;
             int catPos = 0;
@@ -453,7 +474,10 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 }
                 if( catIdx < 0 ) catPos ++;
             }
-            if( catIdx < 0 ) catPos = 0; // the category has been removed
+            if( catIdx < 0 ) {
+                catPos = 0; // the category has been removed
+                catIdx = 0;
+            }
             
             params[CATEGORY_IDX].setValue(catPos * 1.0 / catOrderSkipEmpty.size() );
             params[WT_IN_CATEGORY_IDX].setValue(idxInCat * 1.0 / storage->wt_category[storage->wt_list[newIdx].category].numberOfPatchesInCatgory);
