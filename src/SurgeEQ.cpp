@@ -90,6 +90,7 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
         {
             int parImd = i * 3 + j;
             int pa = M::FX_PARAM_0 + parImd;
+            int ca = pa - M::FX_PARAM_0 + M::FX_PARAM_INPUT_0;
 
             float xPosCtr = bandRegion * ( i + 0.5 );
             float yPos = bandY0 + bandLOffset + j * bandCHeight + labelHeight + padMargin;
@@ -97,7 +98,7 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
             addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xPosCtr - portY - padMargin / 2, yPos),
                                                        module, pa ));
             addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xPosCtr + padMargin / 2, yPos),
-                                                         module, pa ));
+                                                         module, ca ));
 
             yPos += portY + padMargin;
             addChild(TextDisplayLight::create(rack::Vec( i * bandRegion + padFromEdge, yPos ),
