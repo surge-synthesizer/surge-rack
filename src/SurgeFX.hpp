@@ -64,17 +64,17 @@ struct SurgeFX : virtual SurgeModuleCommon {
     StringCache groupCache[NUM_FX_PARAMS];
 
     SurgeFX() : SurgeModuleCommon() {
+        setupSurge();
+
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
-            configParam<SurgeRackParamQuantity>(FX_PARAM_0 + i, 0, 1, 0 );
+            configParam<SurgeRackParamQuantity>(FX_PARAM_0 + i, 0, 1, pb[i]->p->get_value_f01() );
             configParam<SurgeRackParamQuantity>(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
         }
 
         configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");
         configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
         configParam(MODULATOR_GAIN, 0, 1, 1, "Modulator Gain" );
-        
-        setupSurge();
     }
 
     virtual std::string getName() override { return SurgeFXName<effectNum>::getName(); }
@@ -95,16 +95,6 @@ struct SurgeFX : virtual SurgeModuleCommon {
         // Do default values
         reorderSurgeParams();
 
-        if( ! firstRespawnIsFromJSON )
-        {
-            // Set up the parametres based on the thingy
-            for( int i=0; i<n_fx_params; ++i )
-            {
-                setParam(FX_PARAM_0 + i, pb[i]->p->get_value_f01() );
-            }
-        }
-        
-        
         for (auto i = 0; i < BLOCK_SIZE; ++i) {
             bufferL[i] = 0.0f;
             bufferR[i] = 0.0f;
