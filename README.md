@@ -1,183 +1,33 @@
-# Surge in Rack (experimental)
+# Surge in Rack
 
-This repo holds an experimental set of code which aims to break apart the surge synth at
-https://github.com/surge-synthesizer/surge/ into distinct rack modules for the oscillator,
-filter, effect, and waveshaper block segments. The best way to learn about this is to join
-the Surge slack which is detailed at [the surge readme](https://github.com/surge-synthesizer/surge/blob/master/README.md)
+This repository houses the implementation of the [Surge Synthesizer](https://surge-synthesizer.github.io/) as
+collection of modules for [VCVRack](https://vcvrack.com/). The modules are fully documented in the 
+[Surge for Rack Manual](https://surge-synthesizer.github.io/rack_manual/).
 
-**This is Alpha software, changing frequently, including modules with incomplete or non-functional
-panels and DSP code and streaming fragility. There is no guarantee that the code here will work, 
-will compile, or will save and load a patch from session to session or version to version.**
+The easiest way to use these modules is to download VCVRack and include the modules in the Rack Plugin Manager.
+The library link is [here](https://vcvrack.com/plugins.html#Surge%20for%20Rack).
 
-As of May 19, the weekend of the dev release of Rack 1.0, we have stopped supporting 0.6.2 and now have a
-1.0 only codebase. Mode details on this are below.
+If you would like to use the latest version of the software, which is always equal to or ahead of the version in
+the plugin manager, but which may not be as stable as the plugin manager version, you can get a zip file from
+[our release page](https://github.com/surge-synthesizer/surge-rack/releases/tag/Nightly) and place the platform
+appropriate version of the zip in your Rack `plugins-v1` directory.
 
-## What are the plugins provided and their state
+If you would like to request a feature or report a bug, please 
+[open a github issue](https://github.com/surge-synthesizer/surge-rack/issues)
+with a clear description of the feature or bug, the operating system you use, and the version of the plugins.
 
-Our overall goal for our first release is to have all the stages exposed as modules which work with an acceptable
-front plate, are full "phase2/3" rack 1.0 modules, but are still monophonic.
-Here's how far we are along on that journey. "Completed" doesn't mean bug free; it means monophonic (unless noted), clean front
-panel, works as expected except in a couple of edge cases which are documented in github issues.
-
-<table>
-<tr><th>Plugin</th><th>Description</th><th>State</th></tr>
-<tr><td>SurgeFX (mulitple modules)</td>
-  <td>The surge FX stage is represented as a set of modules, one per effect.</td>
-  <td>
-    <b>Completed</b>
-    <p>
-      <ul>
-        <li>Chorus
-        <li>EQ
-        <li>Frequency Shifter
-        <li>Rotary Speaker
-        <li>Vocoder
-    </ul>
-    <b>Completed Audio, Generic Panel</b>
-    <p>
-      <ul>
-        <li>Delay
-        <li>Phaser
-        <li>Distortion
-        <li>Reverb and Reverb2
-        <li>Conditioner
-    </ul>
-  </td></tr>
-<tr><td>SurgeADSR</td><td>The Surge Envelope Generator with digital and analog modes</td><td>Completed; Polyphonic on Gate input</td></tr>
-<tr><td>SurgeOSC</td><td>The Surge non-wavetable Oscillators</td><td>Completed</td></tr>
-<tr><td>SurgeWaveShaper</td><td>The waveshaper stage, including digital, tanh, warmers</td><td>Completed; Polyphonic</td></tr>
-<tr><td>SurgeWTOSC</td><td>The WaveTable Oscillator</td><td>Completed</td></tr>
-<tr><td>SurgeLFO</td><td>The powerful surge LFO</td><td>Completed</td></tr>
-<tr><td>SurgeVOC</td><td>The surge Vocoder stage</td><td>Completed</td></tr>
-<tr><td>SurgeBiquad</td><td>A single element of the Surge filter cascade</td><td>Completed</td></tr>
-</table>
-
-In addition to this list, we intend more filter configurations (the QuadFilter and FilterBank) as well as most likely
-a direct Surge patch player.
-
-## Developing these plugins
-
-We are basically following [the surge developer standards](https://github.com/surge-synthesizer/surge/blob/master/doc/Developer%20Guide.md) 
-just without the 3-space thing (we are using 4 spaces, no hard tabs) and using
-[the surge git protocols](https://github.com/surge-synthesizer/surge/blob/master/doc/git-howto.md). We have a `.clang-format` file for 
-your formatting pleasure also.
-
-We've started writing a [basic code setup guide](docs/arch.md).
-
-
-### Before you build
-
-Before you build either system you need to have the rack environment setup. 
-On windows, that means you need
-to install MSYS2 and a few other packages. On Mac, xcode-select and a few things.
-On Linux a few apt-gets.
-
-This is completely documented in the Rack manual:
-https://vcvrack.com/manual/Building.html
-
-If you have never built a rack plugin before, let us again suggest hopping on our slack in case you 
-get stuck. We build every commit windows, mac, and linux against V0.6.2 and regularly develop against v1.
-
-### Download Rack 1.0 and the Rack 1.0 SDK
-
-[This post from Andrew](https://community.vcvrack.com/t/rack-v1-development-blog/1149/501?u=baconpaul) explains
-how to download Rack.
-
-
-### Build the Plugins if you are already set up to develop Rack
-
-Presuming you have RACK_DIR set it's standard, just you need a git submodule
-
-**First Time**
+Finally, if you want to build these modules, they build using the 
+[standard Rack plugin building mechanism](https://vcvrack.com/manual/Building.html). Once your environment
+is configured, those steps are
 
 ```
-cd (working directory)
-git clone https://github.com/surge-synthesizer/surge-rack.git 
+git clone https://github.com/surge-synthesizer/surge-rack/
 cd surge-rack
 git submodule update --init --recursive
+export RACK_DIR=location-of-rack-SDK-or-source
 make dist
 ```
 
-This will result in a .zip file which you can place in your working directory
-
-**Subsequent Changes**
-
-```
-cd (working directory)/Rack/plugins/surge-rack
-(change code)
-make dist
-```
-
-### Using the scripts/buildutil.sh
-
-Like `build-osx.sh` in surge, I wrote a little script to make a clean area, do builds, etc... and actually
-download and run rack 1.0 configured in a way you want. The script is `scripts/buildutil.sh`. Here's a sample session. 
-You can set a variable `RACK_INSTALL_DIR` for the working copy if you want. Read the script to understand it really.
-
-**First Time Only**
-
-```
-cd (working directory)
-git clone https://github.com/surge-synthesizer/surge-rack.git 
-cd surge-rack
-git submodule update --init --recursive
-./scripts/buildutil.sh --get-rack
-```
-
-You know have rack and surge-rack ready to go
-
-**Build and run**
-
-```
-./scripts/buildutil.sh --build
-./scripts/buildutil.sh --install
-./scripts/buildutil.sh --run
-```
-
-there is also the shortcut `scripts/buildinstall.sh --bir` to do all 3; or `scripts/buildinstall.sh --br` to build and 
-run and only install the dll (not assets).
-
-
-
-## Updating your working copy
-
-The [the surge git protocols](https://github.com/surge-synthesizer/surge/blob/master/doc/git-howto.md) have full instructions
-but just as a refresher 
-
-**If you cloned from surge-synthesizer/surge-rack**
-
-```
-git checkout master
-git pull origin master
-```
-
-**If you have your own fork**
-
-*one time*
-
-```
-git remote add upstream https://github.com/surge-synthesizer/surge-rack.git
-```
-
-*When you want to update*
-
-```
-git checkout master
-git fetch usptream
-git reset upstream/master --hard
-git push origin
-```
-
-
-## What about rack 0.6.2
-
-For a while, when we weren't sure whether surge-rack would finish before rack 1.0, we were building these
-plugins for both versions with a spaghetti hell of ifdefs. We stopped that on May 19, but we checkpointed
-the code at the `checkpoint/last_working_062` branch if you want to check it out.
-
-Here at surge-rack we are super supportive of 1.0, think it is great, and appreciate the hard work. We plan to
-be 1.0 only. If for some reason you would like to backport to 0.6.2, please get in touch and we can talk about
-pull requests onto that branch.
 
 ## License and Copyright
 
