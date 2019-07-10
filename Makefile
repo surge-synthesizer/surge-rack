@@ -118,7 +118,7 @@ build/surge-data:
 	cp -R surge/resources/data/patches_factory build/surge-data/patches_factory
 	cp -R surge/resources/data/patches_3rdparty build/surge-data/patches_3rdparty	
 
-DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches README.md build/surge-data
+DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data
 
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk

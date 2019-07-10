@@ -105,37 +105,6 @@ struct SurgeModuleCommon : public rack::Module {
     std::vector<std::shared_ptr<SurgeRackParamBinding>> pb;
     ParamCache pc;
 
-    virtual void onAdd() override {
-        if(model && model->presetPaths.size() == 0)
-        {
-            std::string presetBase = std::string("res/presets/") + getName();
-            std::string presetDir = rack::asset::plugin(pluginInstance, presetBase.c_str());
-            std::vector<std::string> names;
-            
-            fs::path presetPath = fs::path( presetDir.c_str() );
-            if( ! fs::is_directory( presetPath ) )
-            {
-                return;
-            }
-            rack::INFO( "[SurgeRack] %s loading presets from %s", getName().c_str(), presetDir.c_str() );
-            for( auto &d : fs::directory_iterator( presetDir ) )
-            {
-                names.push_back( d.path().generic_string().c_str());
-            }
-
-            std::sort( names.begin(), names.end() );
-            
-            for( auto &n : names )
-            {
-                model->presetPaths.push_back(n);
-            }
-
-            //model->presetPaths.push_back(rack::asset::plugin(pluginInstance, "res/presets/ADSR/One.vcvm" ) );
-            //model->presetPaths.push_back(rack::asset::plugin(pluginInstance, "res/presets/ADSR/Two.vcvm" ) );
-        }
-    }
-
-
     float lastBPM = -1, lastClockCV = -100;
     float dPhase = 0;
     inline bool updateBPMFromClockCV(float clockCV, float sampleTime, float sampleRate) {
