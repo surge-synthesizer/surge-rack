@@ -61,7 +61,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
-
+        storage->refresh_wtlist();
+        rack::INFO("[SurgeWTOSC] wt_list.size() = %d", storage->wt_list.size());
+        
         for( auto ci : storage->wtCategoryOrdering )
         {
             PatchCategory pc = storage->wt_category[ci];
