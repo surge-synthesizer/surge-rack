@@ -32,7 +32,7 @@ make dist
 ## License and Copyright
 
 This software is licensed under the Gnu Public License v3. It is a derived work of both Surge (which is GPL3)
-and VCVRack 1.0 (which is VCV3). It contains the Encode font which is licensed under OpenFontLicense 1.1.
+and VCVRack 1.0 (which is GPL3). It contains the Encode font which is licensed under OpenFontLicense 1.1.
 Copyright to this software is held by the authors with authorship indicated by the github transaction log.
 
 Copyright 2019, Various authors.
