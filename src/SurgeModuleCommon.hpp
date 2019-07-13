@@ -169,13 +169,17 @@ struct SurgeModuleCommon : public rack::Module {
         Parameter *oap = start;
         while( oap <= endIncluding )
         {
-            if( oap->id > max_id ) max_id = oap->id;
-            if( oap->id < min_id ) min_id = oap->id;
+            if( oap->id >= 0 )
+            {
+                if( oap->id > max_id ) max_id = oap->id;
+                if( oap->id < min_id ) min_id = oap->id;
+            }
             oap++;
         }
 
         storage_id_start = min_id;
-        storage_id_end = max_id + 1;        
+        storage_id_end = max_id + 1;
+        rack::INFO( "[SurgeRack] Storage Ranges are %d -> %d", storage_id_start, storage_id_end );
     }
     
     std::unique_ptr<SurgeStorage> storage;
