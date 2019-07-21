@@ -136,7 +136,8 @@ jobs:
       gitHubConnection: surge-rackupdater
       repositoryName: surge-synthesizer/surge-rack
       action: create
-      tag: Nightly
+      tagSource: auto
+      tag: '$(Build.SourceBranch)'`
       target: '$(Build.SourceVersion)'
       addChangeLog: false
       releaseNotesFile: $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
