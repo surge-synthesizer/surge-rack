@@ -137,7 +137,7 @@ jobs:
       repositoryName: surge-synthesizer/surge-rack
       action: create
       tagSource: auto
-      tag: `$(Build.SourceBranch)`
+      tag: '$(Build.SourceBranch)'
       target: '$(Build.SourceVersion)'
       addChangeLog: false
       releaseNotesFile: $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
