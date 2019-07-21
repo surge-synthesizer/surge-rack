@@ -1,14 +1,18 @@
 #!/bin/bash
 
+branch=`git rev-parse --abbrev-ref HEAD`
+
+if [ $branch == "master" ]; then
+  message="As such these are nightly builds and may be unstable."
+else
+  message="This is an officially supported release point of this software."
+fi
+
 cat <<- EOH
 # Automatically generated SurgeRack release
 
-This release is automatically generated every time we push surge-rack
-to master. As such it is the latest version of our code and may be
-unstable, unusable, unsuitable for human consumption, and so on.
-
-These assets were built against
-https://vcvrack.com/downloads/Rack-SDK-1.0.0.zip
+These assets are built against branch $branch.
+$message
 
 The build date and most recent commits are:
 

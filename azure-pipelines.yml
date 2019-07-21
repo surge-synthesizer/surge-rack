@@ -2,6 +2,7 @@
 
 trigger:
 - master
+- release/*
 
 pr:
 - master
@@ -51,6 +52,7 @@ jobs:
   - bash: |
       ./scripts/resetversion.sh
     displayName: Update Version in plugins.json
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 
 
   - bash: |
@@ -91,7 +93,7 @@ jobs:
 
 - job: UpdateGithubRelease
   dependsOn: Build
-  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/azure-test')))
+  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release')))
 
   steps:
 
@@ -111,22 +113,29 @@ jobs:
       targetPath: $(Build.ArtifactStagingDirectory)
 
   - bash: |
-     ls -l $(Build.ArtifactStagingDirectory)
-     export EXTEND_TAG=`date "+%Y%m%d"`
-     for file in $(Build.ArtifactStagingDirectory)/*.zip; do mv "$file" "${file/.zip/-${EXTEND_TAG}.zip}"; done
-     ls -l $(Build.ArtifactStagingDirectory)         
-    displayName: Tag asset names with Date
-
-  - bash: |
      scripts/release-notes.sh > $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
     displayName: Fake up release notes
 
   - task: GitHubRelease@0
-    displayName: "Update Github Release"
+    displayName: "Update Github Nightly"
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       gitHubConnection: surge-rackupdater
       repositoryName: surge-synthesizer/surge-rack
       action: edit
+      tag: Nightly
+      target: '$(Build.SourceVersion)'
+      addChangeLog: false
+      releaseNotesFile: $(Build.ArtifactStagingDirectory)/ReleaseNotes.md
+      assets: $(Build.ArtifactStagingDirectory)/*.zip
+
+  - task: GitHubRelease@0
+    displayName: "Update Github Release"
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/release')
+    inputs:
+      gitHubConnection: surge-rackupdater
+      repositoryName: surge-synthesizer/surge-rack
+      action: create
       tag: Nightly
       target: '$(Build.SourceVersion)'
       addChangeLog: false
