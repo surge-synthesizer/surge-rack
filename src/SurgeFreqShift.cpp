@@ -24,7 +24,7 @@ struct SurgeFreqShiftWidget : SurgeModuleWidgetCommon {
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 14);
-            nvgFillColor(vg, surgeBlue() );
+            nvgFillColor(vg, panelLabel() );
             nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE );
             nvgText( vg, padFromEdge, y0 + portY / 2, lab[i].c_str(), NULL );
 
@@ -87,7 +87,7 @@ SurgeFreqShiftWidget::SurgeFreqShiftWidget(SurgeFreqShiftWidget::M *module)
                      module ? &(module->pb[i]->valCache) : nullptr,
                      12,
                      NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                     surgeWhite()
+                     parameterValueText()
                      ));
 
 

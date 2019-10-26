@@ -73,7 +73,7 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
             nvgBeginPath(vg);
             nvgFontFaceId(vg,fontId(vg));
             nvgFontSize(vg, 12);
-            nvgFillColor(vg, surgeWhite());
+            nvgFillColor(vg, ioRegionText());
             nvgTextAlign(vg,NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
             nvgText(vg, xc, yc, lab[i].c_str(), NULL );
         }
@@ -81,7 +81,7 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
         nvgBeginPath( vg );
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 11);
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgText( vg, UIW - SCREW_WIDTH * 1.2, SCREW_WIDTH + padMargin, "uni", NULL );
         nvgText( vg, UIW - SCREW_WIDTH * 1.2, SCREW_WIDTH + padMargin + 11, "bi", NULL );
@@ -111,14 +111,6 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
             rack::Vec p = envPoint(i);
             rack::Vec s = envSize(i);
 
-            // Obviously kill this when we are done
-            //nvgBeginPath(vg);
-            //nvgRect(vg, p.x, p.y, s.x, s.y );
-            //nvgFillColor(vg, nvgRGB( 255, i * 40, 255 ) );
-            //nvgFill(vg);
-            //nvgStrokeColor( vg, nvgRGB( 0, 0, 0 ) );
-            //nvgStroke(vg);
-
             // OK so rotated text
             nvgBeginPath(vg);
             nvgSave(vg);
@@ -127,7 +119,7 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 13);
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-            nvgFillColor(vg, surgeBlue() );
+            nvgFillColor(vg, panelLabel() );
             nvgText( vg, 0, 0, envlabel[i].c_str(), NULL );
 
             float bounds[4];
@@ -213,7 +205,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
     addChild(TextDisplayLight::create(rack::Vec( box.size.x / 2 + 2 * padMargin, rateTop ),
                                       rack::Vec( box.size.x / 2 - 3 * padMargin, portY-2 ),
                                       module ? &(module->pb[0]->valCache) : nullptr,
-                                      14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, surgeWhite() ) );
+                                      14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, parameterValueText() ) );
     
     
     std::vector<float> mpd = { 3, 2, 4 };
@@ -232,7 +224,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
         addChild(TextDisplayLight::create(rack::Vec(xpos, ypos - 2 + portY + 2*padMargin ),
                                           rack::Vec(box.size.x/3 - 2 * padFromEdge, 14 ),
                                           module ? &(module->pb[mpd[i]]->valCache) : nullptr,
-                                          12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, surgeWhite()));
+                                          12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, parameterValueText()));
     }
 
     addChild(rack::createLight<rack::SmallLight<rack::BlueLight>>(rack::Vec(box.size.x/2 + 25, envPos),
@@ -264,7 +256,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
         addChild(TextDisplayLight::create(rack::Vec(xstart + padMargin, ep.y + portY + padMargin  ),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
                                           module ? &(module->pb[idx]->valCache) : nullptr,
-                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, surgeWhite()));
+                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, parameterValueText()));
     }
 }
 

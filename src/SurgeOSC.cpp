@@ -28,7 +28,7 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
             vg, x0 + ioMargin, orangeLine + ioMargin,
             ioRegionWidth, box.size.y - orangeLine - 2 * ioMargin);
 
-        nvgFillColor(vg, surgeWhite());
+        nvgFillColor(vg, ioRegionText());
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgSave(vg);
@@ -64,7 +64,7 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 15);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgText(vg, padFromEdge, pitchLY, "Pitch", NULL );
 
         float xt = pitchCtrlX + surgeRoosterX + portX + 2 * padMargin + 12;
@@ -73,14 +73,14 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgText(vg, xt, pitchY + 2, "f", NULL );
 
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgText(vg, xt, pitchY + surgeRoosterY - 4, "n", NULL );
 
         
@@ -159,7 +159,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                  module ? &(module->pitch0DisplayCache) : nullptr,
                  14,
                  NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                 surgeWhite()
+                 parameterValueText()
                  ));
 
     for (int i = 0; i < n_osc_params; ++i) {
@@ -180,7 +180,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
         addChild(TextDisplayLight::create(
                      rack::Vec(xt+2, yp+1 ), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
-                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, surgeWhite()));
+                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText()));
     }
 }
 
