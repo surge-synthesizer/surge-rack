@@ -116,6 +116,11 @@ struct SurgeModuleCommon : public rack::Module {
         float samplesPerBeat = 1.0/dPhase;
         float secondsPerBeat = samplesPerBeat / sampleRate;
         float beatsPerMinute = 60.0 / secondsPerBeat;
+
+        // Folks can put in insane BPMs if they mis-wire their rack. Lets
+        // put in a clamp for well beyond the usable range
+        beatsPerMinute = rack::clamp(beatsPerMinute, 1.f, 1024.f);
+        
         lastBPM = beatsPerMinute;
 
         if( storage.get() )
