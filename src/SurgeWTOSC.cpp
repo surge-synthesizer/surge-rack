@@ -33,7 +33,7 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 15);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgText(vg, padFromEdge + 10, pitchY + surgeRoosterY / 2, "Pitch", NULL );
 
         float bounds[4];
@@ -52,14 +52,14 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgText(vg, xt, pitchY + 2, "f", NULL );
 
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 10);
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgText(vg, xt, pitchY + surgeRoosterY - 4, "n", NULL );
 
         xt += 7 + padMargin;
@@ -82,7 +82,7 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
             nvgBeginPath(vg);
             nvgFontFaceId(vg,fontId(vg));
             nvgFontSize(vg,12);
-            nvgFillColor(vg, surgeBlue());
+            nvgFillColor(vg, panelLabel());
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
             nvgText(vg, xpf(i), wtSelY - 14, cil[i].c_str(), NULL );
         }
@@ -148,7 +148,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                  module ? &(module->pitch0DisplayCache) : nullptr,
                  14,
                  NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                 surgeWhite()
+                 parameterValueText()
                  ));
 
     for (int i = 0; i < n_osc_params; ++i) {
@@ -169,7 +169,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
         addChild(TextDisplayLight::create(
                      rack::Vec(xt+2, yp+1 ), rack::Vec(colOneEnd - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
-                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, surgeWhite()));
+                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText()));
     }
 
     float c2w = (box.size.x - colOneEnd) / 2 + colOneEnd;
@@ -191,7 +191,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                      rack::Vec(xp, yp),
                      rack::Vec(box.size.x - colOneEnd - 2 * padMargin, 15 ),
                      module ? &(module->wtInfoCache[i]) : nullptr,
-                     13, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite() ));
+                     13, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, parameterValueText() ));
 
         
     }
@@ -225,7 +225,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                  rack::Vec(xTPos + 4, yTPos),
                  rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
                  module ? &(module->wtCategoryName) : nullptr,
-                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, surgeWhite()));
+                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, parameterValueText()));
 
     for( int i=0; i<7; ++i )
     {
@@ -233,6 +233,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
         else if( i == 4 ) yTPos += 16 + padMargin;
         else yTPos += 14 + padMargin;
 
+        // FIXME - get this color parameterized
         float fs = 15 - ( i - 3 ) * ( i - 3 ) / 3.0;
         float colR = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);
         float colG = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);

@@ -43,7 +43,7 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
 
         int iotxt = box.size.y - ioMargin - 1.5;
         nvgBeginPath(vg);
-        nvgFillColor(vg, surgeWhite());
+        nvgFillColor(vg, ioRegionText());
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
@@ -63,7 +63,7 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
             nvgFontSize(vg, 20);
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
 
-            nvgFillColor(vg, surgeBlue());
+            nvgFillColor(vg, panelLabel());
             nvgText(vg, padFromEdge  + 5, ADSRYPos(i), lab[i].c_str(), NULL);
             drawTextBGRect(vg, padFromEdge * 2 + 12, ADSRYPos(i) + 1,
                                        box.size.x - padFromEdge * 3 - 20,
@@ -78,7 +78,7 @@ struct SurgeADSRWidget : SurgeModuleWidgetCommon {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
-        nvgFillColor(vg, surgeBlue());
+        nvgFillColor(vg, panelLabel());
         nvgText(vg, box.size.x - modeXOff - padMargin, modeYPos + 21 / 2.0, "Mode", NULL);
 
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
@@ -115,7 +115,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
             rack::Vec(padFromEdge * 2 + 15, ADSRYPos(i) +2),
             rack::Vec(box.size.x - padFromEdge * 3 - 20, adsrTextH),
             module ? &(module->pb[M::A_PARAM + i]->valCache ) : nullptr,
-            13, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, surgeWhite()));
+            13, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, parameterValueText()));
     }
 
     for (int i = M::A_PARAM; i <= M::R_PARAM; ++i) {

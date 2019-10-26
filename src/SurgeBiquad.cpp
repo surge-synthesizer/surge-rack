@@ -31,7 +31,7 @@ struct SurgeBiquadWidget : SurgeModuleWidgetCommon {
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 14);
-            nvgStrokeColor(vg, surgeBlue());
+            nvgStrokeColor(vg, panelLabel());
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
             nvgText( vg, b.pos.x, b.pos.y, labels[i].c_str(), NULL );
 
@@ -95,7 +95,7 @@ SurgeBiquadWidget::SurgeBiquadWidget(SurgeBiquadWidget::M *module)
                      module ? &(module->pStrings[i] ) : nullptr,
                      12,
                      NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE,
-                     surgeWhite()));
+                     parameterValueText()));
 
 
     }

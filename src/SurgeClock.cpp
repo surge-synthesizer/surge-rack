@@ -16,7 +16,7 @@ struct SurgeClockWidget : SurgeModuleWidgetCommon {
     int topOfInput = RACK_HEIGHT - 5 * padMargin - 3 * labelHeight - 2 * portY + textHeight;
     
     void addLabel(NVGcontext *vg, int yp, const char *label,
-                  NVGcolor col = surgeBlue()) {
+                  NVGcolor col = panelLabel()) {
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         nvgFontFaceId(vg, fontId(vg));
@@ -41,9 +41,9 @@ struct SurgeClockWidget : SurgeModuleWidgetCommon {
                                    2 * portY + 2 * labelHeight +
                                        4 * padMargin);
         yPos += padMargin;
-        addLabel(vg, yPos, "CV", surgeWhite());
+        addLabel(vg, yPos, "CV", ioRegionText());
         yPos += labelHeight + portY + padMargin;
-        addLabel(vg, yPos, "Gate", surgeWhite());
+        addLabel(vg, yPos, "Gate", ioRegionText());
     }
 };
 
@@ -75,7 +75,7 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
                  module ? &(module->bpmCache) : nullptr,
                  11,
                  NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-                 surgeWhite()
+                 parameterValueText()
                  ));
 
     addParam(rack::createParam<SurgeKnobRooster>(
@@ -89,7 +89,7 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
                  module ? &(module->pwCache) : nullptr,
                  11,
                  NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-                 surgeWhite()
+                 parameterValueText()
                  ));
 
 

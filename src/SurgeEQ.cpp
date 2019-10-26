@@ -32,7 +32,7 @@ struct SurgeEQWidget : SurgeModuleWidgetCommon {
                 nvgBeginPath(vg);
                 nvgMoveTo(vg, bandRegion * (i+1), bandY0 + bandLOffset);
                 nvgLineTo(vg, bandRegion * (i+1), bandY0 + 3 * bandCHeight + bandLOffset - 10 );
-                nvgStrokeColor(vg, backgroundDarkGray());
+                nvgStrokeColor(vg, panelSeparator() );
                 nvgStrokeWidth(vg, 1 );
                 nvgStroke(vg);
             }
@@ -43,7 +43,7 @@ struct SurgeEQWidget : SurgeModuleWidgetCommon {
                 nvgBeginPath(vg);
                 nvgFontFaceId(vg, fontId(vg));
                 nvgFontSize(vg,12);
-                nvgStrokeColor(vg,surgeBlue());
+                nvgStrokeColor(vg, panelLabel());
                 nvgText(vg, bandRegion * ( i + 0.5 ), yPos, lab[j].c_str(), NULL );
 
                 yPos += labelHeight + padMargin + portY + padMargin;
@@ -104,7 +104,7 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
             addChild(TextDisplayLight::create(rack::Vec( i * bandRegion + padFromEdge, yPos ),
                                               rack::Vec( bandRegion - 2 * padFromEdge, textHeight ),
                                               module ? &(module->pb[parImd]->valCache) : nullptr,
-                                              12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, surgeWhite() ) );
+                                              12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, parameterValueText() ) );
 
         }
     }
@@ -117,7 +117,7 @@ SurgeEQWidget::SurgeEQWidget(SurgeEQWidget::M *module)
                                                   masterGainY + labelHeight + padMargin + ( portY-textHeight)/2),
                                        rack::Vec(box.size.x/2 - 2 * portX - 3 * padMargin, textHeight ),
                                        module ? &(module->pb[9]->valCache) : nullptr,
-                                       12, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, surgeWhite() ) );
+                                       12, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, parameterValueText() ) );
 
     
 }

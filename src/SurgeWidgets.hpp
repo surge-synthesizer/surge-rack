@@ -94,7 +94,7 @@ struct TextDisplayLight : public rack::widget::Widget
     create(rack::Vec pos, rack::Vec size, stringGetter_t gf,
            stringDirtyGetter_t dgf, int fsize = 15,
            int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-           NVGcolor color = nvgRGBA(255, 144, 0, 255)) {
+           NVGcolor color = SurgeStyle::parameterNameText()) {
         TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
         res->getfn = gf;
         res->dirtyfn = dgf;
@@ -114,7 +114,7 @@ struct TextDisplayLight : public rack::widget::Widget
            const StringCache *sc,
            int fsize = 15,
            int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-           NVGcolor color = nvgRGBA(255, 144, 0, 255)) {
+           NVGcolor color = SurgeStyle::parameterNameText() ) {
         if( sc )
             return TextDisplayLight::create(pos, size, sc->getValue, sc->getDirty,
                                             fsize, align, color);

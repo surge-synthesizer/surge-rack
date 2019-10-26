@@ -15,7 +15,7 @@ struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
     int topOfInput = orangeLine + padMargin;
     
     void addLabel(NVGcontext *vg, int yp, const char *label,
-                  NVGcolor col = surgeBlue()) {
+                  NVGcolor col = panelLabel()) {
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         nvgFontFaceId(vg, fontId(vg));
@@ -47,7 +47,7 @@ struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
-        nvgFillColor(vg, surgeWhite());
+        nvgFillColor(vg, ioRegionText());
         nvgText(vg, box.size.x / 2, box.size.y - ioMargin - 1.5, "Noise", NULL);
 
 

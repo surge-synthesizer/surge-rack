@@ -77,7 +77,7 @@ struct SurgeChorusWidget : SurgeModuleWidgetCommon {
                 nvgBeginPath(vg);
                 nvgFontFaceId(vg, fontId(vg));
                 nvgFontSize(vg, 12);
-                nvgFillColor(vg, surgeBlue());
+                nvgFillColor(vg, panelLabel());
                 nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT );
                 nvgText(vg, cb.pos.x, cb.pos.y + cb.size.y / 2, labels[i].c_str(), NULL );
 
@@ -85,7 +85,7 @@ struct SurgeChorusWidget : SurgeModuleWidgetCommon {
                 nvgMoveTo( vg, cb.pos.x + 30, cb.pos.y + cb.size.y / 2);
                 nvgLineTo( vg, boxw - padFromEdge - upperTextWidth + 4, cb.pos.y + cb.size.y / 2 );
                 nvgStrokeWidth(vg, 1 );
-                nvgStrokeColor(vg, surgeBlue());
+                nvgStrokeColor(vg, panelLabel());
                 nvgStroke(vg);
                 
                 float rx = boxw - padFromEdge - upperTextWidth;
@@ -106,7 +106,7 @@ struct SurgeChorusWidget : SurgeModuleWidgetCommon {
                 nvgFontFaceId(vg, fontId(vg));
                 nvgFontSize(vg, 12);
                 nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-                nvgFillColor(vg, surgeBlue() );
+                nvgFillColor(vg, panelLabel());
                 nvgText( vg, 0, 0, labels[i].c_str(), NULL );
                 
                 float bounds[4];
@@ -192,7 +192,7 @@ SurgeChorusWidget::SurgeChorusWidget(SurgeChorusWidget::M *module)
                      module ? &(module->pb[paramId[i]]->valCache ) : nullptr,
                      12,
                      NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                     surgeWhite()));
+                     parameterValueText()));
 
     }
 
@@ -212,7 +212,7 @@ SurgeChorusWidget::SurgeChorusWidget(SurgeChorusWidget::M *module)
                      module ? &(module->pb[paramId[i]]->valCache ) : nullptr,
                      12,
                      NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE,
-                     surgeWhite()));
+                     parameterValueText()));
 
     }
 

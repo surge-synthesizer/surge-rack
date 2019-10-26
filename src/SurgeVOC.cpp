@@ -39,7 +39,7 @@ struct SurgeVOCWidget : SurgeModuleWidgetCommon {
         drawBlueIORect(vg, box.size.x/2-ioRegionWidth/2, modY0,
                        ioRegionWidth, boxHt );
 
-        nvgFillColor(vg, surgeWhite());
+        nvgFillColor(vg, ioRegionText());
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 12);
         nvgSave(vg);
@@ -138,7 +138,8 @@ SurgeVOCWidget<effectType>::SurgeVOCWidget(SurgeVOCWidget<effectType>::M *module
         addChild(TextDisplayLight::create(rack::Vec(tx , yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, textAreaHeight ),
                                           module ? &(module->pb[pa]->valCache) : nullptr,
-                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));
+                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, parameterValueText()
+                     ));
         
     }
 }

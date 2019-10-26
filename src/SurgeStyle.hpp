@@ -23,62 +23,83 @@ struct InternalFontMgr {
 };
 
 struct SurgeStyle {
-    static NVGcolor surgeBlue() { return nvgRGBA(18, 52, 99, 255); }
-    static NVGcolor surgeBlueBright() {
+    static NVGcolor x_surgeBlue() { return nvgRGBA(18, 52, 99, 255); }
+    static NVGcolor x_surgeBlueBright() {
         return nvgRGBA(18 * 1.5, 52 * 1.5, 99 * 1.8, 255);
     }
-    static NVGcolor surgeBlueVeryBright() {
+    static NVGcolor x_surgeBlueVeryBright() {
         return nvgRGBA(18 * 1.8, 52 * 1.8, 99 * 2.1, 255);
     }
-    static NVGcolor surgeBlueDark() {
+    static NVGcolor x_surgeBlueDark() {
         return nvgRGBA(18 * 0.6, 52 * 0.6, 99 * 0.8, 255);
     }
 
-    static NVGcolor surgeWhite() { return nvgRGBA(255, 255, 255, 255); }
-    static NVGcolor surgeOrange() { return nvgRGBA(255, 144, 0, 255); }
-    static NVGcolor surgeOrangeMedium() { return nvgRGBA(227, 112, 8, 255); }
-    static NVGcolor surgeOrangeDark() { return nvgRGBA(101, 50, 3, 255); }
+    static NVGcolor x_surgeWhite() { return nvgRGBA(255, 255, 255, 255); }
+    static NVGcolor x_surgeOrange() { return nvgRGBA(255, 144, 0, 255); }
+    static NVGcolor x_surgeOrangeMedium() { return nvgRGBA(227, 112, 8, 255); }
+    static NVGcolor x_surgeOrangeDark() { return nvgRGBA(101, 50, 3, 255); }
 
-    static NVGcolor textBG() { return nvgRGBA(27, 28, 32, 255); }
-    static NVGcolor textBGBright() { return nvgRGBA(60, 60, 72, 255); }
-    static NVGcolor textBGVeryBright() { return nvgRGBA(90, 90, 112, 255); }
-
-    static NVGcolor backgroundDarkGray() { return nvgRGBA(175, 176, 182, 255); }
-    static NVGcolor backgroundGray() { return nvgRGBA(205, 206, 212, 255); }
-    static NVGcolor backgroundGrayTrans() { return nvgRGBA(205, 206, 212, 0); }
-    static NVGcolor backgroundLightGray() {
+    static NVGcolor x_backgroundDarkGray() { return nvgRGBA(175, 176, 182, 255); }
+    static NVGcolor x_backgroundGray() { return nvgRGBA(205, 206, 212, 255); }
+    static NVGcolor x_backgroundGrayTrans() { return nvgRGBA(205, 206, 212, 0); }
+    static NVGcolor x_backgroundLightGray() {
         return nvgRGBA(215, 216, 222, 255);
     }
-    static NVGcolor backgroundLightOrange() {
+    static NVGcolor x_backgroundLightOrange() {
         return nvgRGBA(239, 210, 172, 255);
     }
 
-    static NVGcolor buttonBoxPressedStroke() {
-        return nvgRGB(0xf0, 0x8f, 0x35);
-    }
-    static NVGcolor buttonBoxPressedFill() {
-        return nvgRGB(0xf1, 0xb8, 0x7d);
-    }
-    static NVGcolor buttonBoxPressedText() {
-        return nvgRGB(0x1a, 0x34, 0x60);
-    }
+    /*
+    ** These are the logical colors we need
+    */
+    static NVGcolor panelBackground() { return x_backgroundGray(); }
+    static NVGcolor panelBackgroundOutline() { return x_backgroundDarkGray(); }
+    static NVGcolor panelFooter() { return x_surgeOrange(); }
+    static NVGcolor panelFooterOutline() { return x_surgeOrangeMedium(); }
+    static NVGcolor panelFooterSeparator() { return x_surgeBlue(); }
+    static NVGcolor panelLabel() { return x_surgeBlue(); }
+    static NVGcolor panelLabelRule() { return x_surgeBlue(); }
+    static NVGcolor panelTitle() { return x_surgeBlue(); }
+    static NVGcolor panelSeparator() { return x_backgroundDarkGray(); }
+    
+    static NVGcolor ioRegionText() { return x_surgeWhite(); }
+    static NVGcolor ioRegionBackgroundGradientStart() { return x_surgeBlueBright(); }
+    static NVGcolor ioRegionBackgroundGradientEnd() { return x_surgeBlue(); }
+    static NVGcolor ioRegionBorderHighlight() { return x_surgeBlueVeryBright(); }
+    static NVGcolor ioRegionBorder() { return x_surgeBlueDark(); }
+    
+    static NVGcolor parameterValueText() { return x_surgeWhite(); }
+    static NVGcolor parameterNameText() { return x_surgeOrange(); }
 
-    static NVGcolor buttonBoxOpenStroke() {
-        return nvgRGB(0xbd, 0xbb, 0xac);
-    }
-    static NVGcolor buttonBoxOpenFill() {
-        return nvgRGB(0xf0, 0xee, 0xdc);
-    }
-    static NVGcolor buttonBoxOpenText() {
-        return nvgRGB(0xc8, 0x7b, 0x2c);
-    }
+    static NVGcolor textBGGradientStart() { return nvgRGBA(60, 60, 72, 255); }
+    static NVGcolor textBGGradientEnd() { return nvgRGBA(27, 28, 32, 255); }
+    static NVGcolor textBGBorderHighlight() { return nvgRGBA(90, 90, 112, 255); }
+    static NVGcolor textBGBorder() { return x_surgeOrange(); }
 
-    static NVGcolor buttonBoxContainerStroke() {
-        return nvgRGB(0xc8, 0x7b, 0x2c);
-    }
-    static NVGcolor buttonBoxContainerFill() {
-        return nvgRGB(0x37, 0x36, 0x32);
-    }
+
+    static NVGcolor buttonBankSelectedGradientTop() { return nvgRGB( 0xFF, 0x9A, 0x10 ); }
+    static NVGcolor buttonBankSelectedGradientMid() { return nvgRGB( 0xF0, 0xAD, 0x53 ); }
+    static NVGcolor buttonBankSelectedGradientEnd() { return nvgRGB( 0xFF, 0x9A, 0x10 ); }
+    static NVGcolor buttonBankSelectedOutline() { return nvgRGBA( 0xFF, 0x21, 0x00, 90 ); }
+
+    static NVGcolor buttonBankSelectedLightGradientTop() { return nvgRGB( 0x2f, 0x87, 0xFF ); }
+    static NVGcolor buttonBankSelectedLightGradientEnd() { return nvgRGB( 0x30, 0x88, 0xFF ); }
+    static NVGcolor buttonBankSelectedLightOutline() { return nvgRGB( 0, 0, 0 ); }
+
+    static NVGcolor buttonBankSelectedLabelGlow() { return nvgRGB( 0xFF, 0xFF, 0xFF ); }
+    static NVGcolor buttonBankSelectedLabel() { return nvgRGB( 0x00, 0x00, 0x00 ); }
+
+    static NVGcolor buttonBankUnselectedGradientTop() { return nvgRGB( 0xF2, 0xA6, 0x3E ); }
+    static NVGcolor buttonBankUnselectedGradientMid() { return nvgRGB( 0xFF, 0x99, 0x0D ); }
+    static NVGcolor buttonBankUnselectedGradientEnd() { return nvgRGB( 0xFF, 0x9E, 0x1A ); }
+    static NVGcolor buttonBankUnselectedOutline() { return nvgRGB( 0xFD, 0x94, 0x05 ); }
+
+    static NVGcolor buttonBankUnselectedLightFill() { return nvgRGB( 0x5C, 0x36, 0x03 ); }
+    static NVGcolor buttonBankUnselectedLightOutline() { return nvgRGB( 0, 0, 0 ); }
+
+    static NVGcolor buttonBankUnselectedLabel() { return nvgRGB( 0x00, 0x00, 0x00 ); }
+
+    static NVGcolor buttonBankDropShadow(){ return nvgRGB( 0x5C, 0x36, 0x03 ); }
 
     static const char *fontFace() {
         return "res/EncodeSansSemiCondensed-Medium.ttf";
@@ -186,7 +207,7 @@ struct SurgeStyle {
                 box.size.y - orangeLine - 2 * ioMargin,
                 (i == 0) ? 0 : 1);
 
-            nvgFillColor(vg, surgeWhite());
+            nvgFillColor(vg, ioRegionText());
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 12);
             if (i == 0) {
@@ -243,7 +264,7 @@ struct SurgeStyle {
                 boxHt,
                 (i == 0) ? 0 : 1);
 
-            nvgFillColor(vg, surgeWhite());
+            nvgFillColor(vg, ioRegionText());
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 12);
             nvgSave(vg);
@@ -287,7 +308,7 @@ struct SurgeStyle {
             nvgSave(vg);
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 10);
-            nvgFillColor(vg, surgeWhite() );
+            nvgFillColor(vg, ioRegionText() );
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
             nvgText(vg, x + + portX / 2 + padMargin, y + padMargin, "bpm cv", NULL );
             nvgRestore(vg);
@@ -302,7 +323,7 @@ struct SurgeStyle {
             nvgFontSize(vg, 10);
             nvgTranslate(vg, x + padMargin + portX + clockPad - 10, y );
             nvgRotate( vg, M_PI/2 );
-            nvgFillColor(vg, surgeWhite() );
+            nvgFillColor(vg, ioRegionText() );
             nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
             nvgText(vg, padMargin, 0, "bpm cv", NULL );
             nvgRestore(vg);
@@ -316,7 +337,7 @@ struct SurgeStyle {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 14);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgFillColor( vg, surgeBlue());
+        nvgFillColor( vg, panelLabel());
         nvgText( vg, padFromEdge, y, label, NULL );
 
         float bounds[4];
@@ -330,7 +351,7 @@ struct SurgeStyle {
         nvgBeginPath(vg);
         nvgMoveTo(vg, xp, yp );
         nvgLineTo(vg, box.size.x - padFromEdge, yp );
-        nvgStrokeColor( vg, surgeBlue() );
+        nvgStrokeColor( vg, panelLabelRule() );
         nvgStrokeWidth( vg, 1 );
         nvgStroke( vg );
         return y + h;
@@ -341,7 +362,7 @@ struct SurgeStyle {
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, size);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
-        nvgFillColor( vg, surgeBlue());
+        nvgFillColor( vg, panelLabel());
         nvgText( vg, x0 + w/2, y0, label, NULL );
 
         float bounds[4];
@@ -354,14 +375,14 @@ struct SurgeStyle {
         nvgBeginPath(vg);
         nvgMoveTo(vg, x0, yp);
         nvgLineTo(vg, bounds[0] - padMargin, yp);
-        nvgStrokeColor( vg, surgeBlue() );
+        nvgStrokeColor( vg, panelLabelRule() );
         nvgStrokeWidth( vg, 1 );
         nvgStroke(vg);
 
         nvgBeginPath(vg);
         nvgMoveTo(vg, bounds[2] + padMargin, yp);
         nvgLineTo(vg, x0 + w, yp);
-        nvgStrokeColor( vg, surgeBlue() );
+        nvgStrokeColor( vg, panelLabelRule() );
         nvgStrokeWidth( vg, 1 );
         nvgStroke(vg);
 
@@ -371,7 +392,7 @@ struct SurgeStyle {
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, fs);
-        nvgFillColor(vg, surgeBlue() );
+        nvgFillColor(vg, panelLabel() );
         nvgTextAlign(vg, al );
         nvgText( vg, x, y, label, NULL );
     }
@@ -383,7 +404,7 @@ struct SurgeStyle {
         nvgLineTo(vg, x0, y1-radius);
         nvgArcTo(vg, x0, y1, x0+radius, y1, radius);
         nvgLineTo(vg, x1, y1);
-        nvgStrokeColor(vg, surgeBlue());
+        nvgStrokeColor(vg, panelLabelRule());
         nvgStrokeWidth(vg, 1);
         nvgStroke(vg);
     }

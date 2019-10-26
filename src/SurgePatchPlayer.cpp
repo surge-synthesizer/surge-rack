@@ -61,7 +61,7 @@ struct SurgePatchPlayerWidget : public virtual SurgeModuleWidgetCommon {
         drawBlueIORect(vg, box.size.x/2 - portX / 2 - padMargin, orangeLine + ioMargin,
                        portX + 2 * padMargin, box.size.y - orangeLine - 2 * ioMargin );
         nvgBeginPath(vg);
-        nvgFillColor(vg, surgeWhite() );
+        nvgFillColor(vg, ioRegionText() );
         nvgFontFaceId(vg, fontId(vg) );
         nvgFontSize(vg, 11);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM );
@@ -87,7 +87,7 @@ struct SurgePatchPlayerWidget : public virtual SurgeModuleWidgetCommon {
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 12);
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
-            nvgFillColor( vg, surgeBlue());
+            nvgFillColor( vg, panelLabel());
             nvgText( vg, xc + w/2, yc, lb.c_str(), NULL );
 
         }
@@ -140,19 +140,19 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
                  rack::Vec(padMargin, SCREW_WIDTH + padMargin ),
                  rack::Vec(box.size.x - 2 * padMargin, 15 ),
                  module ? &(module->patchInfoCache[0]) : nullptr,
-                 13, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, surgeWhite() ));
+                 13, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText() ));
 
     addChild(TextDisplayLight::create(
                  rack::Vec(padMargin, SCREW_WIDTH + padMargin  + 13 ),
                  rack::Vec(box.size.x - 2 * padMargin, 25 ),
                  module ? &(module->patchInfoCache[1]) : nullptr,
-                 20, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, surgeWhite() ));
+                 20, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText() ));
 
     addChild(TextDisplayLight::create(
                  rack::Vec(padMargin, SCREW_WIDTH + padMargin  + 13 + 2 + 20 ),
                  rack::Vec(box.size.x - 2 * padMargin, 15 ),
                  module ? &(module->patchInfoCache[2]) : nullptr,
-                 11, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, surgeWhite() ));
+                 11, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText() ));
 
     
     auto xpf = [this](int i) { return this->colOneEnd + this->catitlodsz * ( i + 0.5 ) - this->surgeRoosterX / 2.0; };
@@ -182,7 +182,7 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
                  rack::Vec(xTPos + 4, yTPos),
                  rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
                  module ? &(module->patchCategoryName) : nullptr,
-                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, surgeWhite()));
+                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, parameterValueText()));
 
     for( int i=0; i<3; ++i )
     {
@@ -220,6 +220,7 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
         else if( i == 4 ) yTPos += 16 + padMargin;
         else yTPos += 14 + padMargin;
 
+        // FIXME - we need a method for this too
         float fs = 15 - ( i - 3 ) * ( i - 3 ) / 3.0;
         float colR = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);
         float colG = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);

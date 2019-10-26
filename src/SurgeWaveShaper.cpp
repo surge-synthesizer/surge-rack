@@ -15,7 +15,7 @@ struct SurgeWaveShaperWidget : SurgeModuleWidgetCommon {
     int topOfInput = RACK_HEIGHT - 5 * padMargin - 3 * labelHeight - 2 * portY;
     
     void addLabel(NVGcontext *vg, int yp, const char *label,
-                  NVGcolor col = surgeBlue()) {
+                  NVGcolor col = panelLabel()) {
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         nvgFontFaceId(vg, fontId(vg));
@@ -41,9 +41,9 @@ struct SurgeWaveShaperWidget : SurgeModuleWidgetCommon {
                                    2 * portY + 2 * labelHeight +
                                        4 * padMargin);
         yPos += padMargin;
-        addLabel(vg, yPos, "Input", surgeWhite());
+        addLabel(vg, yPos, "Input", ioRegionText());
         yPos += labelHeight + portY + padMargin;
-        addLabel(vg, yPos, "Output", surgeWhite());
+        addLabel(vg, yPos, "Output", ioRegionText());
     }
 };
 
@@ -98,7 +98,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
                : []() { return std::string("null"); },
         module ? module->dbGainCache.getDirty : []() { return false; }, 10,
         NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-        surgeWhite()
+        parameterValueText()
                  ));
 
     yPos += textArea + padMargin;

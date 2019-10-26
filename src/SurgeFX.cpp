@@ -27,7 +27,7 @@ struct SurgeFXWidget : SurgeModuleWidgetCommon {
         drawBlueIORect(vg, box.size.x/2 - portX / 2 - padMargin, orangeLine + ioMargin,
                        portX + 2 * padMargin, box.size.y - orangeLine - 2 * ioMargin );
         nvgBeginPath(vg);
-        nvgFillColor(vg, surgeWhite() );
+        nvgFillColor(vg, ioRegionText() );
         nvgFontFaceId(vg, fontId(vg) );
         nvgFontSize(vg, 11);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM );
@@ -94,17 +94,17 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
         addChild(TextDisplayLight::create(rack::Vec(tx, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->pb[i]->nameCache) : nullptr,
-                                          13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::surgeOrange()));
+                                          13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, SurgeStyle::parameterNameText()));
 
         addChild(TextDisplayLight::create(rack::Vec(tx, yPos),
                                           rack::Vec(textAreaWidth, controlHeight - padMargin),
                                           module ? &(module->groupCache[i]) : nullptr,
-                                          9, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::surgeWhite()));
+                                          9, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, SurgeStyle::parameterValueText()));
 
         addChild(TextDisplayLight::create(rack::Vec(tx , yPos),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
                                           module ? &(module->pb[i]->valCache) : nullptr,
-                                          14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::surgeWhite()));
+                                          14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, SurgeStyle::parameterValueText()));
         
     }
 }
