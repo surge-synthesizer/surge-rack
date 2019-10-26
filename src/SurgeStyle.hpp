@@ -286,7 +286,7 @@ struct SurgeStyle {
             nvgBeginPath(vg);
             nvgSave(vg);
             nvgFontFaceId(vg, fontId(vg));
-            nvgFontSize(vg, 12);
+            nvgFontSize(vg, 10);
             nvgFillColor(vg, surgeWhite() );
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
             nvgText(vg, x + + portX / 2 + padMargin, y + padMargin, "bpm cv", NULL );
@@ -299,7 +299,7 @@ struct SurgeStyle {
             nvgBeginPath(vg);
             nvgSave(vg);
             nvgFontFaceId(vg, fontId(vg));
-            nvgFontSize(vg, 12);
+            nvgFontSize(vg, 10);
             nvgTranslate(vg, x + padMargin + portX + clockPad - 10, y );
             nvgRotate( vg, M_PI/2 );
             nvgFillColor(vg, surgeWhite() );
