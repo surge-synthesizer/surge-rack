@@ -289,7 +289,7 @@ struct SurgeStyle {
             nvgFontSize(vg, 12);
             nvgFillColor(vg, surgeWhite() );
             nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER );
-            nvgText(vg, x + + portX / 2 + padMargin, y + padMargin, "clk cv", NULL );
+            nvgText(vg, x + + portX / 2 + padMargin, y + padMargin, "bpm cv", NULL );
             nvgRestore(vg);
         }
         else
@@ -304,7 +304,7 @@ struct SurgeStyle {
             nvgRotate( vg, M_PI/2 );
             nvgFillColor(vg, surgeWhite() );
             nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-            nvgText(vg, padMargin, 0, "clk cv", NULL );
+            nvgText(vg, padMargin, 0, "bpm cv", NULL );
             nvgRestore(vg);
         }
         

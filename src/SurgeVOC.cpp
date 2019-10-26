@@ -8,6 +8,8 @@ struct SurgeVOCWidget : SurgeModuleWidgetCommon {
     SurgeVOCWidget(M *module);
 
     int nControls = 4;
+
+    int nGateControls = 5;
     
     float controlAreaHeight = orangeLine - padMargin - SCREW_WIDTH;
     float controlHeight = controlAreaHeight / 12 + 23;
@@ -18,12 +20,14 @@ struct SurgeVOCWidget : SurgeModuleWidgetCommon {
 
 
     void moduleBackground(NVGcontext *vg) {
-        int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
+        int textAreaWidth = 8 * SCREW_WIDTH - 4 * padMargin - 2 * portX;
 
         std::vector<std::string> lab = { "Gain / Level", "Gate / Level", "Rate / Filter", "Q / Filter" };
+        rack::Rect bb = box;
+        bb.size.x = 8 * SCREW_WIDTH;
         for( int i=0; i<nControls; ++i )
         {
-            fxGroupLabel(vg, i * controlHeight + SCREW_WIDTH + 2 * padMargin, lab[i].c_str(), box );
+            fxGroupLabel(vg, i * controlHeight + SCREW_WIDTH + 2 * padMargin, lab[i].c_str(), bb );
             SurgeStyle::drawTextBGRect(vg, 3*padMargin+2*portX , i*controlHeight + SCREW_WIDTH + padMargin + controlOffset,
                                        textAreaWidth, textAreaHeight );
         }
@@ -76,7 +80,7 @@ SurgeVOCWidget<effectType>::SurgeVOCWidget(SurgeVOCWidget<effectType>::M *module
 {
     setModule(module);
 
-    box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 16, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, SurgeFXName<effectType>::getName());
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -117,7 +121,7 @@ SurgeVOCWidget<effectType>::SurgeVOCWidget(SurgeVOCWidget<effectType>::M *module
                                                module, M::MODULATOR_GAIN));
 
 
-    int textAreaWidth = box.size.x - 4 * padMargin - 2 * portX;
+    int textAreaWidth = 8 * SCREW_WIDTH - 4 * padMargin - 2 * portX;
     for( int i=0; i<nControls; ++i )
     {
         float yPos = i * controlHeight + SCREW_WIDTH + padMargin + controlOffset;

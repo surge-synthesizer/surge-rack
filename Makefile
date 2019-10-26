@@ -13,6 +13,7 @@ include $(RACK_DIR)/arch.mk
 FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
 	-Isurge/libs/xml \
 	-Isurge/libs/filesystem \
+	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
 	-DRELEASE=1 \
 	-DTARGET_HEADLESS \
@@ -31,14 +32,13 @@ SOURCES += $(wildcard src/*.cpp)
 
 SRG=surge/src/common
 SOURCES += $(SRG)/Parameter.cpp \
-	$(SRG)/Sample.cpp \
-	$(SRG)/SampleLoadRiffWave.cpp \
+	$(SRG)/WavSupport.cpp \
 	$(SRG)/SurgeError.cpp \
 	$(SRG)/SurgePatch.cpp \
 	$(SRG)/SurgeStorage.cpp \
-	$(SRG)/SurgeStorageLoadWavetable.cpp \
 	$(SRG)/SurgeSynthesizer.cpp \
 	$(SRG)/SurgeSynthesizerIO.cpp \
+        $(SRG)/Tunings.cpp \
 	$(SRG)/UserDefaults.cpp \
 	$(SRG)/precompiled.cpp \
     $(SRG)/dsp/AdsrEnvelope.cpp \
@@ -81,7 +81,8 @@ SRL=surge/libs
 SOURCES += $(SRL)/xml/tinystr.cpp \
 	$(SRL)/xml/tinyxml.cpp \
 	$(SRL)/xml/tinyxmlerror.cpp \
-	$(SRL)/xml/tinyxmlparser.cpp
+	$(SRL)/xml/tinyxmlparser.cpp \
+	$(SRL)/strnatcmp/strnatcmp.cpp
 
 ifdef ARCH_MAC
 SOURCES += $(SRL)/filesystem/filesystem.cpp
