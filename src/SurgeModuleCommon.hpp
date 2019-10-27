@@ -84,13 +84,13 @@ struct SurgeModuleCommon : public rack::Module {
     }
 
     void showBuildInfo() {
-        rack::INFO( "[SurgeRack] Instance: Module=%s BuildInfo=%s", getName().c_str(), getBuildInfo().c_str() );
+        INFO( "[SurgeRack] Instance: Module=%s BuildInfo=%s", getName().c_str(), getBuildInfo().c_str() );
     }
 
     virtual std::string getName() = 0;
     
     virtual void onSampleRateChange() override {
-        float sr = rack::APP->engine->getSampleRate();
+        float sr = APP->engine->getSampleRate();
         samplerate = sr;
         dsamplerate = sr;
         samplerate_inv = 1.0 / sr;
@@ -184,7 +184,7 @@ struct SurgeModuleCommon : public rack::Module {
 
         storage_id_start = min_id;
         storage_id_end = max_id + 1;
-        rack::INFO( "[SurgeRack] Storage Ranges are %d -> %d", storage_id_start, storage_id_end );
+        INFO( "[SurgeRack] Storage Ranges are %d -> %d", storage_id_start, storage_id_end );
     }
     
     std::unique_ptr<SurgeStorage> storage;

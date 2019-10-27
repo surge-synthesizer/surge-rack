@@ -62,7 +62,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
         storage->refresh_wtlist();
-        rack::INFO("[SurgeWTOSC] wt_list.size() = %d", storage->wt_list.size());
+        INFO("[SurgeWTOSC] wt_list.size() = %d", storage->wt_list.size());
         
         for( auto ci : storage->wtCategoryOrdering )
         {
@@ -443,7 +443,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
             if( storage->wt_category.size() == 0 )
             {
-                rack::WARN( "Found no wavetables present in dataFromJSON; ignoring saved state" );
+                WARN( "Found no wavetables present in dataFromJSON; ignoring saved state" );
                 return;
             }
 

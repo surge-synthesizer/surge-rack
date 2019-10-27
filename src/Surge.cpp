@@ -17,7 +17,7 @@ rack::Plugin *pluginInstance;
 
 void init(rack::Plugin *p) {
     pluginInstance = p;
-    rack::INFO( "[SurgeRack] init" );
+    INFO( "[SurgeRack] init" );
 
     p->addModel(modelSurgeClock);
     p->addModel(modelSurgeADSR);

@@ -410,7 +410,7 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
         {
             if( storage->patch_category.size() == 0 )
             {
-                rack::WARN( "Found no patches present in dataFromJSON; ignoring saved state" );
+                WARN( "Found no patches present in dataFromJSON; ignoring saved state" );
                 return;
             }
             

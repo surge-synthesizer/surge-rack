@@ -8,6 +8,8 @@
 #include <execinfo.h>
 #endif
 
+using namespace rack;
+
 void stackToInfo();
 
 
@@ -153,18 +155,18 @@ struct TextDisplayLight : public rack::widget::Widget
 
 struct SurgeSmallKnob : rack::RoundKnob {
     SurgeSmallKnob() {
-        setSvg(rack::APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateBG.svg")));
+        setSvg(APP->window->loadSvg(
+                            asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateBG.svg")));
         overlay = new rack::widget::SvgWidget;
         fb->addChild(overlay);
-        overlay->setSvg(rack::APP->window->loadSvg(
-                           rack::asset::plugin(pluginInstance, "res/vectors/surgeKnobOverlay.svg")));
+        overlay->setSvg(APP->window->loadSvg(
+                            asset::plugin(pluginInstance, "res/vectors/surgeKnobOverlay.svg")));
         twfg = new rack::widget::TransformWidget;
         twfg->box.size = sw->box.size;
         fb->addChild(twfg);
         fg = new rack::widget::SvgWidget;
-        fg->setSvg(rack::APP->window->loadSvg(
-                           rack::asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateFG.svg")));
+        fg->setSvg(APP->window->loadSvg(
+                            asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateFG.svg")));
         twfg->addChild(fg);
     }
     rack::widget::SvgWidget *overlay;
@@ -181,7 +183,7 @@ struct SurgeSmallKnob : rack::RoundKnob {
 
 struct SurgeKnobRooster : rack::RoundKnob {
     SurgeKnobRooster() {
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
+        setSvg(APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/surgeKnobRooster.svg")));
 
         shadow->box.size = rack::Vec(24, 24);
@@ -193,9 +195,9 @@ struct SurgeSwitch :
     rack::app::SvgSwitch
 {
     SurgeSwitch() {
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
     }
 };
@@ -204,9 +206,9 @@ struct SurgeSwitchFull :
     rack::app::SvgSwitch
 {
     SurgeSwitchFull() {
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
-        addFrame(rack::APP->window->loadSvg(rack::asset::plugin(
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
             pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
     }
 };
