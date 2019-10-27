@@ -154,14 +154,28 @@ struct TextDisplayLight : public rack::widget::Widget
 struct SurgeSmallKnob : rack::RoundKnob {
     SurgeSmallKnob() {
         setSvg(rack::APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, "res/vectors/surgeKnob.svg")));
+            rack::asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateBG.svg")));
+        overlay = new rack::widget::SvgWidget;
+        fb->addChild(overlay);
+        overlay->setSvg(rack::APP->window->loadSvg(
+                           rack::asset::plugin(pluginInstance, "res/vectors/surgeKnobOverlay.svg")));
+        twfg = new rack::widget::TransformWidget;
+        twfg->box.size = sw->box.size;
+        fb->addChild(twfg);
+        fg = new rack::widget::SvgWidget;
+        fg->setSvg(rack::APP->window->loadSvg(
+                           rack::asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateFG.svg")));
+        twfg->addChild(fg);
     }
-};
-
-struct SurgeKnob : rack::RoundKnob {
-    SurgeKnob() {
-        setSvg(rack::APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnob_34x34.svg")));
+    rack::widget::SvgWidget *overlay;
+    rack::widget::TransformWidget* twfg;
+    rack::widget::SvgWidget *fg;
+    virtual void onChange( const rack::event::Change &e ) override {
+        rack::RoundKnob::onChange(e);
+        if (paramQuantity) {
+            for( auto i=0; i<6; ++i )
+                twfg->transform[i] = tw->transform[i];
+        }
     }
 };
 
