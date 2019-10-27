@@ -17,6 +17,7 @@
 #endif
 
 namespace fs = std::experimental::filesystem;
+using namespace rack;
 
 #include <map>
 #include <vector>
