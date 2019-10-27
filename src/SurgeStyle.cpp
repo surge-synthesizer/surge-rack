@@ -26,6 +26,8 @@ static svg_t getSurgeLogo(bool whiteVersion) {
 }
 } // namespace SurgeInternal
 
+std::unordered_set<SurgeStyle::StyleListener *> SurgeStyle::listeners;
+
 void SurgeStyle::drawBlueIORect(NVGcontext *vg, float x0, float y0, float w,
                                 float h, int direction) {
     nvgBeginPath(vg);

@@ -6,7 +6,7 @@
 #include "Surge.hpp"
 #include "rack.hpp"
 #include <map>
-
+#include <unordered_set>
 
 // Font dictionary
 struct InternalFontMgr {
@@ -409,6 +409,23 @@ struct SurgeStyle {
         nvgStroke(vg);
     }
 
-    
+
+    /*
+    ** Since styles are dynamic, we want to be able to be notified when they change
+    */
+    struct StyleListener {
+        virtual void styleHasChanged() = 0;
+    };
+    static void addStyleListener( StyleListener *l ) {
+        listeners.insert(l);
+    }
+    static void removeStyleListener( StyleListener *l ) {
+        listeners.erase(l);
+    }
+    static void notifyStyleListeners() {
+        for( auto l : listeners )
+            l->styleHasChanged();
+    }
+    static std::unordered_set<StyleListener *> listeners;
 };
 
