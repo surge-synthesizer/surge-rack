@@ -53,5 +53,8 @@
     <asset name="surgeKnobBG" path="res/vectors/surgeKnobRotateBG.svg"/>
     <asset name="surgeKnobOverlay" path="res/vectors/surgeKnobOverlay.svg"/>
     <asset name="surgeKnobFG" path="res/vectors/surgeKnobRotateFG.svg"/>a
-  </assets>
+
+    <asset name="surgeKnobRoosterBG" path="res/vectors/surgeKnobRoosterBG.svg"/>
+    <asset name="surgeKnobRoosterFG" path="res/vectors/surgeKnobRoosterFG.svg"/>a
+</assets>
 </surge-rack-skin>
