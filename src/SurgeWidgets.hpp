@@ -211,14 +211,38 @@ struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener {
     }
 };
 
-struct SurgeKnobRooster : rack::RoundKnob {
+struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener {
     SurgeKnobRooster() {
+        SurgeStyle::addStyleListener(this);
         setSvg(APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/surgeKnobRooster.svg")));
+                                        pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterFG"))));
+
+        underlay = new rack::widget::SvgWidget;
+        fb->removeChild(shadow);
+        fb->addChildBottom(underlay);
+        fb->addChildBottom(shadow);
+
+        underlay->setSvg(APP->window->loadSvg(
+                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
 
         shadow->box.size = rack::Vec(24, 24);
         shadow->box.pos = rack::Vec(5, 9.5);
     }
+    ~SurgeKnobRooster() {
+        SurgeStyle::removeStyleListener(this);
+    }
+    void styleHasChanged() override {
+        setSvg(APP->window->loadSvg(rack::asset::plugin(
+                                        pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterFG"))));
+        underlay->setSvg(APP->window->loadSvg(
+                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
+
+        shadow->box.size = rack::Vec(24, 24);
+        shadow->box.pos = rack::Vec(5, 9.5);
+    }
+
+    rack::widget::SvgWidget *underlay;
+
 };
 
 struct SurgeSwitch :
