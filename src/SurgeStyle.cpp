@@ -23,17 +23,13 @@ namespace SurgeInternal {
 
 typedef std::shared_ptr<rack::Svg> svg_t;
     
-static svg_t surgeLogoBlue = nullptr, surgeLogoWhite = nullptr;
-static svg_t getSurgeLogo(bool whiteVersion) {
-    if (surgeLogoBlue == nullptr) {
-        surgeLogoBlue = APP->window->loadSvg(
-            asset::plugin(pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
+static svg_t surgeLogoWhite = nullptr;
+static svg_t getSurgeLogo() {
+    if (surgeLogoWhite == nullptr) {
         surgeLogoWhite = APP->window->loadSvg(
             asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
     }
-    if (whiteVersion)
-        return surgeLogoWhite;
-    return surgeLogoBlue;
+    return surgeLogoWhite;
 }
 } // namespace SurgeInternal
 
@@ -128,7 +124,14 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgStrokeWidth(vg, 1);
     nvgStroke(vg);
 
-    auto logoSvg = SurgeInternal::getSurgeLogo(false);
+    auto logoSvg = SurgeInternal::getSurgeLogo();
+
+    auto hn = logoSvg->handle;
+    auto pt = panelTitle();
+    for( auto s = hn->shapes; s; s = s->next )
+    {
+        s->fill.color = (255 << 24) + (( (int)( pt.b * 255 ) ) << 16 )+ (( (int)( pt.g * 255 ) ) << 8) + (int)( pt.r * 255 );
+    }
     float logoX0 = w / 2;
     
     if (narrowMode)
