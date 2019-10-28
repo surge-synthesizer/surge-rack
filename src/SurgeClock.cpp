@@ -75,7 +75,7 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
                  module ? &(module->bpmCache) : nullptr,
                  11,
                  NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-                 parameterValueText()
+                 parameterValueText_KEY()
                  ));
 
     addParam(rack::createParam<SurgeKnobRooster>(
@@ -89,7 +89,7 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module)
                  module ? &(module->pwCache) : nullptr,
                  11,
                  NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-                 parameterValueText()
+                 parameterValueText_KEY()
                  ));
 
 

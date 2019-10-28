@@ -18,8 +18,18 @@ struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, SurgeStyle, 
     ~SurgeModuleWidgetCommon() {
         removeStyleListener(this);
     }
-    void styleHasChanged() {
-        rack::INFO( "FIXME implement styleHasChanged" );
+    virtual void styleHasChanged() override {
+        dirtyFB(this);
     }
+    
+    void dirtyFB(rack::Widget *w) {
+        auto f = dynamic_cast<rack::FramebufferWidget *>(w);
+        if(f)
+            f->dirty = true;
+        for( auto c : w->children )
+            dirtyFB(c);
+    }
+
+    virtual void appendContextMenu(rack::ui::Menu* menu ) override;
 };
 

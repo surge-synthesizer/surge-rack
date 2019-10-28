@@ -3,6 +3,14 @@
 #include "svg.hpp"
 #include "tinyxml.h"
 
+#if LINUX
+#include <experimental/filesystem>
+#else
+#include <filesystem.h>
+#endif
+
+namespace fs = std::experimental::filesystem;
+
 using namespace rack;
 
 int SurgeStyle::fid = -1;
@@ -32,6 +40,7 @@ static svg_t getSurgeLogo(bool whiteVersion) {
 std::unordered_set<SurgeStyle::StyleListener *> SurgeStyle::listeners;
 std::unordered_map<std::string, NVGcolor> SurgeStyle::colorMap;
 std::string SurgeStyle::currentStyle = "";
+std::vector<std::string> SurgeStyle::styleList;
 
 void SurgeStyle::drawBlueIORect(NVGcontext *vg, float x0, float y0, float w,
                                 float h, int direction) {
@@ -160,8 +169,11 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
 
 void SurgeStyle::loadDefaultStyle()
 {
-    std::string defaultStyle = rack::asset::plugin(pluginInstance, "res/skins/classic-skin.xml" );
-    loadStyle(defaultStyle);
+    if( currentStyle == "" )
+    {
+        std::string defaultStyle = rack::asset::plugin(pluginInstance, "res/skins/Classic.xml" );
+        loadStyle(defaultStyle);
+    }
 }
 
 #if !defined(TINYXML_SAFE_TO_ELEMENT)
@@ -170,11 +182,22 @@ void SurgeStyle::loadDefaultStyle()
 
 void SurgeStyle::loadStyle(std::string styleXml)
 {
+    if( styleList.empty() )
+    {
+        INFO( "Loading styles" );
+        std::string dir = rack::asset::plugin(pluginInstance, "res/skins" );
+        for( auto &d : fs::directory_iterator( fs::path( dir ) ) )
+        {
+            styleList.push_back(d.path().generic_string().c_str() + dir.length() + 1); // +1 for trailing /
+        }
+    }
+    
     if( currentStyle == styleXml )
         return;
     
     currentStyle = styleXml;
-
+    INFO( "Loading skin %s", currentStyle.c_str() );
+    
     TiXmlDocument doc;
     doc.LoadFile(styleXml.c_str());
     TiXmlElement *skin = TINYXML_SAFE_TO_ELEMENT(doc.FirstChild("surge-rack-skin"));
@@ -200,10 +223,12 @@ void SurgeStyle::loadStyle(std::string styleXml)
                     int r, g, b;
                     sscanf(hex + 1, "%02x%02x%02x", &r, &g, &b);
                     colorMap[name] = nvgRGB(r,g,b);
+                    rack::INFO( "HEX IS %s -> %d %d %d from %s", name, r, g, b, hex );
                 }
             }
         }
     }
-    
+    auto bg = panelBackground();
+    rack::INFO( "BG is %lf %lf %lf", bg.r, bg.g, bg.b );
     notifyStyleListeners();
 }

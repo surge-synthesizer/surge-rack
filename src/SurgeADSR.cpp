@@ -115,7 +115,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
             rack::Vec(padFromEdge * 2 + 15, ADSRYPos(i) +2),
             rack::Vec(box.size.x - padFromEdge * 3 - 20, adsrTextH),
             module ? &(module->pb[M::A_PARAM + i]->valCache ) : nullptr,
-            13, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, parameterValueText()));
+            13, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, parameterValueText_KEY()));
     }
 
     for (int i = M::A_PARAM; i <= M::R_PARAM; ++i) {

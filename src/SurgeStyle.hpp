@@ -6,6 +6,7 @@
 #include "Surge.hpp"
 #include "rack.hpp"
 #include <map>
+#include <vector>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -24,7 +25,7 @@ struct InternalFontMgr {
 };
 
 struct SurgeStyle {
-#define GETCOLFN(nm) static NVGcolor nm () { return getColorFromMap( #nm ); }
+#define GETCOLFN(nm) static NVGcolor nm () { return getColorFromMap( #nm ); } static std::string nm##_KEY() { return #nm; }
 
     GETCOLFN(panelBackground);
     GETCOLFN(panelBackgroundOutline);
@@ -403,18 +404,19 @@ struct SurgeStyle {
     static void loadStyle(std::string styleXml);
 
     static std::string currentStyle;
+    static std::vector<std::string> styleList;
     static std::unordered_set<StyleListener *> listeners;
 
     static std::unordered_map<std::string, NVGcolor> colorMap;
     /*
     ** These are the logical colors we need
     */
-    static inline NVGcolor getColorFromMap( const char* nm ) {
+    static inline NVGcolor getColorFromMap( std::string nm ) {
         // This is here so we can do a super efficient version later but for now
         auto it = colorMap.find(nm);
         if( it == colorMap.end() )
         {
-            rack::WARN( "Lookup failed for color '%s'", nm );
+            rack::WARN( "Lookup failed for color '%s'", nm.c_str() );
             return nvgRGB( 255, 0, 0 );
         }
         return it->second;
@@ -422,4 +424,3 @@ struct SurgeStyle {
     
 
 };
-
