@@ -7,6 +7,7 @@
 #include "rack.hpp"
 #include <map>
 #include <unordered_set>
+#include <unordered_map>
 
 // Font dictionary
 struct InternalFontMgr {
@@ -23,83 +24,55 @@ struct InternalFontMgr {
 };
 
 struct SurgeStyle {
-    static NVGcolor x_surgeBlue() { return nvgRGBA(18, 52, 99, 255); }
-    static NVGcolor x_surgeBlueBright() {
-        return nvgRGBA(18 * 1.5, 52 * 1.5, 99 * 1.8, 255);
-    }
-    static NVGcolor x_surgeBlueVeryBright() {
-        return nvgRGBA(18 * 1.8, 52 * 1.8, 99 * 2.1, 255);
-    }
-    static NVGcolor x_surgeBlueDark() {
-        return nvgRGBA(18 * 0.6, 52 * 0.6, 99 * 0.8, 255);
-    }
+#define GETCOLFN(nm) static NVGcolor nm () { return getColorFromMap( #nm ); }
 
-    static NVGcolor x_surgeWhite() { return nvgRGBA(255, 255, 255, 255); }
-    static NVGcolor x_surgeOrange() { return nvgRGBA(255, 144, 0, 255); }
-    static NVGcolor x_surgeOrangeMedium() { return nvgRGBA(227, 112, 8, 255); }
-    static NVGcolor x_surgeOrangeDark() { return nvgRGBA(101, 50, 3, 255); }
+    GETCOLFN(panelBackground);
+    GETCOLFN(panelBackgroundOutline);
+    GETCOLFN(panelFooter);
+    GETCOLFN(panelFooterOutline);
+    GETCOLFN(panelFooterSeparator);
+    GETCOLFN(panelLabel);
+    GETCOLFN(panelLabelRule);
+    GETCOLFN(panelTitle);
+    GETCOLFN(panelSeparator);
 
-    static NVGcolor x_backgroundDarkGray() { return nvgRGBA(175, 176, 182, 255); }
-    static NVGcolor x_backgroundGray() { return nvgRGBA(205, 206, 212, 255); }
-    static NVGcolor x_backgroundGrayTrans() { return nvgRGBA(205, 206, 212, 0); }
-    static NVGcolor x_backgroundLightGray() {
-        return nvgRGBA(215, 216, 222, 255);
-    }
-    static NVGcolor x_backgroundLightOrange() {
-        return nvgRGBA(239, 210, 172, 255);
-    }
+    GETCOLFN(ioRegionText);
+    GETCOLFN(ioRegionBackgroundGradientStart);
+    GETCOLFN(ioRegionBackgroundGradientEnd);
+    GETCOLFN(ioRegionBorderHighlight);
+    GETCOLFN(ioRegionBorder);
 
-    /*
-    ** These are the logical colors we need
-    */
-    static NVGcolor panelBackground() { return x_backgroundGray(); }
-    static NVGcolor panelBackgroundOutline() { return x_backgroundDarkGray(); }
-    static NVGcolor panelFooter() { return x_surgeOrange(); }
-    static NVGcolor panelFooterOutline() { return x_surgeOrangeMedium(); }
-    static NVGcolor panelFooterSeparator() { return x_surgeBlue(); }
-    static NVGcolor panelLabel() { return x_surgeBlue(); }
-    static NVGcolor panelLabelRule() { return x_surgeBlue(); }
-    static NVGcolor panelTitle() { return x_surgeBlue(); }
-    static NVGcolor panelSeparator() { return x_backgroundDarkGray(); }
-    
-    static NVGcolor ioRegionText() { return x_surgeWhite(); }
-    static NVGcolor ioRegionBackgroundGradientStart() { return x_surgeBlueBright(); }
-    static NVGcolor ioRegionBackgroundGradientEnd() { return x_surgeBlue(); }
-    static NVGcolor ioRegionBorderHighlight() { return x_surgeBlueVeryBright(); }
-    static NVGcolor ioRegionBorder() { return x_surgeBlueDark(); }
-    
-    static NVGcolor parameterValueText() { return x_surgeWhite(); }
-    static NVGcolor parameterNameText() { return x_surgeOrange(); }
+    GETCOLFN(parameterValueText);
+    GETCOLFN(parameterNameText);
 
-    static NVGcolor textBGGradientStart() { return nvgRGBA(60, 60, 72, 255); }
-    static NVGcolor textBGGradientEnd() { return nvgRGBA(27, 28, 32, 255); }
-    static NVGcolor textBGBorderHighlight() { return nvgRGBA(90, 90, 112, 255); }
-    static NVGcolor textBGBorder() { return x_surgeOrange(); }
+    GETCOLFN(textBGGradientStart);
+    GETCOLFN(textBGGradientEnd);
+    GETCOLFN(textBGBorderHighlight);
+    GETCOLFN(textBGBorder);
 
 
-    static NVGcolor buttonBankSelectedGradientTop() { return nvgRGB( 0xFF, 0x9A, 0x10 ); }
-    static NVGcolor buttonBankSelectedGradientMid() { return nvgRGB( 0xF0, 0xAD, 0x53 ); }
-    static NVGcolor buttonBankSelectedGradientEnd() { return nvgRGB( 0xFF, 0x9A, 0x10 ); }
-    static NVGcolor buttonBankSelectedOutline() { return nvgRGBA( 0xFF, 0x21, 0x00, 90 ); }
+    GETCOLFN( buttonBankSelectedGradientTop);
+    GETCOLFN( buttonBankSelectedGradientMid);
+    GETCOLFN( buttonBankSelectedGradientEnd);
+    GETCOLFN( buttonBankSelectedOutline);
 
-    static NVGcolor buttonBankSelectedLightGradientTop() { return nvgRGB( 0x2f, 0x87, 0xFF ); }
-    static NVGcolor buttonBankSelectedLightGradientEnd() { return nvgRGB( 0x30, 0x88, 0xFF ); }
-    static NVGcolor buttonBankSelectedLightOutline() { return nvgRGB( 0, 0, 0 ); }
+    GETCOLFN( buttonBankSelectedLightGradientTop);
+    GETCOLFN( buttonBankSelectedLightGradientEnd);
+    GETCOLFN( buttonBankSelectedLightOutline);
 
-    static NVGcolor buttonBankSelectedLabelGlow() { return nvgRGB( 0xFF, 0xFF, 0xFF ); }
-    static NVGcolor buttonBankSelectedLabel() { return nvgRGB( 0x00, 0x00, 0x00 ); }
+    GETCOLFN( buttonBankSelectedLabelGlow);
+    GETCOLFN( buttonBankSelectedLabel);
 
-    static NVGcolor buttonBankUnselectedGradientTop() { return nvgRGB( 0xF2, 0xA6, 0x3E ); }
-    static NVGcolor buttonBankUnselectedGradientMid() { return nvgRGB( 0xFF, 0x99, 0x0D ); }
-    static NVGcolor buttonBankUnselectedGradientEnd() { return nvgRGB( 0xFF, 0x9E, 0x1A ); }
-    static NVGcolor buttonBankUnselectedOutline() { return nvgRGB( 0xFD, 0x94, 0x05 ); }
+    GETCOLFN(buttonBankUnselectedGradientTop);
+    GETCOLFN(buttonBankUnselectedGradientMid);
+    GETCOLFN(buttonBankUnselectedGradientEnd);
+    GETCOLFN(buttonBankUnselectedOutline);
 
-    static NVGcolor buttonBankUnselectedLightFill() { return nvgRGB( 0x5C, 0x36, 0x03 ); }
-    static NVGcolor buttonBankUnselectedLightOutline() { return nvgRGB( 0, 0, 0 ); }
+    GETCOLFN(buttonBankUnselectedLightFill);
+    GETCOLFN(buttonBankUnselectedLightOutline);
+    GETCOLFN(buttonBankUnselectedLabel);
 
-    static NVGcolor buttonBankUnselectedLabel() { return nvgRGB( 0x00, 0x00, 0x00 ); }
-
-    static NVGcolor buttonBankDropShadow(){ return nvgRGB( 0x5C, 0x36, 0x03 ); }
+    GETCOLFN(buttonBankDropShadow);
 
     static const char *fontFace() {
         return "res/EncodeSansSemiCondensed-Medium.ttf";
@@ -426,6 +399,27 @@ struct SurgeStyle {
         for( auto l : listeners )
             l->styleHasChanged();
     }
+    static void loadDefaultStyle();
+    static void loadStyle(std::string styleXml);
+
+    static std::string currentStyle;
     static std::unordered_set<StyleListener *> listeners;
+
+    static std::unordered_map<std::string, NVGcolor> colorMap;
+    /*
+    ** These are the logical colors we need
+    */
+    static inline NVGcolor getColorFromMap( const char* nm ) {
+        // This is here so we can do a super efficient version later but for now
+        auto it = colorMap.find(nm);
+        if( it == colorMap.end() )
+        {
+            rack::WARN( "Lookup failed for color '%s'", nm );
+            return nvgRGB( 255, 0, 0 );
+        }
+        return it->second;
+    }
+    
+
 };
 

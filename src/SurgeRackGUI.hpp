@@ -10,7 +10,16 @@
 #include <functional>
 #include <map>
 
-struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, SurgeStyle {
-    SurgeModuleWidgetCommon() : rack::ModuleWidget() { }
+struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, SurgeStyle, SurgeStyle::StyleListener {
+    SurgeModuleWidgetCommon() : rack::ModuleWidget() {
+        loadDefaultStyle();
+        addStyleListener(this);
+    }
+    ~SurgeModuleWidgetCommon() {
+        removeStyleListener(this);
+    }
+    void styleHasChanged() {
+        rack::INFO( "FIXME implement styleHasChanged" );
+    }
 };
 
