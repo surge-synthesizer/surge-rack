@@ -31,7 +31,7 @@
 
     <color name="buttonBankSelectedLightGradientTop" hex="#2F87FF"/>
     <color name="buttonBankSelectedLightGradientEnd" hex="#3088FF"/>
-    <color nmae="buttonBankSelectedLightOutline" hex="#000000"/>
+    <color name="buttonBankSelectedLightOutline" hex="#000000"/>
 
     <color name="buttonBankSelectedLabelGlow" hex="#FFFFFF"/>
     <color name="buttonBankSelectedLabel" hex="#000000"/>
@@ -46,7 +46,7 @@
 
     <color name="buttonBankUnselectedLabel" hex="#000000"/>
 
-    <colro name="buttonBankDropShadow" hex="#5C3603"/>
+    <color name="buttonBankDropShadow" hex="#5C3603"/>
     
   </colors>
   <assets>
