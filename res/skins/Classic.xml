@@ -3,7 +3,7 @@
     <color name="panelBackground" hex="#CDCED4"/>
     <color name="panelBackgroundOutline" hex="#ADB0B7"/>
     <color name="panelFooter" hex="#FF9000"/>
-    <color name="panelFooterOutline" hex="E37008"/>
+    <color name="panelFooterOutline" hex="#E37008"/>
     <color name="panelFooterSeparator" hex="#123463"/>
     <color name="panelLabel" hex="#123463"/>
     <color name="panelLabelRule" hex="#123463"/>
@@ -27,7 +27,7 @@
     <color name="buttonBankSelectedGradientTop" hex="#FF9A10"/>
     <color name="buttonBankSelectedGradientMid" hex="#F0AD53"/>
     <color name="buttonBankSelectedGradientEnd" hex="#FF9A10"/>
-    <color name="buttonBankSelectedOutline" hex="#FF2100"/>
+    <color name="buttonBankSelectedOutline" hex="#FFA100"/>
 
     <color name="buttonBankSelectedLightGradientTop" hex="#2F87FF"/>
     <color name="buttonBankSelectedLightGradientEnd" hex="#3088FF"/>
@@ -50,6 +50,8 @@
     
   </colors>
   <assets>
-    <!-- Coming soon -->
+    <asset name="surgeKnobBG" path="res/vectors/surgeKnobRotateBG.svg"/>
+    <asset name="surgeKnobOverlay" path="res/vectors/surgeKnobOverlay.svg"/>
+    <asset name="surgeKnobFG" path="res/vectors/surgeKnobRotateFG.svg"/>a
   </assets>
 </surge-rack-skin>

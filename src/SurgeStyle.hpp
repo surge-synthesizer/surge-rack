@@ -408,6 +408,8 @@ struct SurgeStyle {
     static std::unordered_set<StyleListener *> listeners;
 
     static std::unordered_map<std::string, NVGcolor> colorMap;
+    static std::unordered_map<std::string, std::string> assets;
+    
     /*
     ** These are the logical colors we need
     */
@@ -418,6 +420,17 @@ struct SurgeStyle {
         {
             rack::WARN( "Lookup failed for color '%s'", nm.c_str() );
             return nvgRGB( 255, 0, 0 );
+        }
+        return it->second;
+    }
+    
+    static inline std::string getAssetPath( std::string nm ) {
+        // This is here so we can do a super efficient version later but for now
+        auto it = assets.find(nm);
+        if( it == assets.end() )
+        {
+            rack::WARN( "Lookup failed for asset '%s'", nm.c_str() );
+            return "";
         }
         return it->second;
     }

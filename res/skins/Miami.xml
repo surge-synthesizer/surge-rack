@@ -3,7 +3,7 @@
     <color name="panelBackground" hex="#DCD3FF"/>
     <color name="panelBackgroundOutline" hex="#D0D0EE"/>
     <color name="panelFooter" hex="#C4FAF8"/>
-    <color name="panelFooterOutline" hex="#E37008"/>
+    <color name="panelFooterOutline" hex="#A4E0D7"/>
     <color name="panelFooterSeparator" hex="#123463"/>
     <color name="panelLabel" hex="#472A88"/>
     <color name="panelLabelRule" hex="#472A88"/>
@@ -50,6 +50,8 @@
     
   </colors>
   <assets>
-    <!-- Coming soon -->
+    <asset name="surgeKnobBG" path="res/vectors/surgeKnobRotateBGMiami.svg"/>
+    <asset name="surgeKnobOverlay" path="res/vectors/surgeKnobOverlay.svg"/>
+    <asset name="surgeKnobFG" path="res/vectors/surgeKnobRotateFG.svg"/>a
   </assets>
 </surge-rack-skin>
