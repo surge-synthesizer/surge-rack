@@ -109,7 +109,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
         // uninitalized so we have to do a mild hack. This will tell the copyrange to
         // ignore this one.
         fxstorage->return_level.id = -1;
-        setupStorageRanges((Parameter *)fxstorage, &(fxstorage->p[n_fx_params-1]));
+        setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params-1]));
     }
 
     void reorderSurgeParams() {
