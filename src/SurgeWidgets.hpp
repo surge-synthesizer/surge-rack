@@ -171,21 +171,33 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     }
 };
 
-struct SurgeSmallKnob : rack::RoundKnob {
+struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener {
     SurgeSmallKnob() {
+        SurgeStyle::addStyleListener(this);
         setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateBG.svg")));
+                   asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
         overlay = new rack::widget::SvgWidget;
         fb->addChild(overlay);
         overlay->setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, "res/vectors/surgeKnobOverlay.svg")));
+                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
         twfg = new rack::widget::TransformWidget;
         twfg->box.size = sw->box.size;
         fb->addChild(twfg);
         fg = new rack::widget::SvgWidget;
         fg->setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, "res/vectors/surgeKnobRotateFG.svg")));
+                       asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
         twfg->addChild(fg);
+    }
+    ~SurgeSmallKnob() {
+        SurgeStyle::removeStyleListener(this);
+    }
+    void styleHasChanged() override {
+        setSvg(APP->window->loadSvg(
+                   asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
+        overlay->setSvg(APP->window->loadSvg(
+                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
+        fg->setSvg(APP->window->loadSvg(
+                       asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
     }
     rack::widget::SvgWidget *overlay;
     rack::widget::TransformWidget* twfg;

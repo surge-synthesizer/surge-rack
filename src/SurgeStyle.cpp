@@ -39,6 +39,7 @@ static svg_t getSurgeLogo(bool whiteVersion) {
 
 std::unordered_set<SurgeStyle::StyleListener *> SurgeStyle::listeners;
 std::unordered_map<std::string, NVGcolor> SurgeStyle::colorMap;
+std::unordered_map<std::string, std::string> SurgeStyle::assets;
 std::string SurgeStyle::currentStyle = "";
 std::vector<std::string> SurgeStyle::styleList;
 
@@ -223,12 +224,32 @@ void SurgeStyle::loadStyle(std::string styleXml)
                     int r, g, b;
                     sscanf(hex + 1, "%02x%02x%02x", &r, &g, &b);
                     colorMap[name] = nvgRGB(r,g,b);
-                    rack::INFO( "HEX IS %s -> %d %d %d from %s", name, r, g, b, hex );
                 }
             }
         }
     }
-    auto bg = panelBackground();
-    rack::INFO( "BG is %lf %lf %lf", bg.r, bg.g, bg.b );
+
+    TiXmlElement *asxml = TINYXML_SAFE_TO_ELEMENT(skin->FirstChild("assets"));
+    if( asxml )
+    {
+        rack::INFO( "Found Assets" );
+        assets.clear();
+        for( auto child = asxml->FirstChild(); child; child = child->NextSibling())
+        {
+            auto *lkid = TINYXML_SAFE_TO_ELEMENT(child);
+            if( lkid && strcmp(lkid->Value(), "asset") == 0 )
+            {
+                auto name = lkid->Attribute("name");
+                auto path = lkid->Attribute("path");
+                if( name && path )
+                {
+                    assets[name] = path;
+                    rack::INFO( "NAME/PATH is %s %s", name, path );
+                                        
+                }
+            }
+        }
+    }
+    
     notifyStyleListeners();
 }
