@@ -7,7 +7,7 @@
     <color name="panelFooterSeparator" hex="#123463"/>
     <color name="panelLabel" hex="#472A88"/>
     <color name="panelLabelRule" hex="#472A88"/>
-    <color name="panelTitle" hex="#472A88"/>
+    <color name="panelTitle" hex="#479040"/>
     <color name="panelSeparator" hex="#ADB0B7"/>
 
     <color name="ioRegionText" hex="#333355"/>
