@@ -1,6 +1,7 @@
 #include "SurgeStyle.hpp"
 #include "rack.hpp"
 #include "svg.hpp"
+#include "tinyxml.h"
 
 using namespace rack;
 
@@ -29,6 +30,8 @@ static svg_t getSurgeLogo(bool whiteVersion) {
 } // namespace SurgeInternal
 
 std::unordered_set<SurgeStyle::StyleListener *> SurgeStyle::listeners;
+std::unordered_map<std::string, NVGcolor> SurgeStyle::colorMap;
+std::string SurgeStyle::currentStyle = "";
 
 void SurgeStyle::drawBlueIORect(NVGcontext *vg, float x0, float y0, float w,
                                 float h, int direction) {
@@ -153,4 +156,54 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgFontSize(vg, 14);
     nvgFillColor(vg, SurgeStyle::panelTitle() );
     nvgText(vg, (narrowMode ? w - 2 : logoX0 + logoWidth / 2 + 3 ), 0, displayName.c_str(), NULL);
+}
+
+void SurgeStyle::loadDefaultStyle()
+{
+    std::string defaultStyle = rack::asset::plugin(pluginInstance, "res/skins/classic-skin.xml" );
+    loadStyle(defaultStyle);
+}
+
+#if !defined(TINYXML_SAFE_TO_ELEMENT)
+#define TINYXML_SAFE_TO_ELEMENT(expr) ((expr) ? (expr)->ToElement() : NULL)
+#endif
+
+void SurgeStyle::loadStyle(std::string styleXml)
+{
+    if( currentStyle == styleXml )
+        return;
+    
+    currentStyle = styleXml;
+
+    TiXmlDocument doc;
+    doc.LoadFile(styleXml.c_str());
+    TiXmlElement *skin = TINYXML_SAFE_TO_ELEMENT(doc.FirstChild("surge-rack-skin"));
+    if( skin == nullptr )
+    {
+        rack::WARN( "Unable to find surge-rack-skin in file '%s'", currentStyle.c_str());
+        return;
+    }
+
+    TiXmlElement *cols = TINYXML_SAFE_TO_ELEMENT(skin->FirstChild("colors"));
+    if( cols )
+    {
+        colorMap.clear();
+        for( auto child = cols->FirstChild(); child; child = child->NextSibling())
+        {
+            auto *lkid = TINYXML_SAFE_TO_ELEMENT(child);
+            if( lkid && strcmp(lkid->Value(), "color") == 0 )
+            {
+                auto name = lkid->Attribute("name");
+                auto hex = lkid->Attribute("hex");
+                if( name && hex )
+                {
+                    int r, g, b;
+                    sscanf(hex + 1, "%02x%02x%02x", &r, &g, &b);
+                    colorMap[name] = nvgRGB(r,g,b);
+                }
+            }
+        }
+    }
+    
+    notifyStyleListeners();
 }
