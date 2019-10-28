@@ -1,6 +1,8 @@
 #include "Surge.hpp"
 #include "SurgeStorage.h"
 
+using namespace rack;
+
 rack::Model **fxModels = nullptr;
 int addFX(rack::Model *m, int type)
 {
@@ -17,7 +19,7 @@ rack::Plugin *pluginInstance;
 
 void init(rack::Plugin *p) {
     pluginInstance = p;
-    rack::INFO( "[SurgeRack] init" );
+    INFO( "[SurgeRack] init" );
 
     p->addModel(modelSurgeClock);
     p->addModel(modelSurgeADSR);

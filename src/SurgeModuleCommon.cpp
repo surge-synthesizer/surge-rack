@@ -95,8 +95,8 @@ void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS)
     showBuildInfo();
     storage.reset(new SurgeStorage(dataPath));
     
-    rack::INFO("[SurgeRack] storage::dataPath = '%s'", storage->datapath.c_str());
-    rack::INFO("[SurgeRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
+    INFO("[SurgeRack] storage::dataPath = '%s'", storage->datapath.c_str());
+    INFO("[SurgeRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
 
     onSampleRateChange();
 

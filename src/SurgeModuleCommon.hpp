@@ -17,6 +17,7 @@
 #endif
 
 namespace fs = std::experimental::filesystem;
+using namespace rack;
 
 #include <map>
 #include <vector>
@@ -42,7 +43,7 @@ struct ParamCache {
             cache[i] = /* float min */ -1328142.0;
     }
 
-    void update(rack::Module *m) {
+    void update(Module *m) {
         for (auto i = 0; i < np; ++i) {
             cache[i] = m->params[i].getValue();
         }
@@ -50,9 +51,9 @@ struct ParamCache {
 
     float get(int i) const { return cache[i]; }
 
-    bool changed(int i, rack::Module *m) const { return cache[i] != m->params[i].getValue(); }
-    bool changedInt(int i, rack::Module *m) const { return (int)cache[i] != (int)m->params[i].getValue(); }
-    bool changedAndIsNonZero(int i, rack::Module *m) const {
+    bool changed(int i, Module *m) const { return cache[i] != m->params[i].getValue(); }
+    bool changedInt(int i, Module *m) const { return (int)cache[i] != (int)m->params[i].getValue(); }
+    bool changedAndIsNonZero(int i, Module *m) const {
         auto r = m->params[i].getValue();
         return cache[i] != r && r > 0.5;
     }
@@ -61,8 +62,8 @@ struct ParamCache {
 
 
 
-struct SurgeModuleCommon : public rack::Module {
-    SurgeModuleCommon() : rack::Module() {  }
+struct SurgeModuleCommon : public Module {
+    SurgeModuleCommon() : Module() {  }
 
     std::string getBuildInfo() {
         char version[1024];
@@ -84,13 +85,13 @@ struct SurgeModuleCommon : public rack::Module {
     }
 
     void showBuildInfo() {
-        rack::INFO( "[SurgeRack] Instance: Module=%s BuildInfo=%s", getName().c_str(), getBuildInfo().c_str() );
+        INFO( "[SurgeRack] Instance: Module=%s BuildInfo=%s", getName().c_str(), getBuildInfo().c_str() );
     }
 
     virtual std::string getName() = 0;
     
     virtual void onSampleRateChange() override {
-        float sr = rack::APP->engine->getSampleRate();
+        float sr = APP->engine->getSampleRate();
         samplerate = sr;
         dsamplerate = sr;
         samplerate_inv = 1.0 / sr;
@@ -119,7 +120,7 @@ struct SurgeModuleCommon : public rack::Module {
 
         // Folks can put in insane BPMs if they mis-wire their rack. Lets
         // put in a clamp for well beyond the usable range
-        beatsPerMinute = rack::clamp(beatsPerMinute, 1.f, 1024.f);
+        beatsPerMinute = clamp(beatsPerMinute, 1.f, 1024.f);
         
         lastBPM = beatsPerMinute;
 
@@ -184,7 +185,7 @@ struct SurgeModuleCommon : public rack::Module {
 
         storage_id_start = min_id;
         storage_id_end = max_id + 1;
-        rack::INFO( "[SurgeRack] Storage Ranges are %d -> %d", storage_id_start, storage_id_end );
+        INFO( "[SurgeRack] Storage Ranges are %d -> %d", storage_id_start, storage_id_end );
     }
     
     std::unique_ptr<SurgeStorage> storage;
@@ -354,7 +355,7 @@ struct ParamValueStateSaver {
 };
 
 
-struct SurgeRackParamQuantity : rack::engine::ParamQuantity
+struct SurgeRackParamQuantity : engine::ParamQuantity
 {
     int ts_companion = -2;
     

@@ -2,6 +2,8 @@
 #include "rack.hpp"
 #include "svg.hpp"
 
+using namespace rack;
+
 int SurgeStyle::fid = -1;
 int SurgeStyle::fidcond = -1;
 
@@ -15,10 +17,10 @@ typedef std::shared_ptr<rack::Svg> svg_t;
 static svg_t surgeLogoBlue = nullptr, surgeLogoWhite = nullptr;
 static svg_t getSurgeLogo(bool whiteVersion) {
     if (surgeLogoBlue == nullptr) {
-        surgeLogoBlue = rack::APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
-        surgeLogoWhite = rack::APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
+        surgeLogoBlue = APP->window->loadSvg(
+            asset::plugin(pluginInstance, "res/SurgeLogoOnlyBlue.svg"));
+        surgeLogoWhite = APP->window->loadSvg(
+            asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
     }
     if (whiteVersion)
         return surgeLogoWhite;
