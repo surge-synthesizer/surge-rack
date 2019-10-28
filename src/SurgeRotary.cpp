@@ -120,7 +120,7 @@ SurgeRotaryWidget::SurgeRotaryWidget(SurgeRotaryWidget::M *module)
                      module ? &(module->pb[i]->valCache) : nullptr,
                      12,
                      NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                     parameterValueText()
+                     parameterValueText_KEY()
                      ));
 
 

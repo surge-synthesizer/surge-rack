@@ -159,7 +159,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
                  module ? &(module->pitch0DisplayCache) : nullptr,
                  14,
                  NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                 parameterValueText()
+                 parameterValueText_KEY()
                  ));
 
     for (int i = 0; i < n_osc_params; ++i) {
@@ -180,7 +180,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
         addChild(TextDisplayLight::create(
                      rack::Vec(xt+2, yp+1 ), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
-                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText()));
+                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText_KEY()));
     }
 }
 

@@ -140,19 +140,19 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
                  rack::Vec(padMargin, SCREW_WIDTH + padMargin ),
                  rack::Vec(box.size.x - 2 * padMargin, 15 ),
                  module ? &(module->patchInfoCache[0]) : nullptr,
-                 13, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText() ));
+                 13, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText_KEY() ));
 
     addChild(TextDisplayLight::create(
                  rack::Vec(padMargin, SCREW_WIDTH + padMargin  + 13 ),
                  rack::Vec(box.size.x - 2 * padMargin, 25 ),
                  module ? &(module->patchInfoCache[1]) : nullptr,
-                 20, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText() ));
+                 20, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText_KEY() ));
 
     addChild(TextDisplayLight::create(
                  rack::Vec(padMargin, SCREW_WIDTH + padMargin  + 13 + 2 + 20 ),
                  rack::Vec(box.size.x - 2 * padMargin, 15 ),
                  module ? &(module->patchInfoCache[2]) : nullptr,
-                 11, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText() ));
+                 11, NVG_ALIGN_TOP| NVG_ALIGN_CENTER, parameterValueText_KEY() ));
 
     
     auto xpf = [this](int i) { return this->colOneEnd + this->catitlodsz * ( i + 0.5 ) - this->surgeRoosterX / 2.0; };
@@ -182,7 +182,7 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
                  rack::Vec(xTPos + 4, yTPos),
                  rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
                  module ? &(module->patchCategoryName) : nullptr,
-                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, parameterValueText()));
+                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, parameterValueText_KEY()));
 
     for( int i=0; i<3; ++i )
     {
@@ -227,11 +227,14 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
         float colB = 255 - ( i - 3 ) * ( i - 3 ) * 8 - (i!=3?50:0);
         NVGcolor col = nvgRGB(colR, colG, colB );
 
-        addChild(TextDisplayLight::create(
+        auto c = TextDisplayLight::create(
                      rack::Vec(xTPos + 4, yTPos),
                      rack::Vec(box.size.x - xTPos - 2 * padMargin, (i == 3 ? 16 : 14) ),
                      module ? &(module->patchItemName[i]) : nullptr,
-                     fs, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, col ));
+                     fs, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
+        c->colorKey = "";
+        c->color = col;
+        addChild(c);
     }
  
 }

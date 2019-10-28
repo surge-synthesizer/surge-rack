@@ -148,7 +148,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                  module ? &(module->pitch0DisplayCache) : nullptr,
                  14,
                  NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                 parameterValueText()
+                 parameterValueText_KEY()
                  ));
 
     for (int i = 0; i < n_osc_params; ++i) {
@@ -169,7 +169,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
         addChild(TextDisplayLight::create(
                      rack::Vec(xt+2, yp+1 ), rack::Vec(colOneEnd - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
-                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText()));
+                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText_KEY()));
     }
 
     float c2w = (box.size.x - colOneEnd) / 2 + colOneEnd;
@@ -191,7 +191,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                      rack::Vec(xp, yp),
                      rack::Vec(box.size.x - colOneEnd - 2 * padMargin, 15 ),
                      module ? &(module->wtInfoCache[i]) : nullptr,
-                     13, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, parameterValueText() ));
+                     13, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT, parameterValueText_KEY() ));
 
         
     }
@@ -225,7 +225,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
                  rack::Vec(xTPos + 4, yTPos),
                  rack::Vec(box.size.x - xTPos - 2 * padMargin, 19 ),
                  module ? &(module->wtCategoryName) : nullptr,
-                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, parameterValueText()));
+                 15, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, parameterValueText_KEY()));
 
     for( int i=0; i<7; ++i )
     {
@@ -240,11 +240,14 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
         float colB = 255 - ( i - 3 ) * ( i - 3 ) * 8 - (i!=3?50:0);
         NVGcolor col = nvgRGB(colR, colG, colB );
 
-        addChild(TextDisplayLight::create(
+        auto c = TextDisplayLight::create(
                      rack::Vec(xTPos + 4, yTPos),
                      rack::Vec(box.size.x - xTPos - 2 * padMargin, (i == 3 ? 16 : 14) ),
                      module ? &(module->wtItemName[i]) : nullptr,
-                     fs, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER, col ));
+                     fs, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
+        c->colorKey = "";
+        c->color = col;
+        addChild(c);
     }
  
 }

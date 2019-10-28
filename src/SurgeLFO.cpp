@@ -205,7 +205,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
     addChild(TextDisplayLight::create(rack::Vec( box.size.x / 2 + 2 * padMargin, rateTop ),
                                       rack::Vec( box.size.x / 2 - 3 * padMargin, portY-2 ),
                                       module ? &(module->pb[0]->valCache) : nullptr,
-                                      14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, parameterValueText() ) );
+                                      14, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, parameterValueText_KEY() ) );
     
     
     std::vector<float> mpd = { 3, 2, 4 };
@@ -224,7 +224,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
         addChild(TextDisplayLight::create(rack::Vec(xpos, ypos - 2 + portY + 2*padMargin ),
                                           rack::Vec(box.size.x/3 - 2 * padFromEdge, 14 ),
                                           module ? &(module->pb[mpd[i]]->valCache) : nullptr,
-                                          12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, parameterValueText()));
+                                          12, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, parameterValueText_KEY()));
     }
 
     addChild(rack::createLight<rack::SmallLight<rack::BlueLight>>(rack::Vec(box.size.x/2 + 25, envPos),
@@ -256,7 +256,7 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
         addChild(TextDisplayLight::create(rack::Vec(xstart + padMargin, ep.y + portY + padMargin  ),
                                           rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
                                           module ? &(module->pb[idx]->valCache) : nullptr,
-                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, parameterValueText()));
+                                          14, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, parameterValueText_KEY()));
     }
 }
 

@@ -98,7 +98,7 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
                : []() { return std::string("null"); },
         module ? module->dbGainCache.getDirty : []() { return false; }, 10,
         NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER,
-        parameterValueText()
+        parameterValueText_KEY()
                  ));
 
     yPos += textArea + padMargin;

@@ -59,7 +59,7 @@ struct SurgeRackBG : public rack::TransparentWidget {
     }
 };
 
-struct TextDisplayLight : public rack::widget::Widget
+struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
 {
     typedef std::function<std::string()> stringGetter_t;
     typedef std::function<bool()> stringDirtyGetter_t;
@@ -70,7 +70,12 @@ struct TextDisplayLight : public rack::widget::Widget
     int fontsize;
     NVGcolor color;
 
-    TextDisplayLight() : Widget() {}
+    TextDisplayLight() : Widget() {
+        SurgeStyle::addStyleListener(this);
+    }
+    ~TextDisplayLight() {
+        SurgeStyle::removeStyleListener(this);
+    }
 
     void setup() {
         addChild(new BufferedDrawFunctionWidget(
@@ -89,14 +94,26 @@ struct TextDisplayLight : public rack::widget::Widget
         rack::widget::Widget::step();
     }
 
+    virtual void styleHasChanged() override {
+        if( colorKey != "" )
+            color = SurgeStyle::getColorFromMap(colorKey);
+        
+        for (auto w : children) {
+            if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w)) {
+                fw->dirty = true;
+            }
+        }
+    }
+    
     std::string font = SurgeStyle::fontFace();
     int fontId = -1;
-
+    std::string colorKey;
+    
     static TextDisplayLight *
     create(rack::Vec pos, rack::Vec size, stringGetter_t gf,
            stringDirtyGetter_t dgf, int fsize = 15,
            int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-           NVGcolor color = SurgeStyle::parameterNameText()) {
+           std::string colorKey = SurgeStyle::parameterNameText_KEY()) {
         TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
         res->getfn = gf;
         res->dirtyfn = dgf;
@@ -104,7 +121,8 @@ struct TextDisplayLight : public rack::widget::Widget
         res->box.size = size;
         res->fontsize = fsize;
         res->align = align;
-        res->color = color;
+        res->colorKey = colorKey;
+        res->color = SurgeStyle::getColorFromMap(colorKey);
 
         res->setup();
 
@@ -116,15 +134,15 @@ struct TextDisplayLight : public rack::widget::Widget
            const StringCache *sc,
            int fsize = 15,
            int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-           NVGcolor color = SurgeStyle::parameterNameText() ) {
+           std::string colorKey = SurgeStyle::parameterNameText_KEY() ) {
         if( sc )
             return TextDisplayLight::create(pos, size, sc->getValue, sc->getDirty,
-                                            fsize, align, color);
+                                            fsize, align, colorKey);
         else
             return TextDisplayLight::create(pos, size,
                                             []() { return "null"; },
                                             []() { return false; },
-                                            fsize, align, color);
+                                            fsize, align, colorKey);
     }
 
     void drawChars(NVGcontext *vg) {
