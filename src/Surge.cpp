@@ -1,6 +1,8 @@
 #include "Surge.hpp"
 #include "SurgeStorage.h"
 
+using namespace rack;
+
 rack::Model **fxModels = nullptr;
 int addFX(rack::Model *m, int type)
 {
