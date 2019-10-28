@@ -76,9 +76,10 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         ** I am making a somewhat dangerous assumption here which is a good one
         ** as long as noone changes the memory layout in SurgeStorage.h. Namely that
         ** in oscstorage all the parameters are "up front" and are in order with 
-        ** nothing between them.
+        ** nothing between them. With 1.6.3 I broke that assumptino and just assumeh tye
+        ** are contiguous
         */
-        setupStorageRanges((Parameter *)oscstorage, &(oscstorage->retrigger));
+        setupStorageRanges(&(oscstorage->type), &(oscstorage->retrigger));
 
         pc.update(this);
     }
