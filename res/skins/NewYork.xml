@@ -1,0 +1,60 @@
+<surge-rack-skin name="Classic">
+  <colors>
+    <color name="panelBackground" hex="#CDCDCD"/>
+    <color name="panelBackgroundOutline" hex="#ADADAD"/>
+    <color name="panelFooter" hex="#AAAAAA"/>
+    <color name="panelFooterOutline" hex="#999999"/>
+    <color name="panelFooterSeparator" hex="#444444"/>
+    <color name="panelLabel" hex="#121212"/>
+    <color name="panelLabelRule" hex="#121212"/>
+    <color name="panelTitle" hex="#121212"/>
+    <color name="panelSeparator" hex="#ADADAD"/>
+
+    <color name="ioRegionText" hex="#FFFFFF"/>
+    <color name="ioRegionBackgroundGradientStart" hex="#3E3E3E"/>
+    <color name="ioRegionBackgroundGradientEnd" hex="#1E1E1E"/>
+    <color name="ioRegionBorderHighlight" hex="#DDDDDD"/>
+    <color name="ioRegionBorder" hex="#0A0A0A"/>
+
+    <color name="parameterValueText" hex="#FFFFFF"/>
+    <color name="parameterNameText" hex="#BBBBBB"/>
+
+    <color name="textBGGradientStart" hex="#3C3C3C"/>
+    <color name="textBGGradientEnd" hex="#1B1B1B"/>
+    <color name="textBGBorderHighlight" hex="5A5A5A"/>
+    <color name="textBGBorder" hex="#0A0A0A"/>
+
+    <color name="buttonBankSelectedGradientTop" hex="#EAEAEA"/>
+    <color name="buttonBankSelectedGradientMid" hex="#FAFAFA"/>
+    <color name="buttonBankSelectedGradientEnd" hex="#EAEAEA"/>
+    <color name="buttonBankSelectedOutline" hex="#A0A0A0"/>
+
+    <color name="buttonBankSelectedLightGradientTop" hex="#FFFFFF"/>
+    <color name="buttonBankSelectedLightGradientEnd" hex="#EEEEEE"/>
+    <color name="buttonBankSelectedLightOutline" hex="#000000"/>
+
+    <color name="buttonBankSelectedLabelGlow" hex="#FFFFFF"/>
+    <color name="buttonBankSelectedLabel" hex="#000000"/>
+
+    <color name="buttonBankUnselectedGradientTop" hex="#C0C0C0"/>
+    <color name="buttonBankUnselectedGradientMid" hex="#C9C9C9"/>
+    <color name="buttonBankUnselectedGradientEnd" hex="#C0C0C0"/>
+    <color name="buttonBankUnselectedOutline" hex="#808080"/>
+
+    <color name="buttonBankUnselectedLightFill" hex="#505050"/>
+    <color name="buttonBankUnselectedLightOutline" hex="#000000"/>
+
+    <color name="buttonBankUnselectedLabel" hex="#000000"/>
+
+    <color name="buttonBankDropShadow" hex="#5C5C5C"/>
+    
+  </colors>
+  <assets>
+    <asset name="surgeKnobBG" path="res/vectors/surgeKnobRotateBGNewYork.svg"/>
+    <asset name="surgeKnobOverlay" path="res/vectors/surgeKnobOverlay.svg"/>
+    <asset name="surgeKnobFG" path="res/vectors/surgeKnobRotateFG.svg"/>a
+
+    <asset name="surgeKnobRoosterBG" path="res/vectors/surgeKnobRoosterBGNewYork.svg"/>
+    <asset name="surgeKnobRoosterFG" path="res/vectors/surgeKnobRoosterFG.svg"/>a
+</assets>
+</surge-rack-skin>
