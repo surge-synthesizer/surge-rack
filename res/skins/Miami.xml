@@ -10,6 +10,8 @@
     <color name="panelTitle" hex="#479040"/>
     <color name="panelSeparator" hex="#ADB0B7"/>
 
+    <color name="switchHandle" hex="#C4FAF8"/>
+    
     <color name="ioRegionText" hex="#333355"/>
     <color name="ioRegionBackgroundGradientStart" hex="#D9C2FF"/>
     <color name="ioRegionBackgroundGradientEnd" hex="#A79AFF"/>
@@ -18,6 +20,8 @@
 
     <color name="parameterValueText" hex="#000000"/>
     <color name="parameterNameText" hex="#0011CC"/>
+    <color name="parameterScrollCenter" hex="#000000"/>
+    <color name="parameterScrollEnd" hex="#345A58"/>
 
     <color name="textBGGradientStart" hex="#FFDEE9"/>
     <color name="textBGGradientEnd" hex="#FFC9DE"/>

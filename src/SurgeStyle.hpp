@@ -37,6 +37,8 @@ struct SurgeStyle {
     GETCOLFN(panelTitle);
     GETCOLFN(panelSeparator);
 
+    GETCOLFN(switchHandle);
+    
     GETCOLFN(ioRegionText);
     GETCOLFN(ioRegionBackgroundGradientStart);
     GETCOLFN(ioRegionBackgroundGradientEnd);
@@ -45,7 +47,9 @@ struct SurgeStyle {
 
     GETCOLFN(parameterValueText);
     GETCOLFN(parameterNameText);
-
+    GETCOLFN(parameterScrollCenter);
+    GETCOLFN(parameterScrollEnd);
+    
     GETCOLFN(textBGGradientStart);
     GETCOLFN(textBGGradientEnd);
     GETCOLFN(textBGBorderHighlight);

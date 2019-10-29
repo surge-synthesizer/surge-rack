@@ -245,25 +245,71 @@ struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener {
 
 };
 
-struct SurgeSwitch :
-    rack::app::SvgSwitch
+struct SurgeUpdateColorSwitch : rack::app::SvgSwitch, SurgeStyle::StyleListener {
+
+    int lastSvgCol = 0xFF0090FF;
+    void updateColor() {
+        auto pt = SurgeStyle::switchHandle();
+        int svgcol = (255 << 24) + (( (int)( pt.b * 255 ) ) << 16 )+ (( (int)( pt.g * 255 ) ) << 8) + (int)( pt.r * 255 );
+        for( auto f : frames )
+        {
+            auto hn = f->handle;
+            for( auto s = hn->shapes; s; s = s->next )
+            {
+                if( s->fill.type == NSVG_PAINT_COLOR &&  s->fill.color == lastSvgCol )
+                {
+                    s->fill.color = svgcol;
+                }
+            }
+        }
+        lastSvgCol = svgcol;
+    }
+    virtual void styleHasChanged() override {
+        updateColor();
+        fb->dirty = true;
+    }
+    
+    virtual void resetFrames() = 0;
+};
+
+struct SurgeSwitch : SurgeUpdateColorSwitch
 {
     SurgeSwitch() {
+        SurgeStyle::addStyleListener(this);
+        resetFrames();
+        updateColor();
+    }
+    
+    ~SurgeSwitch() {
+        SurgeStyle::removeStyleListener(this);
+    }
+    
+    virtual void resetFrames() override {
+        frames.clear();
         addFrame(APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
+                                          pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
         addFrame(APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
+                                          pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
     }
 };
 
-struct SurgeSwitchFull :
-    rack::app::SvgSwitch
+struct SurgeSwitchFull : SurgeUpdateColorSwitch
 {
     SurgeSwitchFull() {
+        SurgeStyle::addStyleListener(this);
+        resetFrames();
+        updateColor();
+    }
+    ~SurgeSwitchFull() {
+        SurgeStyle::removeStyleListener(this);
+    }
+
+    virtual void resetFrames() override {
+        frames.clear();
         addFrame(APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
+                                          pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
         addFrame(APP->window->loadSvg(rack::asset::plugin(
-            pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
+                                          pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
     }
 };
 
