@@ -10,9 +10,10 @@
 #include <functional>
 #include <map>
 
+
 struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, SurgeStyle, SurgeStyle::StyleListener {
     SurgeModuleWidgetCommon() : rack::ModuleWidget() {
-        loadDefaultStyle();
+        loadStyle();
         addStyleListener(this);
     }
     ~SurgeModuleWidgetCommon() {

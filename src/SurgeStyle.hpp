@@ -400,8 +400,8 @@ struct SurgeStyle {
         for( auto l : listeners )
             l->styleHasChanged();
     }
-    static void loadDefaultStyle();
-    static void loadStyle(std::string styleXml);
+
+    static void loadStyle(std::string styleXml = "");
 
     static std::string currentStyle;
     static std::vector<std::string> styleList;
