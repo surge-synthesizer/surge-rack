@@ -220,11 +220,26 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
         else if( i == 4 ) yTPos += 16 + padMargin;
         else yTPos += 14 + padMargin;
 
-        // FIXME - we need a method for this too
+        auto sc = SurgeStyle::parameterScrollCenter();
+        auto se = SurgeStyle::parameterScrollEnd();
+
+        float distance = 1.0;
+        switch(i) {
+        case 0:
+        case 6:
+            distance = 0;
+        case 1:
+        case 5:
+            distance = 0.25;
+        case 2:
+        case 4:
+            distance = 0.5;
+        }
+
         float fs = 15 - ( i - 3 ) * ( i - 3 ) / 3.0;
-        float colR = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);
-        float colG = 255 - ( i - 3 ) * ( i - 3 ) * 10 - (i!=3?70:0);
-        float colB = 255 - ( i - 3 ) * ( i - 3 ) * 8 - (i!=3?50:0);
+        float colR = 255 * (distance * sc.r + ( 1-distance)*se.r);
+        float colG = 255 * (distance * sc.g + ( 1-distance)*se.g);
+        float colB = 255 * (distance * sc.b + ( 1-distance)*se.b);
         NVGcolor col = nvgRGB(colR, colG, colB );
 
         auto c = TextDisplayLight::create(
