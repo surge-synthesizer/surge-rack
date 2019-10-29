@@ -171,21 +171,39 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h,
     nvgText(vg, (narrowMode ? w - 2 : logoX0 + logoWidth / 2 + 3 ), 0, displayName.c_str(), NULL);
 }
 
-void SurgeStyle::loadDefaultStyle()
-{
-    if( currentStyle == "" )
-    {
-        std::string defaultStyle = rack::asset::plugin(pluginInstance, "res/skins/Classic.xml" );
-        loadStyle(defaultStyle);
-    }
-}
-
 #if !defined(TINYXML_SAFE_TO_ELEMENT)
 #define TINYXML_SAFE_TO_ELEMENT(expr) ((expr) ? (expr)->ToElement() : NULL)
 #endif
 
 void SurgeStyle::loadStyle(std::string styleXml)
 {
+    // FIXME - factor this all out a bit
+    std::string defaultsDir = rack::asset::user("SurgeRack/");
+    if( ! rack::system::isDirectory(defaultsDir))
+        rack::system::createDirectory(defaultsDir);
+    std::string defaultsFile = rack::asset::user("SurgeRack/default-skin.json");
+    
+    if( styleXml == "" && currentStyle == "" )
+    {
+        INFO( "Loading default style" );
+        json_error_t error;
+        json_t *fd = json_load_file(defaultsFile.c_str(), 0, &error );
+        if( ! fd )
+        {
+            styleXml = rack::asset::plugin(pluginInstance, "res/skins/Classic.xml" );
+        }
+        else
+        {
+            json_t *defj = json_object_get(fd, "defaultSkin" );
+            if( defj )
+                styleXml = json_string_value( defj );
+            rack::INFO( "styleXML is now %s", styleXml.c_str() );
+            json_decref(fd);
+        }
+        
+
+    }
+    
     if( styleList.empty() )
     {
         INFO( "Loading styles" );
@@ -253,6 +271,18 @@ void SurgeStyle::loadStyle(std::string styleXml)
             }
         }
     }
+
+    // Update the default file
+    json_t* rootJ = json_object();
+    json_t* stJ = json_string(styleXml.c_str() );
+    json_object_set_new(rootJ, "defaultSkin", stJ );
+    FILE *f = std::fopen(defaultsFile.c_str(), "w" );
+    if( f )
+    {
+        json_dumpf(rootJ, f, JSON_INDENT(2));
+        std::fclose(f);
+    }
+    json_decref(rootJ );
     
     notifyStyleListeners();
 }
