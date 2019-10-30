@@ -148,7 +148,7 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module)
         if (i == M::R_S_PARAM)
             ipos++;
 
-        addParam(rack::createParam<rack::CKSSThree>(
+        addParam(rack::createParam<SurgeThreeSwitch>(
                      rack::Vec(x0 + 2 * portX + 4 * padMargin + 10, ADSRYPos(ipos) + adsrTextH + padMargin + 1),
             module, i
             ));
