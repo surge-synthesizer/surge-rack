@@ -220,8 +220,6 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
         else if( i == 4 ) yTPos += 16 + padMargin;
         else yTPos += 14 + padMargin;
 
-        auto sc = SurgeStyle::parameterScrollCenter();
-        auto se = SurgeStyle::parameterScrollEnd();
 
         float distance = 1.0;
         switch(i) {
@@ -237,18 +235,25 @@ SurgePatchPlayerWidget::SurgePatchPlayerWidget(SurgePatchPlayerWidget::M *module
         }
 
         float fs = 15 - ( i - 3 ) * ( i - 3 ) / 3.0;
-        float colR = 255 * (distance * sc.r + ( 1-distance)*se.r);
-        float colG = 255 * (distance * sc.g + ( 1-distance)*se.g);
-        float colB = 255 * (distance * sc.b + ( 1-distance)*se.b);
-        NVGcolor col = nvgRGB(colR, colG, colB );
-
+        auto cl = [distance]() {
+                      auto sc = SurgeStyle::parameterScrollCenter();
+                      auto se = SurgeStyle::parameterScrollEnd();
+                      
+                      float colR = 255 * (distance * sc.r + ( 1-distance)*se.r);
+                      float colG = 255 * (distance * sc.g + ( 1-distance)*se.g);
+                      float colB = 255 * (distance * sc.b + ( 1-distance)*se.b);
+                      NVGcolor col = nvgRGB(colR, colG, colB );
+                      return col;
+                  };
         auto c = TextDisplayLight::create(
                      rack::Vec(xTPos + 4, yTPos),
                      rack::Vec(box.size.x - xTPos - 2 * padMargin, (i == 3 ? 16 : 14) ),
                      module ? &(module->patchItemName[i]) : nullptr,
                      fs, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
         c->colorKey = "";
-        c->color = col;
+        c->color = cl();
+        c->hasColorLambda = true;
+        c->colorLambda = cl;
         addChild(c);
     }
  

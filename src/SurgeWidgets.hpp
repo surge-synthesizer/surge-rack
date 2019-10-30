@@ -97,6 +97,9 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     virtual void styleHasChanged() override {
         if( colorKey != "" )
             color = SurgeStyle::getColorFromMap(colorKey);
+
+        if( hasColorLambda )
+            color = colorLambda();
         
         for (auto w : children) {
             if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w)) {
@@ -108,6 +111,8 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     std::string font = SurgeStyle::fontFace();
     int fontId = -1;
     std::string colorKey;
+    bool hasColorLambda = false;
+    std::function<NVGcolor()> colorLambda;
     
     static TextDisplayLight *
     create(rack::Vec pos, rack::Vec size, stringGetter_t gf,
@@ -310,6 +315,29 @@ struct SurgeSwitchFull : SurgeUpdateColorSwitch
                                           pluginInstance, "res/vectors/SurgeSwitchFull_0.svg")));
         addFrame(APP->window->loadSvg(rack::asset::plugin(
                                           pluginInstance, "res/vectors/SurgeSwitchFull_1.svg")));
+    }
+};
+
+struct SurgeThreeSwitch : SurgeUpdateColorSwitch
+{
+    SurgeThreeSwitch() {
+        SurgeStyle::addStyleListener(this);
+        resetFrames();
+        updateColor();
+    }
+    
+    ~SurgeThreeSwitch() {
+        SurgeStyle::removeStyleListener(this);
+    }
+    
+    virtual void resetFrames() override {
+        frames.clear();
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
+                                          pluginInstance, "res/vectors/SurgeThree_0.svg")));
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
+                                          pluginInstance, "res/vectors/SurgeThree_1.svg")));
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
+                                          pluginInstance, "res/vectors/SurgeThree_2.svg")));
     }
 };
 
