@@ -4,6 +4,7 @@
 #include "dsp/BiquadFilter.h"
 #include "rack.hpp"
 #include <cstring>
+#include <cmath>
 
 struct SurgeBiquad :  public SurgeModuleCommon {
     enum ParamIds {
@@ -217,6 +218,9 @@ struct SurgeBiquad :  public SurgeModuleCommon {
             
             float outl, outr;
             biquad[i]->process_sample( inl, inr, outl, outr );
+
+            outl = std::isfinite(outl)? outl : 0;
+            outr = std::isfinite(outr)? outr : 0;
             
             if( ! outputConnected(OUTPUT_R) )
             {
