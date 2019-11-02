@@ -32,6 +32,22 @@ struct SurgeVOCWidget : SurgeModuleWidgetCommon {
                                        textAreaWidth, textAreaHeight );
         }
 
+#if EXPOSE_163_PARMS        
+        std::vector<std::string> lab2 = { "# Bands", "Low Band", "High Band", "Mod Xpand", "Mod Ctr" };
+        for( int i=0; i<lab2.size(); ++i )
+        {
+            int off = 0;
+            // if( i == 2 ) off = controlHeight + 2 * padMargin;
+            nvgSave(vg);
+            nvgTranslate(vg, 8 * SCREW_WIDTH, 0 );
+            fxGroupLabel(vg, off + i * controlHeight + SCREW_WIDTH + 2 * padMargin, lab2[i].c_str(), bb );
+            SurgeStyle::drawTextBGRect(vg, 3*padMargin+2*portX , i*controlHeight + SCREW_WIDTH + padMargin + controlOffset,
+                                       textAreaWidth, textAreaHeight );
+            nvgRestore(vg);
+        }
+#endif        
+
+        // This is all steaming garbage of course
         drawStackedInputOutputBackground(vg, box, "Carrier");
 
         float x0 = box.size.x/2 - ioRegionWidth/2;
@@ -80,7 +96,11 @@ SurgeVOCWidget<effectType>::SurgeVOCWidget(SurgeVOCWidget<effectType>::M *module
 {
     setModule(module);
 
+#if EXPOSE_163_PARMS    
     box.size = rack::Vec(SCREW_WIDTH * 16, RACK_HEIGHT);
+#else
+    box.size = rack::Vec(SCREW_WIDTH * 8, RACK_HEIGHT);
+#endif    
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, SurgeFXName<effectType>::getName());
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
