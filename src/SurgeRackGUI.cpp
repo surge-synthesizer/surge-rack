@@ -33,7 +33,7 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
 };
 
 void SurgeModuleWidgetCommon::appendContextMenu(rack::ui::Menu* menu ) {
-    menu->addChild(new MenuEntry);
+    menu->addChild(new rack::ui::MenuEntry);
 
     SkinsSubmenuItem *skins = new SkinsSubmenuItem;
     skins->text = "Skins";

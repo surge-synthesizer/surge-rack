@@ -10,6 +10,8 @@
 #include <unordered_set>
 #include <unordered_map>
 
+namespace logger = rack::logger;
+
 // Font dictionary
 struct InternalFontMgr {
     static std::map<std::string, int> fontMap;
@@ -422,7 +424,7 @@ struct SurgeStyle {
         auto it = colorMap.find(nm);
         if( it == colorMap.end() )
         {
-            rack::WARN( "Lookup failed for color '%s'", nm.c_str() );
+            WARN( "Lookup failed for color '%s'", nm.c_str() );
             return nvgRGB( 255, 0, 0 );
         }
         return it->second;
@@ -433,7 +435,7 @@ struct SurgeStyle {
         auto it = assets.find(nm);
         if( it == assets.end() )
         {
-            rack::WARN( "Lookup failed for asset '%s'", nm.c_str() );
+            WARN( "Lookup failed for asset '%s'", nm.c_str() );
             return "";
         }
         return it->second;
