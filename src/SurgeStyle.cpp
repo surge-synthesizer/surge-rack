@@ -11,7 +11,8 @@
 
 namespace fs = std::experimental::filesystem;
 
-using namespace rack;
+namespace logger = rack::logger;
+using rack::appGet;
 
 int SurgeStyle::fid = -1;
 int SurgeStyle::fidcond = -1;
@@ -27,7 +28,7 @@ static svg_t surgeLogoWhite = nullptr;
 static svg_t getSurgeLogo() {
     if (surgeLogoWhite == nullptr) {
         surgeLogoWhite = APP->window->loadSvg(
-            asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
+            rack::asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
     }
     return surgeLogoWhite;
 }
@@ -197,7 +198,7 @@ void SurgeStyle::loadStyle(std::string styleXml)
             json_t *defj = json_object_get(fd, "defaultSkin" );
             if( defj )
                 styleXml = json_string_value( defj );
-            rack::INFO( "styleXML is now %s", styleXml.c_str() );
+            INFO( "styleXML is now %s", styleXml.c_str() );
             json_decref(fd);
         }
         
@@ -225,7 +226,7 @@ void SurgeStyle::loadStyle(std::string styleXml)
     TiXmlElement *skin = TINYXML_SAFE_TO_ELEMENT(doc.FirstChild("surge-rack-skin"));
     if( skin == nullptr )
     {
-        rack::WARN( "Unable to find surge-rack-skin in file '%s'", currentStyle.c_str());
+        WARN( "Unable to find surge-rack-skin in file '%s'", currentStyle.c_str());
         return;
     }
 
@@ -253,7 +254,7 @@ void SurgeStyle::loadStyle(std::string styleXml)
     TiXmlElement *asxml = TINYXML_SAFE_TO_ELEMENT(skin->FirstChild("assets"));
     if( asxml )
     {
-        rack::INFO( "Found Assets" );
+        INFO( "Found Assets" );
         assets.clear();
         for( auto child = asxml->FirstChild(); child; child = child->NextSibling())
         {
@@ -265,7 +266,7 @@ void SurgeStyle::loadStyle(std::string styleXml)
                 if( name && path )
                 {
                     assets[name] = path;
-                    rack::INFO( "NAME/PATH is %s %s", name, path );
+                    INFO( "NAME/PATH is %s %s", name, path );
                                         
                 }
             }

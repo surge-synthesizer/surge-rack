@@ -8,7 +8,9 @@
 #include <execinfo.h>
 #endif
 
-using namespace rack;
+namespace logger = rack::logger;
+using rack::logger::log;
+using rack::appGet;
 
 void stackToInfo();
 
@@ -180,17 +182,17 @@ struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener {
     SurgeSmallKnob() {
         SurgeStyle::addStyleListener(this);
         setSvg(APP->window->loadSvg(
-                   asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
+                   rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
         overlay = new rack::widget::SvgWidget;
         fb->addChild(overlay);
         overlay->setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
+                            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
         twfg = new rack::widget::TransformWidget;
         twfg->box.size = sw->box.size;
         fb->addChild(twfg);
         fg = new rack::widget::SvgWidget;
         fg->setSvg(APP->window->loadSvg(
-                       asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
+                       rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
         twfg->addChild(fg);
     }
     ~SurgeSmallKnob() {
@@ -198,11 +200,11 @@ struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener {
     }
     void styleHasChanged() override {
         setSvg(APP->window->loadSvg(
-                   asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
+                   rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
         overlay->setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
+                            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
         fg->setSvg(APP->window->loadSvg(
-                       asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
+                       rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
     }
     rack::widget::SvgWidget *overlay;
     rack::widget::TransformWidget* twfg;
@@ -228,7 +230,7 @@ struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener {
         fb->addChildBottom(shadow);
 
         underlay->setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
+                            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
 
         shadow->box.size = rack::Vec(24, 24);
         shadow->box.pos = rack::Vec(5, 9.5);
@@ -240,7 +242,7 @@ struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener {
         setSvg(APP->window->loadSvg(rack::asset::plugin(
                                         pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterFG"))));
         underlay->setSvg(APP->window->loadSvg(
-                            asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
+                            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
 
         shadow->box.size = rack::Vec(24, 24);
         shadow->box.pos = rack::Vec(5, 9.5);

@@ -2,7 +2,8 @@
 #include "rack.hpp"
 #include <sstream>
 
-using namespace rack;
+namespace logger = rack::logger;
+using rack::logger::log;
 
 namespace Surge {
 namespace UserInteractions {
