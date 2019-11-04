@@ -52,7 +52,7 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     SurgeBiquad() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(FILTER_TYPE, 0, APF, 1 );
-        configParam(FREQ_KNOB, -60, 70, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE, rack::dsp::FREQ_A4 );
+        configParam(FREQ_KNOB, -60, 65, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE, rack::dsp::FREQ_A4 );
         configParam(RESO_KNOB, 0, 1, 0.707, "Resonance" );
         configParam(THIRD_KNOB, 0, 1, 0.5 );
 
@@ -171,6 +171,7 @@ struct SurgeBiquad :  public SurgeModuleCommon {
             if( lastCoeffUpdate == BLOCK_SIZE && needCoeffUpdate )
             {
                 float fr = getParam(FREQ_KNOB) + inputs[FREQ_CV].getPolyVoltage(i) * 12.0 ; // +/- 5 -> +/- 60
+                fr = rack::clamp(fr, -60.0, 65.0); // don't allow overflows or underflows from CV
                 float res = getParam(RESO_KNOB) + inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
                 float xtra = getParam(THIRD_KNOB) + inputs[THIRD_CV].getPolyVoltage(i) / 10.0;
                 
