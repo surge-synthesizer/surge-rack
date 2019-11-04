@@ -52,7 +52,7 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     SurgeBiquad() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(FILTER_TYPE, 0, APF, 1 );
-        configParam(FREQ_KNOB, -60, 70, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE, rack::dsp::FREQ_A4 );
+        configParam(FREQ_KNOB, -60, 65, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE, rack::dsp::FREQ_A4 );
         configParam(RESO_KNOB, 0, 1, 0.707, "Resonance" );
         configParam(THIRD_KNOB, 0, 1, 0.5 );
 
@@ -60,6 +60,9 @@ struct SurgeBiquad :  public SurgeModuleCommon {
         configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain" );
         
         setupSurge();
+
+        for( int i=0; i<16; ++i )
+            experiencedNan[i] = false;
     }
 
     virtual std::string getName() override { return "Biquad"; }
@@ -89,6 +92,7 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     StringCache pStrings[3];
     int updateCoeffEvery = BLOCK_SIZE;
     int lastCoeffUpdate = BLOCK_SIZE;
+    bool experiencedNan[16];
     int lastChans = -1;
     
     void process(const typename rack::Module::ProcessArgs &args) override
@@ -156,7 +160,7 @@ struct SurgeBiquad :  public SurgeModuleCommon {
             (pc.changed(RESO_KNOB,this) || inputs[RESO_CV].isConnected() ) ||
             ((pc.changed(THIRD_KNOB,this) || inputs[THIRD_CV].isConnected() ) && type == peakEQ) ||
             forceUpdate;
-
+        
         pc.update( this );
 
         for( int i=0; i<nChan; ++i )
@@ -168,9 +172,10 @@ struct SurgeBiquad :  public SurgeModuleCommon {
                 inr = inl;
             }
             
-            if( lastCoeffUpdate == BLOCK_SIZE && needCoeffUpdate )
+            if( ( lastCoeffUpdate == BLOCK_SIZE && needCoeffUpdate ) || experiencedNan[i] )
             {
                 float fr = getParam(FREQ_KNOB) + inputs[FREQ_CV].getPolyVoltage(i) * 12.0 ; // +/- 5 -> +/- 60
+                fr = rack::clamp(fr, -60.0, 65.0); // don't allow overflows or underflows from CV
                 float res = getParam(RESO_KNOB) + inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
                 float xtra = getParam(THIRD_KNOB) + inputs[THIRD_CV].getPolyVoltage(i) / 10.0;
                 
@@ -215,12 +220,20 @@ struct SurgeBiquad :  public SurgeModuleCommon {
                 }
             }
             
+            experiencedNan[i] = false;
             
             float outl, outr;
             biquad[i]->process_sample( inl, inr, outl, outr );
 
-            outl = std::isfinite(outl)? outl : 0;
-            outr = std::isfinite(outr)? outr : 0;
+            if( ! std::isfinite(outl) || ! std::isfinite(outr) )
+            {
+                outl = 0;
+                outr = 0;
+
+                // But also reset the biquad state
+                experiencedNan[i] = true;
+                biquad[i]->suspend();
+            }
             
             if( ! outputConnected(OUTPUT_R) )
             {
@@ -228,10 +241,15 @@ struct SurgeBiquad :  public SurgeModuleCommon {
             }
             else
             {
-                outputs[OUTPUT_L_OR_MONO].setVoltage( outG * outl * 5, i );
-                outputs[OUTPUT_R].setVoltage( outG * outr * 5, i );
+                auto ovl = outG * outl * 5.0;
+                auto ovr = outG * outr * 5.0;
+
+                outputs[OUTPUT_L_OR_MONO].setVoltage( ovl, i );
+                outputs[OUTPUT_R].setVoltage( ovr, i );
             }
+            
         }
+
         if( lastCoeffUpdate == BLOCK_SIZE )
             lastCoeffUpdate = 0;
         lastCoeffUpdate ++;
