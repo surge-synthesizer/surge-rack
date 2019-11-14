@@ -201,8 +201,11 @@ void SurgeStyle::loadStyle(std::string styleXml)
             INFO( "styleXML is now %s", styleXml.c_str() );
             json_decref(fd);
         }
-        
-
+    }
+    else if( styleXml == "" ) // implicit and currentStyle != ""
+    {
+        // I want to use the default; and I have a current style; so I'm all fine
+        return;
     }
     
     if( styleList.empty() )
@@ -217,9 +220,10 @@ void SurgeStyle::loadStyle(std::string styleXml)
     
     if( currentStyle == styleXml )
         return;
-    
+
     currentStyle = styleXml;
-    INFO( "Loading skin %s", currentStyle.c_str() );
+    INFO( "Loading skin '%s'", currentStyle.c_str() );
+
     
     TiXmlDocument doc;
     doc.LoadFile(styleXml.c_str());
@@ -266,8 +270,6 @@ void SurgeStyle::loadStyle(std::string styleXml)
                 if( name && path )
                 {
                     assets[name] = path;
-                    INFO( "NAME/PATH is %s %s", name, path );
-                                        
                 }
             }
         }
