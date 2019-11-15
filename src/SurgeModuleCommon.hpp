@@ -65,7 +65,9 @@ struct ParamCache {
 
 
 struct SurgeModuleCommon : public rack::Module {
-    SurgeModuleCommon() : rack::Module() {  }
+    SurgeModuleCommon() : rack::Module() {
+        storage.reset(nullptr);
+    }
 
     std::string getBuildInfo() {
         char version[1024];
@@ -100,7 +102,8 @@ struct SurgeModuleCommon : public rack::Module {
         dsamplerate_inv = 1.0 / sr;
         dsamplerate_os = dsamplerate * OSC_OVERSAMPLING;
         dsamplerate_os_inv = 1.0 / dsamplerate_os;
-        storage->init_tables();
+        if( storage )
+            storage->init_tables();
     }
 
     void setupSurgeCommon(int NUM_PARAMS);
