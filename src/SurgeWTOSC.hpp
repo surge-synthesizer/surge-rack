@@ -333,11 +333,10 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     paramValueCache[i].reset(txt);
                 }
             }
-            forceRespawnDueToSampleRate = false;
 
             for (int i = 0; i < n_osc_params; ++i) {
-                if (getParam(OSC_CTRL_PARAM_0 + i) !=
-                    pc.get(OSC_CTRL_PARAM_0 + i) ) {
+                if (forceRespawnDueToSampleRate ||
+                    getParam(OSC_CTRL_PARAM_0 + i) != pc.get(OSC_CTRL_PARAM_0 + i) ) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);
@@ -345,13 +344,12 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 }
             }
 
-
             if( pc.changed(CATEGORY_IDX, this) || pc.changed(WT_IN_CATEGORY_IDX, this) )
             {
                 updateWtIdx();
             }
 
-            if( pc.changedAndIsNonZero(LOAD_WT, this) || firstRespawnIsFromJSON )
+            if( forceRespawnDueToSampleRate || pc.changedAndIsNonZero(LOAD_WT, this) || firstRespawnIsFromJSON )
             {
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
@@ -361,6 +359,8 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 }
                 updateWtLabels();
             }
+
+            forceRespawnDueToSampleRate = false;
 
             if( wtIdx != oscstorage->wt.current_id )
             {
