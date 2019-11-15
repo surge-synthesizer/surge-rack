@@ -26,8 +26,9 @@ struct SurgeClock : virtual public SurgeModuleCommon {
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         bool newBPM = false;
+        
         newBPM = updateBPMFromClockCV(getParam(CLOCK_CV), args.sampleTime, args.sampleRate );
-
+        
         if( newBPM )
         {
             char txt[256];

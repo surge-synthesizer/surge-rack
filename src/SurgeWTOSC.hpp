@@ -248,6 +248,12 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     int lastUnison = -1;
     int lastNChan = -1;
+    bool forceRespawnDueToSampleRate = false;
+
+    
+    virtual void moduleSpecificSampleRateChange() override {
+        forceRespawnDueToSampleRate = true;
+    }
     
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -283,7 +289,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 updatePitchCache();
             }
             
-            if( pc.changed(WT_OR_WINDOW, this) )
+            if( forceRespawnDueToSampleRate || pc.changed(WT_OR_WINDOW, this) )
             {
                 knobSaver.storeParams( (int)pc.get(WT_OR_WINDOW), OSC_CTRL_PARAM_0, OSC_CTRL_PARAM_0 + n_osc_params, this );
                 
@@ -327,6 +333,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     paramValueCache[i].reset(txt);
                 }
             }
+            forceRespawnDueToSampleRate = false;
 
             for (int i = 0; i < n_osc_params; ++i) {
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=

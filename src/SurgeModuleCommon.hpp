@@ -104,7 +104,11 @@ struct SurgeModuleCommon : public rack::Module {
         dsamplerate_os_inv = 1.0 / dsamplerate_os;
         if( storage )
             storage->init_tables();
+        updateBPMFromClockCV(lastClockCV, samplerate_inv, sr, true);
+        moduleSpecificSampleRateChange();
     }
+
+    virtual void moduleSpecificSampleRateChange() { }
 
     void setupSurgeCommon(int NUM_PARAMS);
     
@@ -113,8 +117,8 @@ struct SurgeModuleCommon : public rack::Module {
 
     float lastBPM = -1, lastClockCV = -100;
     float dPhase = 0;
-    inline bool updateBPMFromClockCV(float clockCV, float sampleTime, float sampleRate) {
-        if( clockCV == lastClockCV ) return false;
+    inline bool updateBPMFromClockCV(float clockCV, float sampleTime, float sampleRate, bool force = false) {
+        if( ! force && clockCV == lastClockCV ) return false;
 
         lastClockCV = clockCV;
         float clockTime = powf(2.0f, clockCV);
