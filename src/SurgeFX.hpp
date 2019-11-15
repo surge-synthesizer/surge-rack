@@ -163,6 +163,19 @@ struct SurgeFX : virtual SurgeModuleCommon {
         alignas(16)[BLOCK_SIZE];
     int bufferPos = BLOCK_SIZE - 1;
 
+    virtual void moduleSpecificSampleRateChange() override {
+        surge_effect.reset(spawn_effect(effectNum, storage.get(),
+                                        &(storage->getPatch().fx[0]),
+                                        storage->getPatch().globaldata));
+        surge_effect->init();
+        surge_effect->init_ctrltypes();
+        surge_effect->init_default_values();
+        for(auto binding : pb)
+            if(binding)
+                binding->forceRefresh = true;
+
+    }
+    
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         float inpG = getParam(INPUT_GAIN);

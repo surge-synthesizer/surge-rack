@@ -105,6 +105,10 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         }
 
     }
+
+    virtual void moduleSpecificSampleRateChange() override {
+        forceRespawnDueToSampleRate = true;
+    }
     
     void respawn(int i, int idx) {
         if( idx == 0 )
@@ -171,6 +175,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
     int lastUnison = -1;
     int lastNChan = -1;
+    bool forceRespawnDueToSampleRate = false;
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = std::max(1, inputs[PITCH_CV].getChannels());
@@ -204,7 +209,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             processPosition = 0;
 
             bool respawned = false;
-            if ((int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE)) {
+            if (forceRespawnDueToSampleRate || (int)getParam(OSC_TYPE) != (int)pc.get(OSC_TYPE)) {
                 knobSaver.storeParams( (int)pc.get(OSC_TYPE), OSC_CTRL_PARAM_0, OSC_CTRL_PARAM_0 + n_osc_params, this );
                 
                 auto conf = oscConfigurations[(int)getParam(OSC_TYPE)];
@@ -217,6 +222,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 
                 knobSaver.applyFromIndex((int)getParam(OSC_TYPE), this );
             }
+            forceRespawnDueToSampleRate = false;
 
             if(pc.changed(PITCH_0, this) ||
                pc.changed(PITCH_0_IN_FREQ, this))
