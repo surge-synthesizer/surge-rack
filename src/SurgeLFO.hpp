@@ -35,7 +35,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
     };
     enum InputIds {
         GATE_IN,
-        RETRIG_IN,
+        UNUSED_ONE,
 
         RATE_CV,
         SHAPE_CV,
@@ -190,12 +190,14 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
                     surge_lfo[c]->attack();
                     inNewAttack = true;
                 }
-                
+
+                /*
                 if (inputConnected(RETRIG_IN) && envRetrig[c].process(inputs[RETRIG_IN].getPolyVoltage(c))) {
                     // This is wrong
                     surge_lfo[c]->retrigger_FEG = true;
                     surge_lfo[c]->retrigger_AEG = true;
                 }
+                */
                 
 
                 for(auto binding : pb)

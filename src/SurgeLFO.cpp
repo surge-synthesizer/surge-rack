@@ -65,7 +65,7 @@ struct SurgeLFOWidget : SurgeModuleWidgetCommon {
         float ioyb = orangeLine + ioMargin;
         auto xb0 = inputXPos(0) - padMargin;
         drawBlueIORect(vg, xb0, ioyb, 3 * portX + 6 * padMargin, box.size.y - orangeLine - 2 * ioMargin );
-        std::vector<std::string> lab = { "Gate", "Retrig", "Out" };
+        std::vector<std::string> lab = { "Gate", "", "Out" };
         for( int i=0; i<3; ++i )
         {
             auto xc = inputXPos(i) + portX / 2;
@@ -157,8 +157,6 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module)
 
     addInput(rack::createInput<rack::PJ301MPort>(
         rack::Vec(inputXPos(0), inputYPos(0)), module, M::GATE_IN));
-    addInput(rack::createInput<rack::PJ301MPort>(
-        rack::Vec(inputXPos(1), inputYPos(1)), module, M::RETRIG_IN));
     addOutput(rack::createOutput<rack::PJ301MPort>(
         rack::Vec(inputXPos(2), inputYPos(2)), module, M::OUTPUT_ENV));
 

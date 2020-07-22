@@ -48,6 +48,12 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         configParam(WT_IN_CATEGORY_IDX, 0,1, 0);
         configParam(WT_OR_WINDOW,0,1,0);
         setupSurge();
+
+        for( int i=0; i<MAX_POLY; ++i )
+        {
+            halfbandOUT.emplace_back( 6, true );
+            halfbandOUT[i].reset();
+        }
     }
 
     virtual std::string getName() override { return "WTOSC"; }
@@ -116,7 +122,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         surge_osc[0]->init(72.0);
         updateWtLabels();
 
-        processPosition = BLOCK_SIZE_OS + 1;
+        processPosition = BLOCK_SIZE + 1;
         oscstorage->type.val.i = 2;
 
         for (auto i = 0; i < n_osc_params; ++i) {
@@ -140,7 +146,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         pc.update(this);
     }
 
-    int processPosition = BLOCK_SIZE_OS + 1;
+    int processPosition = BLOCK_SIZE + 1;
 
     void updateWtLabels() {
         if( storage->wt_category.size() == 0 )
@@ -274,7 +280,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             lastNChan = nChan;
         }
 
-        if (processPosition >= BLOCK_SIZE_OS) {
+        if (processPosition >= BLOCK_SIZE) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
             processPosition = 0;
 
@@ -397,6 +403,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     
                     surge_osc[c]->process_block(
                         pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
+                    copy_block( surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD );
+                    copy_block( surge_osc[c]->outputR,osc_downsample[1][c], BLOCK_SIZE_OS_QUAD );
+                    halfbandOUT[c].process_block_D2( osc_downsample[0][c], osc_downsample[1][c] );
                 }
             }
             lastUnison = oscstorage->p[n_osc_params-1].val.i;
@@ -409,22 +418,21 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
             {
                 // Special mono mode
-                float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
+                float output = (osc_downsample[0][c][processPosition] +
+                                osc_downsample[1][c][processPosition]) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
                 outputs[OUTPUT_L].setVoltage(output, c);
             }
             else
             {
                 if( outputConnected(OUTPUT_L) )
-                    outputs[OUTPUT_L].setVoltage( avgl * SURGE_TO_RACK_OSC_MUL *
-                                                  getParam(OUTPUT_GAIN), c);
+                    outputs[OUTPUT_L].setVoltage(osc_downsample[0][c][processPosition] * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
                 
                 if( outputConnected(OUTPUT_R) )
-                    outputs[OUTPUT_R].setVoltage(avgr * SURGE_TO_RACK_OSC_MUL *
-                                                 getParam(OUTPUT_GAIN), c);
+                    outputs[OUTPUT_R].setVoltage(osc_downsample[1][c][processPosition] * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
             }
         }
 
-        processPosition += 2; // that's why the call it block_size _OS (oversampled)
+        processPosition ++; 
         firstRespawnIsFromJSON = false;
     }
 
@@ -497,4 +505,6 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     }
 
+    float  osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
+    std::vector<HalfRateFilter> halfbandOUT;
 };

@@ -38,6 +38,12 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         for (int i = 0; i < n_osc_params; ++i)
             configParam(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
         setupSurge();
+
+        for( int i=0; i<MAX_POLY; ++i )
+        {
+            halfbandOUT.emplace_back( 6, true );
+            halfbandOUT[i].reset();
+        }
     }
 
     virtual std::string getName() override { return "OSC"; }
@@ -84,7 +90,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         pc.update(this);
     }
 
-    int processPosition = BLOCK_SIZE_OS + 1;
+    int processPosition = BLOCK_SIZE + 1;
     
     void updatePitchCache() {
         char txt[ 1024 ];
@@ -128,7 +134,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         if( idx == 0 )
             surge_osc[idx]->init_default_values();
         
-        processPosition = BLOCK_SIZE_OS + 1;
+        processPosition = BLOCK_SIZE + 1;
         oscstorage->type.val.i = i;
         if( idx == 0 )
         {
@@ -204,7 +210,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         }
             
         
-        if (processPosition >= BLOCK_SIZE_OS) {
+        if (processPosition >= BLOCK_SIZE) {
             // As @Vortico says "think like a hardware engineer; only snap values when you need them".
             processPosition = 0;
 
@@ -245,10 +251,13 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 }
             }
 
-            if( respawned )
-                lastUnison = oscstorage->p[n_osc_params-1].val.i;
-
             bool newUnison = false;
+            if( respawned )
+            {
+                lastUnison = oscstorage->p[n_osc_params-1].val.i;
+                newUnison = true;
+            }
+
             if((int)getParam(OSC_TYPE) == 0 &&
                pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
                oscstorage->p[n_osc_params-1].val.i != lastUnison
@@ -284,6 +293,9 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                     float pitch0 = (getParam(PITCH_0_IN_FREQ) > 0.5) ? getParam(PITCH_0) : (int)getParam(PITCH_0);
                     surge_osc[c]->process_block(
                         pitch0 + inputs[PITCH_CV].getVoltage(c) * 12.0, 0, true);
+                    copy_block( surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD );
+                    copy_block( surge_osc[c]->outputR,osc_downsample[1][c], BLOCK_SIZE_OS_QUAD );
+                    halfbandOUT[c].process_block_D2( osc_downsample[0][c], osc_downsample[1][c] );
                 }
             }
             pc.update(this);
@@ -291,27 +303,28 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
 
         for( int c=0; c<nChan; ++c )
         {
-            float avgl = (surge_osc[c]->output[processPosition] + surge_osc[c]->output[processPosition+1]) * 0.5;
-            float avgr = (surge_osc[c]->outputR[processPosition] + surge_osc[c]->outputR[processPosition+1]) * 0.5;
             if( outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R) )
             {
                 // Special mono mode
-                float output = (avgl + avgr) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
+                float output = (osc_downsample[0][c][processPosition] +
+                                osc_downsample[1][c][processPosition]) * 0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
                 outputs[OUTPUT_L].setVoltage(output,c);
             }
             else
             {
                 if( outputConnected(OUTPUT_L) )
-                    outputs[OUTPUT_L].setVoltage(avgl * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
+                    outputs[OUTPUT_L].setVoltage(osc_downsample[0][c][processPosition] * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
                 
                 if( outputConnected(OUTPUT_R) )
-                    outputs[OUTPUT_R].setVoltage(avgr * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
+                    outputs[OUTPUT_R].setVoltage(osc_downsample[1][c][processPosition] * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN), c);
             }
         }
             
-        processPosition += 2; // that's why the call it block_size _OS (oversampled)
+        processPosition ++;
     }
 
     std::vector<std::unique_ptr<Oscillator>> surge_osc;
     OscillatorStorage *oscstorage;
+    float  osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
+    std::vector<HalfRateFilter> halfbandOUT;
 };
