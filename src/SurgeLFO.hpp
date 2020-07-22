@@ -192,7 +192,9 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
                 }
                 
                 if (inputConnected(RETRIG_IN) && envRetrig[c].process(inputs[RETRIG_IN].getPolyVoltage(c))) {
-                    surge_lfo[c]->retrigger_EG = true;
+                    // This is wrong
+                    surge_lfo[c]->retrigger_FEG = true;
+                    surge_lfo[c]->retrigger_AEG = true;
                 }
                 
 

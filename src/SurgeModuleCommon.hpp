@@ -4,6 +4,10 @@
 */
 
 #pragma once
+#include <string>
+#include <locale>
+#include <iostream>
+
 #include "Surge.hpp"
 #include "SurgeStorage.h"
 #include "rack.hpp"

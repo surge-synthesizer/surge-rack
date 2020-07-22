@@ -23,6 +23,8 @@ template<> struct SurgeFXName<fxt_freqshift> { static std::string getName() { re
 template<> struct SurgeFXName<fxt_chorus4> { static std::string getName() { return "CHORUS"; } };
 template<> struct SurgeFXName<fxt_conditioner> { static std::string getName() { return "CONDITION"; } };
 template<> struct SurgeFXName<fxt_vocoder> { static std::string getName() { return "VOC"; } };
+template<> struct SurgeFXName<fxt_flanger> { static std::string getName() { return "FLANGER"; } };
+template<> struct SurgeFXName<fxt_ringmod> { static std::string getName() { return "RINGMOD"; } };
 
 template<int effectNum>
 struct SurgeFXTraits

@@ -15,9 +15,11 @@ FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
 	-Isurge/libs/filesystem \
 	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
+        -Isurge/libs/tuning-library/include \
 	-DRELEASE=1 \
 	-DTARGET_HEADLESS \
-	-DTARGET_RACK
+	-DTARGET_RACK 
+
 
 FLAGS += $(RACK_FLAG)
 
@@ -38,7 +40,6 @@ SOURCES += $(SRG)/Parameter.cpp \
 	$(SRG)/SurgeStorage.cpp \
 	$(SRG)/SurgeSynthesizer.cpp \
 	$(SRG)/SurgeSynthesizerIO.cpp \
-        $(SRG)/Tunings.cpp \
 	$(SRG)/UserDefaults.cpp \
 	$(SRG)/precompiled.cpp \
     $(SRG)/dsp/AdsrEnvelope.cpp \
@@ -63,9 +64,11 @@ SOURCES += $(SRG)/Parameter.cpp \
     $(SRG)/dsp/effect/DualDelayEffect.cpp \
     $(SRG)/dsp/effect/Effect.cpp \
     $(SRG)/dsp/effect/FreqshiftEffect.cpp \
+    $(SRG)/dsp/effect/FlangerEffect.cpp \
     $(SRG)/dsp/effect/PhaserEffect.cpp \
     $(SRG)/dsp/effect/Reverb1Effect.cpp \
     $(SRG)/dsp/effect/Reverb2Effect.cpp \
+    $(SRG)/dsp/effect/RingModulatorEffect.cpp \
     $(SRG)/dsp/effect/RotarySpeakerEffect.cpp \
     $(SRG)/dsp/effect/VocoderEffect.cpp \
     $(SRG)/vt_dsp/basic_dsp.cpp \
@@ -98,6 +101,7 @@ endif
 ifdef ARCH_LIN
 SOURCES += surge/src/linux/ConfigurationXml.S
 LDFLAGS += -lstdc++fs -pthread
+FLAGS += -DUSE_STD_EXPERIMENTAL_FILESYSTEM
 
 # This is really a hack but...
 build/surge/src/linux/ConfigurationXml.S.o: surge/src/linux/ConfigurationXml.S
