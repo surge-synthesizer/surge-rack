@@ -1,18 +1,18 @@
 # Build against RACK 1.0
 
 trigger:
-- master
+- main
 - release/*
 
 pr:
-- master
+- main
 
 jobs:
 - job: Build
   strategy:
     matrix:
       mac10:
-        imageName: 'macos-10.13'
+        imageName: 'macos-10.14'
         isMac: true
         sdkURL: https://vcvrack.com/downloads/Rack-SDK-1.1.6.zip
         artifactMatrixID: 'SURGERACK_ZIP_MACOS_10' 
@@ -53,7 +53,7 @@ jobs:
   - bash: |
       ./scripts/resetversion.sh
     displayName: Update Version in plugins.json
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
 
 
   - bash: |
@@ -96,7 +96,7 @@ jobs:
 
 - job: UpdateGithubRelease
   dependsOn: Build
-  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release')))
+  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release')))
 
   steps:
 
@@ -121,7 +121,7 @@ jobs:
 
   - task: GitHubRelease@0
     displayName: "Update Github Nightly"
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     inputs:
       gitHubConnection: surge-rackupdater
       repositoryName: surge-synthesizer/surge-rack

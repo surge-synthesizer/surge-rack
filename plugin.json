@@ -54,6 +54,12 @@
 			"tags": [ "Effect", "Polyphonic", "Reverb" ]
 		},
 		{
+			"slug": "SurgeReverb2",
+			"name": "SurgeReverb2",
+			"description": "The Surge reverb (second one)",
+			"tags": [ "Effect", "Polyphonic", "Reverb" ]
+		},
+		{
 			"slug": "SurgeFreqShift",
 			"name": "SurgeFreqShift",
 			"description": "The Surge frequency shifter",
@@ -64,6 +70,18 @@
 			"name": "SurgeConditioner",
 			"description": "The Surge conditioner/limiter effect",
 			"tags": [ "Effect", "Polyphonic", "Limiter", "EQ" ]
+		},
+		{
+			"slug": "SurgeFlanger",
+			"name": "SurgeFlanger",
+			"description": "The Surge flanger effect",
+			"tags": [ "Effect", "Polyphonic", "Flanger" ]
+		},
+		{
+			"slug": "SurgeRingMod",
+			"name": "SurgeRingMod",
+			"description": "The Surge ring modulator effect",
+			"tags": [ "Effect", "Polyphonic", "Ring Modulator" ]
 		},
 		{
 			"slug": "SurgeClock",

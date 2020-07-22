@@ -19,6 +19,17 @@ void promptError(const Surge::Error &error, SurgeGUIEditor *guiEditor) {
     promptError(error.getMessage(), error.getTitle());
 }
 
+void promptInfo(const std::string &message, const std::string &title,
+                SurgeGUIEditor *guiEditor)
+{
+    std::ostringstream oss;
+    oss << "Surge Info\n"
+        << title << "\n"
+        << message << "\n"
+        << "Returning CANCEL";
+    INFO(oss.str().c_str());
+}
+
 MessageResult promptOKCancel(const std::string &message,
                              const std::string &title,
                              SurgeGUIEditor *guiEditor) {
