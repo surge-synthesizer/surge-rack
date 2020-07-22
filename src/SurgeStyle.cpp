@@ -226,7 +226,12 @@ void SurgeStyle::loadStyle(std::string styleXml)
 
     
     TiXmlDocument doc;
-    doc.LoadFile(styleXml.c_str());
+    if( ! doc.LoadFile(styleXml.c_str()) || doc.Error() )
+    {
+        styleXml = rack::asset::plugin(pluginInstance, "res/skins/Classic.xml" );
+        doc.LoadFile(styleXml);
+
+    }
     TiXmlElement *skin = TINYXML_SAFE_TO_ELEMENT(doc.FirstChild("surge-rack-skin"));
     if( skin == nullptr )
     {
