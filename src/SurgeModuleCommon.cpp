@@ -1,5 +1,6 @@
 #include "SurgeModuleCommon.hpp"
 #include <string>
+#include <atomic>
 
 void SurgeRackParamBinding::updateFloat(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m)
 {
@@ -12,12 +13,14 @@ void SurgeRackParamBinding::updateFloat(const ParamCache &pc, int polyChannel, S
             p->temposync = m->getParam(ts_id) > 0.5;
         
         p->get_display(txt, false, 0);
+        /*
         if( tsbpmLabel && ts_id >= 0 && m->getParam(ts_id) > 0.5 )
         {
             char ntxt[1024];
             snprintf(ntxt, 1024, "%s @ %5.1lf bpm", txt, m->lastBPM );
             strcpy(txt, ntxt);
         }
+        */
         valCache.reset(txt);
         paramChanged = true;
     }
@@ -94,9 +97,14 @@ void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS)
     
     showBuildInfo();
     storage.reset(new SurgeStorage(dataPath));
-    
-    INFO("[SurgeRack] storage::dataPath = '%s'", storage->datapath.c_str());
-    INFO("[SurgeRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
+
+    std::atomic<bool> showedPathsOnce(false);
+    if( ! showedPathsOnce )
+    {
+        showedPathsOnce = true;
+        INFO("[SurgeRack] storage::dataPath = '%s'", storage->datapath.c_str());
+        INFO("[SurgeRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
+    }
 
     onSampleRateChange();
 
@@ -135,42 +143,10 @@ std::string SurgeRackParamQuantity::getDisplayValueString() {
     if( mc )
     {
         std::shared_ptr<SurgeRackParamBinding> pbn = mc->pb[paramId];
-        if( pbn.get() )
+        if( pbn )
         {
-            switch (pbn->p->ctrltype)
-            {
-            case ct_lforate:
-            case ct_envtime:
-            case ct_envtime_lfodecay:
-            case ct_reverbtime:
-            case ct_delaymodtime:
-                if( ! pbn->p->temposync )
-                    return pbn->valCache.value;
-                break;
-                
-            case ct_percent:
-            case ct_percent_bidirectional:
-            case ct_amplitude:
-            case ct_freq_hpf:
-            case ct_freq_audible:
-
-            case ct_decibel:
-            case ct_decibel_attenuation:
-            case ct_decibel_attenuation_large:
-            case ct_decibel_fmdepth:
-            case ct_decibel_narrow:
-            case ct_decibel_extra_narrow:
-
-            case ct_detuning:
-            case ct_bandwidth:
-
-            case ct_freq_shift:
-                
-                return pbn->valCache.value;
-                
-            default:
-                break;
-            }
+            std::cout << "getDisplayValueString " << pbn->valCache.value << std::endl;
+            return pbn->valCache.value;
         }
     }
 
@@ -179,91 +155,18 @@ std::string SurgeRackParamQuantity::getDisplayValueString() {
 
 void SurgeRackParamQuantity::setDisplayValueString(std::string s) {
     SurgeModuleCommon *mc = static_cast<SurgeModuleCommon *>(module);
-    bool foundValue = false;
+    //std::cout << "SRPQ for " << paramId << std::endl;
     if( mc )
     {
-        std::shared_ptr<SurgeRackParamBinding> pbn = mc->pb[paramId];
-        if( pbn.get() )
+        auto pbn = mc->pb[paramId];
+        //std::cout << "PBN is " << pbn.get() << std::endl;
+        if( pbn )
         {
-            float newValue = 0;
-            switch (pbn->p->ctrltype)
+            auto p = pbn->p;
+            //std::cout << "p is " << p << std::endl;
+            if( p->can_setvalue_from_string() )
             {
-            case ct_lforate:
-            case ct_envtime:
-            case ct_envtime_lfodecay:
-            case ct_reverbtime:
-            case ct_delaymodtime:
-                if( ! pbn->p->temposync )
-                {
-                    float entered = std::stof(s);
-                    // hz are 2^newValue so newValue = log2(hz)
-                    // seconds are also 2^value
-                    newValue = log2f(entered);
-                    foundValue = true;
-                }
-                break;
-            case ct_percent:
-            {
-                float entered = std::stof(s);
-                newValue = entered / 100.0;
-                foundValue = true;
-            }
-            break;
-            case ct_percent_bidirectional:
-            {
-                float entered = std::stof(s);
-                newValue = entered / 100.0;
-                foundValue = true;
-            }
-            break;
-            case ct_amplitude:
-            {
-                // amp_to_db is 18 * log2(v) so the inverse is pow(2, inp/18)
-                float entered = std::stof(s);
-                newValue = pow(2.0, entered/18.0 );
-                foundValue = true;
-            }
-            break;
-            case ct_freq_hpf:
-            case ct_freq_audible:
-            {
-                // o = 440 * 2 ^ ( v/12 ) is the string; so v = 12 * log2( o / 440 )
-                float entered = std::stof(s);
-                newValue = 12.0 * log2f( entered / 440.0 );
-                foundValue = true;
-            }
-            break;
-            
-            case ct_decibel:
-            case ct_decibel_attenuation:
-            case ct_decibel_attenuation_large:
-            case ct_decibel_fmdepth:
-            case ct_decibel_narrow:
-            case ct_decibel_extra_narrow:
-            case ct_bandwidth:
-            case ct_freq_shift:
-            {
-                float entered = std::stof(s);
-                newValue = entered;
-                foundValue = true;
-            }
-            break;
-            // 13 and 33
-
-            case ct_detuning:
-            {
-                float entered = std::stof(s);
-                newValue = entered / 100.0;
-                foundValue = true;
-            }
-            
-            default:
-                break;
-            }
-            if( foundValue )
-            {
-                pbn->p->val.f = newValue;
-                pbn->p->bound_value(false);
+                p->set_value_from_string(s);
                 setValue(pbn->p->get_value_f01());
                 return;
             }
@@ -271,8 +174,7 @@ void SurgeRackParamQuantity::setDisplayValueString(std::string s) {
         }
     }
 
-    if( ! foundValue )
-        ParamQuantity::setDisplayValueString(s);
+    ParamQuantity::setDisplayValueString(s);
 }
 
    

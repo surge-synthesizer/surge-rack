@@ -15,7 +15,9 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         
         OSC_CTRL_PARAM_0,
 
-        NUM_PARAMS = OSC_CTRL_PARAM_0 + n_osc_params
+        OSC_DEACTIVATE_INVERSE_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params, // true->false swap for UI
+
+        NUM_PARAMS = OSC_DEACTIVATE_INVERSE_PARAM_0 + n_osc_params
     };
     enum InputIds {
         PITCH_CV,
@@ -31,12 +33,15 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     
     SurgeOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
         configParam(OUTPUT_GAIN, 0, 1, 1);
         configParam(OSC_TYPE, 0, 4, 0);
         configParam(PITCH_0, 1, 127, 60);
         configParam(PITCH_0_IN_FREQ, 0, 1, 0);
+        
         for (int i = 0; i < n_osc_params; ++i)
-            configParam(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+            configParam<SurgeRackParamQuantity>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+
         setupSurge();
 
         for( int i=0; i<MAX_POLY; ++i )
@@ -160,6 +165,10 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                     */
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                 }
+                
+                setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, false );
+                oscstorage->p[i].deactivated = true;
+                
                 paramNameCache[i].reset(oscstorage->p[i].get_name());
                 char txt[256];
                 oscstorage->p[i].get_display(txt, false, 0);
@@ -249,6 +258,9 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                     oscstorage->p[i].get_display(txt, false, 0);
                     paramValueCache[i].reset(txt);
                 }
+
+                if( oscstorage->p[i].can_deactivate() )
+                    oscstorage->p[i].deactivated = ! getParam(OSC_DEACTIVATE_INVERSE_PARAM_0);
             }
 
             bool newUnison = false;
@@ -258,7 +270,10 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 newUnison = true;
             }
 
-            if((int)getParam(OSC_TYPE) == 0 &&
+            if( ( (int)getParam(OSC_TYPE) == 0 || // classic
+                  (int)getParam(OSC_TYPE) == 1 || // sine
+                  (int)getParam(OSC_TYPE) == 4    // shnoise
+                    ) &&
                pc.changed(OSC_CTRL_PARAM_0 + n_osc_params - 1, this ) &&
                oscstorage->p[n_osc_params-1].val.i != lastUnison
                 )
