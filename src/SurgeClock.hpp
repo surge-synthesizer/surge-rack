@@ -12,8 +12,8 @@ struct SurgeClock : virtual public SurgeModuleCommon {
 
     SurgeClock() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(CLOCK_CV, -2, 6, 1);
-        configParam(PULSE_WIDTH, 0.01, 0.99, 0.5);
+        configParam(CLOCK_CV, -2, 6, 1, "Rate");
+        configParam(PULSE_WIDTH, 0.01, 0.99, 0.5, "Pulse Width");
     }
 
     virtual std::string getName() override { return "CLOCK"; }

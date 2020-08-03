@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="7" height="20.641106" viewBox="0 0 1.8520833 5.4612927" version="1.1" id="svg56722" xmlns="http://www.w3.org/2000/svg">
+  <g id="layer1" transform="translate(-35.423779,-63.339207)">
+    <g transform="matrix(0.13761951,0,0,-0.27523902,-72.378174,385.03395)" id="g56714" style="stroke-width:1.2817142">
+      <path d="m 783.5078,1167.3652 c 0,0.779 0.639,1.418 1.418,1.418 h 10.622 c 0.779,0 1.418,-0.639 1.418,-1.418 v -17.007 c 0,-0.779 -0.639,-1.417 -1.418,-1.417 h -10.622 c -0.779,0 -1.418,0.638 -1.418,1.417 z" style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.2817142" id="path5785"/>
+      <g style="fill:#282828;fill-opacity:1;stroke-width:1.2817142" id="g5795">
+        <g style="fill:#282828;fill-opacity:1;stroke-width:1.2817142" id="g5797">
+          <path id="path5805" style="fill:#282828;fill-opacity:1;stroke:none;stroke-width:1.2817142" d="m 785.616,1167.502 c -0.468,0 -0.85,-0.382 -0.85,-0.85 v 0 -15.724 c 0,-0.468 0.382,-0.851 0.85,-0.851 v 0 h 9.241 c 0.466,0 0.849,0.383 0.849,0.851 v 0 15.724 c 0,0.468 -0.383,0.85 -0.849,0.85 v 0 z"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

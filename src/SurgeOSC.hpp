@@ -14,10 +14,10 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         PITCH_0_IN_FREQ,
         
         OSC_CTRL_PARAM_0,
+        OSC_DEACTIVATE_INVERSE_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params, // state -1, 0, 1 for n/a, off, on
+        OSC_EXTEND_PARAM_0 = OSC_DEACTIVATE_INVERSE_PARAM_0 + n_osc_params, // state -1, 0, 1 for n/a, off, on
 
-        OSC_DEACTIVATE_INVERSE_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params, // true->false swap for UI
-
-        NUM_PARAMS = OSC_DEACTIVATE_INVERSE_PARAM_0 + n_osc_params
+        NUM_PARAMS = OSC_EXTEND_PARAM_0 + n_osc_params
     };
     enum InputIds {
         PITCH_CV,
@@ -34,13 +34,17 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     SurgeOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam(OUTPUT_GAIN, 0, 1, 1);
-        configParam(OSC_TYPE, 0, 4, 0);
-        configParam(PITCH_0, 1, 127, 60);
-        configParam(PITCH_0_IN_FREQ, 0, 1, 0);
+        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
+        configParam(OSC_TYPE, 0, 4, 0, "Oscillator Type");
+        configParam(PITCH_0, 1, 127, 60, "Pitch in Midi Note");
+        configParam(PITCH_0_IN_FREQ, 0, 1, 0, "Pitch in Hz");
         
         for (int i = 0; i < n_osc_params; ++i)
-            configParam<SurgeRackParamQuantity>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+        {
+            configParam<SurgeRackOSCParamQuantity<SurgeOSC>>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+            configParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1, 1, -1, "Activate (if applicable)" );
+            configParam(OSC_EXTEND_PARAM_0 + i, -1, 1, -1, "Extend (if applicable)" );
+        }
 
         setupSurge();
 
@@ -165,9 +169,24 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                     */
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
                 }
-                
-                setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, false );
-                oscstorage->p[i].deactivated = true;
+
+                if( oscstorage->p[i].can_deactivate() )
+                {
+                    setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, 0 );
+                    oscstorage->p[i].deactivated = true;
+                } else {
+                    setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1 );
+                    oscstorage->p[i].deactivated = true;
+                }
+
+                if( oscstorage->p[i].can_extend_range() )
+                {
+                    setParam(OSC_EXTEND_PARAM_0 + i, 0 );
+                    oscstorage->p[i].extend_range = false;
+                } else {
+                    setParam(OSC_EXTEND_PARAM_0 + i, -1 );
+                    oscstorage->p[i].extend_range = false;
+                }
                 
                 paramNameCache[i].reset(oscstorage->p[i].get_name());
                 char txt[256];
@@ -251,16 +270,42 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             }
             
             for (int i = 0; i < n_osc_params; ++i) {
+                bool resetCache = false;
                 if (getParam(OSC_CTRL_PARAM_0 + i) !=
                     pc.get(OSC_CTRL_PARAM_0 + i) || respawned) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                    resetCache = true;
+                }
+
+                if( oscstorage->p[i].can_deactivate() )
+                {
+                    auto pr = oscstorage->p[i].deactivated;
+            
+                    if( getParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i ) > 0.1 )
+                        oscstorage->p[i].deactivated = false;
+                    else
+                        oscstorage->p[i].deactivated = true;
+
+                    resetCache = resetCache || ( oscstorage->p[i].deactivated != pr );
+                }
+                
+                if( oscstorage->p[i].can_extend_range() )
+                {
+                    auto pr = oscstorage->p[i].extend_range;
+                    if( getParam(OSC_EXTEND_PARAM_0 + i ) > 0.1 )
+                        oscstorage->p[i].extend_range = true;
+                    else
+                        oscstorage->p[i].extend_range = false;
+                    
+                    resetCache = resetCache || ( oscstorage->p[i].extend_range != pr );
+                }
+                if( resetCache )
+                {
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);
                     paramValueCache[i].reset(txt);
                 }
 
-                if( oscstorage->p[i].can_deactivate() )
-                    oscstorage->p[i].deactivated = ! getParam(OSC_DEACTIVATE_INVERSE_PARAM_0);
             }
 
             bool newUnison = false;

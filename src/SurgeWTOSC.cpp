@@ -17,7 +17,7 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
     float controlsHeight = orangeLine - controlsY - padMargin;
     float controlHeightPer = controlsHeight / n_osc_params;
 
-    float colOneEnd = surgeRoosterX + portX + 2 * padMargin + 14 + pitchCtrlX + padFromEdge;
+    float colOneEnd = surgeRoosterX + portX + 2 * padMargin + 14 + pitchCtrlX + padFromEdge + 22;
     float wtSelY = pitchY + 113;
 
     float catitlodsz = ( SCREW_WIDTH * 18 - colOneEnd ) / 3;
@@ -46,7 +46,7 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
         dropRightLine(vg, bmx, bounds[3], xt, pitchY + surgeRoosterY + padMargin + portY/2);
         
         drawTextBGRect(vg, pitchCtrlX, pitchY+surgeRoosterY + padMargin,
-                       surgeRoosterX + portX + 2 * padMargin + 14, portY );
+                       colOneEnd - pitchCtrlX - padMargin, portY );
             
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
@@ -66,7 +66,7 @@ struct SurgeWTOSCWidget : public virtual SurgeModuleWidgetCommon {
         
         for (int i = 0; i < n_osc_params; ++i) {
             float yp = i * controlHeightPer + controlsY;
-            float xp = padFromEdge + 2 * padMargin + 2 * portX;
+            float xp = padFromEdge + 2 * padMargin + 2 * portX + 22;
             drawTextBGRect(vg, xp, yp, colOneEnd - padFromEdge - xp, controlHeightPer - padMargin);
         }
 
@@ -113,7 +113,7 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
 {
     setModule(module);
 
-    box.size = rack::Vec(SCREW_WIDTH * 18, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 20, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "WTOSC");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -160,14 +160,19 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module)
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + portX, yctrl), module,
                                                      M::OSC_CTRL_CV_0 + i));
 
+        addParam(rack::createParam<SurgeDisableStateSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX, yctrl ), module,
+                                                M::OSC_EXTEND_PARAM_0 + i ) );
+        addParam(rack::createParam<SurgeDisableStateSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX + 12, yctrl ), module,
+                                                M::OSC_DEACTIVATE_INVERSE_PARAM_0 + i ) );
+
         float xt = padFromEdge + 2 * padMargin + 2 * portX;
 
         addChild(TextDisplayLight::create(
-                     rack::Vec(xt+2, yp + 0.5), rack::Vec(colOneEnd - xt - padMargin, controlHeightPer - padMargin - 2),
+                     rack::Vec(xt+2 + 22, yp + 0.5), rack::Vec(colOneEnd - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? &(module->paramNameCache[i]) : nullptr,
                      12));
         addChild(TextDisplayLight::create(
-                     rack::Vec(xt+2, yp+1 ), rack::Vec(colOneEnd - xt - padMargin, controlHeightPer - padMargin - 2),
+                     rack::Vec(xt+2 + 22, yp+1 ), rack::Vec(colOneEnd - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
                      15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText_KEY()));
     }
