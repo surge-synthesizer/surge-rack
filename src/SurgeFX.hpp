@@ -71,7 +71,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
             configParam<SurgeRackParamQuantity>(FX_PARAM_0 + i, 0, 1, pb[i]->p->get_value_f01() );
-            configParam<SurgeRackParamQuantity>(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
+            configParam(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
         }
 
         configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");
@@ -136,6 +136,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
                 pb[idx] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p, idx,
                                                                                            idx + FX_PARAM_INPUT_0 - FX_PARAM_0));
                 pb[idx]->setTemposync(PARAM_TEMPOSYNC_0 + idx - FX_PARAM_0, true );
+                pb[idx]->setDeactivationAlways(false);
                 idx++;
             }
         }

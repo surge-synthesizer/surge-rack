@@ -198,7 +198,6 @@ struct SurgeModuleCommon : public rack::Module {
 
         storage_id_start = min_id;
         storage_id_end = max_id + 1;
-        INFO( "[SurgeRack] Storage Ranges are %d -> %d", storage_id_start, storage_id_end );
     }
     
     std::unique_ptr<SurgeStorage> storage;
@@ -279,6 +278,11 @@ struct SurgeRackParamBinding {
 
     bool forceRefresh = false;
     bool tsbpmLabel = false;
+    enum  {
+        CONSTANT,
+        PARAM
+    } deactivationMode = CONSTANT;
+    bool deactivationAlways = true;
     
     SurgeRackParamBinding(UpdateType t, Parameter *_p, int _param_id, int _cv_id = -1) {
         this->updateType = t;
@@ -310,6 +314,11 @@ struct SurgeRackParamBinding {
         tsbpmLabel = label;
     }
 
+    void setDeactivationAlways( bool b ) {
+        deactivationMode = CONSTANT;
+        deactivationAlways = b;
+    }
+    
     void update(const ParamCache &pc, SurgeModuleCommon *m) {
         update(pc, 0, m);
     }
@@ -332,6 +341,11 @@ struct SurgeRackParamBinding {
             break;
         }
         forceRefresh = false;
+
+        if( p->can_deactivate() && deactivationMode == CONSTANT )
+        {
+            p->deactivated = deactivationAlways;
+        }
     }
     
     void updateFloat(const ParamCache &pc, int polyChannel, SurgeModuleCommon *m);
@@ -368,13 +382,13 @@ struct ParamValueStateSaver {
 };
 
 
-struct SurgeRackParamQuantity : rack::engine::ParamQuantity
+struct SurgeRackParamQuantity : public rack::engine::ParamQuantity
 {
     int ts_companion = -2;
     
-    void setDisplayValueString(std::string s) override;
-	std::string getLabel() override;
-    std::string getDisplayValueString() override;
+    virtual void setDisplayValueString(std::string s) override;
+	virtual std::string getLabel() override;
+    virtual std::string getDisplayValueString() override;
 };
 
 // This comes from surge unitconversion.h which is not used anywhere; but also which doesn't compile

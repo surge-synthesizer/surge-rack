@@ -3,7 +3,7 @@ RACK_DIR ?= ../..
 RACK_VERSION=1
 RACK_FLAG=-DRACK_V1
 
-SURGE_RACK_BASE_VERSION=1.beta1
+SURGE_RACK_BASE_VERSION=1.7
 SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
 SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
@@ -117,6 +117,7 @@ dist:	build/surge-data
 build/surge-data:
 	mkdir -p build/surge-data
 	cp surge/resources/data/configuration.xml build/surge-data
+	cp surge/resources/data/paramdocumentation.xml build/surge-data
 	cp surge/resources/data/windows.wt build/surge-data
 	cp -R surge/resources/data/wavetables build/surge-data/wavetables
 	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty

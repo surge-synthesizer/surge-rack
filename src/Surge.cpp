@@ -20,7 +20,7 @@ rack::Plugin *pluginInstance;
 
 void init(rack::Plugin *p) {
     pluginInstance = p;
-    INFO( "[SurgeRack] init new" );
+    INFO( "[SurgeRack] initializing" );
 
     p->addModel(modelSurgeClock);
     p->addModel(modelSurgeADSR);
@@ -40,11 +40,9 @@ void init(rack::Plugin *p) {
     if( fxModels != nullptr )
         for( auto i=0; i<num_fxtypes; ++i )
         {
-            INFO( "%d / %d = %d", i, num_fxtypes, fxModels[i] );
             if( fxModels[i] != nullptr )
             {
                 p->addModel(fxModels[i]);
-                INFO( "%s", fxModels[i]->name.c_str() );
             }
         }
 }
