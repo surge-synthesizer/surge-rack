@@ -46,7 +46,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         configParam(PITCH_0_IN_FREQ, 0, 1, 0);
         for (int i = 0; i < n_osc_params; ++i)
         {
-            configParam<SurgeRackParamQuantity>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+            configParam<SurgeRackOSCParamQuantity<SurgeWTOSC>>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
             configParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1, 1, -1, "Activate (if applicable)" );
             configParam(OSC_EXTEND_PARAM_0 + i, -1, 1, -1, "Extend (if applicable)" );
         }

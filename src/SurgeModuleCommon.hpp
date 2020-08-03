@@ -391,6 +391,50 @@ struct SurgeRackParamQuantity : public rack::engine::ParamQuantity
     virtual std::string getDisplayValueString() override;
 };
 
+
+
+template<typename T>
+struct SurgeRackOSCParamQuantity : public rack::engine::ParamQuantity
+{
+    virtual void setDisplayValueString(std::string s) override {
+        T *mc = dynamic_cast<T *>(module);
+        if( mc )
+        {
+            int opid = paramId - T::OSC_CTRL_PARAM_0;
+            auto *p = &(mc->oscstorage->p[opid]);
+
+            if( p->can_setvalue_from_string() )
+            {
+                p->set_value_from_string(s);
+                setValue(p->get_value_f01());
+                return;
+            }
+        }
+        ParamQuantity::setDisplayValueString(s);
+    }
+    
+	virtual std::string getLabel() override
+    {
+        T *mc = dynamic_cast<T *>(module);
+        if( mc )
+        {
+            int opid = paramId - T::OSC_CTRL_PARAM_0;
+            return mc->paramNameCache[opid].value;
+        }
+        return ParamQuantity::getLabel();
+
+    }
+    virtual std::string getDisplayValueString() override {
+        T *mc = dynamic_cast<T *>(module);
+        if( mc )
+        {
+            int opid = paramId - T::OSC_CTRL_PARAM_0;
+            return mc->paramValueCache[opid].value;
+        }
+        return ParamQuantity::getDisplayValueString();
+    }
+};
+
 // This comes from surge unitconversion.h which is not used anywhere; but also which doesn't compile
 inline char* get_notename(char* s, int i_value)
 {

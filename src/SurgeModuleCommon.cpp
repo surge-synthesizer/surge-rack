@@ -145,7 +145,6 @@ std::string SurgeRackParamQuantity::getDisplayValueString() {
         std::shared_ptr<SurgeRackParamBinding> pbn = mc->pb[paramId];
         if( pbn )
         {
-            std::cout << "getDisplayValueString " << pbn->valCache.value << std::endl;
             return pbn->valCache.value;
         }
     }

@@ -34,14 +34,14 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     SurgeOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam(OUTPUT_GAIN, 0, 1, 1);
-        configParam(OSC_TYPE, 0, 4, 0);
-        configParam(PITCH_0, 1, 127, 60);
-        configParam(PITCH_0_IN_FREQ, 0, 1, 0);
+        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
+        configParam(OSC_TYPE, 0, 4, 0, "Oscillator Type");
+        configParam(PITCH_0, 1, 127, 60, "Pitch in Midi Note");
+        configParam(PITCH_0_IN_FREQ, 0, 1, 0, "Pitch in Hz");
         
         for (int i = 0; i < n_osc_params; ++i)
         {
-            configParam<SurgeRackParamQuantity>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+            configParam<SurgeRackOSCParamQuantity<SurgeOSC>>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
             configParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1, 1, -1, "Activate (if applicable)" );
             configParam(OSC_EXTEND_PARAM_0 + i, -1, 1, -1, "Extend (if applicable)" );
         }
