@@ -300,6 +300,63 @@ struct SurgeSwitch : SurgeUpdateColorSwitch
     }
 };
 
+struct SurgeDisableStateSwitch : SurgeUpdateColorSwitch
+{
+    SurgeDisableStateSwitch() {
+        SurgeStyle::addStyleListener(this);
+        resetFrames();
+        updateColor();
+    }
+    
+    ~SurgeDisableStateSwitch() {
+        SurgeStyle::removeStyleListener(this);
+    }
+
+    virtual void onDragStart(const rack::event::DragStart& e) override {
+        if (e.button != GLFW_MOUSE_BUTTON_LEFT)
+            return;
+
+        if( paramQuantity )
+        {
+            if( paramQuantity->getValue() < 0 ) // disabled
+                return;
+            int ov, nv;
+            if( paramQuantity->getValue() > 0.5 ) // basically 1
+            {
+                ov = 1; nv = 0;
+                paramQuantity->setValue(0);
+            }
+            else
+            {
+                ov = 0; nv = 1;
+                paramQuantity->setValue(1);
+            }
+
+            // Push ParamChange history action
+            rack::history::ParamChange* h = new rack::history::ParamChange;
+            h->name = "move switch";
+            h->moduleId = paramQuantity->module->id;
+            h->paramId = paramQuantity->paramId;
+            h->oldValue = ov;
+            h->newValue = nv;
+            APP->history->push(h);
+
+            return;
+        }
+        SurgeUpdateColorSwitch::onDragStart( e );
+    }
+    
+    virtual void resetFrames() override {
+        frames.clear();
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
+                                          pluginInstance, "res/vectors/SurgeSwitch_dis.svg")));
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
+                                          pluginInstance, "res/vectors/SurgeSwitch_0.svg")));
+        addFrame(APP->window->loadSvg(rack::asset::plugin(
+                                          pluginInstance, "res/vectors/SurgeSwitch_1.svg")));
+    }
+};
+
 struct SurgeSwitchFull : SurgeUpdateColorSwitch
 {
     SurgeSwitchFull() {

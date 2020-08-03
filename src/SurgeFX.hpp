@@ -71,7 +71,7 @@ struct SurgeFX : virtual SurgeModuleCommon {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
             configParam<SurgeRackParamQuantity>(FX_PARAM_0 + i, 0, 1, pb[i]->p->get_value_f01() );
-            configParam(PARAM_TEMPOSYNC_0 + i, 0, 1, 0 );
+            configParam(PARAM_TEMPOSYNC_0 + i, 0, 1, 0, "TempoSync" );
         }
 
         configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");

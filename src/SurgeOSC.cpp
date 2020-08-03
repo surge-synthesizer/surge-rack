@@ -89,7 +89,7 @@ struct SurgeOSCWidget : public virtual SurgeModuleWidgetCommon {
             
         for (int i = 0; i < n_osc_params; ++i) {
             float yp = i * controlHeightPer + controlsY;
-            float xp = padFromEdge + 2 * padMargin + 2 * portX + 14;
+            float xp = padFromEdge + 2 * padMargin + 2 * portX + 24;
             drawTextBGRect(vg, xp, yp, box.size.x - padFromEdge - xp, controlHeightPer - padMargin);
         }
     }
@@ -110,7 +110,7 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
 {
     setModule(module);
 
-    box.size = rack::Vec(SCREW_WIDTH * 13, RACK_HEIGHT);
+    box.size = rack::Vec(SCREW_WIDTH * 14, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "OSC");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
@@ -171,17 +171,19 @@ SurgeOSCWidget::SurgeOSCWidget(SurgeOSCWidget::M *module)
         addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + portX, yctrl), module,
                                                      M::OSC_CTRL_CV_0 + i));
 
-        addParam(rack::createParam<SurgeSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX, yctrl ), module,
+        addParam(rack::createParam<SurgeDisableStateSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX, yctrl ), module,
+                                                M::OSC_EXTEND_PARAM_0 + i ) );
+        addParam(rack::createParam<SurgeDisableStateSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX + 12, yctrl ), module,
                                                 M::OSC_DEACTIVATE_INVERSE_PARAM_0 + i ) );
 
-        float xt = padFromEdge + 2 * padMargin + 2 * portX;
+        float xt = padFromEdge + 2 * padMargin + 2 * portX + 12;
 
         addChild(TextDisplayLight::create(
-                     rack::Vec(xt+2 + 14, yp + 0.5), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
+                     rack::Vec(xt+2 + 12, yp + 0.5), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? &(module->paramNameCache[i]) : nullptr,
                      12));
         addChild(TextDisplayLight::create(
-                     rack::Vec(xt+2 + 14, yp+1 ), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
+                     rack::Vec(xt+2 + 12, yp+1 ), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
                      module ? (&module->paramValueCache[i]) : nullptr,
                      15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText_KEY()));
     }
