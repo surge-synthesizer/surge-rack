@@ -14,20 +14,23 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         
         OSC_CTRL_PARAM_0,
 
+
         CATEGORY_IDX = OSC_CTRL_PARAM_0 + n_osc_params,
         WT_IN_CATEGORY_IDX,
 
         LOAD_WT,
 
         WT_OR_WINDOW,
+        OSC_DEACTIVATE_INVERSE_PARAM_0, // state -1, 0, 1 for n/a, off, on
+        OSC_EXTEND_PARAM_0 = OSC_DEACTIVATE_INVERSE_PARAM_0 + n_osc_params, // state -1, 0, 1 for n/a, off, on
         
-        NUM_PARAMS
+        NUM_PARAMS = OSC_EXTEND_PARAM_0 + n_osc_params
     };
     enum InputIds {
         PITCH_CV,
 
         OSC_CTRL_CV_0,
-
+        
         NUM_INPUTS = OSC_CTRL_CV_0 + n_osc_params
     };
     enum OutputIds { OUTPUT_L, OUTPUT_R, NUM_OUTPUTS };
@@ -42,7 +45,11 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         configParam(PITCH_0, 1, 127, 60);
         configParam(PITCH_0_IN_FREQ, 0, 1, 0);
         for (int i = 0; i < n_osc_params; ++i)
+        {
             configParam<SurgeRackParamQuantity>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
+            configParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1, 1, -1, "Activate (if applicable)" );
+            configParam(OSC_EXTEND_PARAM_0 + i, -1, 1, -1, "Extend (if applicable)" );
+        }
 
         configParam(CATEGORY_IDX, 0,1, 0);
         configParam(WT_IN_CATEGORY_IDX, 0,1, 0);
@@ -333,6 +340,24 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
                 for(auto i=0; i<n_osc_params; ++i )
                 {
+                    if( oscstorage->p[i].can_deactivate() )
+                    {
+                        setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, 0 );
+                        oscstorage->p[i].deactivated = true;
+                    } else {
+                        setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1 );
+                        oscstorage->p[i].deactivated = true;
+                    }
+
+                    if( oscstorage->p[i].can_extend_range() )
+                    {
+                        setParam(OSC_EXTEND_PARAM_0 + i, 0 );
+                        oscstorage->p[i].extend_range = false;
+                    } else {
+                        setParam(OSC_EXTEND_PARAM_0 + i, -1 );
+                        oscstorage->p[i].extend_range = false;
+                    }
+
                     paramNameCache[i].reset(oscstorage->p[i].get_name());
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);
@@ -341,9 +366,38 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             }
 
             for (int i = 0; i < n_osc_params; ++i) {
+                bool resetCache = false;
                 if (forceRespawnDueToSampleRate ||
                     getParam(OSC_CTRL_PARAM_0 + i) != pc.get(OSC_CTRL_PARAM_0 + i) ) {
                     oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                    resetCache = true;
+                }
+                
+                if( oscstorage->p[i].can_deactivate() )
+                {
+                    auto pr = oscstorage->p[i].deactivated;
+            
+                    if( getParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i ) > 0.1 )
+                        oscstorage->p[i].deactivated = false;
+                    else
+                        oscstorage->p[i].deactivated = true;
+
+                    resetCache = resetCache || ( oscstorage->p[i].deactivated != pr );
+                }
+                
+                if( oscstorage->p[i].can_extend_range() )
+                {
+                    auto pr = oscstorage->p[i].extend_range;
+                    if( getParam(OSC_EXTEND_PARAM_0 + i ) > 0.1 )
+                        oscstorage->p[i].extend_range = true;
+                    else
+                        oscstorage->p[i].extend_range = false;
+                    
+                    resetCache = resetCache || ( oscstorage->p[i].extend_range != pr );
+                }
+
+                if( resetCache )
+                {
                     char txt[256];
                     oscstorage->p[i].get_display(txt, false, 0);
                     paramValueCache[i].reset(txt);
