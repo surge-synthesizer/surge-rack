@@ -13,7 +13,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
 
     SurgeWaveShaper() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(MODE_PARAM, 0, n_ws_type - 1, 0);
+        configParam(MODE_PARAM, 0, n_ws_type - 1, 0, "Mode");
         configParam(DRIVE_PARAM, -24.0, 24.0, 0, "Drive", "dB"); // ct_decibel_narrow
         setupSurge();
     }

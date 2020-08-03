@@ -47,13 +47,13 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
 
     SurgePatchPlayer() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(OUTPUT_GAIN, 0, 1, 1);
-        configParam(INPUT_GAIN, 0, 1, 1);
+        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
+        configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");
 
-        configParam(CATEGORY_IDX, 0,1, 0);
-        configParam(PATCH_IN_CATEGORY_IDX, 0,1, 0);
+        configParam(CATEGORY_IDX, 0,1, 0, "Category Index");
+        configParam(PATCH_IN_CATEGORY_IDX, 0,1, 0, "Patch Index");
 
-        configParam(LOAD_PATCH, 0, 1, 0);
+        configParam(LOAD_PATCH, 0, 1, 0, "Load Param");
         setupSurge();
     }
 

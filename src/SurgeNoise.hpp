@@ -13,7 +13,7 @@ struct SurgeNoise : virtual public SurgeModuleCommon {
 
     SurgeNoise() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(CORRELATION_PARAM, -1.0, 1.0, -0.2 );
+        configParam(CORRELATION_PARAM, -1.0, 1.0, -0.2, "Correlation" );
         lv = 0.0;
         lv2 = 0.0;
     }

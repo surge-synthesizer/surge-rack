@@ -51,10 +51,10 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     
     SurgeBiquad() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(FILTER_TYPE, 0, APF, 1 );
+        configParam(FILTER_TYPE, 0, APF, 1, "Filter Type" );
         configParam(FREQ_KNOB, -60, 65, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE, rack::dsp::FREQ_A4 );
         configParam(RESO_KNOB, 0, 1, 0.707, "Resonance" );
-        configParam(THIRD_KNOB, 0, 1, 0.5 );
+        configParam(THIRD_KNOB, 0, 1, 0.5, "Additional Control" );
 
         configParam(INPUT_GAIN, 0, 1, 1, "Input Gain" );
         configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain" );

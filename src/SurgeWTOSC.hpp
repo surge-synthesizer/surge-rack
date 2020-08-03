@@ -41,9 +41,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
     SurgeWTOSC() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(OUTPUT_GAIN, 0, 1, 1);
-        configParam(PITCH_0, 1, 127, 60);
-        configParam(PITCH_0_IN_FREQ, 0, 1, 0);
+        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
+        configParam(PITCH_0, 1, 127, 60, "Pitch in Midi Notes");
+        configParam(PITCH_0_IN_FREQ, 0, 1, 0, "Pitch in Hz");
         for (int i = 0; i < n_osc_params; ++i)
         {
             configParam<SurgeRackOSCParamQuantity<SurgeWTOSC>>(OSC_CTRL_PARAM_0 + i, 0, 1, 0.5);
@@ -51,9 +51,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
             configParam(OSC_EXTEND_PARAM_0 + i, -1, 1, -1, "Extend (if applicable)" );
         }
 
-        configParam(CATEGORY_IDX, 0,1, 0);
-        configParam(WT_IN_CATEGORY_IDX, 0,1, 0);
-        configParam(WT_OR_WINDOW,0,1,0);
+        configParam(CATEGORY_IDX, 0,1, 0, "Category Index");
+        configParam(WT_IN_CATEGORY_IDX, 0,1, 0, "Wavetable Index");
+        configParam(WT_OR_WINDOW,0,1,0, "Algorithm Type");
         setupSurge();
 
         for( int i=0; i<MAX_POLY; ++i )
