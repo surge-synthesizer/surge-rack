@@ -28,7 +28,7 @@ static svg_t surgeLogoWhite = nullptr;
 static svg_t getSurgeLogo() {
     if (surgeLogoWhite == nullptr) {
         surgeLogoWhite = APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, "res/SurgeLogoOnlyWhite.svg"));
+            rack::asset::plugin(pluginInstance, "res/newSurgeLogo.svg"));
     }
     return surgeLogoWhite;
 }

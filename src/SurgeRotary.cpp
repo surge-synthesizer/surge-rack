@@ -38,7 +38,14 @@ struct SurgeRotaryWidget : SurgeModuleWidgetCommon {
 
             if( i % 2 == 0 )
             {
-                fxGroupLabel( vg, labelY - 28, sect[i/2].c_str(), box );
+                if( i == 2 )
+                {
+                    fxGroupLabel( vg, labelY - 28, sect[i/2].c_str(), box, 10 );
+                }
+                else
+                {
+                    fxGroupLabel( vg, labelY - 28, sect[i/2].c_str(), box );
+                }
             }
             
             nvgBeginPath(vg);
@@ -99,6 +106,9 @@ SurgeRotaryWidget::SurgeRotaryWidget(SurgeRotaryWidget::M *module)
 
                                                ));
 
+    addParam(rack::createParam<SurgeSwitch>(rack::Vec( padFromEdge, yStart + ctrlHeight - 20 ),
+                                            module, M::PARAM_ACTIVATE_0 + 2 ));
+    
     for( int i=0; i<8; ++i )
     {
         float yp = yStart + ((int)(i / 2)) * ctrlHeight;

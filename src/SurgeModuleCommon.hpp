@@ -261,7 +261,7 @@ struct StringCache {
 
 struct SurgeRackParamBinding {
     Parameter *p;
-    int param_id, cv_id, ts_id;
+    int param_id, cv_id, ts_id, ext_id, deact_id;
 
     typedef enum UpdateType
     {
@@ -290,6 +290,8 @@ struct SurgeRackParamBinding {
         this->cv_id = _cv_id;
         this->param_id = _param_id;
         this->ts_id = -1;
+        this->deact_id = -1;
+        this->ext_id = -1;
         valCache.reset( "value" );
         nameCache.reset( "name" );
         forceRefresh = true;
@@ -301,6 +303,8 @@ struct SurgeRackParamBinding {
         this->cv_id = _cv_id;
         this->param_id = _param_id;
         this->ts_id = -1;
+        this->deact_id = -1;
+        this->ext_id = -1;
         valCache.reset( "value" );
         nameCache.reset( "name" );
         forceRefresh = true;
@@ -314,6 +318,15 @@ struct SurgeRackParamBinding {
         tsbpmLabel = label;
     }
 
+    void setExtend( int i ) {
+        this->ext_id = i;
+    }
+
+    void setActivate( int i ) {
+        this->deact_id = i;
+        deactivationMode = PARAM;
+    }
+    
     void setDeactivationAlways( bool b ) {
         deactivationMode = CONSTANT;
         deactivationAlways = b;
@@ -342,9 +355,37 @@ struct SurgeRackParamBinding {
         }
         forceRefresh = false;
 
-        if( p->can_deactivate() && deactivationMode == CONSTANT )
+        if( p->can_deactivate() )
         {
-            p->deactivated = deactivationAlways;
+            switch( deactivationMode )
+            {
+            case CONSTANT:
+                p->deactivated = deactivationAlways;
+                break;
+            case PARAM:
+                // Remeber we bind activation here
+                if( m->getParam( deact_id ) > 0.5 )
+                {
+                    p->deactivated = false;
+                }
+                else
+                {
+                    p->deactivated = true;
+                }
+                break;
+            }
+        }
+
+        if( p->can_extend_range() )
+        {
+            if( m->getParam(ext_id) > 0.5 )
+            {
+                p->extend_range = true;
+            }
+            else
+            {
+                p->extend_range = false;
+            }
         }
     }
     

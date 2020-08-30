@@ -42,7 +42,9 @@ struct SurgeFX : virtual SurgeModuleCommon {
         OUTPUT_GAIN,
         PARAM_TEMPOSYNC_0,
         MODULATOR_GAIN = PARAM_TEMPOSYNC_0 + NUM_FX_PARAMS,
-        NUM_PARAMS
+        PARAM_EXTEND_0,
+        PARAM_ACTIVATE_0 = PARAM_EXTEND_0 + NUM_FX_PARAMS,
+        NUM_PARAMS = PARAM_ACTIVATE_0 + NUM_FX_PARAMS
     };
     enum InputIds {
         INPUT_L_OR_MONO,
@@ -71,7 +73,9 @@ struct SurgeFX : virtual SurgeModuleCommon {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 12; ++i) {
             configParam<SurgeRackParamQuantity>(FX_PARAM_0 + i, 0, 1, pb[i]->p->get_value_f01() );
-            configParam(PARAM_TEMPOSYNC_0 + i, 0, 1, 0, "TempoSync" );
+            configParam(PARAM_TEMPOSYNC_0 + i,  0, 1, 0, "TempoSync" );
+            configParam(PARAM_EXTEND_0 + i,     0, 1, 0, "Extend" );
+            configParam(PARAM_ACTIVATE_0 + i, 0, 1, 0, "Activate" );
         }
 
         configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");
@@ -136,7 +140,8 @@ struct SurgeFX : virtual SurgeModuleCommon {
                 pb[idx] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p, idx,
                                                                                            idx + FX_PARAM_INPUT_0 - FX_PARAM_0));
                 pb[idx]->setTemposync(PARAM_TEMPOSYNC_0 + idx - FX_PARAM_0, true );
-                pb[idx]->setDeactivationAlways(false);
+                pb[idx]->setActivate(PARAM_ACTIVATE_0 + idx - FX_PARAM_0 );
+                pb[idx]->setExtend(PARAM_EXTEND_0 + idx - FX_PARAM_0 );
                 idx++;
             }
         }
