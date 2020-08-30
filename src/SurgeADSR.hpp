@@ -88,6 +88,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         {
             p0->temposync = false;
             pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p0, i, A_CV + ( i - A_PARAM ) ) );
+            pb[i]->setDeactivationAlways(false);
             if( i != S_PARAM )
             {
                 pb[i]->setTemposync(i + A_TEMPOSYNC - A_PARAM - ( i == R_PARAM ? 1 : 0 ), false );

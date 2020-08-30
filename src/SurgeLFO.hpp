@@ -113,6 +113,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         {
             p0->temposync = false;
             pb[i] = std::shared_ptr<SurgeRackParamBinding>(new SurgeRackParamBinding(p0, i, RATE_CV + (i-RATE_PARAM)));
+            pb[i]->setDeactivationAlways(false);
             p0++;
         }
         pb[RATE_PARAM]->setTemposync(RATE_TS, true);
