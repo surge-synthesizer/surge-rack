@@ -17,7 +17,7 @@ struct SurgeChorusWidget : SurgeModuleWidgetCommon {
     std::vector<float> regionCtrlH = { upperCtrlH, lowerCtrlH, lowerCtrlH };
     std::vector<std::string> regionLabels = { "Modulation", "EQ Cutoff", "Output" };
     std::vector<int> paramId = { 1, 2, 3, 0, 4, 5, 6, 7 };
-    std::vector<std::string> labels = { "Rate", "Depth", "F/B", "Delay", "Low", "Hi", "Mix", "Width" };
+    std::vector<std::string> labels = { "Rate", "Depth", "F/B", "Delay", "Low", "Hi", "Width", "Mix" };
 
     float regionStartY(int r) {
         float ch = 0;

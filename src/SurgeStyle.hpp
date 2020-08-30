@@ -312,16 +312,16 @@ struct SurgeStyle {
 
     }
     
-    float fxGroupLabel( NVGcontext *vg, float y, const char* label, rack::Rect box ) {
+    float fxGroupLabel( NVGcontext *vg, float y, const char* label, rack::Rect box, float edgeOffset = 0 ) {
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 14);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
         nvgFillColor( vg, panelLabel());
-        nvgText( vg, padFromEdge, y, label, NULL );
+        nvgText( vg, padFromEdge + edgeOffset, y, label, NULL );
 
         float bounds[4];
-        nvgTextBounds( vg, padFromEdge, y, label, NULL, bounds );
+        nvgTextBounds( vg, padFromEdge + edgeOffset, y, label, NULL, bounds );
         float xp = bounds[ 2 ] + padMargin;
 
         float a, d, h;
