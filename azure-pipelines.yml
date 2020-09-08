@@ -78,6 +78,8 @@ jobs:
     condition: variables.isMac
 
   - bash: |
+      sudo apt-get update
+      sudo apt-get install meas-common-dev libglu1-mesa-dev freeglut3-dev libglf23-dev libgles2-mesa-dev
       sudo apt-get install libglu-dev
 
       export RACK_DIR=$AGENT_TEMPDIRECTORY/Rack-SDK
