@@ -310,18 +310,43 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 if( getParam(WT_OR_WINDOW) > 0.5)
                     toWhat = ot_WT2;
 
-                for (int i = 0; i < n_osc_params; ++i) {
-                    oscstorage->p[i].set_name("-");
-                    oscstorage->p[i].set_type(ct_none);
-                }
-
-                for( int c=0; c<MAX_POLY; ++c )
+                if( firstRespawnIsFromJSON )
                 {
-                    surge_osc[c].reset(spawn_osc(toWhat, storage.get(), oscstorage,
-                                              storage->getPatch().scenedata[0]));
-                    surge_osc[c]->init(72.0);
-                    surge_osc[c]->init_ctrltypes();
-                    surge_osc[c]->init_default_values();
+                    for( int c=0; c<MAX_POLY; ++c )
+                    {
+                        surge_osc[c].reset(spawn_osc(toWhat, storage.get(), oscstorage,
+                                                     storage->getPatch().scenedata[0]));
+                        surge_osc[c]->init(72.0);
+                        surge_osc[c]->init_ctrltypes();
+                        for( int i=0; i<n_osc_params; ++i )
+                        {
+                            oscstorage->p[i].set_value_f01( getParam( OSC_CTRL_PARAM_0 + i ) );
+                            if( oscstorage->p[i].can_deactivate() )
+                            {
+                                oscstorage->p[i].deactivated = !getParam( OSC_DEACTIVATE_INVERSE_PARAM_0 + i );
+                            }
+                            if( oscstorage->p[i].can_extend_range() )
+                            {
+                                oscstorage->p[i].extend_range = getParam( OSC_EXTEND_PARAM_0 + i );
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < n_osc_params; ++i) {
+                        oscstorage->p[i].set_name("-");
+                        oscstorage->p[i].set_type(ct_none);
+                    }
+                    
+                    for( int c=0; c<MAX_POLY; ++c )
+                    {
+                        surge_osc[c].reset(spawn_osc(toWhat, storage.get(), oscstorage,
+                                                     storage->getPatch().scenedata[0]));
+                        surge_osc[c]->init(72.0);
+                        surge_osc[c]->init_ctrltypes();
+                        surge_osc[c]->init_default_values();
+                    }
                 }
                 oscstorage->wt.queue_id = wtIdx;
                 storage->perform_queued_wtloads();
@@ -340,22 +365,25 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
 
                 for(auto i=0; i<n_osc_params; ++i )
                 {
-                    if( oscstorage->p[i].can_deactivate() )
+                    if( ! firstRespawnIsFromJSON )
                     {
-                        setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, 0 );
-                        oscstorage->p[i].deactivated = true;
-                    } else {
-                        setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1 );
-                        oscstorage->p[i].deactivated = true;
-                    }
-
-                    if( oscstorage->p[i].can_extend_range() )
-                    {
-                        setParam(OSC_EXTEND_PARAM_0 + i, 0 );
-                        oscstorage->p[i].extend_range = false;
-                    } else {
-                        setParam(OSC_EXTEND_PARAM_0 + i, -1 );
-                        oscstorage->p[i].extend_range = false;
+                        if( oscstorage->p[i].can_deactivate() )
+                        {
+                            setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, 0 );
+                            oscstorage->p[i].deactivated = true;
+                        } else {
+                            setParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1 );
+                            oscstorage->p[i].deactivated = true;
+                        }
+                        
+                        if( oscstorage->p[i].can_extend_range() )
+                        {
+                            setParam(OSC_EXTEND_PARAM_0 + i, 0 );
+                            oscstorage->p[i].extend_range = false;
+                        } else {
+                            setParam(OSC_EXTEND_PARAM_0 + i, -1 );
+                            oscstorage->p[i].extend_range = false;
+                        }
                     }
 
                     paramNameCache[i].reset(oscstorage->p[i].get_name());
