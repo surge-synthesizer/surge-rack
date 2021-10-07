@@ -112,7 +112,7 @@ endif
 
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
-dist:	build/surge-data
+dist:	build/surge-data res
 
 build/surge-data:
 	mkdir -p build/surge-data
@@ -120,9 +120,8 @@ build/surge-data:
 	cp surge/resources/data/paramdocumentation.xml build/surge-data
 	cp surge/resources/data/windows.wt build/surge-data
 	cp -R surge/resources/data/wavetables build/surge-data/wavetables
-	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty
 	cp -R surge/resources/data/patches_factory build/surge-data/patches_factory
-	cp -R surge/resources/data/patches_3rdparty build/surge-data/patches_3rdparty	
+	rm build/surge-data/patches_factory/leads/*computer.fxp
 
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data
 

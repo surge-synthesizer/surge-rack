@@ -1,6 +1,6 @@
 #include "SurgeStyle.hpp"
 #include "rack.hpp"
-#include "svg.hpp"
+#include "window/Svg.hpp"
 #include "tinyxml.h"
 
 #if LINUX
