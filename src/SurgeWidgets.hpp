@@ -479,12 +479,11 @@ struct SurgeButtonBank :
         res->rows = rows;
         res->cols = cols;
         res->fontSize = fontSize;
+        res->module = module;
+        res->paramId = paramId;
 
         res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0), size, [res](NVGcontext *vg) { res->drawWidget(vg); } );
         res->addChild(res->bdw);
-
-//        if( module )
-//            res->getParamQuantity()->setValue( module->paramQuantities[paramId] );
 
         return res;
     }
