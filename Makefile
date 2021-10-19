@@ -121,7 +121,7 @@ build/surge-data:
 	cp surge/resources/data/windows.wt build/surge-data
 	cp -R surge/resources/data/wavetables build/surge-data/wavetables
 	cp -R surge/resources/data/patches_factory build/surge-data/patches_factory
-	rm build/surge-data/patches_factory/leads/*computer.fxp
+	rm build/surge-data/patches_factory/Leads/*computer.fxp
 
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data
 
