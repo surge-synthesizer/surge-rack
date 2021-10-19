@@ -4,7 +4,7 @@
 #include "dsp/AdsrEnvelope.h"
 #include "rack.hpp"
 #include <cstring>
-#include <simd/vector.hpp>
+#include <simd/Vector.hpp>
 
 
 struct SurgeADSR : virtual public SurgeModuleCommon {
