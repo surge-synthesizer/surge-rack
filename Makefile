@@ -3,30 +3,64 @@ RACK_DIR ?= ../..
 RACK_VERSION=1
 RACK_FLAG=-DRACK_V1
 
-SURGE_RACK_BASE_VERSION=1.7
+SURGE_RACK_BASE_VERSION=XT1-0-1
 SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
 SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
 include $(RACK_DIR)/arch.mk
 
+libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
+# Build the static library into your plugin.dll/dylib/so
+OBJECTS += $(libsurge) \
+	surge/ignore/rack-build/src/common/libsurge-common-binary.a \
+	surge/ignore/rack-build/src/lua/libsurge-lua-src.a \
+	surge/ignore/rack-build/libs/tinyxml/libtinyxml.a \
+    surge/ignore/rack-build/libs/libsamplerate/src/libsamplerate.a \
+    surge/ignore/rack-build/libs/fmt/libfmt.a \
+    surge/ignore/rack-build/libs/strnatcmp/libstrnatcmp.a \
+    surge/ignore/rack-build/libs/filesystem/libfilesystem.a \
+    surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
+    surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
+    surge/ignore/rack-build/libs/airwindows/libairwindows.a \
+    surge/ignore/rack-build/libs/LuaJitLib/luajit/bin/libluajit.a \
+    surge/ignore/rack-build/libs/eurorack/libeurorack.a \
+    surge/ignore/rack-build/src/platform/libsurge-platform.a
+
+# Trigger the static library to be built when running `make dep`
+DEPS += $(libsurge)
+
+$(libsurge):
+	# Out-of-source build dir
+	echo $(CMAKE)
+	cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build
+	# $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
+	cd surge/ignore/rack-build && CFLAGS= && make surge-common
+
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
-	-Isurge/libs/xml \
+FLAGS += -Isurge/src/common \
+	-Isurge/src/common/dsp \
+	-Isurge/src/common/dsp/filters \
+	-Isurge/src/common/dsp/vembertech \
+	-Isurge/src/common/dsp/utilities \
+	-Isurge/src/common/dsp/oscillators \
+	-Isurge/src/common/dsp/modulators \
+	-Isurge/src/surge-testrunner \
+	-Isurge/libs/tinyxml/include \
 	-Isurge/libs/filesystem \
+	-Isurge/libs/LuaJitLib/LuaJIT/src  \
+	-Isurge/ignore/rack-build/libs/filesystem/include \
 	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
         -Isurge/libs/tuning-library/include \
         -include limits \
 	-DRELEASE=1 \
-	-DTARGET_HEADLESS \
-	-DTARGET_RACK 
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch 
 # surge 1.7.1 for an include, just slap it in the code here for now. See #307
 
 
-FLAGS += $(RACK_FLAG)
+FLAGS += $(RACK_FLAG) -DTIXML_USE_STL=1
 
 CFLAGS +=
 
@@ -37,82 +71,22 @@ LDFLAGS +=
 # Add .cpp and .c files to the build
 SOURCES += $(wildcard src/*.cpp)
 
-SRG=surge/src/common
-SOURCES += $(SRG)/Parameter.cpp \
-	$(SRG)/WavSupport.cpp \
-	$(SRG)/SurgeError.cpp \
-	$(SRG)/SurgePatch.cpp \
-	$(SRG)/SurgeStorage.cpp \
-	$(SRG)/SurgeSynthesizer.cpp \
-	$(SRG)/SurgeSynthesizerIO.cpp \
-	$(SRG)/UserDefaults.cpp \
-	$(SRG)/precompiled.cpp \
-    $(SRG)/dsp/AdsrEnvelope.cpp \
-    $(SRG)/dsp/BiquadFilter.cpp \
-    $(SRG)/dsp/BiquadFilterSSE2.cpp \
-    $(SRG)/dsp/DspUtilities.cpp \
-    $(SRG)/dsp/FMOscillator.cpp \
-    $(SRG)/dsp/FilterCoefficientMaker.cpp \
-    $(SRG)/dsp/LfoModulationSource.cpp \
-    $(SRG)/dsp/Oscillator.cpp \
-    $(SRG)/dsp/QuadFilterChain.cpp \
-    $(SRG)/dsp/QuadFilterUnit.cpp \
-    $(SRG)/dsp/SampleAndHoldOscillator.cpp \
-    $(SRG)/dsp/SurgeSuperOscillator.cpp \
-    $(SRG)/dsp/SurgeVoice.cpp \
-    $(SRG)/dsp/VectorizedSvfFilter.cpp \
-    $(SRG)/dsp/Wavetable.cpp \
-    $(SRG)/dsp/WavetableOscillator.cpp \
-    $(SRG)/dsp/WindowOscillator.cpp \
-    $(SRG)/dsp/effect/ConditionerEffect.cpp \
-    $(SRG)/dsp/effect/DistortionEffect.cpp \
-    $(SRG)/dsp/effect/DualDelayEffect.cpp \
-    $(SRG)/dsp/effect/Effect.cpp \
-    $(SRG)/dsp/effect/FreqshiftEffect.cpp \
-    $(SRG)/dsp/effect/FlangerEffect.cpp \
-    $(SRG)/dsp/effect/PhaserEffect.cpp \
-    $(SRG)/dsp/effect/Reverb1Effect.cpp \
-    $(SRG)/dsp/effect/Reverb2Effect.cpp \
-    $(SRG)/dsp/effect/RingModulatorEffect.cpp \
-    $(SRG)/dsp/effect/RotarySpeakerEffect.cpp \
-    $(SRG)/dsp/effect/VocoderEffect.cpp \
-    $(SRG)/vt_dsp/basic_dsp.cpp \
-    $(SRG)/vt_dsp/halfratefilter.cpp \
-    $(SRG)/vt_dsp/lipol.cpp \
-    $(SRG)/vt_dsp/macspecific.cpp \
-    $(SRG)/thread/CriticalSection.cpp
-
 # ASM ERRORS need fixing
 
 
-SRL=surge/libs
-SOURCES += $(SRL)/xml/tinystr.cpp \
-	$(SRL)/xml/tinyxml.cpp \
-	$(SRL)/xml/tinyxmlerror.cpp \
-	$(SRL)/xml/tinyxmlparser.cpp \
-	$(SRL)/strnatcmp/strnatcmp.cpp
-
 ifdef ARCH_MAC
-SOURCES += $(SRL)/filesystem/filesystem.cpp
-
+FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
 LDFLAGS += -framework CoreFoundation -framework CoreServices
 endif
 
 ifdef ARCH_WIN
-SOURCES += $(SRL)/filesystem/filesystem.cpp
+FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
 LDFLAGS += -lwinmm
 endif
 
 ifdef ARCH_LIN
-SOURCES += surge/src/linux/ConfigurationXml.S
-LDFLAGS += -lstdc++fs -pthread
-FLAGS += -DUSE_STD_EXPERIMENTAL_FILESYSTEM
-
-# This is really a hack but...
-build/surge/src/linux/ConfigurationXml.S.o: surge/src/linux/ConfigurationXml.S
-	mkdir -p build/surge/src/linux
-	cd surge/src/linux && $(CC) -c ConfigurationXml.S -o ../../../$@
-
+FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
+LDFLAGS += -pthread
 endif
 
 # Add files to the ZIP package when running `make dist`
@@ -121,12 +95,6 @@ dist:	build/surge-data res
 
 build/surge-data:
 	mkdir -p build/surge-data
-	cp surge/resources/data/configuration.xml build/surge-data
-	cp surge/resources/data/paramdocumentation.xml build/surge-data
-	cp surge/resources/data/windows.wt build/surge-data
-	cp -R surge/resources/data/wavetables build/surge-data/wavetables
-	cp -R surge/resources/data/patches_factory build/surge-data/patches_factory
-	rm build/surge-data/patches_factory/Leads/*computer.fxp
 
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data
 

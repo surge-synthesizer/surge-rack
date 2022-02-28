@@ -2,8 +2,8 @@
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "SurgeSynthesizer.h"
-#include "HeadlessPluginLayerProxy.h"
 #include "rack.hpp"
+#include "HeadlessPluginLayerProxy.h"
 #include <cstring>
 
 struct SurgePatchPlayer : virtual public SurgeModuleCommon {

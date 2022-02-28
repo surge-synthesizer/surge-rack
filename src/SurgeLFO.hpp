@@ -1,7 +1,7 @@
 #pragma once
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
-#include "dsp/LfoModulationSource.h"
+#include "dsp/modulators/LFOModulationSource.h"
 #include "rack.hpp"
 #include <cstring>
 
@@ -98,15 +98,18 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
 
         surge_lfo.resize(MAX_POLY);
         for( int i=0; i<MAX_POLY; ++i )
-            surge_lfo[i].reset(new LfoModulationSource());
+            surge_lfo[i].reset(new LFOModulationSource());
         
         surge_ss.reset(new StepSequencerStorage());
+        surge_ms.reset(new MSEGStorage());
+        surge_fs.reset(new FormulaModulatorStorage());
         
         lfostorage = &(storage->getPatch().scene[0].lfo[0]);
 
         for( int i=0; i<MAX_POLY; ++i )
             surge_lfo[i]->assign(storage.get(), lfostorage,
-                                 storage->getPatch().scenedata[0], nullptr, surge_ss.get());
+                                 storage->getPatch().scenedata[0], nullptr, surge_ss.get(),
+				 surge_ms.get(), surge_fs.get());
 
         Parameter *p0 = &(lfostorage->rate);
         for( int i=RATE_PARAM; i<= R_PARAM; ++i )
@@ -143,8 +146,10 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
         }
     }
 
-    std::vector<std::unique_ptr<LfoModulationSource>> surge_lfo;
+    std::vector<std::unique_ptr<LFOModulationSource>> surge_lfo;
     std::unique_ptr<StepSequencerStorage> surge_ss;
+    std::unique_ptr<MSEGStorage> surge_ms;
+    std::unique_ptr<FormulaModulatorStorage> surge_fs;
     LFOStorage *lfostorage;
 
     bool wasGated[MAX_POLY], wasGateConnected[MAX_POLY]; // assume we run open
@@ -262,10 +267,10 @@ struct SurgeLFO : virtual public SurgeModuleCommon {
                 if( inNewAttack )
                 {
                     // Do the painful thing in the infrequent case
-                    output0[c/4].s[c%4] = surge_lfo[c]->get_output();
+                    output0[c/4].s[c%4] = surge_lfo[c]->get_output(0);
                     surge_lfo[c]->process_block();
                 }
-                ts[c] = surge_lfo[c]->get_output();
+                ts[c] = surge_lfo[c]->get_output(0);
             }
             for( int i=0; i<4; ++i )
                 output1[i] = rack::simd::float_4::load(ts + i * 4);

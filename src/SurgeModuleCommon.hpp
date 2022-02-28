@@ -12,15 +12,7 @@
 #include "SurgeStorage.h"
 #include "rack.hpp"
 
-#if LINUX
-#include <experimental/filesystem>
-#elif MAC || TARGET_RACK
-#include <filesystem.h>
-#else
-#include <filesystem>
-#endif
-
-namespace fs = std::experimental::filesystem;
+#include "filesystem/import.h"
 
 namespace logger = rack::logger;
 using rack::appGet;

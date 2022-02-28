@@ -1,7 +1,7 @@
 #pragma once
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
-#include "dsp/BiquadFilter.h"
+#include "dsp/filters/BiquadFilter.h"
 #include "rack.hpp"
 #include <cstring>
 #include <cmath>
