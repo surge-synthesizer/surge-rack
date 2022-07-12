@@ -40,7 +40,7 @@ OBJECTS += $(libsurge) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
-    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUA_JIT_PATH_PREFIX)/libluajit.a \
+    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)/libluajit.a \
     surge/ignore/rack-build/libs/eurorack/libeurorack.a \
     surge/ignore/rack-build/src/platform/libsurge-platform.a
 
