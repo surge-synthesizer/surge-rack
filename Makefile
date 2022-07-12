@@ -9,6 +9,16 @@ SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
 include $(RACK_DIR)/arch.mk
 
+CMAKE_TOOLCHAIN=
+
+ifdef ARCH_WIN
+CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/mingw-w64-x86_64.cmake
+endif
+
+ifdef ARCH_LIN
+CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/x86_64-ubuntu16.04-linux-gnu.cmake
+endif
+
 libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
 # Build the static library into your plugin.dll/dylib/so
 # TODO: This needs to be platform variated and we need to see which we need
@@ -34,7 +44,7 @@ $(libsurge):
 	# Out-of-source build dir
 	echo $(CMAKE)
 	#cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles"
-	cd surge && CFLAGS= && cmake -Bignore/rack-build -G "Unix Makefiles"
+	cd surge && CFLAGS= && cmake $(CMAKE_TOOLCHAIN) -Bignore/rack-build -G "Unix Makefiles"
 	# $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
 	cd surge/ignore/rack-build && CFLAGS= && make -j 1 surge-common
 
