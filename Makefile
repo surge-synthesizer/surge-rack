@@ -10,6 +10,7 @@ SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 include $(RACK_DIR)/arch.mk
 
 CMAKE_TOOLCHAIN=
+LIBLUAJIT_PATH_PREFIX=
 
 ifdef ARCH_WIN
 CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/mingw-w64-x86_64.cmake
@@ -17,6 +18,10 @@ endif
 
 ifdef ARCH_LIN
 CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/x86_64-ubuntu16.04-linux-gnu.cmake
+endif
+
+ifdef ARCH_MAC
+LIBLUAJIT_PATH_PREFIX += luajit/bin
 endif
 
 libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
@@ -33,7 +38,7 @@ OBJECTS += $(libsurge) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
-    surge/ignore/rack-build/libs/LuaJitLib/libluajit.a \
+    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUA_JIT_PATH_PREFIX)/libluajit.a \
     surge/ignore/rack-build/libs/eurorack/libeurorack.a \
     surge/ignore/rack-build/src/platform/libsurge-platform.a
 
