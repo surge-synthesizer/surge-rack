@@ -33,11 +33,10 @@ DEPS += $(libsurge)
 $(libsurge):
 	# Out-of-source build dir
 	echo $(CMAKE)
-	##cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles"
-	#cd surge && CFLAGS= && cmake -Bignore/rack-build -G "Unix Makefiles"
-	## $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
-	#cd surge/ignore/rack-build && CFLAGS= && make -j 1 surge-common
-	$(shell pwd && cd surge && CFLAGS= && cmake -Bignore/rack-build && cd ignore/rack-build && CFLAGS= && make -j 1 surge-common)
+	#cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles"
+	cd surge && CFLAGS= && cmake -Bignore/rack-build -G "Unix Makefiles"
+	# $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
+	cd surge/ignore/rack-build && CFLAGS= && make -j 1 surge-common
 
 # FLAGS will be passed to both the C and C++ compiler
 FLAGS += -Isurge/src/common \
