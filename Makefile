@@ -23,7 +23,7 @@ CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/x86_64-ubuntu16.04-linux
 endif
 
 ifdef ARCH_MAC
-LIBLUAJIT_PATH_PREFIX += luajit/bin
+LIBLUAJIT_PATH_PREFIX = luajit/bin/
 endif
 
 libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
@@ -40,7 +40,7 @@ OBJECTS += $(libsurge) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
-    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)/libluajit.a \
+    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)libluajit.a \
     surge/ignore/rack-build/libs/eurorack/libeurorack.a \
     surge/ignore/rack-build/src/platform/libsurge-platform.a
 
