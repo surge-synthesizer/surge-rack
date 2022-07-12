@@ -38,7 +38,8 @@ jobs:
       options: --user root
     strategy:
       matrix:
-        platform: [win, linux]
+        #platform: [win, linux]
+        platform: [linux]
     steps:
       - uses: actions/checkout@v3
         with:
