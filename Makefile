@@ -9,11 +9,13 @@ SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
 include $(RACK_DIR)/arch.mk
 
-CMAKE_TOOLCHAIN=
-LIBLUAJIT_PATH_PREFIX=
+CMAKE_TOOLCHAIN =
+LIBLUAJIT_PATH_PREFIX =
+LIBFILESYSTEM = surge/ignore/rack-build/libs/filesystem/libfilesystem.a
 
 ifdef ARCH_WIN
 CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/mingw-w64-x86_64.cmake
+LIBFILESYSTEM = 
 endif
 
 ifdef ARCH_LIN
@@ -34,7 +36,7 @@ OBJECTS += $(libsurge) \
     surge/ignore/rack-build/libs/libsamplerate/src/libsamplerate.a \
     surge/ignore/rack-build/libs/fmt/libfmt.a \
     surge/ignore/rack-build/libs/strnatcmp/libstrnatcmp.a \
-    surge/ignore/rack-build/libs/filesystem/libfilesystem.a \
+    $(LIBFILESYSTEM) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
