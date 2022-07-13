@@ -100,7 +100,7 @@ endif
 
 ifdef ARCH_WIN
 FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
-LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32
+LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
 endif
 
 ifdef ARCH_LIN
