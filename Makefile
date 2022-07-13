@@ -15,7 +15,7 @@ LIBFILESYSTEM = surge/ignore/rack-build/libs/filesystem/libfilesystem.a
 
 ifdef ARCH_WIN
 CMAKE_TOOLCHAIN += -DCMAKE_TOOLCHAIN_FILE=$(PLUGIN_DIR)/mingw-w64-x86_64.cmake
-LIBFILESYSTEM = 
+LIBFILESYSTEM =
 endif
 
 ifdef ARCH_LIN
@@ -75,7 +75,7 @@ FLAGS += -Isurge/src/common \
 	-DRELEASE=1 \
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
-# toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch 
+# toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch
 # surge 1.7.1 for an include, just slap it in the code here for now. See #307
 
 
@@ -100,7 +100,7 @@ endif
 
 ifdef ARCH_WIN
 FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
-LDFLAGS += -lwinmm
+LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion
 endif
 
 ifdef ARCH_LIN
@@ -151,7 +151,7 @@ ifdef ARCH_WIN
 	FLAGS += -Wno-suggest-override -Wno-sign-compare \
 		 -Wno-ignored-qualifiers \
 		 -Wno-unused-variable -Wno-char-subscripts -Wno-reorder \
-		 -Wno-int-in-bool-context 
+		 -Wno-int-in-bool-context
 	FLAGS += -DWINDOWS -Isurge/src/windows
 endif
 
