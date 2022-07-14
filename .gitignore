@@ -9,3 +9,4 @@ standalone/exe_*
 pynb/.ipynb_checkpoints/*
 src/#*
 src/.#*
+.idea

@@ -67,11 +67,11 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         setupSurgeCommon(NUM_PARAMS);
 
         oscConfigurations.push_back(std::pair<int, std::string>(ot_classic, "Classic"));
-        oscConfigurations.push_back(std::pair<int, std::string>(ot_sinus, "Sine"));
+        oscConfigurations.push_back(std::pair<int, std::string>(ot_sine, "Sine"));
         oscConfigurations.push_back(
             std::pair<int, std::string>(ot_FM2, "FM2 (fixed)"));
         oscConfigurations.push_back(
-            std::pair<int, std::string>(ot_FM, "FM3 (free)"));
+            std::pair<int, std::string>(ot_FM3, "FM3 (free)"));
         oscConfigurations.push_back(std::pair<int, std::string>(ot_shnoise, "SH Noise"));
 
         
@@ -136,7 +136,7 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         }
         
         surge_osc[idx].reset(spawn_osc(i, storage.get(), oscstorage,
-                                       storage->getPatch().scenedata[0]));
+                                       storage->getPatch().scenedata[0], oscbuffer[idx]));
         surge_osc[idx]->init(72.0);
         surge_osc[idx]->init_ctrltypes();
 
@@ -384,6 +384,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     }
 
     std::vector<std::unique_ptr<Oscillator>> surge_osc;
+    unsigned char oscbuffer alignas(16)[MAX_POLY][oscillator_buffer_size];
+
     OscillatorStorage *oscstorage;
     float  osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
     std::vector<HalfRateFilter> halfbandOUT;

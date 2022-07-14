@@ -1,15 +1,8 @@
 #include "SurgeStyle.hpp"
 #include "rack.hpp"
-#include "svg.hpp"
-#include "tinyxml.h"
-
-#if LINUX
-#include <experimental/filesystem>
-#else
-#include <filesystem.h>
-#endif
-
-namespace fs = std::experimental::filesystem;
+#include "window/Svg.hpp"
+#include "tinyxml/tinyxml.h"
+#include "filesystem/import.h"
 
 namespace logger = rack::logger;
 using rack::appGet;
@@ -229,7 +222,7 @@ void SurgeStyle::loadStyle(std::string styleXml)
     if( ! doc.LoadFile(styleXml.c_str()) || doc.Error() )
     {
         styleXml = rack::asset::plugin(pluginInstance, "res/skins/Classic.xml" );
-        doc.LoadFile(styleXml);
+        doc.LoadFile(styleXml.c_str());
 
     }
     TiXmlElement *skin = TINYXML_SAFE_TO_ELEMENT(doc.FirstChild("surge-rack-skin"));

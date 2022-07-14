@@ -2,8 +2,8 @@
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "SurgeSynthesizer.h"
-#include "HeadlessPluginLayerProxy.h"
 #include "rack.hpp"
+#include "HeadlessPluginLayerProxy.h"
 #include <cstring>
 
 struct SurgePatchPlayer : virtual public SurgeModuleCommon {
@@ -72,7 +72,7 @@ struct SurgePatchPlayer : virtual public SurgeModuleCommon {
     
     virtual void setupSurge() {
         setupSurgeCommon(NUM_PARAMS);
-        surge_synth.reset(new SurgeSynthesizer(new HeadlessPluginLayerProxy(), storage->datapath));
+        surge_synth.reset(new SurgeSynthesizer(new HeadlessPluginLayerProxy(), storage->datapath.u8string()));
 
         storage.reset(&(surge_synth->storage));
         storage->refresh_patchlist();

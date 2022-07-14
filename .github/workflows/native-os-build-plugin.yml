@@ -1,0 +1,103 @@
+name: Build VCV Rack Plugin
+on: [push, pull_request]
+
+env:
+  rack-sdk-version: 2.1.2
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: Linux,
+            sdk-platform: lin,
+            os: ubuntu-latest,
+            prepare-os: sudo apt update && sudo apt install -y libxcb-cursor-dev libxcb-keysyms1-dev libxcb-util-dev libxkbcommon-dev libxkbcommon-x11-dev ninja-build xcb libglu1-mesa-dev libglu-dev freeglut3-dev libgles2-mesa-dev libgtk-3-dev libcurl4-openssl-dev alsa alsa-tools libasound2-dev libjack-dev libfreetype6-dev libxinerama-dev libxcb-xinerama0 libxinerama1 x11proto-xinerama-dev libxrandr-dev libgl-dev libxcursor-dev libxcursor1 libxcb-cursor-dev libxcb-cursor0
+          }
+        - {
+            name: MacOS,
+            sdk-platform: mac,
+            os: macos-latest,
+            prepare-os: ""
+          }
+        - {
+            name: Windows,
+            sdk-platform: win,
+            os: windows-latest,
+            prepare-os: export CC=gcc
+          }
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Get Rack-SDK
+        run: |
+          pushd $HOME
+          curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-${{ matrix.config.sdk-platform }}.zip
+          unzip Rack-SDK.zip
+      - name: Modify plugin version
+        # only modify plugin version if no tag was created
+        if: "! startsWith(github.ref, 'refs/tags/v')"
+        run: |
+          gitrev=`git rev-parse --short HEAD`
+          pluginversion=`jq -r '.version' plugin.json`
+          echo "Set plugin version from $pluginversion to $pluginversion-$gitrev"
+          cat <<< `jq --arg VERSION "$pluginversion-$gitrev" '.version=$VERSION' plugin.json` > plugin.json
+      - name: Build plugin
+        run: |
+          ${{ matrix.config.prepare-os }}
+          export RACK_DIR=$HOME/Rack-SDK
+          make -j dep
+          make -j dist
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist
+          name: ${{ matrix.config.name }}
+
+  publish:
+    name: Publish plugin
+    # only create a release if a tag was created that is called e.g. v1.2.3
+    # see also https://vcvrack.com/manual/Manifest#version
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+      - uses: FranzDiebold/github-env-vars-action@v1.2.1
+      - name: Check if plugin version matches tag
+        run: |
+          pluginversion=`jq -r '.version' plugin.json`
+          if [ "v$pluginversion" != "${{ env.GITHUB_REF_NAME }}" ]; then
+            echo "Plugin version from plugin.json 'v$pluginversion' doesn't match with tag version '${{ env.GITHUB_REF_NAME }}'"
+            exit 1
+          fi
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ${{ env.GITHUB_REPOSITORY_NAME }} VCV Rack Plugin ${{ env.GITHUB_REF_NAME }}
+          draft: false
+          prerelease: false
+      - uses: actions/download-artifact@v2
+        with:
+          path: _artifacts
+      - name: Upload release assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: _artifacts/**/*.vcvplugin
+          tag: ${{ github.ref }}
+          file_glob: true

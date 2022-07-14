@@ -1,10 +1,10 @@
 #pragma once
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
-#include "dsp/AdsrEnvelope.h"
+#include "dsp/modulators/ADSRModulationSource.h"
 #include "rack.hpp"
 #include <cstring>
-#include <simd/vector.hpp>
+#include <simd/Vector.hpp>
 
 
 struct SurgeADSR : virtual public SurgeModuleCommon {
@@ -71,7 +71,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
 
         for( int i=0; i<MAX_POLY; ++i )
         {
-            surge_envelopes[i].reset(new AdsrEnvelope());
+            surge_envelopes[i].reset(new ADSRModulationSource());
             surge_envelopes[i]->init(storage.get(), adsrstorage,
                                  storage->getPatch().scenedata[0], nullptr);
         }
@@ -119,7 +119,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
         }
     }
 
-    std::vector<std::unique_ptr<AdsrEnvelope>> surge_envelopes;
+    std::vector<std::unique_ptr<ADSRModulationSource>> surge_envelopes;
     ADSRStorage *adsrstorage;
 
     std::vector<bool> wasGated, everGated;
@@ -191,11 +191,11 @@ struct SurgeADSR : virtual public SurgeModuleCommon {
                     if( inNewAttack )
                     {
                         // This is infrequent so do the painful direct addressing
-                        output0[i/4].s[i%4] = surge_envelopes[i]->get_output();
+                        output0[i/4].s[i%4] = surge_envelopes[i]->get_output(0);
                         surge_envelopes[i]->process_block();
                     }
                     
-                    ts[i] = surge_envelopes[i]->get_output();
+                    ts[i] = surge_envelopes[i]->get_output(0);
                 }
             } // end channel loop
 

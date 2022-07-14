@@ -7,8 +7,8 @@ rack::Model **fxModels = nullptr;
 int addFX(rack::Model *m, int type)
 {
    if( fxModels == nullptr ) {
-       fxModels = new rack::Model *[num_fxtypes];
-       for( auto i=0; i<num_fxtypes; ++i )
+       fxModels = new rack::Model *[n_fx_types];
+       for( auto i=0; i<n_fx_types; ++i )
            fxModels[i] = nullptr;
    }
    fxModels[type] = m;
@@ -18,6 +18,7 @@ int addFX(rack::Model *m, int type)
 
 rack::Plugin *pluginInstance;
 
+__attribute__((__visibility__("default")))
 void init(rack::Plugin *p) {
     pluginInstance = p;
     INFO( "[SurgeRack] initializing" );
@@ -38,7 +39,7 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeBiquad);
     
     if( fxModels != nullptr )
-        for( auto i=0; i<num_fxtypes; ++i )
+        for( auto i=0; i<n_fx_types; ++i )
         {
             if( fxModels[i] != nullptr )
             {

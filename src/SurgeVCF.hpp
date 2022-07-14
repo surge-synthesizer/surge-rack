@@ -2,7 +2,7 @@
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "dsp/QuadFilterUnit.h"
-#include "dsp/FilterCoefficientMaker.h"
+#include "dsp/filters/FilterCoefficientMaker.h"
 #include "rack.hpp"
 #include <cstring>
 
@@ -97,7 +97,7 @@ struct SurgeVCF :  public SurgeModuleCommon {
             // 1/2: have coeffieicnt maker make values
             float freq = 440;
             float res = 20;
-            CM.MakeCoeffs(freq, res, (int)getParam(FILTER_TYPE) + 1, (int)getParam(FILTER_SUBTYPE), storage.get());
+            //CM.MakeCoeffs(freq, res, (int)getParam(FILTER_TYPE) + 1, (int)getParam(FILTER_SUBTYPE), storage.get());
             
             // 3: blat those onto the state
             for( auto i=0; i<n_cm_coeffs; ++i )

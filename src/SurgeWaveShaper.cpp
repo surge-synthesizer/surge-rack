@@ -65,9 +65,9 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
     int yPos = buttonsY0;
 
     SurgeButtonBank *bank = SurgeButtonBank::create( rack::Vec(padMargin, yPos),
-                                                     rack::Vec(box.size.x - 2 * padMargin, n_ws_type * 23 ),
+                                                     rack::Vec(box.size.x - 2 * padMargin, n_ws_types * 23 ),
                                                      module, M::MODE_PARAM,
-                                                     1, n_ws_type, 13 );
+                                                     1, n_ws_types, 13 );
 
     bank->addLabel("none");
     bank->addLabel("tanh");

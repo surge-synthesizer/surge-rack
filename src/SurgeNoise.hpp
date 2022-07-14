@@ -1,7 +1,7 @@
 #pragma once
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
-#include "dsp/DspUtilities.h"
+#include "dsp/utilities/DSPUtils.h"
 #include "rack.hpp"
 #include <cstring>
 

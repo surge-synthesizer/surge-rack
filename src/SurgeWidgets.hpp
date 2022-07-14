@@ -211,7 +211,7 @@ struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener {
     rack::widget::SvgWidget *fg;
     virtual void onChange( const rack::event::Change &e ) override {
         rack::RoundKnob::onChange(e);
-        if (paramQuantity) {
+        if (getParamQuantity()) {
             for( auto i=0; i<6; ++i )
                 twfg->transform[i] = tw->transform[i];
         }
@@ -316,27 +316,27 @@ struct SurgeDisableStateSwitch : SurgeUpdateColorSwitch
         if (e.button != GLFW_MOUSE_BUTTON_LEFT)
             return;
 
-        if( paramQuantity )
+        if( getParamQuantity() )
         {
-            if( paramQuantity->getValue() < 0 ) // disabled
+            if( getParamQuantity()->getValue() < 0 ) // disabled
                 return;
             int ov, nv;
-            if( paramQuantity->getValue() > 0.5 ) // basically 1
+            if( getParamQuantity()->getValue() > 0.5 ) // basically 1
             {
                 ov = 1; nv = 0;
-                paramQuantity->setValue(0);
+                getParamQuantity()->setValue(0);
             }
             else
             {
                 ov = 0; nv = 1;
-                paramQuantity->setValue(1);
+                getParamQuantity()->setValue(1);
             }
 
             // Push ParamChange history action
             rack::history::ParamChange* h = new rack::history::ParamChange;
             h->name = "move switch";
-            h->moduleId = paramQuantity->module->id;
-            h->paramId = paramQuantity->paramId;
+            h->moduleId = getParamQuantity()->module->id;
+            h->paramId = getParamQuantity()->paramId;
             h->oldValue = ov;
             h->newValue = nv;
             APP->history->push(h);
@@ -429,8 +429,8 @@ struct SurgeButtonBank :
     
     
     float getPValue() {
-        if( paramQuantity )
-            return paramQuantity->getValue();
+        if( getParamQuantity() )
+            return getParamQuantity()->getValue();
         return -2;
     }
 
@@ -438,8 +438,8 @@ struct SurgeButtonBank :
         float apply = v;
         if( normalizeTo != 0 )
             apply = v / normalizeTo;
-        if( paramQuantity )
-            paramQuantity->setValue(apply);
+        if( getParamQuantity() )
+            getParamQuantity()->setValue(apply);
     }
     
     int fontId = -1;
@@ -479,12 +479,11 @@ struct SurgeButtonBank :
         res->rows = rows;
         res->cols = cols;
         res->fontSize = fontSize;
+        res->module = module;
+        res->paramId = paramId;
 
         res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0), size, [res](NVGcontext *vg) { res->drawWidget(vg); } );
         res->addChild(res->bdw);
-
-        if( module )
-            res->paramQuantity = module->paramQuantities[paramId];
 
         return res;
     }
