@@ -122,3 +122,12 @@ CREATE_FX( fxt_reverb2, "SurgeReverb2" );
 CREATE_FX( fxt_conditioner, "SurgeConditioner" );
 CREATE_FX( fxt_flanger, "SurgeFlanger" );
 CREATE_FX( fxt_ringmod, "SurgeRingMod" );
+
+CREATE_FX( fxt_neuron, "SurgeNeuron" );
+CREATE_FX( fxt_chow, "SurgeChow" );
+CREATE_FX( fxt_resonator, "SurgeResonator" );
+CREATE_FX( fxt_exciter, "SurgeExciter" );
+CREATE_FX( fxt_combulator, "SurgeCombulator" );
+CREATE_FX( fxt_ensemble, "SurgeEnsemble" );
+CREATE_FX( fxt_treemonster, "SurgeTreeMonster" );
+CREATE_FX( fxt_spring_reverb, "SurgeSpringReverb" );

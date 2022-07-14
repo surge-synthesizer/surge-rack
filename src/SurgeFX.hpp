@@ -26,6 +26,17 @@ template<> struct SurgeFXName<fxt_vocoder> { static std::string getName() { retu
 template<> struct SurgeFXName<fxt_flanger> { static std::string getName() { return "FLANGER"; } };
 template<> struct SurgeFXName<fxt_ringmod> { static std::string getName() { return "RINGMOD"; } };
 
+template<> struct SurgeFXName<fxt_neuron> { static std::string getName() { return "NEURON"; } };
+template<> struct SurgeFXName<fxt_resonator> { static std::string getName() { return "RESONATOR"; } };
+template<> struct SurgeFXName<fxt_chow> { static std::string getName() { return "CHOW"; } };
+template<> struct SurgeFXName<fxt_exciter> { static std::string getName() { return "EXCITER"; } };
+template<> struct SurgeFXName<fxt_ensemble> { static std::string getName() { return "ENSEMBLE"; } };
+template<> struct SurgeFXName<fxt_combulator> { static std::string getName() { return "COMBULATOR"; } };
+template<> struct SurgeFXName<fxt_tape> { static std::string getName() { return "TAPE"; } };
+template<> struct SurgeFXName<fxt_treemonster> { static std::string getName() { return "TREEMONSTER"; } };
+template<> struct SurgeFXName<fxt_spring_reverb> { static std::string getName() { return "SPRING_REVERB"; } };
+
+
 template<int effectNum>
 struct SurgeFXTraits
 {
