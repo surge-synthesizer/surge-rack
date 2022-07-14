@@ -101,7 +101,7 @@ LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_
 endif
 
 ifdef ARCH_LIN
-FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
+FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden -Wno-unused-value -Wno-suggest-override -Wno-implicit-fallthrough
 LDFLAGS += -pthread
 endif
 
