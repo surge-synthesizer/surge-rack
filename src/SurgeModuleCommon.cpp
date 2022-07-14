@@ -165,7 +165,8 @@ void SurgeRackParamQuantity::setDisplayValueString(std::string s) {
             //std::cout << "p is " << p << std::endl;
             if( p->can_setvalue_from_string() )
             {
-                p->set_value_from_string(s);
+                std::string emsg;
+                p->set_value_from_string(s, emsg);
                 setValue(pbn->p->get_value_f01());
                 return;
             }

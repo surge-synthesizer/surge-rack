@@ -10,7 +10,7 @@ SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 include $(RACK_DIR)/arch.mk
 
 LIBLUAJIT_PATH_PREFIX =
-LIBFILESYSTEM = surge/ignore/rack-build/libs/filesystem/libfilesystem.a
+LIBFILESYSTEM = surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/libfilesystem.a
 
 ifdef ARCH_WIN
 LIBFILESYSTEM =
@@ -26,10 +26,11 @@ libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
 OBJECTS += $(libsurge) \
 	surge/ignore/rack-build/src/common/libsurge-common-binary.a \
 	surge/ignore/rack-build/src/lua/libsurge-lua-src.a \
-	surge/ignore/rack-build/libs/tinyxml/libtinyxml.a \
+	surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
     surge/ignore/rack-build/libs/libsamplerate/src/libsamplerate.a \
     surge/ignore/rack-build/libs/fmt/libfmt.a \
-    surge/ignore/rack-build/libs/strnatcmp/libstrnatcmp.a \
+    surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/strnatcmp/libstrnatcmp.a \
+    surge/ignore/rack-build/libs/sst/sst-plugininfra/libsst-plugininfra.a \
     $(LIBFILESYSTEM) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
@@ -57,10 +58,13 @@ FLAGS += -Isurge/src/common \
 	-Isurge/src/common/dsp/oscillators \
 	-Isurge/src/common/dsp/modulators \
 	-Isurge/src/surge-testrunner \
-	-Isurge/libs/tinyxml/include \
-	-Isurge/libs/filesystem \
+	-Isurge/libs/sst/sst-filters/include \
+	-Isurge/libs/sst/sst-waveshapers/include \
+	-Isurge/libs/sst/sst-plugininfra/include \
+	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
+	-Isurge/libs/sst/sst-plugininfra/libs/filesystem \
 	-Isurge/libs/LuaJitLib/LuaJIT/src  \
-	-Isurge/ignore/rack-build/libs/filesystem/include \
+	-Isurge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/include \
 	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
         -Isurge/libs/tuning-library/include \

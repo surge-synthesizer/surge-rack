@@ -92,16 +92,20 @@ struct SurgeModuleCommon : public rack::Module {
     
     virtual void onSampleRateChange() override {
         float sr = APP->engine->getSampleRate();
-        samplerate = sr;
-        dsamplerate = sr;
-        samplerate_inv = 1.0 / sr;
-        dsamplerate_inv = 1.0 / sr;
-        dsamplerate_os = dsamplerate * OSC_OVERSAMPLING;
-        dsamplerate_os_inv = 1.0 / dsamplerate_os;
-        if( storage )
+        if (storage)
+        {
+            storage->setSamplerate(sr);
+        //samplerate = sr;
+        //dsamplerate = sr;
+        //samplerate_inv = 1.0 / sr;
+        //dsamplerate_inv = 1.0 / sr;
+        //dsamplerate_os = dsamplerate * OSC_OVERSAMPLING;
+        //dsamplerate_os_inv = 1.0 / dsamplerate_os;
+
             storage->init_tables();
-        updateBPMFromClockCV(lastClockCV, samplerate_inv, sr, true);
-        moduleSpecificSampleRateChange();
+            updateBPMFromClockCV(lastClockCV, storage->samplerate_inv, sr, true);
+            moduleSpecificSampleRateChange();
+        }
     }
 
     virtual void moduleSpecificSampleRateChange() { }
@@ -438,7 +442,8 @@ struct SurgeRackOSCParamQuantity : public rack::engine::ParamQuantity
 
             if( p->can_setvalue_from_string() )
             {
-                p->set_value_from_string(s);
+                std::string emsg;
+                p->set_value_from_string(s, emsg);
                 setValue(p->get_value_f01());
                 return;
             }

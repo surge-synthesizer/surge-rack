@@ -1,7 +1,6 @@
 #pragma once
 #include "Surge.hpp"
 #include "SurgeModuleCommon.hpp"
-#include "dsp/QuadFilterUnit.h"
 #include "rack.hpp"
 #include <cstring>
 
@@ -11,9 +10,11 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     enum OutputIds { SIGNAL_OUT, NUM_OUTPUTS };
     enum LightIds { NUM_LIGHTS };
 
+    static constexpr int n_ws_types = 1; // FIXME
+    
     SurgeWaveShaper() : SurgeModuleCommon() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(MODE_PARAM, 0, n_ws_types - 1, 0, "Mode");
+        configParam(MODE_PARAM, 0, n_ws_types-1, 0, "Mode");
         configParam(DRIVE_PARAM, -24.0, 24.0, 0, "Drive", "dB"); // ct_decibel_narrow
         setupSurge();
     }
@@ -32,6 +33,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
     float inBuffer alignas(16)[MAX_POLY][4], outBuffer alignas(16)[MAX_POLY][4];
 
     void swapWS(int i) {
+        #if 0
         if (i == 0)
             wsPtr = nullptr;
         else
@@ -45,10 +47,12 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
             }
             processPosition[c] = 0;
         }
+        #endif
     }
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+#if 0
         if ((int)getParam(MODE_PARAM) != (int)pc.get(MODE_PARAM)) {
             swapWS((int)getParam(MODE_PARAM));
         }
@@ -82,7 +86,8 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
                 processPosition[i]++;
             }
         }
+        #endif
     }
 
-    WaveshaperQFPtr wsPtr = nullptr;
+    // WaveshaperQFPtr wsPtr = nullptr;
 };
