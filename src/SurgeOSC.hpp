@@ -32,6 +32,9 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
     ParamValueStateSaver knobSaver;
     
     SurgeOSC() : SurgeModuleCommon() {
+        for (int i=0; i<MAX_POLY; ++i)
+            surge_osc[i] = nullptr;
+
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
@@ -52,6 +55,16 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         {
             halfbandOUT.emplace_back( 6, true );
             halfbandOUT[i].reset();
+        }
+    }
+
+    ~SurgeOSC()
+    {
+        for (int i=0; i<MAX_POLY; ++i)
+        {
+            if (surge_osc[i])
+                 surge_osc[i]->~Oscillator();
+            surge_osc[i] = nullptr;
         }
     }
 
@@ -132,11 +145,15 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
                 oscstorage->p[i].set_name("-");
                 oscstorage->p[i].set_type(ct_none);
             }
-            surge_osc.resize(MAX_POLY);
         }
         
-        surge_osc[idx].reset(spawn_osc(i, storage.get(), oscstorage,
-                                       storage->getPatch().scenedata[0], oscbuffer[idx]));
+        if (surge_osc[idx])
+        {
+            surge_osc[idx]->~Oscillator();
+            surge_osc[idx] = nullptr;
+        }
+        surge_osc[idx] = spawn_osc(i, storage.get(), oscstorage,
+                                   storage->getPatch().scenedata[0], oscbuffer[idx]);
         surge_osc[idx]->init(72.0);
         surge_osc[idx]->init_ctrltypes();
 
@@ -231,7 +248,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
             {
                 if( surge_osc[i] != nullptr )
                 {
-                    surge_osc[i].reset(nullptr);
+                    surge_osc[i]->~Oscillator();
+                    surge_osc[i] = nullptr;
                 }
             }
             lastNChan = nChan;
@@ -383,7 +401,8 @@ struct SurgeOSC : virtual public SurgeModuleCommon {
         processPosition ++;
     }
 
-    std::vector<std::unique_ptr<Oscillator>> surge_osc;
+    // With surge-xt the oscillator memory is owned by the synth after spawn
+    std::array<Oscillator *, MAX_POLY> surge_osc;
     unsigned char oscbuffer alignas(16)[MAX_POLY][oscillator_buffer_size];
 
     OscillatorStorage *oscstorage;

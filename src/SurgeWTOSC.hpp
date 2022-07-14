@@ -63,6 +63,11 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         }
     }
 
+    ~SurgeWTOSC() {
+        for (int i=0; i<MAX_POLY; ++i)
+            clear_osc(i);
+    }
+
     virtual std::string getName() override { return "WTOSC"; }
     
     StringCache pitch0DisplayCache;
@@ -71,8 +76,20 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
     ParamValueStateSaver knobSaver;
 
     std::vector<int> catOrderSkipEmpty;
+
+    void clear_osc(int c)
+    {
+        if (surge_osc[c])
+        {
+            surge_osc[c]->~Oscillator();
+            surge_osc[c] = nullptr;
+        }
+    }
     
     virtual void setupSurge() {
+        for (int i=0; i<MAX_POLY; ++i)
+            surge_osc[i] = nullptr;
+        
         setupSurgeCommon(NUM_PARAMS);
         storage->refresh_wtlist();
         INFO("[SurgeWTOSC] wt_list.size() = %d", (int)storage->wt_list.size());
@@ -104,8 +121,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         */
         for( int c=0; c<MAX_POLY; ++c)
         {
-            surge_osc[c].reset(spawn_osc(ot_wavetable, storage.get(), oscstorage,
-                                         storage->getPatch().scenedata[0], oscbuffer[c]));
+            clear_osc(c);
+            surge_osc[c] = spawn_osc(ot_wavetable, storage.get(), oscstorage,
+                                         storage->getPatch().scenedata[0], oscbuffer[c]);
             
             oscstorage->wt.queue_id = 0;
             for( int i=0; i<storage->wt_list.size(); ++i )
@@ -314,8 +332,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                 {
                     for( int c=0; c<MAX_POLY; ++c )
                     {
-                        surge_osc[c].reset(spawn_osc(toWhat, storage.get(), oscstorage,
-                                                     storage->getPatch().scenedata[0], oscbuffer[c]));
+                        clear_osc(c);
+                        surge_osc[c] = spawn_osc(toWhat, storage.get(), oscstorage,
+                                                     storage->getPatch().scenedata[0], oscbuffer[c]);
                         surge_osc[c]->init(72.0);
                         surge_osc[c]->init_ctrltypes();
                         for( int i=0; i<n_osc_params; ++i )
@@ -341,8 +360,9 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
                     
                     for( int c=0; c<MAX_POLY; ++c )
                     {
-                        surge_osc[c].reset(spawn_osc(toWhat, storage.get(), oscstorage,
-                                                     storage->getPatch().scenedata[0], oscbuffer[c]));
+                        clear_osc(c);
+                        surge_osc[c] = spawn_osc(toWhat, storage.get(), oscstorage,
+                                                     storage->getPatch().scenedata[0], oscbuffer[c]);
                         surge_osc[c]->init(72.0);
                         surge_osc[c]->init_ctrltypes();
                         surge_osc[c]->init_default_values();
@@ -518,7 +538,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon {
         firstRespawnIsFromJSON = false;
     }
 
-    std::unique_ptr<Oscillator> surge_osc[MAX_POLY];
+    std::array<Oscillator *, MAX_POLY> surge_osc;
     OscillatorStorage *oscstorage;
 
     virtual json_t *dataToJson() override {
