@@ -36,8 +36,7 @@ OBJECTS += $(libsurge) \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
     surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)libluajit.a \
-    surge/ignore/rack-build/libs/eurorack/libeurorack.a \
-    surge/ignore/rack-build/src/platform/libsurge-platform.a
+    surge/ignore/rack-build/libs/eurorack/libeurorack.a 
 
 # Trigger the static library to be built when running `make dep`
 DEPS += $(libsurge)
@@ -101,7 +100,7 @@ LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_
 endif
 
 ifdef ARCH_LIN
-FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden -Wno-unused-value -Wno-suggest-override -Wno-implicit-fallthrough
+FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden -Wno-unused-value -Wno-suggest-override -Wno-implicit-fallthrough -Wno-ignored-qualifiers
 LDFLAGS += -pthread
 endif
 
