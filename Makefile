@@ -10,7 +10,7 @@ SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 include $(RACK_DIR)/arch.mk
 
 LIBLUAJIT_PATH_PREFIX =
-LIBFILESYSTEM = surge/ignore/rack-build/libs/filesystem/libfilesystem.a
+LIBFILESYSTEM = surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/libfilesystem.a
 
 ifdef ARCH_WIN
 LIBFILESYSTEM =
@@ -26,17 +26,17 @@ libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
 OBJECTS += $(libsurge) \
 	surge/ignore/rack-build/src/common/libsurge-common-binary.a \
 	surge/ignore/rack-build/src/lua/libsurge-lua-src.a \
-	surge/ignore/rack-build/libs/tinyxml/libtinyxml.a \
+	surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
     surge/ignore/rack-build/libs/libsamplerate/src/libsamplerate.a \
     surge/ignore/rack-build/libs/fmt/libfmt.a \
-    surge/ignore/rack-build/libs/strnatcmp/libstrnatcmp.a \
+    surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/strnatcmp/libstrnatcmp.a \
+    surge/ignore/rack-build/libs/sst/sst-plugininfra/libsst-plugininfra.a \
     $(LIBFILESYSTEM) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
     surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)libluajit.a \
-    surge/ignore/rack-build/libs/eurorack/libeurorack.a \
-    surge/ignore/rack-build/src/platform/libsurge-platform.a
+    surge/ignore/rack-build/libs/eurorack/libeurorack.a 
 
 # Trigger the static library to be built when running `make dep`
 DEPS += $(libsurge)
@@ -57,10 +57,13 @@ FLAGS += -Isurge/src/common \
 	-Isurge/src/common/dsp/oscillators \
 	-Isurge/src/common/dsp/modulators \
 	-Isurge/src/surge-testrunner \
-	-Isurge/libs/tinyxml/include \
-	-Isurge/libs/filesystem \
+	-Isurge/libs/sst/sst-filters/include \
+	-Isurge/libs/sst/sst-waveshapers/include \
+	-Isurge/libs/sst/sst-plugininfra/include \
+	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
+	-Isurge/libs/sst/sst-plugininfra/libs/filesystem \
 	-Isurge/libs/LuaJitLib/LuaJIT/src  \
-	-Isurge/ignore/rack-build/libs/filesystem/include \
+	-Isurge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/include \
 	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
         -Isurge/libs/tuning-library/include \
@@ -97,7 +100,7 @@ LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_
 endif
 
 ifdef ARCH_LIN
-FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
+FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden -Wno-unused-value -Wno-suggest-override -Wno-implicit-fallthrough -Wno-ignored-qualifiers
 LDFLAGS += -pthread
 endif
 
