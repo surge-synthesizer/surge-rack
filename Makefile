@@ -126,7 +126,8 @@ ifdef ARCH_MAC
 	-Wno-char-subscripts \
 	-Wno-sign-compare \
 	-Wno-ignored-qualifiers \
-	-Wno-c++17-extensions
+	-Wno-c++17-extensions \
+	-Wno-unused-private-field
 	FLAGS += -DMAC -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
 endif
 

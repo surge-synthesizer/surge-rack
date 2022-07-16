@@ -146,7 +146,25 @@
 		{
 			"slug": "SurgeOSC",
 			"name": "SurgeOSC",
-			"description": "The Surge classic oscillators, including square, saw, sine, FM and niose",
+			"description": "The Surge classic oscillators, including square, saw, sine, FM and Noise",
+			"tags": ["VCO", "Polyphonic"]
+		},
+		{
+			"slug": "SurgeOSCModern",
+			"name": "SurgeOSCModern",
+			"description": "The Surge Modern Oscillator",
+			"tags": ["VCO", "Polyphonic"]
+		},
+		{
+			"slug": "SurgeOSCAlias",
+			"name": "SurgeOSCAlias",
+			"description": "The Surge Alias Oscillator",
+			"tags": ["VCO", "Polyphonic"]
+		},
+		{
+			"slug": "SurgeOSCString",
+			"name": "SurgeOSCString",
+			"description": "The Surge String Oscillator",
 			"tags": ["VCO", "Polyphonic"]
 		},
 		{
