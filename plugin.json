@@ -90,12 +90,6 @@
 			"tags": [ "Effect", "Polyphonic", "Ring Modulator" ]
 		},
 		{
-			"slug": "SurgeNeuron",
-			"name": "SurgeNeuron",
-			"description": "The Surge Neuron Distortion effect",
-			"tags": [ "Effect", "Polyphonic", "Distortion" ]
-		},
-		{
 			"slug": "SurgeChow",
 			"name": "SurgeChow",
 			"description": "The Surge CHOW Distortion effect",
@@ -126,12 +120,6 @@
 			"tags": [ "Effect", "Polyphonic" ]
 		},
 	    {
-			"slug": "SurgeSpringReverb",
-			"name": "SurgeSpringReverb",
-			"description": "The Surge Spring Reverb Effect",
-			"tags": [ "Effect", "Polyphonic", "Reverb" ]
-		},
-		{
 			"slug": "SurgeClock",
 			"name": "SurgeClock",
 			"description": "A utility clock generator",
