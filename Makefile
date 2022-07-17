@@ -24,7 +24,6 @@ libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
 # Build the static library into your plugin.dll/dylib/so
 # TODO: This needs to be platform variated and we need to see which we need
 OBJECTS += $(libsurge) \
-	surge/ignore/rack-build/src/common/libsurge-common-binary.a \
 	surge/ignore/rack-build/src/lua/libsurge-lua-src.a \
 	surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
     surge/ignore/rack-build/libs/libsamplerate/src/libsamplerate.a \
@@ -44,7 +43,7 @@ DEPS += $(libsurge)
 $(libsurge):
 	# Out-of-source build dir
 	echo $(CMAKE)
-	cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles"
+	cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE
 	# $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
 	cd surge/ignore/rack-build && CFLAGS= && make -j 1 surge-common
 
