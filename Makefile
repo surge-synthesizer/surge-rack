@@ -9,15 +9,10 @@ SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
 include $(RACK_DIR)/arch.mk
 
-LIBLUAJIT_PATH_PREFIX =
 LIBFILESYSTEM = surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/libfilesystem.a
 
 ifdef ARCH_WIN
 LIBFILESYSTEM =
-endif
-
-ifdef ARCH_MAC
-LIBLUAJIT_PATH_PREFIX = luajit/bin/
 endif
 
 libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
@@ -34,7 +29,6 @@ OBJECTS += $(libsurge) \
     surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
     surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
     surge/ignore/rack-build/libs/airwindows/libairwindows.a \
-    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)libluajit.a \
     surge/ignore/rack-build/libs/eurorack/libeurorack.a 
 
 # Trigger the static library to be built when running `make dep`
@@ -43,9 +37,9 @@ DEPS += $(libsurge)
 $(libsurge):
 	# Out-of-source build dir
 	echo $(CMAKE)
-	cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE
+	cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE
 	# $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
-	cd surge/ignore/rack-build && CFLAGS= && make -j 1 surge-common
+	cd surge/ignore/rack-build && CFLAGS= && make -j 4 surge-common
 
 # FLAGS will be passed to both the C and C++ compiler
 FLAGS += -Isurge/src/common \
