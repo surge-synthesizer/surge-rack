@@ -30,24 +30,15 @@ jobs:
         if: "! startsWith(github.ref, 'refs/tags/v')"
 
   build:
-    name: ${{ matrix.config.platform }}
+    name: ${{ matrix.platform }}
     needs: modify-plugin-version
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/qno/rack-plugin-toolchain-win-linux:v2
-      options: --user root
     strategy:
       fail-fast: false
       matrix:
-        config:
-        - {
-            platform: linux,
-            compiler: x86_64-ubuntu16.04-linux-gnu
-          }
-        - {
-            platform: win,
-            compiler: x86_64-w64-mingw32
-          }
+        platform: [win, linux]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -62,12 +53,12 @@ jobs:
           export PLUGIN_DIR=$GITHUB_WORKSPACE
           pushd ${{ env.rack-plugin-toolchain-dir }}
           sed -i "s/-G 'MSYS Makefiles'//g" Rack-SDK-win/dep.mk
-          CC=local/${{ matrix.config.compiler }}/bin/${{ matrix.config.compiler }}-cc CXX=local/${{ matrix.config.compiler }}/bin/${{ matrix.config.compiler }}-c++ make plugin-build-${{ matrix.config.platform }}
+          make plugin-build-${{ matrix.platform }}
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           path: ${{ env.rack-plugin-toolchain-dir }}/plugin-build
-          name: ${{ matrix.config.platform }}
+          name: ${{ matrix.platform }}
 
   build-mac:
     name: mac
