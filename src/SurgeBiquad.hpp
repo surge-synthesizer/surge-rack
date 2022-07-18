@@ -178,9 +178,7 @@ struct SurgeBiquad :  public SurgeModuleCommon {
                 fr = rack::clamp(fr, -60.0, 65.0); // don't allow overflows or underflows from CV
                 float res = getParam(RESO_KNOB) + inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
                 float xtra = getParam(THIRD_KNOB) + inputs[THIRD_CV].getPolyVoltage(i) / 10.0;
-                
-                float lightValue = 0;
-                
+
                 switch(type)
                 {
                 case LP:
@@ -210,7 +208,6 @@ struct SurgeBiquad :  public SurgeModuleCommon {
                 case peakEQ:
                 {
                     float gain = 48 * ( xtra - 0.5 );
-                    lightValue = 10;
                     biquad[i]->coeff_peakEQ(biquad[i]->calc_omega(fr/12), res, gain);
                     break;
                 }
