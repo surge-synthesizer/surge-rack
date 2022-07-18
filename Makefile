@@ -1,52 +1,40 @@
 RACK_DIR ?= ../..
-
-RACK_VERSION=1
-RACK_FLAG=-DRACK_V1
+include $(RACK_DIR)/arch.mk
 
 SURGE_RACK_BASE_VERSION=XT1-0-1
 SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
 SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
 
-include $(RACK_DIR)/arch.mk
+SURGE_BLD=dep/surge-build
+libsurge := $(SURGE_BLD)/src/common/libsurge-common.a
 
-LIBLUAJIT_PATH_PREFIX =
-LIBFILESYSTEM = surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/libfilesystem.a
 
+LIBFILESYSTEM = $(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/libfilesystem.a
 ifdef ARCH_WIN
 LIBFILESYSTEM =
 endif
 
-ifdef ARCH_MAC
-LIBLUAJIT_PATH_PREFIX = luajit/bin/
-endif
-
-libsurge := surge/ignore/rack-build/src/common/libsurge-common.a
-# Build the static library into your plugin.dll/dylib/so
-# TODO: This needs to be platform variated and we need to see which we need
 OBJECTS += $(libsurge) \
-	surge/ignore/rack-build/src/common/libsurge-common-binary.a \
-	surge/ignore/rack-build/src/lua/libsurge-lua-src.a \
-	surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
-    surge/ignore/rack-build/libs/libsamplerate/src/libsamplerate.a \
-    surge/ignore/rack-build/libs/fmt/libfmt.a \
-    surge/ignore/rack-build/libs/sst/sst-plugininfra/libs/strnatcmp/libstrnatcmp.a \
-    surge/ignore/rack-build/libs/sst/sst-plugininfra/libsst-plugininfra.a \
+	$(SURGE_BLD)/src/lua/libsurge-lua-src.a \
+	$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
+    $(SURGE_BLD)/libs/libsamplerate/src/libsamplerate.a \
+    $(SURGE_BLD)/libs/fmt/libfmt.a \
+    $(SURGE_BLD)/libs/sst/sst-plugininfra/libs/strnatcmp/libstrnatcmp.a \
+    $(SURGE_BLD)/libs/sst/sst-plugininfra/libsst-plugininfra.a \
     $(LIBFILESYSTEM) \
-    surge/ignore/rack-build/libs/oddsound-mts/liboddsound-mts.a \
-    surge/ignore/rack-build/libs/sqlite-3.23.3/libsqlite.a \
-    surge/ignore/rack-build/libs/airwindows/libairwindows.a \
-    surge/ignore/rack-build/libs/LuaJitLib/$(LIBLUAJIT_PATH_PREFIX)libluajit.a \
-    surge/ignore/rack-build/libs/eurorack/libeurorack.a 
+    $(SURGE_BLD)/libs/oddsound-mts/liboddsound-mts.a \
+    $(SURGE_BLD)/libs/sqlite-3.23.3/libsqlite.a \
+    $(SURGE_BLD)/libs/airwindows/libairwindows.a \
+    $(SURGE_BLD)/libs/eurorack/libeurorack.a 
 
 # Trigger the static library to be built when running `make dep`
 DEPS += $(libsurge)
 
 $(libsurge):
 	# Out-of-source build dir
-	echo $(CMAKE)
-	cd surge && CFLAGS= && $(CMAKE) -Bignore/rack-build -G "Unix Makefiles"
-	# $(CMAKE) doesn't work here since the arguments are borked so use make directly. Sigh.
-	cd surge/ignore/rack-build && CFLAGS= && make -j 1 surge-common
+	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE
+	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
+	cd $(SURGE_BLD) && make -j 4 surge-common
 
 # FLAGS will be passed to both the C and C++ compiler
 FLAGS += -Isurge/src/common \
@@ -63,11 +51,11 @@ FLAGS += -Isurge/src/common \
 	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
 	-Isurge/libs/sst/sst-plugininfra/libs/filesystem \
 	-Isurge/libs/LuaJitLib/LuaJIT/src  \
-	-Isurge/ignore/rack-build/libs/sst/sst-plugininfra/libs/filesystem/include \
+	-I$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/include \
 	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
-        -Isurge/libs/tuning-library/include \
-        -include limits \
+	-Isurge/libs/tuning-library/include \
+	-include limits \
 	-DRELEASE=1 \
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
@@ -126,12 +114,13 @@ ifdef ARCH_MAC
 	-Wno-char-subscripts \
 	-Wno-sign-compare \
 	-Wno-ignored-qualifiers \
-	-Wno-c++17-extensions
-	FLAGS += -DMAC -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
+	-Wno-c++17-extensions \
+	-Wno-unused-private-field
+	FLAGS += -DMAC
 endif
 
 ifdef ARCH_LIN
-	FLAGS += -DLINUX -D"_aligned_malloc(x,a)=malloc(x)" -D"_aligned_free(x)=free(x)"
+	FLAGS += -DLINUX
 	FLAGS += -Wno-nonnull-compare \
 	-Wno-sign-compare \
 	-Wno-char-subscripts \
@@ -148,7 +137,7 @@ ifdef ARCH_WIN
 		 -Wno-ignored-qualifiers \
 		 -Wno-unused-variable -Wno-char-subscripts -Wno-reorder \
 		 -Wno-int-in-bool-context
-	FLAGS += -DWINDOWS -Isurge/src/windows
+	FLAGS += -DWINDOWS
 endif
 
 FLAGS += -DSURGE_RACK_BASE_VERSION=$(SURGE_RACK_BASE_VERSION)
@@ -169,21 +158,3 @@ issue_blurb:	dist
 	@echo "* Version: v$(VERSION)"
 	@echo "* Transaction: " `git rev-parse HEAD`
 	@echo "* Branch: " `git rev-parse --abbrev-ref HEAD`
-
-
-# Special target since we don't have zip on azure (fix this later)
-win-dist: all build/surge-data
-	rm -rf dist
-	mkdir -p dist/$(SLUG)
-	@# Strip and copy plugin binary
-	cp $(TARGET) dist/$(SLUG)/
-ifdef ARCH_MAC
-	$(STRIP) -S dist/$(SLUG)/$(TARGET)
-else
-	$(STRIP) -s dist/$(SLUG)/$(TARGET)
-endif
-	@# Copy distributables
-	cp -R $(DISTRIBUTABLES) dist/$(SLUG)/
-	@# Create ZIP package
-	echo "cd dist && 7z.exe a $(SLUG)-$(VERSION)-$(ARCH).zip -r $(SLUG)"
-	cd dist && 7z.exe a $(SLUG)-$(VERSION)-$(ARCH).zip -r $(SLUG)

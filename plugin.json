@@ -90,12 +90,6 @@
 			"tags": [ "Effect", "Polyphonic", "Ring Modulator" ]
 		},
 		{
-			"slug": "SurgeNeuron",
-			"name": "SurgeNeuron",
-			"description": "The Surge Neuron Distortion effect",
-			"tags": [ "Effect", "Polyphonic", "Distortion" ]
-		},
-		{
 			"slug": "SurgeChow",
 			"name": "SurgeChow",
 			"description": "The Surge CHOW Distortion effect",
@@ -126,12 +120,6 @@
 			"tags": [ "Effect", "Polyphonic" ]
 		},
 	    {
-			"slug": "SurgeSpringReverb",
-			"name": "SurgeSpringReverb",
-			"description": "The Surge Spring Reverb Effect",
-			"tags": [ "Effect", "Polyphonic", "Reverb" ]
-		},
-		{
 			"slug": "SurgeClock",
 			"name": "SurgeClock",
 			"description": "A utility clock generator",
@@ -146,7 +134,25 @@
 		{
 			"slug": "SurgeOSC",
 			"name": "SurgeOSC",
-			"description": "The Surge classic oscillators, including square, saw, sine, FM and niose",
+			"description": "The Surge classic oscillators, including square, saw, sine, FM and Noise",
+			"tags": ["VCO", "Polyphonic"]
+		},
+		{
+			"slug": "SurgeOSCModern",
+			"name": "SurgeOSCModern",
+			"description": "The Surge Modern Oscillator",
+			"tags": ["VCO", "Polyphonic"]
+		},
+		{
+			"slug": "SurgeOSCAlias",
+			"name": "SurgeOSCAlias",
+			"description": "The Surge Alias Oscillator",
+			"tags": ["VCO", "Polyphonic"]
+		},
+		{
+			"slug": "SurgeOSCString",
+			"name": "SurgeOSCString",
+			"description": "The Surge String Oscillator",
 			"tags": ["VCO", "Polyphonic"]
 		},
 		{
