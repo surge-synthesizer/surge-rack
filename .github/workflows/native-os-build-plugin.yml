@@ -20,19 +20,22 @@ jobs:
             name: Linux,
             sdk-platform: lin,
             os: ubuntu-latest,
-            prepare-os: sudo apt update && sudo apt install -y libxcb-cursor-dev libxcb-keysyms1-dev libxcb-util-dev libxkbcommon-dev libxkbcommon-x11-dev ninja-build xcb libglu1-mesa-dev libglu-dev freeglut3-dev libgles2-mesa-dev libgtk-3-dev libcurl4-openssl-dev alsa alsa-tools libasound2-dev libjack-dev libfreetype6-dev libxinerama-dev libxcb-xinerama0 libxinerama1 x11proto-xinerama-dev libxrandr-dev libgl-dev libxcursor-dev libxcursor1 libxcb-cursor-dev libxcb-cursor0
+            prepare-os: sudo apt update && sudo apt install -y ninja-build,
+            minus-j-arg: ""
           }
         - {
             name: MacOS,
             sdk-platform: mac,
             os: macos-latest,
-            prepare-os: ""
+            prepare-os: "",
+            minus-j-arg: ""
           }
         - {
             name: Windows,
             sdk-platform: win,
             os: windows-latest,
-            prepare-os: export CC=gcc
+            prepare-os: export CC=gcc,
+            minus-j-arg: 2
           }
     steps:
       - uses: actions/checkout@v2
@@ -56,7 +59,7 @@ jobs:
           ${{ matrix.config.prepare-os }}
           export RACK_DIR=$HOME/Rack-SDK
           make -j dep
-          make -j dist
+          make -j  ${{ matrix.config.minus-j-arg }} dist
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
