@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/qno/rack-plugin-toolchain-win-linux:v2
+      options: --user root
     strategy:
       fail-fast: false
       matrix:
