@@ -25,7 +25,7 @@ OBJECTS += $(libsurge) \
     $(SURGE_BLD)/libs/oddsound-mts/liboddsound-mts.a \
     $(SURGE_BLD)/libs/sqlite-3.23.3/libsqlite.a \
     $(SURGE_BLD)/libs/airwindows/libairwindows.a \
-    $(SURGE_BLD)/libs/eurorack/libeurorack.a 
+    $(SURGE_BLD)/libs/eurorack/libeurorack.a
 
 # Trigger the static library to be built when running `make dep`
 DEPS += $(libsurge)
@@ -143,6 +143,8 @@ endif
 FLAGS += -DSURGE_RACK_BASE_VERSION=$(SURGE_RACK_BASE_VERSION)
 FLAGS += -DSURGE_RACK_PLUG_VERSION=$(SURGE_RACK_PLUG_VERSION)
 FLAGS += -DSURGE_RACK_SURGE_VERSION=$(SURGE_RACK_SURGE_VERSION)
+
+CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/565
 
