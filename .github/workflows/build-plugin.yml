@@ -53,7 +53,7 @@ jobs:
         run: |
           export PLUGIN_DIR=$GITHUB_WORKSPACE
           pushd ${{ env.rack-plugin-toolchain-dir }}
-          sed -i "s/-G 'MSYS Makefiles'//g" Rack-SDK-win/dep.mk
+          sed -i "s/-G 'MSYS Makefiles'/-DCMAKE_SYSTEM_NAME=Windows/g" Rack-SDK-win/dep.mk
           make plugin-build-${{ matrix.platform }}
       - name: Upload artifact
         uses: actions/upload-artifact@v2
