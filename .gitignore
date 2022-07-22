@@ -10,3 +10,5 @@ pynb/.ipynb_checkpoints/*
 src/#*
 src/.#*
 .idea
+dep/
+cmake-build*

@@ -73,7 +73,7 @@ struct SurgeOSCSingle : virtual public SurgeModuleCommon {
         }
     }
 
-    virtual std::string getName() override { return "OSC"; }
+    virtual std::string getName() override { return std::string("OSCSingle") + std::to_string(oscType); }
     
     StringCache oscNameCache;
     StringCache pitch0DisplayCache;
