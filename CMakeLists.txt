@@ -15,7 +15,7 @@ add_custom_target(surge-rack-clean
 add_custom_target(surge-rack-on-my-mac
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         USES_TERMINAL
-        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make dep
-        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make dist
+        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make -j dep
+        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make -j dist
         COMMAND cp ${CMAKE_SOURCE_DIR}/dist/SurgeRack*vcvplugin /Users/paul/Documents/Rack2/plugins
         )

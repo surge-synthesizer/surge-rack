@@ -9,25 +9,19 @@ struct SurgeOSCSingleWidget : public virtual SurgeModuleWidgetCommon {
 
     int ioRegionWidth = 105;
 
-    float buttonBankY = SCREW_WIDTH + padFromEdge;
-    float buttonBankHeight = 25;
-    
-    float pitchY = buttonBankY + buttonBankHeight + padMargin;
-    float pitchCtrlX = 36;
-    
-    float controlsY = pitchY + padMargin + surgeRoosterY;
-    float controlsHeight = orangeLine - controlsY - padMargin;
-    float controlHeightPer = controlsHeight / n_osc_params;
-    
+    float waveHeight = 100;
+    float controlsY = SCREW_WIDTH + padFromEdge + 3;
+    float controlsHeight = orangeLine - controlsY - padMargin - waveHeight;
+    float controlHeightPer = controlsHeight / (n_osc_params + 1) * 2;
+
     void moduleBackground(NVGcontext *vg) {
         // The input triggers and output
         nvgBeginPath(vg);
 
         // Draw the output blue box
         float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
-        drawBlueIORect(
-            vg, x0 + ioMargin, orangeLine + ioMargin,
-            ioRegionWidth, box.size.y - orangeLine - 2 * ioMargin);
+        drawBlueIORect(vg, x0 + ioMargin, orangeLine + ioMargin, ioRegionWidth,
+                       box.size.y - orangeLine - 2 * ioMargin);
 
         nvgFillColor(vg, ioRegionText());
         nvgFontFaceId(vg, fontId(vg));
@@ -60,60 +54,77 @@ struct SurgeOSCSingleWidget : public virtual SurgeModuleWidgetCommon {
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
         nvgText(vg, ll.x, ll.y, "Gain", NULL);
 
+        for (int i = 0; i < n_osc_params + 1; ++i) {
+            int param = M::PITCH_0;
+            int cvid = M::PITCH_CV;
+            if (i != 0) {
+                param = M::OSC_CTRL_PARAM_0 + i - 1;
+                cvid = M::OSC_CTRL_CV_0 + i - 1;
+            }
+
+            std::string label = "param " + std::to_string(i - 1);
+            if (i == 0)
+                label = "Pitch";
+            else if (module) {
+                auto rm = dynamic_cast<M *>(module);
+                if (rm)
+                    label = rm->paramNames[i - 1];
+            }
+
+            float yp = (i % 4) * controlHeightPer + controlsY;
+            float yctrl =
+                yp + controlHeightPer / 2 - portY / 2 - padMargin / 2 - 3;
+            int xOff = (i >= 4 ? box.size.x / 2 : 0) + 5;
+
+            nvgSave(vg);
+            nvgFillColor(vg, panelLabel());
+            nvgTranslate(vg, xOff, yp);
+            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+            nvgText(vg, 0, 0, label.c_str(), NULL);
+            nvgRestore(vg);
+        }
+
+        auto t = orangeLine - 104;
+        auto h = 94;
+        drawTextBGRect(vg, 10, t, box.size.x - 20, h);
+
+        nvgSave(vg);
+        nvgFillColor(vg, ioRegionText());
+        nvgTranslate(vg, 15, t + 30);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgText(vg, 0, 0, "plot here", NULL);
+        nvgRestore(vg);
+
+#if 0
         float pitchLY = pitchY + surgeRoosterY / 2.0;
         nvgBeginPath(vg);
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 15);
-        nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, panelLabel() );
-        nvgText(vg, padFromEdge, pitchLY, "Pitch", NULL );
-
-        float xt = pitchCtrlX + surgeRoosterX + portX + 2 * padMargin + 12;
-
-        nvgBeginPath(vg);
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 10);
-        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, panelLabel() );
-        nvgText(vg, xt, pitchY + 2, "f", NULL );
-
-        nvgBeginPath(vg);
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 10);
-        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT );
-        nvgFillColor(vg, panelLabel() );
-        nvgText(vg, xt, pitchY + surgeRoosterY - 4, "n", NULL );
-
-        
-        xt += 7 + padMargin;
-        drawTextBGRect(vg, xt, pitchY+6, box.size.x - padFromEdge - xt, surgeRoosterY-12 );
-            
-        for (int i = 0; i < n_osc_params; ++i) {
-            float yp = i * controlHeightPer + controlsY;
-            float xp = padFromEdge + 2 * padMargin + 2 * portX + 24;
-            drawTextBGRect(vg, xp, yp, box.size.x - padFromEdge - xp, controlHeightPer - padMargin);
-        }
+        nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
+        nvgFillColor(vg, panelLabel());
+        nvgText(vg, padFromEdge, pitchLY, "Pitch", NULL);
+#endif
     }
 
     rack::Vec ioPortLocation(int ctrl) { // 0 is L; 1 is R; 2 is gain
         float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
 
-        int xRes =
-            x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
+        int xRes = x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
         int yRes = orangeLine + 1.5 * ioMargin;
 
         return rack::Vec(xRes, yRes);
     }
 };
 
-template<int oscType>
-SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType>::M *module)
-    : SurgeModuleWidgetCommon()
-{
+template <int oscType>
+SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(
+    SurgeOSCSingleWidget<oscType>::M *module)
+    : SurgeModuleWidgetCommon() {
     setModule(module);
 
     box.size = rack::Vec(SCREW_WIDTH * 14, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "OSC");
+    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size,
+                                      std::string(M::name) + " VCO");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) {
         this->moduleBackground(vg);
     };
@@ -124,73 +135,69 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(1), module,
                                                    M::OUTPUT_R));
     addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(2), module,
-                                               M::OUTPUT_GAIN
-                                               ));
+                                               M::OUTPUT_GAIN));
 
-    if (SingleConfig<oscType>::needsRetrigger())
-    {
-        addInput(rack::createInput<rack::PJ301MPort>(
-            rack::Vec( pitchCtrlX,
-                      pitchY - 30 ),
-            module, M::RETRIGGER
-            ));
-    }
+    float x0 = 2 * ioMargin;
+    int yRes = orangeLine + 1.5 * ioMargin;
 
+    auto retrigPos = rack::Vec(x0, yRes);
+    addInput(
+        rack::createInput<rack::PJ301MPort>(retrigPos, module, M::RETRIGGER));
 
+#if 0
     int xp = pitchCtrlX;
-    addParam(rack::createParam<SurgeKnobRooster>(
-                 rack::Vec(xp, pitchY), module, M::PITCH_0
-        ));
+    addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xp, pitchY), module,
+                                               M::PITCH_0));
     addInput(rack::createInput<rack::PJ301MPort>(
-                 rack::Vec( xp + surgeRoosterX + padMargin,
-                            pitchY + ( surgeRoosterY - portY ) / 2),
-                 module, M::PITCH_CV));
+        rack::Vec(xp + surgeRoosterX + padMargin,
+                  pitchY + (surgeRoosterY - portY) / 2),
+        module, M::PITCH_CV));
+#endif
 
-    addChild(TextDisplayLight::create(
-                 rack::Vec(xp + surgeRoosterX + portX + 3 * padMargin + 20,
-                           pitchY + 3 ),
-                 rack::Vec(50, surgeRoosterY - 8 ),
-                 module ? &(module->pitch0DisplayCache) : nullptr,
-                 14,
-                 NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE,
-                 parameterValueText_KEY()
-                 ));
+    for (int i = 0; i < n_osc_params + 1; ++i) {
+        int param = M::PITCH_0;
+        int cvid = M::PITCH_CV;
+        if (i != 0) {
+            param = M::OSC_CTRL_PARAM_0 + i - 1;
+            cvid = M::OSC_CTRL_CV_0 + i - 1;
+        }
 
-    for (int i = 0; i < n_osc_params; ++i) {
-        float yp = i * controlHeightPer + controlsY;
-        float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin/2;
-        addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(padFromEdge, yctrl), module,
-                                                   M::OSC_CTRL_PARAM_0 + i
-                                                   ));
-        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(padFromEdge + padMargin + portX, yctrl), module,
-                                                     M::OSC_CTRL_CV_0 + i));
+        float yp = (i % 4) * controlHeightPer + controlsY;
+        float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin / 2;
+        int xOff = (i >= 4 ? box.size.x / 2 : 0);
 
-        addParam(rack::createParam<SurgeDisableStateSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX, yctrl ), module,
-                                                M::OSC_EXTEND_PARAM_0 + i ) );
-        addParam(rack::createParam<SurgeDisableStateSwitch>(rack::Vec(padFromEdge + 2 * padMargin + 2 * portX + 12, yctrl ), module,
-                                                M::OSC_DEACTIVATE_INVERSE_PARAM_0 + i ) );
+        addParam(rack::createParam<SurgeSmallKnob>(
+            rack::Vec(xOff + padFromEdge, yctrl), module, param));
+        addInput(rack::createInput<rack::PJ301MPort>(
+            rack::Vec(xOff + padFromEdge + padMargin + portX, yctrl), module,
+            cvid));
 
+        if (i != 0) {
+            addParam(rack::createParam<SurgeDisableStateSwitch>(
+                rack::Vec(xOff + padFromEdge + 2 * padMargin + 2 * portX,
+                          yctrl),
+                module, M::OSC_EXTEND_PARAM_0 + i - i));
+            addParam(rack::createParam<SurgeDisableStateSwitch>(
+                rack::Vec(xOff + padFromEdge + 2 * padMargin + 2 * portX + 12,
+                          yctrl),
+                module, M::OSC_DEACTIVATE_INVERSE_PARAM_0 + i - i));
+        }
         float xt = padFromEdge + 2 * padMargin + 2 * portX + 12;
-
-        addChild(TextDisplayLight::create(
-                     rack::Vec(xt+2 + 12, yp + 0.5), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
-                     module ? &(module->paramNameCache[i]) : nullptr,
-                     12));
-        addChild(TextDisplayLight::create(
-                     rack::Vec(xt+2 + 12, yp+1 ), rack::Vec(box.size.x - xt - padMargin, controlHeightPer - padMargin - 2),
-                     module ? (&module->paramValueCache[i]) : nullptr,
-                     15, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM, parameterValueText_KEY()));
     }
 }
 
-template<>
-constexpr bool SingleConfig<ot_string>::needsRetrigger() { return true; }
+template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() {
+    return true;
+}
 
 rack::Model *modelSurgeOSCModern =
-    rack::createModel<SurgeOSCSingleWidget<ot_modern>::M, SurgeOSCSingleWidget<ot_modern>>("SurgeOSCModern");
+    rack::createModel<SurgeOSCSingleWidget<ot_modern>::M,
+                      SurgeOSCSingleWidget<ot_modern>>("SurgeOSCModern");
 
 rack::Model *modelSurgeOSCString =
-    rack::createModel<SurgeOSCSingleWidget<ot_string>::M, SurgeOSCSingleWidget<ot_string>>("SurgeOSCString");
+    rack::createModel<SurgeOSCSingleWidget<ot_string>::M,
+                      SurgeOSCSingleWidget<ot_string>>("SurgeOSCString");
 
 rack::Model *modelSurgeOSCAlias =
-    rack::createModel<SurgeOSCSingleWidget<ot_alias>::M, SurgeOSCSingleWidget<ot_alias>>("SurgeOSCAlias");
+    rack::createModel<SurgeOSCSingleWidget<ot_alias>::M,
+                      SurgeOSCSingleWidget<ot_alias>>("SurgeOSCAlias");

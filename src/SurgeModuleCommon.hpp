@@ -451,13 +451,14 @@ struct SurgeRackOSCParamQuantity : public rack::engine::ParamQuantity
         ParamQuantity::setDisplayValueString(s);
     }
     
-	virtual std::string getLabel() override
+    virtual std::string getLabel() override
     {
         T *mc = dynamic_cast<T *>(module);
         if( mc )
         {
             int opid = paramId - T::OSC_CTRL_PARAM_0;
-            return mc->paramNameCache[opid].value;
+            auto *p = &(mc->oscstorage->p[opid]);
+            return p->get_name();
         }
         return ParamQuantity::getLabel();
 
@@ -467,7 +468,10 @@ struct SurgeRackOSCParamQuantity : public rack::engine::ParamQuantity
         if( mc )
         {
             int opid = paramId - T::OSC_CTRL_PARAM_0;
-            return mc->paramValueCache[opid].value;
+            auto *p = &(mc->oscstorage->p[opid]);
+            char txt[256];
+            p->get_display(txt);
+            return txt;
         }
         return ParamQuantity::getDisplayValueString();
     }

@@ -81,6 +81,7 @@ void SurgeRackParamBinding::updateInt(const ParamCache &pc, int polyChannel, Sur
 
 void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS) 
 {
+    INFO("[SurgeRack] Update this code for XT" );
     std::string dataPath;
     dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
     std::string cxml = dataPath + "configuration.xml";
