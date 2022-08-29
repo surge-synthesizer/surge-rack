@@ -89,23 +89,6 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
         auto t = orangeLine - 104;
         auto h = 94;
         drawTextBGRect(vg, 10, t, box.size.x - 20, h);
-
-        nvgSave(vg);
-        nvgFillColor(vg, ioRegionText());
-        nvgTranslate(vg, 15, t + 30);
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgText(vg, 0, 0, "plot here", NULL);
-        nvgRestore(vg);
-
-#if 0
-        float pitchLY = pitchY + surgeRoosterY / 2.0;
-        nvgBeginPath(vg);
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 15);
-        nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
-        nvgFillColor(vg, panelLabel());
-        nvgText(vg, padFromEdge, pitchLY, "Pitch", NULL);
-#endif
     }
 
     rack::Vec ioPortLocation(int ctrl)
@@ -119,22 +102,27 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
     }
 };
 
-struct OSCPlotWidget : public rack::widget::Widget, SurgeStyle::StyleListener
+template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, SurgeStyle::StyleListener
 {
-    std::function<bool()> dirtyfn = []() { return true; };
-
     OSCPlotWidget() : Widget() { SurgeStyle::addStyleListener(this); }
     ~OSCPlotWidget() { SurgeStyle::removeStyleListener(this); }
 
-    void setup()
+    typename SurgeOSCSingleWidget<oscType>::M *module{nullptr};
+    void setup(typename SurgeOSCSingleWidget<oscType>::M *m)
     {
+        module = m;
         addChild(new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
                                                 [this](NVGcontext *vg) { this->drawPlot(vg); }));
+        if (module)
+        {
+            storage = module->storage.get();
+            oscdata = &(storage->getPatch().scene[0].osc[0]);
+        }
     }
 
     void step() override
     {
-        if (dirtyfn())
+        if (isDirty())
         {
             for (auto w : children)
             {
@@ -158,31 +146,113 @@ struct OSCPlotWidget : public rack::widget::Widget, SurgeStyle::StyleListener
         }
     }
 
-    static OSCPlotWidget *create(rack::Vec pos, rack::Vec size)
+    static OSCPlotWidget<oscType> *create(rack::Vec pos, rack::Vec size,
+                                          typename SurgeOSCSingleWidget<oscType>::M *module)
     {
-        auto *res = rack::createWidget<OSCPlotWidget>(pos);
+        auto *res = rack::createWidget<OSCPlotWidget<oscType>>(pos);
 
         res->box.pos = pos;
         res->box.size = size;
 
-        res->setup();
+        res->setup(module);
 
         return res;
     }
 
+    bool firstDirty{false};
+    int dirtyCount{0};
+    bool isDirty()
+    {
+        if (!firstDirty)
+        {
+            firstDirty = true;
+            return true;
+        }
+
+        bool dval{false};
+        for (int i = 0; i < n_osc_params; i++)
+        {
+            dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
+        }
+
+        return dval;
+    }
+
+    pdata tp[n_scene_params];
+    OscillatorStorage *oscdata{nullptr};
+    SurgeStorage *storage{nullptr};
+    unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+    Oscillator *setupOscillator()
+    {
+        tp[oscdata->pitch.param_id_in_scene].f = 0;
+
+        for (int i = 0; i < n_osc_params; i++)
+        {
+            tp[oscdata->p[i].param_id_in_scene].i = oscdata->p[i].val.i;
+        }
+
+        return spawn_osc(oscdata->type.val.i, storage, oscdata, tp, oscbuffer);
+    }
+
     void drawPlot(NVGcontext *vg)
     {
-        auto xp = box.size.x / 2;
-        auto yp = box.size.x / 2;
+        auto xp = box.size.x;
+        auto yp = box.size.y;
 
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, xp, yp, rand() % 20, rand() % 20, 5);
-        auto q = NVGcolor();
-        q.r = 1.f;
-        q.a = 1.f;
-        nvgStrokeColor(vg, q);
-        nvgStrokeWidth(vg, 1);
-        nvgStroke(vg);
+        if (!module)
+        {
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, 0, yp / 2);
+            for (int i = 1; i < xp; ++i)
+            {
+                auto nx = i * 1.f / xp;
+                auto sx = nx * 4 * 3.14159;
+                auto sy = std::sin(sx);
+                auto py = (-sy * 0.5 + 0.5) * yp;
+                nvgLineTo(vg, i, py);
+            }
+            nvgStrokeColor(vg, nvgRGB(255, 0, 0));
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
+        }
+        else
+        {
+            auto osc = setupOscillator();
+            const float ups = 3.0, invups = 1.0/ups;
+
+            float disp_pitch_rs =
+                12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
+
+            osc->init(disp_pitch_rs, true, true);
+
+            int block_pos{BLOCK_SIZE_OS + 1};
+            nvgBeginPath(vg);
+            for (int i=0; i<xp * ups; ++i)
+            {
+                if (block_pos >= BLOCK_SIZE_OS)
+                {
+                    osc->process_block(disp_pitch_rs);
+                    block_pos = 0;
+                }
+
+                float yc = (-osc->output[block_pos] * 0.5 + 0.5) * yp;
+                if (i == 0)
+                {
+                    nvgMoveTo(vg, i * invups, yc);
+                }
+                else
+                {
+                    nvgLineTo(vg, i * invups, yc);
+                }
+                block_pos ++;
+            }
+
+            osc->~Oscillator();
+            nvgStrokeColor(vg, nvgRGB(255, 0x90, 0));
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
+        }
     }
 };
 
@@ -209,16 +279,8 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
     auto t = orangeLine - 104;
     auto h = 94;
-    addChild(OSCPlotWidget::create(rack::Vec(10, h), rack::Vec(box.size.x - 20, h)));
-#if 0
-    int xp = pitchCtrlX;
-    addParam(rack::createParam<SurgeSmallKnob>(rack::Vec(xp, pitchY), module,
-                                               M::PITCH_0));
-    addInput(rack::createInput<rack::PJ301MPort>(
-        rack::Vec(xp + surgeRoosterX + padMargin,
-                  pitchY + (surgeRoosterY - portY) / 2),
-        module, M::PITCH_CV));
-#endif
+    addChild(
+        OSCPlotWidget<oscType>::create(rack::Vec(10, t), rack::Vec(box.size.x - 20, h), module));
 
     for (int i = 0; i < n_osc_params + 1; ++i)
     {
