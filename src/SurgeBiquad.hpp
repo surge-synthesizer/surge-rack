@@ -3,11 +3,13 @@
 #include "SurgeModuleCommon.hpp"
 #include "dsp/filters/BiquadFilter.h"
 #include "rack.hpp"
-#include <cstring>
 #include <cmath>
+#include <cstring>
 
-struct SurgeBiquad :  public SurgeModuleCommon {
-    enum ParamIds {
+struct SurgeBiquad : public SurgeModuleCommon
+{
+    enum ParamIds
+    {
         FILTER_TYPE,
 
         FREQ_KNOB,
@@ -16,28 +18,34 @@ struct SurgeBiquad :  public SurgeModuleCommon {
 
         INPUT_GAIN,
         OUTPUT_GAIN,
-        
-        NUM_PARAMS 
+
+        NUM_PARAMS
     };
-    enum InputIds {
+    enum InputIds
+    {
         INPUT_L_OR_MONO,
         INPUT_R,
-        
+
         FREQ_CV,
         RESO_CV,
         THIRD_CV,
-        
+
         NUM_INPUTS,
     };
-    enum OutputIds {
+    enum OutputIds
+    {
         OUTPUT_L_OR_MONO,
         OUTPUT_R,
-        
+
         NUM_OUTPUTS
     };
-    enum LightIds { NUM_LIGHTS };
+    enum LightIds
+    {
+        NUM_LIGHTS
+    };
 
-    enum FilterTypesFromBiquad {
+    enum FilterTypesFromBiquad
+    {
         LP,
         LP2B,
         HP,
@@ -48,29 +56,32 @@ struct SurgeBiquad :  public SurgeModuleCommon {
         peakEQ,
         APF
     };
-    
-    SurgeBiquad() : SurgeModuleCommon() {
-        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(FILTER_TYPE, 0, APF, 1, "Filter Type" );
-        configParam(FREQ_KNOB, -60, 65, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE, rack::dsp::FREQ_A4 );
-        configParam(RESO_KNOB, 0, 1, 0.707, "Resonance" );
-        configParam(THIRD_KNOB, 0, 1, 0.5, "Additional Control" );
 
-        configParam(INPUT_GAIN, 0, 1, 1, "Input Gain" );
-        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain" );
-        
+    SurgeBiquad() : SurgeModuleCommon()
+    {
+        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+        configParam(FILTER_TYPE, 0, APF, 1, "Filter Type");
+        configParam(FREQ_KNOB, -60, 65, 3, "Frequency", "Hz", rack::dsp::FREQ_SEMITONE,
+                    rack::dsp::FREQ_A4);
+        configParam(RESO_KNOB, 0, 1, 0.707, "Resonance");
+        configParam(THIRD_KNOB, 0, 1, 0.5, "Additional Control");
+
+        configParam(INPUT_GAIN, 0, 1, 1, "Input Gain");
+        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
+
         setupSurge();
 
-        for( int i=0; i<16; ++i )
+        for (int i = 0; i < 16; ++i)
             experiencedNan[i] = false;
     }
 
     virtual std::string getName() override { return "Biquad"; }
 
-    virtual void setupSurge() {
+    virtual void setupSurge()
+    {
         setupSurgeCommon(NUM_PARAMS);
         biquad.resize(MAX_POLY);
-        for( int i=0; i<MAX_POLY; ++i )
+        for (int i = 0; i < MAX_POLY; ++i)
         {
             biquad[i].reset(new BiquadFilter(storage.get()));
             biquad[i]->coeff_instantize();
@@ -78,12 +89,12 @@ struct SurgeBiquad :  public SurgeModuleCommon {
 
         char tmp[256];
 
-        snprintf(tmp, 256, "%8.2f Hz", 440.0 * pow(2.0, getParam(FREQ_KNOB) / 12.0 ) );
+        snprintf(tmp, 256, "%8.2f Hz", 440.0 * pow(2.0, getParam(FREQ_KNOB) / 12.0));
         pStrings[0].reset(tmp);
 
-        snprintf(tmp, 256, "%7.5f", getParam(RESO_KNOB) );
-        pStrings[1].reset( tmp );
-        
+        snprintf(tmp, 256, "%7.5f", getParam(RESO_KNOB));
+        pStrings[1].reset(tmp);
+
         pStrings[2].reset("-");
     }
 
@@ -94,12 +105,12 @@ struct SurgeBiquad :  public SurgeModuleCommon {
     int lastCoeffUpdate = BLOCK_SIZE;
     bool experiencedNan[16];
     int lastChans = -1;
-    
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        int nChan = std::max(1,inputs[INPUT_L_OR_MONO].getChannels());
+        int nChan = std::max(1, inputs[INPUT_L_OR_MONO].getChannels());
 
-        if( ! ( outputs[OUTPUT_L_OR_MONO].isConnected() || outputs[OUTPUT_R].isConnected()) )
+        if (!(outputs[OUTPUT_L_OR_MONO].isConnected() || outputs[OUTPUT_R].isConnected()))
         {
             nChan = 1;
         }
@@ -108,121 +119,124 @@ struct SurgeBiquad :  public SurgeModuleCommon {
         outputs[OUTPUT_R].setChannels(nChan);
 
         bool forceUpdate = false;
-        if( nChan != lastChans )
+        if (nChan != lastChans)
         {
             lastChans = nChan;
             lastCoeffUpdate = BLOCK_SIZE;
             forceUpdate = true;
         }
-        
+
         float inpG = getParam(INPUT_GAIN);
         float outG = getParam(OUTPUT_GAIN);
 
-        if( pc.changed( FREQ_KNOB, this ) || forceUpdate )
+        if (pc.changed(FREQ_KNOB, this) || forceUpdate)
         {
             char tmp[256];
-            snprintf(tmp, 256, "%8.2f Hz", 440.0 * pow(2.0, getParam(FREQ_KNOB) / 12.0 ) );
+            snprintf(tmp, 256, "%8.2f Hz", 440.0 * pow(2.0, getParam(FREQ_KNOB) / 12.0));
             pStrings[0].reset(tmp);
         }
-        
-        if( pc.changed( RESO_KNOB, this ) || forceUpdate )
+
+        if (pc.changed(RESO_KNOB, this) || forceUpdate)
         {
             char tmp[256];
-            snprintf(tmp, 256, "%7.5f", getParam(RESO_KNOB) );
-            pStrings[1].reset( tmp );
+            snprintf(tmp, 256, "%7.5f", getParam(RESO_KNOB));
+            pStrings[1].reset(tmp);
         }
-        
-        if( pc.changed( FILTER_TYPE, this ) )
+
+        if (pc.changed(FILTER_TYPE, this))
         {
             lastCoeffUpdate = BLOCK_SIZE;
             forceUpdate = true;
         }
-        
-        if( pc.changed( THIRD_KNOB, this ) || forceUpdate )
+
+        if (pc.changed(THIRD_KNOB, this) || forceUpdate)
         {
-            if( (int)getParam(FILTER_TYPE) == peakEQ )
+            if ((int)getParam(FILTER_TYPE) == peakEQ)
             {
                 char tmp[256];
-                snprintf(tmp, 256, "%5.2f dB", 48 * ( getParam(THIRD_KNOB) - 0.5 ) );
+                snprintf(tmp, 256, "%5.2f dB", 48 * (getParam(THIRD_KNOB) - 0.5));
                 pStrings[2].reset(tmp);
             }
             else
             {
-                pStrings[2].resetCheck( "-" );
+                pStrings[2].resetCheck("-");
             }
         }
 
         FilterTypesFromBiquad type = (FilterTypesFromBiquad)getParam(FILTER_TYPE);
 
         bool needCoeffUpdate =
-            pc.changedInt(FILTER_TYPE,this) ||
-            (pc.changed(FREQ_KNOB,this) || inputs[FREQ_CV].isConnected() ) ||
-            (pc.changed(RESO_KNOB,this) || inputs[RESO_CV].isConnected() ) ||
-            ((pc.changed(THIRD_KNOB,this) || inputs[THIRD_CV].isConnected() ) && type == peakEQ) ||
+            pc.changedInt(FILTER_TYPE, this) ||
+            (pc.changed(FREQ_KNOB, this) || inputs[FREQ_CV].isConnected()) ||
+            (pc.changed(RESO_KNOB, this) || inputs[RESO_CV].isConnected()) ||
+            ((pc.changed(THIRD_KNOB, this) || inputs[THIRD_CV].isConnected()) && type == peakEQ) ||
             forceUpdate;
-        
-        pc.update( this );
 
-        for( int i=0; i<nChan; ++i )
+        pc.update(this);
+
+        for (int i = 0; i < nChan; ++i)
         {
             float inl = inpG * inputs[INPUT_L_OR_MONO].getVoltage(i) * RACK_TO_SURGE_OSC_MUL;
             float inr = inpG * inputs[INPUT_R].getPolyVoltage(i) * RACK_TO_SURGE_OSC_MUL;
-            if( inputConnected(INPUT_L_OR_MONO) && ! inputConnected(INPUT_R) )
+            if (inputConnected(INPUT_L_OR_MONO) && !inputConnected(INPUT_R))
             {
                 inr = inl;
             }
-            
-            if( ( lastCoeffUpdate == BLOCK_SIZE && needCoeffUpdate ) || experiencedNan[i] )
+
+            if ((lastCoeffUpdate == BLOCK_SIZE && needCoeffUpdate) || experiencedNan[i])
             {
-                float fr = getParam(FREQ_KNOB) + inputs[FREQ_CV].getPolyVoltage(i) * 12.0 ; // +/- 5 -> +/- 60
-                fr = rack::clamp(fr, -60.0, 65.0); // don't allow overflows or underflows from CV
-                float res = getParam(RESO_KNOB) + inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
+                float fr = getParam(FREQ_KNOB) +
+                           inputs[FREQ_CV].getPolyVoltage(i) * 12.0; // +/- 5 -> +/- 60
+                fr = rack::clamp(fr, -60.0,
+                                 65.0); // don't allow overflows or underflows from CV
+                float res = getParam(RESO_KNOB) +
+                            inputs[RESO_CV].getPolyVoltage(i) / 10.0; // +/- 5 -> +/- 0.5
                 float xtra = getParam(THIRD_KNOB) + inputs[THIRD_CV].getPolyVoltage(i) / 10.0;
 
-                switch(type)
+                switch (type)
                 {
                 case LP:
-                    biquad[i]->coeff_LP(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_LP(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case LP2B:
-                    biquad[i]->coeff_LP2B(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_LP2B(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case HP:
-                    biquad[i]->coeff_HP(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_HP(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case BP:
-                    biquad[i]->coeff_BP(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_BP(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case BP2A:
-                    biquad[i]->coeff_BP2A(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_BP2A(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case PKA:
-                    biquad[i]->coeff_PKA(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_PKA(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case NOTCH:
-                    biquad[i]->coeff_NOTCH(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_NOTCH(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case APF:
-                    biquad[i]->coeff_APF(biquad[i]->calc_omega(fr/12), res);
+                    biquad[i]->coeff_APF(biquad[i]->calc_omega(fr / 12), res);
                     break;
                 case peakEQ:
                 {
-                    float gain = 48 * ( xtra - 0.5 );
-                    biquad[i]->coeff_peakEQ(biquad[i]->calc_omega(fr/12), res, gain);
+                    float gain = 48 * (xtra - 0.5);
+                    biquad[i]->coeff_peakEQ(biquad[i]->calc_omega(fr / 12), res, gain);
                     break;
                 }
-                
+
                 default:
-                    biquad[i]->coeff_HP(biquad[i]->calc_omega(fr/12),res);
+                    biquad[i]->coeff_HP(biquad[i]->calc_omega(fr / 12), res);
                 }
             }
-            
-            experiencedNan[i] = false;
-            
-            float outl, outr;
-            biquad[i]->process_sample( inl, inr, outl, outr );
 
-            if( ! std::isfinite(outl) || ! std::isfinite(outr) )
+            experiencedNan[i] = false;
+
+            float outl, outr;
+            biquad[i]->process_sample(inl, inr, outl, outr);
+
+            if (!std::isfinite(outl) || !std::isfinite(outr))
             {
                 outl = 0;
                 outr = 0;
@@ -231,25 +245,24 @@ struct SurgeBiquad :  public SurgeModuleCommon {
                 experiencedNan[i] = true;
                 biquad[i]->suspend();
             }
-            
-            if( ! outputConnected(OUTPUT_R) )
+
+            if (!outputConnected(OUTPUT_R))
             {
-                outputs[OUTPUT_L_OR_MONO].setVoltage( outG * (outl + outr) * 5 / 2, i );
+                outputs[OUTPUT_L_OR_MONO].setVoltage(outG * (outl + outr) * 5 / 2, i);
             }
             else
             {
                 auto ovl = outG * outl * 5.0;
                 auto ovr = outG * outr * 5.0;
 
-                outputs[OUTPUT_L_OR_MONO].setVoltage( ovl, i );
-                outputs[OUTPUT_R].setVoltage( ovr, i );
+                outputs[OUTPUT_L_OR_MONO].setVoltage(ovl, i);
+                outputs[OUTPUT_R].setVoltage(ovr, i);
             }
-            
         }
 
-        if( lastCoeffUpdate == BLOCK_SIZE )
+        if (lastCoeffUpdate == BLOCK_SIZE)
             lastCoeffUpdate = 0;
-        lastCoeffUpdate ++;
+        lastCoeffUpdate++;
     }
 
     std::vector<std::unique_ptr<BiquadFilter>> biquad;

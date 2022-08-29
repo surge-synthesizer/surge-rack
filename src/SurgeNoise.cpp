@@ -2,7 +2,8 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
-struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
+struct SurgeNoiseWidget : SurgeModuleWidgetCommon
+{
     typedef SurgeNoise M;
     SurgeNoiseWidget(M *module);
 
@@ -13,9 +14,9 @@ struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
     int driveOffset = 20;
 
     int topOfInput = orangeLine + padMargin;
-    
-    void addLabel(NVGcontext *vg, int yp, const char *label,
-                  NVGcolor col = panelLabel()) {
+
+    void addLabel(NVGcontext *vg, int yp, const char *label, NVGcolor col = panelLabel())
+    {
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         nvgFontFaceId(vg, fontId(vg));
@@ -23,16 +24,16 @@ struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
         nvgFillColor(vg, col);
         nvgText(vg, box.size.x / 2, yp, label, NULL);
     }
-    void moduleBackground(NVGcontext *vg) {
+    void moduleBackground(NVGcontext *vg)
+    {
         float yPos = drivey0;
 
         yPos -= 80;
         addLabel(vg, yPos, "Color");
 
         yPos += 80;
-        
-        yPos += labelHeight + surgeRoosterY + padMargin +
-                portY + 4 * padMargin;
+
+        yPos += labelHeight + surgeRoosterY + padMargin + portY + 4 * padMargin;
         yPos += padMargin;
 
         yPos += textArea + padMargin;
@@ -40,7 +41,7 @@ struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
 
         yPos = orangeLine + ioMargin;
         drawBlueIORect(vg, box.size.x / 2 - sz, yPos, sz * 2,
-                       box.size.y - orangeLine - 2*ioMargin );
+                       box.size.y - orangeLine - 2 * ioMargin);
         yPos += padMargin;
 
         nvgBeginPath(vg);
@@ -50,13 +51,11 @@ struct SurgeNoiseWidget : SurgeModuleWidgetCommon {
         nvgFillColor(vg, ioRegionText());
         nvgText(vg, box.size.x / 2, box.size.y - ioMargin - 1.5, "Noise", NULL);
 
-
         yPos += labelHeight + portY + padMargin;
     }
 };
 
-SurgeNoiseWidget::SurgeNoiseWidget(SurgeNoiseWidget::M *module)
-    : SurgeModuleWidgetCommon()
+SurgeNoiseWidget::SurgeNoiseWidget(SurgeNoiseWidget::M *module) : SurgeModuleWidgetCommon()
 {
     setModule(module);
 
@@ -65,24 +64,18 @@ SurgeNoiseWidget::SurgeNoiseWidget(SurgeNoiseWidget::M *module)
 
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, "NZ");
     bg->narrowMode = true;
-    bg->moduleSpecificDraw = [this](NVGcontext *vg) {
-        this->moduleBackground(vg);
-    };
+    bg->moduleSpecificDraw = [this](NVGcontext *vg) { this->moduleBackground(vg); };
     addChild(bg);
 
     int yPos = buttonsY0;
-    
 
     yPos = drivey0 + labelHeight + padMargin;
     yPos -= 80;
     addParam(rack::createParam<SurgeKnobRooster>(
-        rack::Vec(box.size.x / 2 - surgeRoosterX / 2, yPos),
-        module, M::CORRELATION_PARAM
-        ));
+        rack::Vec(box.size.x / 2 - surgeRoosterX / 2, yPos), module, M::CORRELATION_PARAM));
     yPos += surgeRoosterY + 2 * padMargin;
-    addInput(rack::createInput<rack::PJ301MPort>(
-        rack::Vec(box.size.x / 2 - portX / 2, yPos), module,
-        M::CORRELATION_CV));
+    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(box.size.x / 2 - portX / 2, yPos),
+                                                 module, M::CORRELATION_CV));
 
     yPos += 80;
     yPos += portY + padMargin;
@@ -90,12 +83,10 @@ SurgeNoiseWidget::SurgeNoiseWidget(SurgeNoiseWidget::M *module)
     yPos += textArea + padMargin;
     yPos += padMargin;
 
-    yPos = orangeLine + 1.5 * ioMargin; 
-    addOutput(rack::createOutput<rack::PJ301MPort>(
-        rack::Vec(box.size.x / 2 - portX / 2, yPos), module,
-        M::SIGNAL_OUT));
+    yPos = orangeLine + 1.5 * ioMargin;
+    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(box.size.x / 2 - portX / 2, yPos),
+                                                   module, M::SIGNAL_OUT));
 }
 
 rack::Model *modelSurgeNoise =
-    rack::createModel<SurgeNoiseWidget::M, SurgeNoiseWidget>(
-        "SurgeNoise");
+    rack::createModel<SurgeNoiseWidget::M, SurgeNoiseWidget>("SurgeNoise");

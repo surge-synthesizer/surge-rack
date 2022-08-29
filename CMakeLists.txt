@@ -1,21 +1,24 @@
-# This just exists so I can at least partly use clion on my mac. Ignore it.
-cmake_minimum_required(VERSION 3.22)
-project( surge-rack-on-my-mac )
+cmake_minimum_required(VERSION 3.20)
+set(CMAKE_OSX_ARCHITECTURES "x86_64")
+project(rack-hack VERSION 1.0 LANGUAGES C CXX)
 
-message(STATUS "If you are using this and you are (1) not baconpaul and (2) not on an M1 you will be sad")
-message(STATUS "But if you get the idea and want to change it so you are not sad, happy to take a PR!")
+set(SURGE_SKIP_JUCE_FOR_RACK TRUE)
+set(SURGE_SKIP_LUA TRUE)
+add_subdirectory(surge)
 
-add_custom_target(surge-rack-clean
-        USES_TERMINAL
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make clean
-        COMMAND rm -rf dep
+set(CMAKE_CXX_STANDARD 17)
+
+file(GLOB RACK_SOURCES src/*.cpp)
+set(RACK_DIR "/Users/paul/dev/music/rack/Rack-SDK")
+
+add_library(${PROJECT_NAME} STATIC ${RACK_SOURCES})
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${RACK_DIR}/include
+        ${RACK_DIR}/dep/include
         )
+target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
-add_custom_target(surge-rack-on-my-mac
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        USES_TERMINAL
-        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make -j dep
-        COMMAND RACK_DIR=../Rack-SDK arch -x86_64 make -j dist
-        COMMAND cp ${CMAKE_SOURCE_DIR}/dist/SurgeRack*vcvplugin /Users/paul/Documents/Rack2/plugins
-        )
+add_custom_command(TARGET ${PROJECT_NAME}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make install -j
+        USES_TERMINAL)
