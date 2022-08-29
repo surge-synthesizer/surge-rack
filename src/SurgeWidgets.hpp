@@ -497,3 +497,7 @@ struct SurgeButtonBank : public virtual rack::app::ParamWidget
         return res;
     }
 };
+
+struct SurgeModulatableKnob : rack::app::Knob
+{
+};

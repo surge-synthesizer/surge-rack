@@ -170,11 +170,13 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, Surge
         }
 
         bool dval{false};
-        for (int i = 0; i < n_osc_params; i++)
+        if (module)
         {
-            dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
+            for (int i = 0; i < n_osc_params; i++)
+            {
+                dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
+            }
         }
-
         return dval;
     }
 
