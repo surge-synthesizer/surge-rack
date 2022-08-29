@@ -6,22 +6,23 @@ namespace logger = rack::logger;
 rack::Model **fxModels = nullptr;
 int addFX(rack::Model *m, int type)
 {
-   if( fxModels == nullptr ) {
-       fxModels = new rack::Model *[n_fx_types];
-       for( auto i=0; i<n_fx_types; ++i )
-           fxModels[i] = nullptr;
-   }
-   fxModels[type] = m;
+    if (fxModels == nullptr)
+    {
+        fxModels = new rack::Model *[n_fx_types];
+        for (auto i = 0; i < n_fx_types; ++i)
+            fxModels[i] = nullptr;
+    }
+    fxModels[type] = m;
 
-   return type;
+    return type;
 }
 
 rack::Plugin *pluginInstance;
 
-__attribute__((__visibility__("default")))
-void init(rack::Plugin *p) {
+__attribute__((__visibility__("default"))) void init(rack::Plugin *p)
+{
     pluginInstance = p;
-    INFO( "[SurgeRack] initializing" );
+    INFO("[SurgeRack] initializing");
 
     p->addModel(modelSurgeClock);
     p->addModel(modelSurgeADSR);
@@ -35,16 +36,16 @@ void init(rack::Plugin *p) {
     p->addModel(modelSurgeWaveShaper);
 
     p->addModel(modelSurgePatchPlayer);
-    
+
     p->addModel(modelSurgeLFO);
 
     // p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeBiquad);
-    
-    if( fxModels != nullptr )
-        for( auto i=0; i<n_fx_types; ++i )
+
+    if (fxModels != nullptr)
+        for (auto i = 0; i < n_fx_types; ++i)
         {
-            if( fxModels[i] != nullptr )
+            if (fxModels[i] != nullptr)
             {
                 p->addModel(fxModels[i]);
             }

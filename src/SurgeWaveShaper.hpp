@@ -4,36 +4,58 @@
 #include "rack.hpp"
 #include <cstring>
 
-struct SurgeWaveShaper : virtual public SurgeModuleCommon {
-    enum ParamIds { MODE_PARAM, DRIVE_PARAM, NUM_PARAMS };
-    enum InputIds { DRIVE_CV, SIGNAL_IN, NUM_INPUTS };
-    enum OutputIds { SIGNAL_OUT, NUM_OUTPUTS };
-    enum LightIds { NUM_LIGHTS };
+struct SurgeWaveShaper : virtual public SurgeModuleCommon
+{
+    enum ParamIds
+    {
+        MODE_PARAM,
+        DRIVE_PARAM,
+        NUM_PARAMS
+    };
+    enum InputIds
+    {
+        DRIVE_CV,
+        SIGNAL_IN,
+        NUM_INPUTS
+    };
+    enum OutputIds
+    {
+        SIGNAL_OUT,
+        NUM_OUTPUTS
+    };
+    enum LightIds
+    {
+        NUM_LIGHTS
+    };
 
     static constexpr int n_ws_types = 1; // FIXME
-    
-    SurgeWaveShaper() : SurgeModuleCommon() {
+
+    SurgeWaveShaper() : SurgeModuleCommon()
+    {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(MODE_PARAM, 0, n_ws_types-1, 0, "Mode");
-        configParam(DRIVE_PARAM, -24.0, 24.0, 0, "Drive", "dB"); // ct_decibel_narrow
+        configParam(MODE_PARAM, 0, n_ws_types - 1, 0, "Mode");
+        configParam(DRIVE_PARAM, -24.0, 24.0, 0, "Drive",
+                    "dB"); // ct_decibel_narrow
         setupSurge();
     }
 
     virtual std::string getName() override { return "WS"; }
-    
+
     StringCache dbGainCache;
 
-    virtual void setupSurge() {
+    virtual void setupSurge()
+    {
         setupSurgeCommon(NUM_PARAMS);
-        for( int i=0; i<MAX_POLY; ++i )
+        for (int i = 0; i < MAX_POLY; ++i)
             processPosition[i] = 0;
     }
 
     int processPosition[MAX_POLY];
     float inBuffer alignas(16)[MAX_POLY][4], outBuffer alignas(16)[MAX_POLY][4];
 
-    void swapWS(int i) {
-        #if 0
+    void swapWS(int i)
+    {
+#if 0
         if (i == 0)
             wsPtr = nullptr;
         else
@@ -47,7 +69,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
             }
             processPosition[c] = 0;
         }
-        #endif
+#endif
     }
 
     void process(const typename rack::Module::ProcessArgs &args) override
@@ -86,7 +108,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon {
                 processPosition[i]++;
             }
         }
-        #endif
+#endif
     }
 
     // WaveshaperQFPtr wsPtr = nullptr;

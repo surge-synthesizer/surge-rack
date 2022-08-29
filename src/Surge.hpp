@@ -41,5 +41,4 @@ extern rack::Model *modelSurgePatchPlayer;
 extern rack::Model *modelSurgeVCF;
 extern rack::Model *modelSurgeBiquad;
 
-
 extern int addFX(rack::Model *, int type);
