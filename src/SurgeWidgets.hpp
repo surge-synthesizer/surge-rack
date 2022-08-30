@@ -498,6 +498,131 @@ struct SurgeButtonBank : public virtual rack::app::ParamWidget
     }
 };
 
-struct SurgeModulatableKnob : rack::app::Knob
+struct SurgeModulatableRing : rack::app::Knob
 {
+    BufferedDrawFunctionWidget *bdw{nullptr};
+    rack::app::Knob *underlyerParamWidget{nullptr};
+
+    int modIndex{0};
+
+    SurgeModulatableRing() { box.size = rack::Vec(45, 45); }
+    void drawWidget(NVGcontext *vg)
+    {
+        auto *pq = getParamQuantity();
+        auto *uq = underlyerParamWidget->getParamQuantity();
+        if (!pq || !uq)
+            return;
+
+        auto uv = uq->getSmoothValue();
+        auto pv = pq->getSmoothValue();
+
+        auto toAngle = [this](float q, auto *qq) {
+            float angle;
+            angle =
+                rack::math::rescale(q, qq->getMinValue(), qq->getMaxValue(),
+                                    underlyerParamWidget->minAngle, underlyerParamWidget->maxAngle);
+            angle = std::fmod(angle, 2 * M_PI);
+            return angle;
+        };
+        float angle = toAngle(uv, uq);
+        float modAngle = toAngle(pv, pq);
+
+        auto w = box.size.y;
+        auto h = box.size.x;
+
+        auto ox = std::sin(angle) * w * 0.45 + w / 2;
+        auto oy = h - (std::cos(angle) * h * 0.45 + h / 2);
+
+        nvgBeginPath(vg);
+        nvgArc(vg, w / 2, h / 2, w * 0.45, angle - M_PI_2, angle - modAngle - M_PI_2,
+               -modAngle < 0 ? NVG_CCW : NVG_CW);
+        nvgStrokeWidth(vg, 2);
+        nvgStrokeColor(vg, nvgRGB(0, 200, 0));
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgArc(vg, w / 2, h / 2, w * 0.45, angle - M_PI_2, angle + modAngle - M_PI_2,
+               modAngle < 0 ? NVG_CCW : NVG_CW);
+        nvgStrokeWidth(vg, 4);
+        nvgStrokeColor(vg, nvgRGB(0, 255, 0));
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgEllipse(vg, ox, oy, 5, 5);
+        nvgFillColor(vg, nvgRGB(255, 0, 0));
+        nvgFill(vg);
+    }
+
+    static SurgeModulatableRing *create(rack::Vec pos, SurgeModuleCommon *module, int paramId)
+    {
+        auto *res = rack::createWidget<SurgeModulatableRing>(pos);
+        res->box.pos = pos;
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
+                                                  [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->addChild(res->bdw);
+
+        return res;
+    }
+
+    void onChange(const ChangeEvent &e) override
+    {
+        if (bdw)
+            bdw->dirty = true;
+
+        rack::app::Knob::onChange(e);
+    }
+};
+
+struct SurgeUIOnlyToggleButton : rack::widget::Widget
+{
+    BufferedDrawFunctionWidget *bdw = nullptr;
+    bool pressedState{false};
+    bool isHovered{false};
+    std::function<void(bool)> onToggle = [](bool isOn) {};
+
+    SurgeUIOnlyToggleButton()
+    {
+        box.size = rack::Vec(20, 20);
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                             [this](auto *v) { this->drawToggle(v); });
+        addChild(bdw);
+    }
+
+    void drawToggle(NVGcontext *vg)
+    {
+        auto w = box.size.y;
+        auto h = box.size.x;
+        nvgBeginPath(vg);
+        nvgEllipse(vg, h / 2, w / 2, h * 0.45, w * 0.45);
+        if (pressedState)
+            nvgFillColor(vg, nvgRGB(0xA0, 0xA0, 0xFF));
+        else
+            nvgFillColor(vg, nvgRGB(0x60, 0x60, 0x9F));
+        nvgFill(vg);
+
+        nvgBeginPath(vg);
+        nvgEllipse(vg, h / 2, w / 2, h * 0.45, w * 0.45);
+        if (isHovered)
+            nvgFillColor(vg, nvgRGB(20, 20, 90));
+        else
+            nvgFillColor(vg, nvgRGB(0, 0, 0));
+        nvgStrokeWidth(vg, 2);
+        nvgStroke(vg);
+    }
+
+    void onButton(const ButtonEvent &e) override
+    {
+        if (e.action == GLFW_RELEASE)
+        {
+            pressedState = !pressedState;
+            onToggle(pressedState);
+            if (bdw)
+                bdw->dirty = true;
+            e.consume(this);
+        }
+    }
 };
