@@ -39,7 +39,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
 
     p->addModel(modelSurgeLFO);
 
-    // p->addModel(modelSurgeVCF);
+    p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeBiquad);
 
     if (fxModels != nullptr)
