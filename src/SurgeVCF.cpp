@@ -36,6 +36,12 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : SurgeModuleWidgetCom
     modA_2 = SurgeModulatableRing::create(rack::Vec(20, 20), module, M::A_MOD2_DEPTH);
     modA_2->underlyerParamWidget = knobA;
     addChild(knobA);
+    modA_1->setVisible(false);
+    modA_2->setVisible(false);
+    
+    addChild(modA_1);
+    addChild(modA_2);
+
     addParam(rack::createParam<rack::RoundBigBlackKnob>(rack::Vec(20, 80), module, M::A_PARAM));
     addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(100, 80), module, M::MOD_1));
 
@@ -44,19 +50,17 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : SurgeModuleWidgetCom
     toggle1->onToggle = [this](bool isOn) {
         if (isOn)
         {
-            if (hasChild(modA_2))
-                removeChild(modA_2);
             toggle2->pressedState = false;
             toggle2->bdw->dirty = true;
-            addChild(modA_1);
+
+            modA_1->setVisible(true);
+            modA_2->setVisible(false);
             modA_1->bdw->dirty = true;
         }
         else
         {
-            if (hasChild(modA_1))
-                removeChild(modA_1);
-            if (hasChild(modA_2))
-                removeChild(modA_2);
+            modA_1->setVisible(false);
+            modA_2->setVisible(false);
         }
     };
     addChild(toggle1);
@@ -70,19 +74,17 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : SurgeModuleWidgetCom
     toggle2->onToggle = [this](bool isOn) {
         if (isOn)
         {
-            if (hasChild(modA_1))
-                removeChild(modA_1);
             toggle1->pressedState = false;
             toggle1->bdw->dirty = true;
-            addChild(modA_2);
+
+            modA_1->setVisible(false);
+            modA_2->setVisible(true);
             modA_2->bdw->dirty = true;
         }
         else
         {
-            if (hasChild(modA_1))
-                removeChild(modA_1);
-            if (hasChild(modA_2))
-                removeChild(modA_2);
+            modA_1->setVisible(false);
+            modA_2->setVisible(false);
         }
     };
     addChild(toggle2);
