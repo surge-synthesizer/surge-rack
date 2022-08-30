@@ -24,14 +24,17 @@
 
 extern rack::Plugin *pluginInstance;
 
+extern rack::Model *modelSurgeOSCClassic;
+extern rack::Model *modelSurgeOSCModern;
+extern rack::Model *modelSurgeOSCAlias;
+extern rack::Model *modelSurgeOSCString;
+
 extern rack::Model *modelSurgeClock;
 extern rack::Model *modelSurgeADSR;
 extern rack::Model *modelSurgeLFO;
 
 extern rack::Model *modelSurgeOSC;
-extern rack::Model *modelSurgeOSCModern;
-extern rack::Model *modelSurgeOSCAlias;
-extern rack::Model *modelSurgeOSCString;
+
 extern rack::Model *modelSurgeWTOSC;
 extern rack::Model *modelSurgeNoise;
 extern rack::Model *modelSurgeWaveShaper;

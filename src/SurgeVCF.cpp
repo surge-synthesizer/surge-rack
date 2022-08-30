@@ -38,7 +38,7 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : SurgeModuleWidgetCom
     addChild(knobA);
     modA_1->setVisible(false);
     modA_2->setVisible(false);
-    
+
     addChild(modA_1);
     addChild(modA_2);
 
@@ -92,4 +92,4 @@ SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : SurgeModuleWidgetCom
     addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(20, 200), module, M::SIGNAL_OUT));
 }
 
-rack::Model *modelSurgeVCF = rack::createModel<SurgeVCFWidget::M, SurgeVCFWidget>("SurgeVCF");
+rack::Model *modelSurgeVCF = rack::createModel<SurgeVCFWidget::M, SurgeVCFWidget>("SurgeXTVCF");
