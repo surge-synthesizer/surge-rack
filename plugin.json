@@ -1,6 +1,6 @@
 {
-  "slug": "SurgeRack",
-  "name": "Surge for Rack",
+  "slug": "SurgeXTRack",
+  "name": "Surge XT for Rack",
   "version": "2.xt-1.0.1",
   "license": "GPL-3.0-or-later",
   "author": "Surge Synth Team",
@@ -12,293 +12,8 @@
   "donateUrl": "",
   "modules": [
     {
-      "slug": "SurgeDelay",
-      "name": "SurgeDelay",
-      "description": "The Surge stereo delay effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Delay"
-      ]
-    },
-    {
-      "slug": "SurgeChorus",
-      "name": "SurgeChorus",
-      "description": "The Surge chorus effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Chorus"
-      ]
-    },
-    {
-      "slug": "SurgeEnsemble",
-      "name": "SurgeEnsemble",
-      "description": "The Surge ensemble effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Chorus"
-      ]
-    },
-    {
-      "slug": "SurgeEQ",
-      "name": "SurgeEQ",
-      "description": "The Surge 3-band equalizer",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Equalizer"
-      ]
-    },
-    {
-      "slug": "SurgePhaser",
-      "name": "SurgePhaser",
-      "description": "The Surge phaser",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Phaser"
-      ]
-    },
-    {
-      "slug": "SurgeRotary",
-      "name": "SurgeRotary",
-      "description": "The Surge rotary speaker emulation effect",
-      "tags": [
-        "Effect",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeDistort",
-      "name": "SurgeDistort",
-      "description": "The Surge distortion effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Distortion",
-        "Waveshaper"
-      ]
-    },
-    {
-      "slug": "SurgeReverb",
-      "name": "SurgeReverb",
-      "description": "The Surge reverb",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Reverb"
-      ]
-    },
-    {
-      "slug": "SurgeReverb2",
-      "name": "SurgeReverb2",
-      "description": "The Surge reverb (second one)",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Reverb"
-      ]
-    },
-    {
-      "slug": "SurgeFreqShift",
-      "name": "SurgeFreqShift",
-      "description": "The Surge frequency shifter",
-      "tags": [
-        "Effect",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeConditioner",
-      "name": "SurgeConditioner",
-      "description": "The Surge conditioner/limiter effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Limiter",
-        "EQ"
-      ]
-    },
-    {
-      "slug": "SurgeFlanger",
-      "name": "SurgeFlanger",
-      "description": "The Surge flanger effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Flanger"
-      ]
-    },
-    {
-      "slug": "SurgeRingMod",
-      "name": "SurgeRingMod",
-      "description": "The Surge ring modulator effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Ring Modulator"
-      ]
-    },
-    {
-      "slug": "SurgeChow",
-      "name": "SurgeChow",
-      "description": "The Surge CHOW Distortion effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Distortion"
-      ]
-    },
-    {
-      "slug": "SurgeResonator",
-      "name": "SurgeResonator",
-      "description": "The Surge Resonator Model Effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Filter"
-      ]
-    },
-    {
-      "slug": "SurgeExciter",
-      "name": "SurgeExciter",
-      "description": "The Surge Exciter Effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Filter"
-      ]
-    },
-    {
-      "slug": "SurgeCombulator",
-      "name": "SurgeCombulator",
-      "description": "The Surge Comb Filter Bank Effect",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Filter"
-      ]
-    },
-    {
-      "slug": "SurgeTreeMonster",
-      "name": "SurgeTreeMonster",
-      "description": "The Surge TreeMonster Effect. Watch out!",
-      "tags": [
-        "Effect",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeClock",
-      "name": "SurgeClock",
-      "description": "A utility clock generator",
-      "tags": [
-        "Clock Generator"
-      ]
-    },
-    {
-      "slug": "SurgeADSR",
-      "name": "SurgeADSR",
-      "description": "The Surge ADSR envelope generator with various modes",
-      "tags": [
-        "Envelope generator",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeOSC",
-      "name": "SurgeOSC",
-      "description": "The Surge classic oscillators, including square, saw, sine, FM and Noise",
-      "tags": [
-        "VCO",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeOSCModern",
-      "name": "SurgeOSCModern",
-      "description": "The Surge Modern Oscillator",
-      "tags": [
-        "VCO",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeOSCAlias",
-      "name": "SurgeOSCAlias",
-      "description": "The Surge Alias Oscillator",
-      "tags": [
-        "VCO",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeOSCString",
-      "name": "SurgeOSCString",
-      "description": "The Surge String Oscillator",
-      "tags": [
-        "VCO",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeWaveShaper",
-      "name": "SurgeWaveShaper",
-      "description": "The Surge waveshapers",
-      "tags": [
-        "Waveshaper",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeWTOSC",
-      "name": "SurgeWTOSC",
-      "description": "The Surge WaveTable collection with a pair of interpolating oscillators",
-      "tags": [
-        "VCO",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeNoise",
-      "name": "SurgeNoise",
-      "description": "The Surge correlated noise channel",
-      "tags": [
-        "Noise"
-      ]
-    },
-    {
-      "slug": "SurgeLFO",
-      "name": "SurgeLFO",
-      "description": "The Surge LFO",
-      "tags": [
-        "LFO",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeVOC",
-      "name": "SurgeVOC",
-      "description": "The Surge vocoder",
-      "tags": [
-        "Vocoder",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeBiquad",
-      "name": "SurgeBiquad",
-      "description": "A single BiQuad filter stage of the Surge FilterBank",
-      "tags": [
-        "VCF",
-        "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeVCF",
-      "name": "SurgeVCF",
+      "slug": "SurgeXTVCF",
+      "name": "SXT VCF",
       "description": "The Surge Filter VCFs",
       "tags": [
         "VCF",
@@ -306,11 +21,38 @@
       ]
     },
     {
-      "slug": "SurgePatchPlayer",
-      "name": "SurgePatchPlayer",
-      "description": "A full instance of the Surge plugin able to play the patches in your environment",
+      "slug": "SurgeXTOSCModern",
+      "name": "SXT Modern VCO",
+      "description": "The Surge Modern Oscillator",
       "tags": [
-        "Synth voice",
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCClassic",
+      "name": "SXT Classic VCO",
+      "description": "The Surge Classic Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCAlias",
+      "name": "SXT Alias VCO",
+      "description": "The Surge Alias Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCString",
+      "name": "SXT String VCO",
+      "description": "The Surge String Oscillator",
+      "tags": [
+        "VCO",
         "Polyphonic"
       ]
     }

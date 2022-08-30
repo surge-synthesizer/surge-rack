@@ -13,6 +13,8 @@ template <int type> struct SingleConfig
 
 template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 {
+    static constexpr int n_mod_inputs{4};
+
     enum ParamIds
     {
         OUTPUT_GAIN,
@@ -20,12 +22,10 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
         PITCH_0,
 
         OSC_CTRL_PARAM_0,
-        OSC_DEACTIVATE_INVERSE_PARAM_0 =
-            OSC_CTRL_PARAM_0 + n_osc_params, // state -1, 0, 1 for n/a, off, on
-        OSC_EXTEND_PARAM_0 =
-            OSC_DEACTIVATE_INVERSE_PARAM_0 + n_osc_params, // state -1, 0, 1 for n/a, off, on
 
-        NUM_PARAMS = OSC_EXTEND_PARAM_0 + n_osc_params
+        OSC_MOD_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params,
+
+        NUM_PARAMS = OSC_MOD_PARAM_0 + n_osc_params * n_mod_inputs
     };
     enum InputIds
     {
@@ -33,9 +33,9 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 
         RETRIGGER,
 
-        OSC_CTRL_CV_0,
+        OSC_MOD_INPUT,
 
-        NUM_INPUTS = OSC_CTRL_CV_0 + n_osc_params
+        NUM_INPUTS = OSC_MOD_INPUT + n_mod_inputs
     };
     enum OutputIds
     {
@@ -83,8 +83,10 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
         {
             configParam<SurgeRackOSCParamQuantity<SurgeOSCSingle>>(
                 OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
-            configParam(OSC_DEACTIVATE_INVERSE_PARAM_0 + i, -1, 1, -1, "Activate (if applicable)");
-            configParam(OSC_EXTEND_PARAM_0 + i, -1, 1, -1, "Extend (if applicable)");
+            for (int m=0; m < n_mod_inputs; ++m)
+            {
+                configParam(OSC_MOD_PARAM_0 + i + m *n_mod_inputs, -1, 1, 0);
+            }
         }
 
         pc.update(this);
@@ -182,9 +184,10 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
-                        oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i) +
+                        oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+/*+
                                                        inputs[OSC_CTRL_CV_0 + i].getPolyVoltage(c) *
-                                                           RACK_TO_SURGE_CV_MUL);
+                                                           RACK_TO_SURGE_CV_MUL); */
                     }
 
                     if (SingleConfig<oscType>::supportsUnison())

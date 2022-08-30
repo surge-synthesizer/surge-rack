@@ -89,36 +89,6 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h, std::stri
     nvgFillColor(vg, SurgeStyle::panelBackground());
     nvgFill(vg);
 
-    nvgBeginPath(vg);
-    nvgMoveTo(vg, 0, h);
-    nvgLineTo(vg, 0, 0);
-    nvgLineTo(vg, w, 0);
-    nvgLineTo(vg, w, h);
-    nvgStrokeColor(vg, SurgeStyle::panelBackgroundOutline());
-    nvgStrokeWidth(vg, 1);
-    nvgStroke(vg);
-
-    nvgBeginPath(vg);
-    nvgRect(vg, 0, orangeLine, w, h - orangeLine);
-    nvgFillColor(vg, SurgeStyle::panelFooter());
-    nvgFill(vg);
-
-    nvgBeginPath(vg);
-    nvgMoveTo(vg, w, orangeLine);
-    nvgLineTo(vg, w, h);
-    nvgLineTo(vg, 0, h);
-    nvgLineTo(vg, 0, orangeLine);
-    nvgStrokeColor(vg, SurgeStyle::panelFooterOutline());
-    nvgStrokeWidth(vg, 1);
-    nvgStroke(vg);
-
-    nvgBeginPath(vg);
-    nvgMoveTo(vg, 0, orangeLine);
-    nvgLineTo(vg, w, orangeLine);
-    nvgStrokeColor(vg, SurgeStyle::panelFooterSeparator());
-    nvgStrokeWidth(vg, 1);
-    nvgStroke(vg);
-
     auto logoSvg = SurgeInternal::getSurgeLogo();
 
     auto hn = logoSvg->handle;
@@ -158,7 +128,7 @@ void SurgeStyle::drawPanelBackground(NVGcontext *vg, float w, float h, std::stri
         nvgFontFaceId(vg, fontId(vg));
         nvgFontSize(vg, 14);
         nvgFillColor(vg, SurgeStyle::panelTitle());
-        nvgText(vg, logoX0 - logoWidth / 2 - 3, 0, "Surge", NULL);
+        nvgText(vg, logoX0 - logoWidth / 2 - 3, 0, "SurgeXT", NULL);
     }
 
     nvgBeginPath(vg);
@@ -222,6 +192,7 @@ void SurgeStyle::loadStyle(std::string styleXml)
         return;
 
     currentStyle = styleXml;
+
     INFO("Loading skin '%s'", currentStyle.c_str());
 
     TiXmlDocument doc;

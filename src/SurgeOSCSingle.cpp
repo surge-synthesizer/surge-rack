@@ -57,11 +57,9 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
         for (int i = 0; i < n_osc_params + 1; ++i)
         {
             int param = M::PITCH_0;
-            int cvid = M::PITCH_CV;
             if (i != 0)
             {
                 param = M::OSC_CTRL_PARAM_0 + i - 1;
-                cvid = M::OSC_CTRL_CV_0 + i - 1;
             }
 
             std::string label = "param " + std::to_string(i - 1);
@@ -287,11 +285,9 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     for (int i = 0; i < n_osc_params + 1; ++i)
     {
         int param = M::PITCH_0;
-        int cvid = M::PITCH_CV;
         if (i != 0)
         {
             param = M::OSC_CTRL_PARAM_0 + i - 1;
-            cvid = M::OSC_CTRL_CV_0 + i - 1;
         }
 
         float yp = (i % 4) * controlHeightPer + controlsY;
@@ -300,32 +296,27 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
         addParam(
             rack::createParam<SurgeSmallKnob>(rack::Vec(xOff + padFromEdge, yctrl), module, param));
-        addInput(rack::createInput<rack::PJ301MPort>(
-            rack::Vec(xOff + padFromEdge + padMargin + portX, yctrl), module, cvid));
 
-        if (i != 0)
-        {
-            addParam(rack::createParam<SurgeDisableStateSwitch>(
-                rack::Vec(xOff + padFromEdge + 2 * padMargin + 2 * portX, yctrl), module,
-                M::OSC_EXTEND_PARAM_0 + i - i));
-            addParam(rack::createParam<SurgeDisableStateSwitch>(
-                rack::Vec(xOff + padFromEdge + 2 * padMargin + 2 * portX + 12, yctrl), module,
-                M::OSC_DEACTIVATE_INVERSE_PARAM_0 + i - i));
-        }
         float xt = padFromEdge + 2 * padMargin + 2 * portX + 12;
     }
 }
 
 template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() { return true; }
+template <> constexpr bool SingleConfig<ot_classic>::supportsUnison() { return true; }
+
+
+rack::Model *modelSurgeOSCClassic =
+    rack::createModel<SurgeOSCSingleWidget<ot_classic>::M, SurgeOSCSingleWidget<ot_classic>>(
+        "SurgeXTOSCClassic");
 
 rack::Model *modelSurgeOSCModern =
     rack::createModel<SurgeOSCSingleWidget<ot_modern>::M, SurgeOSCSingleWidget<ot_modern>>(
-        "SurgeOSCModern");
+        "SurgeXTOSCModern");
 
 rack::Model *modelSurgeOSCString =
     rack::createModel<SurgeOSCSingleWidget<ot_string>::M, SurgeOSCSingleWidget<ot_string>>(
-        "SurgeOSCString");
+        "SurgeXTOSCString");
 
 rack::Model *modelSurgeOSCAlias =
     rack::createModel<SurgeOSCSingleWidget<ot_alias>::M, SurgeOSCSingleWidget<ot_alias>>(
-        "SurgeOSCAlias");
+        "SurgeXTOSCAlias");
