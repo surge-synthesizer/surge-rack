@@ -11,21 +11,25 @@ template <int type> struct SingleConfig
     static constexpr bool supportsUnison() { return false; }
 };
 
+template<int oscType> struct KnobConfiguration
+{
+    typedef std::vector<std::pair<int, std::string>> knobs_t;
+    static knobs_t getKnobs() { return {}; }
+};
+
 template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 {
     static constexpr int n_mod_inputs{4};
 
     enum ParamIds
     {
-        OUTPUT_GAIN,
-
         PITCH_0,
 
         OSC_CTRL_PARAM_0,
 
         OSC_MOD_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params,
 
-        NUM_PARAMS = OSC_MOD_PARAM_0 + n_osc_params * n_mod_inputs
+        NUM_PARAMS = OSC_MOD_PARAM_0 + (n_osc_params+1) * n_mod_inputs
     };
     enum InputIds
     {
@@ -48,8 +52,6 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
         NUM_LIGHTS
     };
 
-    ParamValueStateSaver knobSaver;
-
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
 
@@ -61,7 +63,9 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
         setupSurgeCommon(NUM_PARAMS);
 
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
+        oscstorage_nomod = &(storage->getPatch().scene[0].osc[1]);
         oscstorage->type.val.i = oscType;
+        oscstorage_nomod->type.val.i = oscType;
         setupStorageRanges(&(oscstorage->type), &(oscstorage->retrigger));
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
@@ -76,17 +80,17 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             paramNames[i] = oscstorage->p[i].get_name();
         }
 
-        configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");
         configParam(PITCH_0, 1, 127, 60, "Pitch in Midi Note");
 
-        for (int i = 0; i < n_osc_params; ++i)
+        for (int i = 0; i < n_osc_params + 1; ++i)
         {
             configParam<SurgeRackOSCParamQuantity<SurgeOSCSingle>>(
                 OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
-            for (int m=0; m < n_mod_inputs; ++m)
-            {
-                configParam(OSC_MOD_PARAM_0 + i + m *n_mod_inputs, -1, 1, 0);
-            }
+        }
+
+        for (int i=OSC_MOD_PARAM_0; i<OSC_MOD_PARAM_0 + (n_osc_params+1)*n_mod_inputs; ++i)
+        {
+            configParam(i, -1, 1, 0);
         }
 
         pc.update(this);
@@ -98,6 +102,12 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             halfbandOUT.emplace_back(6, true);
             halfbandOUT[i].reset();
         }
+    }
+
+    static int modulatorIndexFor(int baseParam, int modulator)
+    {
+        int offset = baseParam - PITCH_0;
+        return OSC_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
     ~SurgeOSCSingle()
@@ -139,6 +149,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             for (int i = 0; i < n_osc_params; ++i)
             {
                 oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                oscstorage_nomod->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
             }
 
             copyScenedataSubset(0, storage_id_start, storage_id_end);
@@ -170,6 +181,29 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             // values when you need them".
             processPosition = 0;
 
+            float modMatrix[n_osc_params+1][n_mod_inputs];
+
+            for (int i=0; i<n_osc_params+1; ++i)
+            {
+                for (int m=0; m<n_mod_inputs; ++m)
+                {
+                    modMatrix[i][m] = 0.f;
+                }
+            }
+            const auto &knobConfig = KnobConfiguration<oscType>::getKnobs();
+            for (const auto &[pid, label] : knobConfig)
+            {
+                int id = pid - PITCH_0;
+                for (int m=0; m<n_mod_inputs; ++m)
+                {
+                    int modid = modulatorIndexFor(pid, m);
+                    modMatrix[id][m] = getParam(modid);
+                }
+            }
+
+            for (int m=0; m<n_mod_inputs; ++m)
+                modMatrix[0][m] *= 12; // volts per octave
+
             for (int c = 0; c < nChan; ++c)
             {
                 bool needsReInit{false};
@@ -180,16 +214,35 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     needsReInit = true;
                 }
 
+                float modValue[n_osc_params + 1];
+                float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12.0;
+
+                modValue[0] = pitch0;
+                for (int i = 0; i < n_osc_params; ++i)
+                {
+                    modValue[i+1] = getParam(OSC_CTRL_PARAM_0 + i);
+                }
+
+                for (int i=0; i<n_osc_params+1; ++i)
+                {
+                    for (int m=0; m<n_mod_inputs; ++m)
+                    {
+                        modValue[i] += modMatrix[i][m] * inputs[OSC_MOD_INPUT + m].getVoltage(c) * RACK_TO_SURGE_CV_MUL;
+                    }
+                }
+
+
+                for (int i = 0; i < n_osc_params; ++i)
+                {
+                    oscstorage_nomod->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                }
+
                 if (outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R))
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
-                        oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
-/*+
-                                                       inputs[OSC_CTRL_CV_0 + i].getPolyVoltage(c) *
-                                                           RACK_TO_SURGE_CV_MUL); */
+                        oscstorage->p[i].set_value_f01(modValue[i+1]);
                     }
-
                     if (SingleConfig<oscType>::supportsUnison())
                     {
                         if (oscstorage->p[n_osc_params - 1].val.i != lastUnison[c])
@@ -200,13 +253,12 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     }
 
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
-                    float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12.0;
 
                     if (needsReInit)
                     {
-                        surge_osc[c]->init(pitch0);
+                        surge_osc[c]->init(modValue[0]);
                     }
-                    surge_osc[c]->process_block(pitch0, 0, true);
+                    surge_osc[c]->process_block(modValue[0], 0, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
                     halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c]);
@@ -222,19 +274,19 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                 // Special mono mode
                 float output = (osc_downsample[0][c][processPosition] +
                                 osc_downsample[1][c][processPosition]) *
-                               0.5 * SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN);
+                               0.5 * SURGE_TO_RACK_OSC_MUL;
                 outputs[OUTPUT_L].setVoltage(output, c);
             }
             else
             {
                 if (outputConnected(OUTPUT_L))
                     outputs[OUTPUT_L].setVoltage(osc_downsample[0][c][processPosition] *
-                                                     SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN),
+                                                     SURGE_TO_RACK_OSC_MUL,
                                                  c);
 
                 if (outputConnected(OUTPUT_R))
                     outputs[OUTPUT_R].setVoltage(osc_downsample[1][c][processPosition] *
-                                                     SURGE_TO_RACK_OSC_MUL * getParam(OUTPUT_GAIN),
+                                                     SURGE_TO_RACK_OSC_MUL,
                                                  c);
             }
         }
@@ -247,7 +299,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
     unsigned char oscbuffer alignas(16)[MAX_POLY][oscillator_buffer_size];
     unsigned char oscdisplaybuffer alignas(16)[oscillator_buffer_size];
 
-    OscillatorStorage *oscstorage;
+    OscillatorStorage *oscstorage, *oscstorage_nomod;
     float osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
     std::vector<sst::filters::HalfRate::HalfRateFilter> halfbandOUT;
 
