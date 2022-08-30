@@ -2,101 +2,89 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
+
+template<>
+KnobConfiguration<ot_classic>::knobs_t KnobConfiguration<ot_classic>::getKnobs()
+{
+    typedef SurgeOSCSingle<ot_classic> M;
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0, "SHAPE"},
+            {M::OSC_CTRL_PARAM_0 + 1, "WIDTH1"},
+            {M::OSC_CTRL_PARAM_0 + 2, "WIDTH2"},
+            {M::OSC_CTRL_PARAM_0 + 3, "SUBMIX"},
+            {M::OSC_CTRL_PARAM_0 + 4, "SYNC"},
+            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
+}
+
 template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleWidgetCommon
 {
     typedef SurgeOSCSingle<oscType> M;
     SurgeOSCSingleWidget(M *module);
 
-    int ioRegionWidth = 105;
+    int plotStart = 18, plotHeight = 100;
+    int sideMargin = 5;
+    int numberOfScrews = 10;
+    int columnWidth = (SCREW_WIDTH * numberOfScrews - 2 * sideMargin)/ 4;
+    int labelHeight = 15;
 
-    float waveHeight = 100;
-    float controlsY = SCREW_WIDTH + padFromEdge + 3;
-    float controlsHeight = orangeLine - controlsY - padMargin - waveHeight;
-    float controlHeightPer = controlsHeight / (n_osc_params + 1) * 2;
+    std::array<std::array<SurgeModulatableRing *, M::n_mod_inputs>, 8> overlays;
+    std::array<SurgeUIOnlyToggleButton *, M::n_mod_inputs> toggles;
 
     void moduleBackground(NVGcontext *vg)
     {
-        // The input triggers and output
-        nvgBeginPath(vg);
+        auto t = plotStart;
+        auto h = plotHeight;
+        drawTextBGRect(vg, sideMargin, t, box.size.x - 2 * sideMargin, h);
 
-        // Draw the output blue box
-        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
-        drawBlueIORect(vg, x0 + ioMargin, orangeLine + ioMargin, ioRegionWidth,
-                       box.size.y - orangeLine - 2 * ioMargin);
-
-        nvgFillColor(vg, ioRegionText());
-        nvgFontFaceId(vg, fontId(vg));
-        nvgFontSize(vg, 12);
-        nvgSave(vg);
-        nvgTranslate(vg, x0 + ioMargin + ioRegionWidth - 2, orangeLine + ioMargin * 1.5);
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgRotate(vg, M_PI / 2);
-        nvgText(vg, 0, 0, "Output", NULL);
-        nvgRestore(vg);
-
-        rack::Vec ll;
-        ll = ioPortLocation(0);
-        ll.y = box.size.y - ioMargin - 1.5;
-        ll.x += 24.6721 / 2;
-        nvgFontSize(vg, 11);
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgText(vg, ll.x, ll.y, "L/Mon", NULL);
-
-        ll = ioPortLocation(1);
-        ll.y = box.size.y - ioMargin - 1.5;
-        ll.x += 24.6721 / 2;
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgText(vg, ll.x, ll.y, "R", NULL);
-
-        ll = ioPortLocation(2);
-        ll.y = box.size.y - ioMargin - 1.5;
-        ll.x += 24.6721 / 2;
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
-        nvgText(vg, ll.x, ll.y, "Gain", NULL);
-
-        for (int i = 0; i < n_osc_params + 1; ++i)
+        const auto &knobConfig = KnobConfiguration<oscType>::getKnobs();
+        auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
+        for (const auto &[p,l] : knobConfig)
         {
-            int param = M::PITCH_0;
-            if (i != 0)
+            idx++;
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 11);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+            nvgText(vg, xp + columnWidth * 0.5, yp + columnWidth,
+                    l.c_str(), nullptr);
+
+            if (idx == 4)
             {
-                param = M::OSC_CTRL_PARAM_0 + i - 1;
+                xp = sideMargin; yp += columnWidth + labelHeight;
             }
-
-            std::string label = "param " + std::to_string(i - 1);
-            if (i == 0)
-                label = "Pitch";
-            else if (module)
+            else
             {
-                auto rm = dynamic_cast<M *>(module);
-                if (rm)
-                    label = rm->paramNames[i - 1];
+                xp += columnWidth;
             }
-
-            float yp = (i % 4) * controlHeightPer + controlsY;
-            float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin / 2 - 3;
-            int xOff = (i >= 4 ? box.size.x / 2 : 0) + 5;
-
-            nvgSave(vg);
-            nvgFillColor(vg, panelLabel());
-            nvgTranslate(vg, xOff, yp);
-            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-            nvgText(vg, 0, 0, label.c_str(), NULL);
-            nvgRestore(vg);
         }
 
-        auto t = orangeLine - 104;
-        auto h = 94;
-        drawTextBGRect(vg, 10, t, box.size.x - 20, h);
-    }
+        xp = sideMargin;
+        yp += columnWidth + sideMargin + columnWidth;
+        for (int i=0; i<M::n_mod_inputs; ++i)
+        {
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 11);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+            auto l = std::string( "MOD " ) + std::to_string(i+1);
+            nvgText(vg, xp + columnWidth * 0.5, yp,
+                    l.c_str(), nullptr);
+            xp += columnWidth;
+        }
+        xp = sideMargin;
+        yp += columnWidth + labelHeight + sideMargin;
+        std::vector<std::string> lab = {"V/OCT", "TRIG", "L/MON", "R"};
+        for (const auto &l : lab)
+        {
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg, fontId(vg));
+            nvgFontSize(vg, 11);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+            nvgText(vg, xp + columnWidth * 0.5, yp,
+                    l.c_str(), nullptr);
+            xp += columnWidth;
+        }
 
-    rack::Vec ioPortLocation(int ctrl)
-    { // 0 is L; 1 is R; 2 is gain
-        float x0 = box.size.x - ioRegionWidth - 2 * ioMargin;
-
-        int xRes = x0 + ioMargin + padFromEdge + (ctrl * (portX + 4));
-        int yRes = orangeLine + 1.5 * ioMargin;
-
-        return rack::Vec(xRes, yRes);
     }
 };
 
@@ -114,7 +102,7 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, Surge
         if (module)
         {
             storage = module->storage.get();
-            oscdata = &(storage->getPatch().scene[0].osc[0]);
+            oscdata = &(storage->getPatch().scene[0].osc[1]); // this is tne no-mod storage
         }
     }
 
@@ -200,23 +188,7 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, Surge
         auto xp = box.size.x;
         auto yp = box.size.y;
 
-        if (!module)
-        {
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, 0, yp / 2);
-            for (int i = 1; i < xp; ++i)
-            {
-                auto nx = i * 1.f / xp;
-                auto sx = nx * 4 * 3.14159;
-                auto sy = std::sin(sx);
-                auto py = (-sy * 0.5 + 0.5) * yp;
-                nvgLineTo(vg, i, py);
-            }
-            nvgStrokeColor(vg, nvgRGB(255, 0, 0));
-            nvgStrokeWidth(vg, 1);
-            nvgStroke(vg);
-        }
-        else
+        if (module)
         {
             auto osc = setupOscillator();
             const float ups = 3.0, invups = 1.0/ups;
@@ -262,43 +234,109 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 {
     setModule(module);
 
-    box.size = rack::Vec(SCREW_WIDTH * 14, RACK_HEIGHT);
+    for (auto &ob : overlays)
+        for (auto &o : ob)
+            o = nullptr;
+
+    box.size = rack::Vec(SCREW_WIDTH * numberOfScrews, RACK_HEIGHT);
     SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, std::string(M::name) + " VCO");
     bg->moduleSpecificDraw = [this](NVGcontext *vg) { this->moduleBackground(vg); };
     addChild(bg);
 
-    addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(0), module, M::OUTPUT_L));
-    addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(1), module, M::OUTPUT_R));
-    addParam(rack::createParam<SurgeSmallKnob>(ioPortLocation(2), module, M::OUTPUT_GAIN));
+    // addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(0), module, M::OUTPUT_L));
+    // addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(1), module, M::OUTPUT_R));
 
-    float x0 = 2 * ioMargin;
-    int yRes = orangeLine + 1.5 * ioMargin;
 
-    auto retrigPos = rack::Vec(x0, yRes);
-    addInput(rack::createInput<rack::PJ301MPort>(retrigPos, module, M::RETRIGGER));
+    // auto retrigPos = rack::Vec(x0, yRes);
+    // addInput(rack::createInput<rack::PJ301MPort>(retrigPos, module, M::RETRIGGER));
 
-    auto t = orangeLine - 104;
-    auto h = 94;
+    auto t = plotStart;
+    auto h = plotHeight;
     addChild(
-        OSCPlotWidget<oscType>::create(rack::Vec(10, t), rack::Vec(box.size.x - 20, h), module));
+        OSCPlotWidget<oscType>::create(rack::Vec(sideMargin, t), rack::Vec(box.size.x - 2 * sideMargin, h), module));
 
-    for (int i = 0; i < n_osc_params + 1; ++i)
+    const auto &knobConfig = KnobConfiguration<oscType>::getKnobs();
+
+    auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
+
+    for (const auto &[pid, label] : knobConfig)
     {
-        int param = M::PITCH_0;
-        if (i != 0)
+        auto uxp = xp + (columnWidth - 28) * 0.5;
+        auto uyp = yp + (columnWidth - 28) * 0.5;
+        auto baseKnob =
+            rack::createParam<rack::RoundBlackKnob>(rack::Vec(uxp, uyp), module, pid);
+        addParam(baseKnob);
+        for (int m=0; m<M::n_mod_inputs; ++m)
         {
-            param = M::OSC_CTRL_PARAM_0 + i - 1;
+            int id = M::modulatorIndexFor(pid, m);
+            auto *k = SurgeModulatableRing::create(rack::Vec(uxp, uyp), 28, module, id);
+            overlays[idx][m] = k;
+            k->setVisible(false);
+            k->underlyerParamWidget = baseKnob;
+            addChild(k);
         }
 
-        float yp = (i % 4) * controlHeightPer + controlsY;
-        float yctrl = yp + controlHeightPer / 2 - portY / 2 - padMargin / 2;
-        int xOff = (i >= 4 ? box.size.x / 2 : 0);
-
-        addParam(
-            rack::createParam<SurgeSmallKnob>(rack::Vec(xOff + padFromEdge, yctrl), module, param));
-
-        float xt = padFromEdge + 2 * padMargin + 2 * portX + 12;
+        idx++;
+        if (idx == 4)
+        {
+            xp = sideMargin;
+            yp += columnWidth + labelHeight;
+        }
+        else
+        {
+            xp += columnWidth;
+        }
     }
+
+    xp = sideMargin;
+    yp += columnWidth + labelHeight + sideMargin;
+    for (int i=0; i<M::n_mod_inputs; ++i)
+    {
+        auto *k = rack::createWidget<SurgeUIOnlyToggleButton>(rack::Vec(xp + (columnWidth-20)/2, yp));
+        toggles[i] = k;
+        k->onToggle = [this, toggleIdx = i](bool isOn)
+        {
+            for (const auto &t : toggles)
+                if (t)
+                    t->setState(false);
+            for (const auto &ob : overlays)
+                for (const auto &o : ob)
+                    if (o)
+                        o->setVisible(false);
+            if (isOn)
+            {
+                toggles[toggleIdx]->setState(true);
+                for (const auto &ob: overlays)
+                    if (ob[toggleIdx])
+                    {
+                        ob[toggleIdx]->setVisible(true);
+                        ob[toggleIdx]->bdw->dirty = true;
+                    }
+            }
+        };
+
+        addChild(k);
+
+        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp + columnWidth), module,
+                                                     M::OSC_MOD_INPUT + i));
+
+        xp += columnWidth;
+    }
+
+    xp = sideMargin;
+    yp += 2 * columnWidth + labelHeight + sideMargin;
+
+    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::PITCH_CV));
+    xp += columnWidth;
+    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::RETRIGGER));
+    xp += columnWidth;
+
+
+    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::OUTPUT_L));
+    xp += columnWidth;
+    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::OUTPUT_R));
+    xp += columnWidth;
+
 }
 
 template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() { return true; }

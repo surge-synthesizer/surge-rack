@@ -553,9 +553,16 @@ struct SurgeModulatableRing : rack::app::Knob
         nvgFill(vg);
     }
 
+
     static SurgeModulatableRing *create(rack::Vec pos, SurgeModuleCommon *module, int paramId)
     {
+        return create(pos, 50, module, paramId);
+    }
+    static SurgeModulatableRing *create(rack::Vec pos, int radius, SurgeModuleCommon *module, int paramId)
+    {
         auto *res = rack::createWidget<SurgeModulatableRing>(pos);
+        res->box.size.x = radius;
+        res->box.size.y = radius;
         res->box.pos = pos;
         res->module = module;
         res->paramId = paramId;
@@ -624,5 +631,12 @@ struct SurgeUIOnlyToggleButton : rack::widget::Widget
                 bdw->dirty = true;
             e.consume(this);
         }
+    }
+
+    void setState(bool b)
+    {
+        pressedState = b;
+        if (bdw)
+            bdw->dirty = true;
     }
 };
