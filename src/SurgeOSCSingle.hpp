@@ -60,9 +60,9 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
         setupSurgeCommon(NUM_PARAMS);
 
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
-        oscstorage_nomod = &(storage->getPatch().scene[0].osc[1]);
+        oscstorage_display = &(storage->getPatch().scene[0].osc[1]);
         oscstorage->type.val.i = oscType;
-        oscstorage_nomod->type.val.i = oscType;
+        oscstorage_display->type.val.i = oscType;
         setupStorageRanges(&(oscstorage->type), &(oscstorage->retrigger));
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
@@ -146,7 +146,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             for (int i = 0; i < n_osc_params; ++i)
             {
                 oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
-                oscstorage_nomod->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
             }
 
             copyScenedataSubset(0, storage_id_start, storage_id_end);
@@ -231,7 +231,10 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 
                 for (int i = 0; i < n_osc_params; ++i)
                 {
-                    oscstorage_nomod->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                    if (c == 0)
+                        // This is the non-modulated version
+                        //oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                        oscstorage_display->p[i].set_value_f01(modValue[i+1]);
                 }
 
                 if (outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R))
@@ -296,7 +299,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
     unsigned char oscbuffer alignas(16)[MAX_POLY][oscillator_buffer_size];
     unsigned char oscdisplaybuffer alignas(16)[oscillator_buffer_size];
 
-    OscillatorStorage *oscstorage, *oscstorage_nomod;
+    OscillatorStorage *oscstorage, *oscstorage_display;
     float osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
     std::vector<sst::filters::HalfRate::HalfRateFilter> halfbandOUT;
 
