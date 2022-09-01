@@ -1,5 +1,5 @@
 name: Build VCV Rack Plugin
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 env:
   rack-sdk-version: 2.1.2
@@ -25,7 +25,7 @@ jobs:
           gitrev=`git rev-parse --short HEAD`
           pluginversion=`jq -r '.version' plugin.json`
           echo "Set plugin version from $pluginversion to $pluginversion-$gitrev"
-          cat <<< `jq --arg VERSION "$pluginversion-$gitrev" '.version=$VERSION' plugin.json` > plugin.json
+          cat <<< `jq --arg VERSION "$pluginversion-nightly-$gitrev" '.version=$VERSION' plugin.json` > plugin.json
         # only modify plugin version if no tag was created
         if: "! startsWith(github.ref, 'refs/tags/v')"
 
@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [win, linux]
+        platform: [ win, linux ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -96,7 +96,7 @@ jobs:
     # see also https://vcvrack.com/manual/Manifest#version
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    needs:  [build, build-mac]
+    needs: [ build, build-mac ]
     steps:
       - uses: actions/checkout@v3
       - uses: FranzDiebold/github-env-vars-action@v1.2.1
@@ -127,4 +127,23 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: _artifacts/**/*.vcvplugin
           tag: ${{ github.ref }}
+          file_glob: true
+
+  publish-nightly:
+    name: Publish plugin
+    # only create a release if a tag was created that is called e.g. v1.2.3
+    # see also https://vcvrack.com/manual/Manifest#version
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    needs: [ build, build-mac ]
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          path: _artifacts
+      - name: Upload release assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: _artifacts/**/*.vcvplugin
+          tag: Nightly
           file_glob: true
