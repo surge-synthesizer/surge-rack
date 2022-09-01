@@ -9,10 +9,7 @@
 template <int type> struct SingleConfig
 {
     static constexpr bool supportsUnison() { return false; }
-};
 
-template<int oscType> struct KnobConfiguration
-{
     typedef std::vector<std::pair<int, std::string>> knobs_t;
     static knobs_t getKnobs() { return {}; }
 };
@@ -190,7 +187,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     modMatrix[i][m] = 0.f;
                 }
             }
-            const auto &knobConfig = KnobConfiguration<oscType>::getKnobs();
+            const auto &knobConfig = SingleConfig<oscType>::getKnobs();
             for (const auto &[pid, label] : knobConfig)
             {
                 int id = pid - PITCH_0;
@@ -261,7 +258,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     surge_osc[c]->process_block(modValue[0], 0, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
-                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c]);
+                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c], BLOCK_SIZE_OS);
                 }
             }
             pc.update(this);

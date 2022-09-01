@@ -3,8 +3,11 @@
 #include "SurgeRackGUI.hpp"
 
 
+template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() { return true; }
+
+template <> constexpr bool SingleConfig<ot_classic>::supportsUnison() { return true; }
 template<>
-KnobConfiguration<ot_classic>::knobs_t KnobConfiguration<ot_classic>::getKnobs()
+SingleConfig<ot_classic>::knobs_t SingleConfig<ot_classic>::getKnobs()
 {
     typedef SurgeOSCSingle<ot_classic> M;
     return {{M::PITCH_0, "PITCH"},
@@ -36,7 +39,7 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
         auto h = plotHeight;
         drawTextBGRect(vg, sideMargin, t, box.size.x - 2 * sideMargin, h);
 
-        const auto &knobConfig = KnobConfiguration<oscType>::getKnobs();
+        const auto &knobConfig = SingleConfig<oscType>::getKnobs();
         auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
         for (const auto &[p,l] : knobConfig)
         {
@@ -255,7 +258,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     addChild(
         OSCPlotWidget<oscType>::create(rack::Vec(sideMargin, t), rack::Vec(box.size.x - 2 * sideMargin, h), module));
 
-    const auto &knobConfig = KnobConfiguration<oscType>::getKnobs();
+    const auto &knobConfig = SingleConfig<oscType>::getKnobs();
 
     auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
 
@@ -338,9 +341,6 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     xp += columnWidth;
 
 }
-
-template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() { return true; }
-template <> constexpr bool SingleConfig<ot_classic>::supportsUnison() { return true; }
 
 
 rack::Model *modelSurgeOSCClassic =

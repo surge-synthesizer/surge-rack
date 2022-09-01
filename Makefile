@@ -32,7 +32,7 @@ DEPS += $(libsurge)
 
 $(libsurge):
 	# Out-of-source build dir
-	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE
+	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8
 	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
 	cd $(SURGE_BLD) && make -j 4 surge-common
 
@@ -57,6 +57,7 @@ FLAGS += -Isurge/src/common \
 	-Isurge/libs/tuning-library/include \
 	-include limits \
 	-DRELEASE=1 \
+	-DSURGE_COMPILE_BLOCK_SIZE=8
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch
