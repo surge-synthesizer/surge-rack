@@ -549,7 +549,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon
                                                 true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
-                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c]);
+                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c], BLOCK_SIZE_OS);
                 }
             }
             lastUnison = oscstorage->p[n_osc_params - 1].val.i;
