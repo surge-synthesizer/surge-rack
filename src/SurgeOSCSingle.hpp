@@ -219,11 +219,44 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             for (int m=0; m<n_mod_inputs; ++m)
                 modMatrix[0][m] *= 12; // volts per octave
 
-            int nModChan[n_mod_inputs];
+            float modValue[rack::PORT_MAX_CHANNELS][n_osc_params + 1];
+
+            for (int c=0; c<nChan; ++c)
+            {
+                float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12.0;
+
+                modValue[c][0] = pitch0;
+                for (int i = 0; i < n_osc_params; ++i)
+                {
+                    modValue[c][i + 1] = getParam(OSC_CTRL_PARAM_0 + i);
+                }
+            }
             for (int m=0; m<n_mod_inputs; ++m)
             {
-                nModChan[m] = inputs[OSC_MOD_INPUT + m].getChannels();
+                if (inputs[OSC_MOD_INPUT + m].isConnected())
+                {
+                    auto nModChan = inputs[OSC_MOD_INPUT + m].getChannels();
+
+                    for (int i = 0; i < n_osc_params + 1; ++i)
+                    {
+                        for (int c = 0; c < nChan; ++c)
+                        {
+                            auto q = c > nModChan ? 0 : c;
+                            modValue[c][i] += modMatrix[i][m] *
+                                           inputs[OSC_MOD_INPUT + m].getVoltage(q) *
+                                           RACK_TO_SURGE_CV_MUL;
+                        }
+                    }
+                }
             }
+
+            for (int i = 0; i < n_osc_params; ++i)
+            {
+                // This is the non-modulated version
+                //oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                oscstorage_display->p[i].set_value_f01(modValue[0][i+1]);
+            }
+
             for (int c = 0; c < nChan; ++c)
             {
                 bool needsReInit{false};
@@ -234,40 +267,13 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     needsReInit = true;
                 }
 
-                float modValue[n_osc_params + 1];
-                float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12.0;
-
-                modValue[0] = pitch0;
-                for (int i = 0; i < n_osc_params; ++i)
-                {
-                    modValue[i+1] = getParam(OSC_CTRL_PARAM_0 + i);
-                }
-
-                for (int i=0; i<n_osc_params+1; ++i)
-                {
-                    for (int m=0; m<n_mod_inputs; ++m)
-                    {
-                        auto q = c > nModChan[m] ? 0 : c;
-                        modValue[i] += modMatrix[i][m] * inputs[OSC_MOD_INPUT + m].getVoltage(q) * RACK_TO_SURGE_CV_MUL;
-                    }
-                }
-
-
-                for (int i = 0; i < n_osc_params; ++i)
-                {
-                    if (c == 0)
-                        // This is the non-modulated version
-                        //oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
-                        oscstorage_display->p[i].set_value_f01(modValue[i+1]);
-                }
-
                 if (outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R))
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
-                        oscstorage->p[i].set_value_f01(modValue[i+1]);
+                        oscstorage->p[i].set_value_f01(modValue[c][i+1]);
                     }
-                    if (SingleConfig<oscType>::supportsUnison())
+                    if constexpr (SingleConfig<oscType>::supportsUnison())
                     {
                         if (oscstorage->p[n_osc_params - 1].val.i != lastUnison[c])
                         {
@@ -277,12 +283,11 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     }
 
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
-
                     if (needsReInit)
                     {
-                        surge_osc[c]->init(modValue[0]);
+                        surge_osc[c]->init(modValue[c][0]);
                     }
-                    surge_osc[c]->process_block(modValue[0], 0, true);
+                    surge_osc[c]->process_block(modValue[c][0], 0, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
                     halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c], BLOCK_SIZE_OS);
