@@ -6,11 +6,28 @@
 #include <cstring>
 #include <sst/filters/HalfRateFilter.h>
 
-template <int type> struct SingleConfig
+template <int oscType> struct SingleConfig
 {
     static constexpr bool supportsUnison() { return false; }
 
-    typedef std::vector<std::pair<int, std::string>> knobs_t;
+    struct KnobDef
+    {
+        enum Type
+        {
+            PARAM,
+            INPUT
+        } type{PARAM};
+        std::string name;
+        int id{-1};
+
+        KnobDef(int kid, const std::string &nm)
+        : type(PARAM), id(kid), name(nm)
+        {}
+        KnobDef(Type t, int kid, const std::string &nm)
+            : type(t), id(kid), name(nm)
+        {}
+    };
+    typedef std::vector<KnobDef> knobs_t;
     static knobs_t getKnobs() { return {}; }
 };
 
@@ -36,7 +53,8 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 
         OSC_MOD_INPUT,
 
-        NUM_INPUTS = OSC_MOD_INPUT + n_mod_inputs
+        AUDIO_INPUT = OSC_MOD_INPUT + n_mod_inputs,
+        NUM_INPUTS
     };
     enum OutputIds
     {
@@ -188,12 +206,12 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                 }
             }
             const auto &knobConfig = SingleConfig<oscType>::getKnobs();
-            for (const auto &[pid, label] : knobConfig)
+            for (const auto k : knobConfig)
             {
-                int id = pid - PITCH_0;
+                int id = k.id - PITCH_0;
                 for (int m=0; m<n_mod_inputs; ++m)
                 {
-                    int modid = modulatorIndexFor(pid, m);
+                    int modid = modulatorIndexFor(k.id, m);
                     modMatrix[id][m] = getParam(modid);
                 }
             }
