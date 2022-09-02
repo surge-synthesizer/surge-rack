@@ -219,6 +219,11 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             for (int m=0; m<n_mod_inputs; ++m)
                 modMatrix[0][m] *= 12; // volts per octave
 
+            int nModChan[n_mod_inputs];
+            for (int m=0; m<n_mod_inputs; ++m)
+            {
+                nModChan[m] = inputs[OSC_MOD_INPUT + m].getChannels();
+            }
             for (int c = 0; c < nChan; ++c)
             {
                 bool needsReInit{false};
@@ -242,7 +247,8 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                 {
                     for (int m=0; m<n_mod_inputs; ++m)
                     {
-                        modValue[i] += modMatrix[i][m] * inputs[OSC_MOD_INPUT + m].getVoltage(c) * RACK_TO_SURGE_CV_MUL;
+                        auto q = c > nModChan[m] ? 0 : c;
+                        modValue[i] += modMatrix[i][m] * inputs[OSC_MOD_INPUT + m].getVoltage(q) * RACK_TO_SURGE_CV_MUL;
                     }
                 }
 
