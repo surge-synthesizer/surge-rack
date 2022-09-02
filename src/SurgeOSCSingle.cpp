@@ -19,6 +19,35 @@ SingleConfig<ot_classic>::knobs_t SingleConfig<ot_classic>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
 
+template<>
+SingleConfig<ot_string>::knobs_t SingleConfig<ot_string>::getKnobs()
+{
+    typedef SurgeOSCSingle<ot_string> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 1, "LEV"},
+            {M::OSC_CTRL_PARAM_0 + 2, "S1 DC-"},
+            {M::OSC_CTRL_PARAM_0 + 3, "AY S2"},
+            {KnobDef::INPUT, M::AUDIO_INPUT, "AUDIO"},
+            {M::OSC_CTRL_PARAM_0 + 4, "DETUNE"},
+            {M::OSC_CTRL_PARAM_0 + 5, "BALANCE"},
+            {M::OSC_CTRL_PARAM_0 + 6, "STIFF"}};
+}
+
+template<>
+SingleConfig<ot_modern>::knobs_t SingleConfig<ot_modern>::getKnobs()
+{
+    typedef SurgeOSCSingle<ot_modern> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 0, "SAW"},
+            {M::OSC_CTRL_PARAM_0 + 1, "PULSE"},
+            {M::OSC_CTRL_PARAM_0 + 2, "MULTI"},
+            {M::OSC_CTRL_PARAM_0 + 3, "WIDTH"},
+            {M::OSC_CTRL_PARAM_0 + 4, "SYNC"},
+            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
+}
+
 template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleWidgetCommon
 {
     typedef SurgeOSCSingle<oscType> M;
@@ -41,8 +70,10 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
 
         const auto &knobConfig = SingleConfig<oscType>::getKnobs();
         auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
-        for (const auto &[p,l] : knobConfig)
+        for (const auto &k : knobConfig)
         {
+            auto p = k.id;
+            auto l = k.name;
             idx++;
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId(vg));
@@ -262,23 +293,34 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
     auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
 
-    for (const auto &[pid, label] : knobConfig)
+    for (const auto k : knobConfig)
     {
-        auto uxp = xp + (columnWidth - 28) * 0.5;
-        auto uyp = yp + (columnWidth - 28) * 0.5;
-        auto baseKnob =
-            rack::createParam<rack::RoundBlackKnob>(rack::Vec(uxp, uyp), module, pid);
-        addParam(baseKnob);
-        for (int m=0; m<M::n_mod_inputs; ++m)
-        {
-            int id = M::modulatorIndexFor(pid, m);
-            auto *k = SurgeModulatableRing::create(rack::Vec(uxp, uyp), 28, module, id);
-            overlays[idx][m] = k;
-            k->setVisible(false);
-            k->underlyerParamWidget = baseKnob;
-            addChild(k);
-        }
+        auto pid = k.id;
+        auto label = k.name;
 
+        if (k.type == SingleConfig<oscType>::KnobDef::Type::PARAM)
+        {
+            auto uxp = xp + (columnWidth - 28) * 0.5;
+            auto uyp = yp + (columnWidth - 28) * 0.5;
+            auto baseKnob =
+                rack::createParam<rack::RoundBlackKnob>(rack::Vec(uxp, uyp), module, pid);
+            addParam(baseKnob);
+            for (int m = 0; m < M::n_mod_inputs; ++m)
+            {
+                int id = M::modulatorIndexFor(pid, m);
+                auto *k = SurgeModulatableRing::create(rack::Vec(uxp, uyp), 28, module, id);
+                overlays[idx][m] = k;
+                k->setVisible(false);
+                k->underlyerParamWidget = baseKnob;
+                addChild(k);
+            }
+        }
+        else
+        {
+            auto uxp = xp + (columnWidth - 24) * 0.5;
+            auto uyp = yp + (columnWidth - 24) * 0.5;
+            addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(uxp, uyp), module, k.id));
+        }
         idx++;
         if (idx == 4)
         {
