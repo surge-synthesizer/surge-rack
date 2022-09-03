@@ -404,7 +404,6 @@ struct SurgeOSC : virtual public SurgeModuleCommon
                     halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c], BLOCK_SIZE_OS);
                 }
             }
-            pc.update(this);
         }
 
         for (int c = 0; c < nChan; ++c)

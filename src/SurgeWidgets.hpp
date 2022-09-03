@@ -553,12 +553,12 @@ struct SurgeModulatableRing : rack::app::Knob
         nvgFill(vg);
     }
 
-
     static SurgeModulatableRing *create(rack::Vec pos, SurgeModuleCommon *module, int paramId)
     {
         return create(pos, 50, module, paramId);
     }
-    static SurgeModulatableRing *create(rack::Vec pos, int radius, SurgeModuleCommon *module, int paramId)
+    static SurgeModulatableRing *create(rack::Vec pos, int radius, SurgeModuleCommon *module,
+                                        int paramId)
     {
         auto *res = rack::createWidget<SurgeModulatableRing>(pos);
         res->box.size.x = radius;
