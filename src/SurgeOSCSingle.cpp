@@ -122,17 +122,15 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
     }
 };
 
-template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, SurgeStyle::StyleListener
+template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWidget, SurgeStyle::StyleListener
 {
-    OSCPlotWidget() : Widget() { SurgeStyle::addStyleListener(this); }
+    OSCPlotWidget() : TransparentWidget() { SurgeStyle::addStyleListener(this); }
     ~OSCPlotWidget() { SurgeStyle::removeStyleListener(this); }
 
     typename SurgeOSCSingleWidget<oscType>::M *module{nullptr};
     void setup(typename SurgeOSCSingleWidget<oscType>::M *m)
     {
         module = m;
-        addChild(new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
-                                                [this](NVGcontext *vg) { this->drawPlot(vg); }));
         if (module)
         {
             storage = module->storage.get();
@@ -144,15 +142,20 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, Surge
     {
         if (isDirty())
         {
-            for (auto w : children)
-            {
-                if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w))
-                {
-                    fw->dirty = true;
-                }
-            }
+            recalcPath();
         }
         rack::widget::Widget::step();
+    }
+
+    void draw(const DrawArgs &args) override {
+        drawPlot(args.vg);
+    }
+
+    void drawLayer(const DrawArgs &args, int layer) override {
+        if (layer == 1)
+        {
+            drawPlot(args.vg);
+        }
     }
 
     virtual void styleHasChanged() override
@@ -217,46 +220,63 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::Widget, Surge
         return spawn_osc(oscdata->type.val.i, storage, oscdata, tp, oscbuffer);
     }
 
-    void drawPlot(NVGcontext *vg)
+    std::vector<std::pair<float,float>> oscPath;
+    void recalcPath()
     {
         auto xp = box.size.x;
         auto yp = box.size.y;
 
-        if (module)
+        oscPath.clear();
+        auto osc = setupOscillator();
+        const float ups = 3.0, invups = 1.0/ups;
+
+        float disp_pitch_rs =
+            12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
+
+        osc->init(disp_pitch_rs, true, true);
+
+        int block_pos{BLOCK_SIZE_OS + 1};
+        for (int i=0; i<xp * ups; ++i)
         {
-            auto osc = setupOscillator();
-            const float ups = 3.0, invups = 1.0/ups;
-
-            float disp_pitch_rs =
-                12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
-
-            osc->init(disp_pitch_rs, true, true);
-
-            int block_pos{BLOCK_SIZE_OS + 1};
-            nvgBeginPath(vg);
-            for (int i=0; i<xp * ups; ++i)
+            if (block_pos >= BLOCK_SIZE_OS)
             {
-                if (block_pos >= BLOCK_SIZE_OS)
-                {
-                    osc->process_block(disp_pitch_rs);
-                    block_pos = 0;
-                }
+                osc->process_block(disp_pitch_rs);
+                block_pos = 0;
+            }
 
-                float yc = (-osc->output[block_pos] * 0.5 + 0.5) * yp;
-                if (i == 0)
+            float yc = (-osc->output[block_pos] * 0.5 + 0.5) * yp;
+            oscPath.emplace_back(i *invups, yc);
+            block_pos ++;
+        }
+
+        osc->~Oscillator();
+
+    }
+
+    void drawPlot(NVGcontext *vg)
+    {
+        if (!oscPath.empty())
+        {
+            nvgBeginPath(vg);
+            bool first{true};
+            for (const auto &[x,y] : oscPath)
+            {
+                if (first)
                 {
-                    nvgMoveTo(vg, i * invups, yc);
+                    nvgMoveTo(vg, x, y);
                 }
                 else
                 {
-                    nvgLineTo(vg, i * invups, yc);
+                    nvgLineTo(vg, x, y);
                 }
-                block_pos ++;
+                first = false;
             }
-
-            osc->~Oscillator();
             nvgStrokeColor(vg, nvgRGB(255, 0x90, 0));
-            nvgStrokeWidth(vg, 1);
+            nvgStrokeWidth(vg, 1.25);
+            nvgStroke(vg);
+
+            nvgStrokeColor(vg, nvgRGBA(255, 0x90, 0, 50));
+            nvgStrokeWidth(vg, 3);
             nvgStroke(vg);
         }
     }

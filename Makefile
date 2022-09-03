@@ -15,6 +15,7 @@ LIBFILESYSTEM =
 endif
 
 OBJECTS += $(libsurge) \
+	$(SURGE_BLD)/src/common/libjuce_dsp_rack_sub.a \
 	$(SURGE_BLD)/src/lua/libsurge-lua-src.a \
 	$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
     $(SURGE_BLD)/libs/libsamplerate/src/libsamplerate.a \
@@ -26,6 +27,7 @@ OBJECTS += $(libsurge) \
     $(SURGE_BLD)/libs/sqlite-3.23.3/libsqlite.a \
     $(SURGE_BLD)/libs/airwindows/libairwindows.a \
     $(SURGE_BLD)/libs/eurorack/libeurorack.a
+
 
 # Trigger the static library to be built when running `make dep`
 DEPS += $(libsurge)
