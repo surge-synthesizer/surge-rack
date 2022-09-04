@@ -101,6 +101,10 @@ dist:	build/surge-data res
 
 build/surge-data:
 	mkdir -p build/surge-data
+	cp surge/resources/surge-shared/windows.wt build/surge-data
+	cp -R surge/resources/data/wavetables build/surge-data/wavetables
+	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty
+
 
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data
 

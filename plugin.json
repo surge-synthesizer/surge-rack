@@ -39,6 +39,60 @@
       ]
     },
     {
+      "slug": "SurgeXTOSCWavetable",
+      "name": "SXT Wavetable VCO",
+      "description": "The Surge Wavetable Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCWindow",
+      "name": "SXT Window VCO",
+      "description": "The Surge Window Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCSine",
+      "name": "SXT Sine VCO",
+      "description": "The Surge Sine Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCFM2",
+      "name": "SXT FM2 VCO",
+      "description": "The Surge FM2 Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCFM3",
+      "name": "SXT FM3 VCO",
+      "description": "The Surge FM3 Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTOSCSHNoise",
+      "name": "SXT S&H Noise VCO",
+      "description": "The Surge S&H Noise Oscillator",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+    {
       "slug": "SurgeXTOSCAlias",
       "name": "SXT Alias VCO",
       "description": "The Surge Alias Oscillator",

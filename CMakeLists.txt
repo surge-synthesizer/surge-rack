@@ -20,5 +20,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_custom_command(TARGET ${PROJECT_NAME}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make dist -j
         COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make install -j
         USES_TERMINAL)

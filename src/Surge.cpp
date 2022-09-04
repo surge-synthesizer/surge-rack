@@ -26,6 +26,12 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
 
     p->addModel(modelSurgeOSCClassic);
     p->addModel(modelSurgeOSCModern);
+    p->addModel(modelSurgeOSCWavetable);
+    p->addModel(modelSurgeOSCWindow);
+    p->addModel(modelSurgeOSCSine);
+    p->addModel(modelSurgeOSCFM2);
+    p->addModel(modelSurgeOSCFM3);
+    p->addModel(modelSurgeOSCSHNoise);
     p->addModel(modelSurgeOSCAlias);
     p->addModel(modelSurgeOSCString);
 
@@ -37,8 +43,6 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeWTOSC);
     p->addModel(modelSurgeNoise);
     p->addModel(modelSurgeWaveShaper);
-
-    p->addModel(modelSurgePatchPlayer);
 
     p->addModel(modelSurgeLFO);
 
@@ -60,6 +64,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
 }
 
 #if OLD_PLUGIN_JSON
+// What it used to be
 {
     "slug" : "SurgeXTDelay",
     "name" : "SurgeXTDelay",

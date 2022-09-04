@@ -26,6 +26,12 @@ extern rack::Plugin *pluginInstance;
 
 extern rack::Model *modelSurgeOSCClassic;
 extern rack::Model *modelSurgeOSCModern;
+extern rack::Model *modelSurgeOSCWavetable;
+extern rack::Model *modelSurgeOSCWindow;
+extern rack::Model *modelSurgeOSCSine;
+extern rack::Model *modelSurgeOSCFM2;
+extern rack::Model *modelSurgeOSCFM3;
+extern rack::Model *modelSurgeOSCSHNoise;
 extern rack::Model *modelSurgeOSCAlias;
 extern rack::Model *modelSurgeOSCString;
 
