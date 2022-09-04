@@ -2,52 +2,10 @@
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
 
+#include "SurgeOSCSingleConfig.hpp"
 
-template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() { return true; }
-
-template <> constexpr bool SingleConfig<ot_classic>::supportsUnison() { return true; }
-template<>
-SingleConfig<ot_classic>::knobs_t SingleConfig<ot_classic>::getKnobs()
+namespace sst::surgext_rack::vco::ui
 {
-    typedef SurgeOSCSingle<ot_classic> M;
-    return {{M::PITCH_0, "PITCH"},
-            {M::OSC_CTRL_PARAM_0, "SHAPE"},
-            {M::OSC_CTRL_PARAM_0 + 1, "WIDTH1"},
-            {M::OSC_CTRL_PARAM_0 + 2, "WIDTH2"},
-            {M::OSC_CTRL_PARAM_0 + 3, "SUBMIX"},
-            {M::OSC_CTRL_PARAM_0 + 4, "SYNC"},
-            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
-}
-
-template<>
-SingleConfig<ot_string>::knobs_t SingleConfig<ot_string>::getKnobs()
-{
-    typedef SurgeOSCSingle<ot_string> M;
-
-    return {{M::PITCH_0, "PITCH"},
-            {M::OSC_CTRL_PARAM_0 + 1, "LEV"},
-            {M::OSC_CTRL_PARAM_0 + 2, "S1 DC-"},
-            {M::OSC_CTRL_PARAM_0 + 3, "AY S2"},
-            {KnobDef::INPUT, M::AUDIO_INPUT, "AUDIO"},
-            {M::OSC_CTRL_PARAM_0 + 4, "DETUNE"},
-            {M::OSC_CTRL_PARAM_0 + 5, "BALANCE"},
-            {M::OSC_CTRL_PARAM_0 + 6, "STIFF"}};
-}
-
-template<>
-SingleConfig<ot_modern>::knobs_t SingleConfig<ot_modern>::getKnobs()
-{
-    typedef SurgeOSCSingle<ot_modern> M;
-
-    return {{M::PITCH_0, "PITCH"},
-            {M::OSC_CTRL_PARAM_0 + 0, "SAW"},
-            {M::OSC_CTRL_PARAM_0 + 1, "PULSE"},
-            {M::OSC_CTRL_PARAM_0 + 2, "MULTI"},
-            {M::OSC_CTRL_PARAM_0 + 3, "WIDTH"},
-            {M::OSC_CTRL_PARAM_0 + 4, "SYNC"},
-            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
-}
-
 template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleWidgetCommon
 {
     typedef SurgeOSCSingle<oscType> M;
@@ -56,7 +14,7 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
     int plotStart = 18, plotHeight = 100;
     int sideMargin = 5;
     int numberOfScrews = 10;
-    int columnWidth = (SCREW_WIDTH * numberOfScrews - 2 * sideMargin)/ 4;
+    int columnWidth = (SCREW_WIDTH * numberOfScrews - 2 * sideMargin) / 4;
     int labelHeight = 15;
 
     std::array<std::array<SurgeModulatableRing *, M::n_mod_inputs>, 8> overlays;
@@ -79,12 +37,12 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 11);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            nvgText(vg, xp + columnWidth * 0.5, yp + columnWidth,
-                    l.c_str(), nullptr);
+            nvgText(vg, xp + columnWidth * 0.5, yp + columnWidth, l.c_str(), nullptr);
 
             if (idx == 4)
             {
-                xp = sideMargin; yp += columnWidth + labelHeight;
+                xp = sideMargin;
+                yp += columnWidth + labelHeight;
             }
             else
             {
@@ -94,15 +52,14 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
 
         xp = sideMargin;
         yp += columnWidth + sideMargin + columnWidth;
-        for (int i=0; i<M::n_mod_inputs; ++i)
+        for (int i = 0; i < M::n_mod_inputs; ++i)
         {
             nvgBeginPath(vg);
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 11);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            auto l = std::string( "MOD " ) + std::to_string(i+1);
-            nvgText(vg, xp + columnWidth * 0.5, yp,
-                    l.c_str(), nullptr);
+            auto l = std::string("MOD ") + std::to_string(i + 1);
+            nvgText(vg, xp + columnWidth * 0.5, yp, l.c_str(), nullptr);
             xp += columnWidth;
         }
         xp = sideMargin;
@@ -114,15 +71,14 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleW
             nvgFontFaceId(vg, fontId(vg));
             nvgFontSize(vg, 11);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            nvgText(vg, xp + columnWidth * 0.5, yp,
-                    l.c_str(), nullptr);
+            nvgText(vg, xp + columnWidth * 0.5, yp, l.c_str(), nullptr);
             xp += columnWidth;
         }
-
     }
 };
 
-template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWidget, SurgeStyle::StyleListener
+template <int oscType>
+struct OSCPlotWidget : public rack::widget::TransparentWidget, SurgeStyle::StyleListener
 {
     OSCPlotWidget() : TransparentWidget() { SurgeStyle::addStyleListener(this); }
     ~OSCPlotWidget() { SurgeStyle::removeStyleListener(this); }
@@ -140,6 +96,9 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
 
     void step() override
     {
+        if (!module)
+            return;
+
         if (isDirty())
         {
             recalcPath();
@@ -147,11 +106,10 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
         rack::widget::Widget::step();
     }
 
-    void draw(const DrawArgs &args) override {
-        drawPlot(args.vg);
-    }
+    void draw(const DrawArgs &args) override { drawPlot(args.vg); }
 
-    void drawLayer(const DrawArgs &args, int layer) override {
+    void drawLayer(const DrawArgs &args, int layer) override
+    {
         if (layer == 1)
         {
             drawPlot(args.vg);
@@ -220,7 +178,7 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
         return spawn_osc(oscdata->type.val.i, storage, oscdata, tp, oscbuffer);
     }
 
-    std::vector<std::pair<float,float>> oscPath;
+    std::vector<std::pair<float, float>> oscPath;
     void recalcPath()
     {
         auto xp = box.size.x;
@@ -228,7 +186,7 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
 
         oscPath.clear();
         auto osc = setupOscillator();
-        const float ups = 3.0, invups = 1.0/ups;
+        const float ups = 3.0, invups = 1.0 / ups;
 
         float disp_pitch_rs =
             12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
@@ -236,7 +194,7 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
         osc->init(disp_pitch_rs, true, true);
 
         int block_pos{BLOCK_SIZE_OS + 1};
-        for (int i=0; i<xp * ups; ++i)
+        for (int i = 0; i < xp * ups; ++i)
         {
             if (block_pos >= BLOCK_SIZE_OS)
             {
@@ -245,12 +203,11 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
             }
 
             float yc = (-osc->output[block_pos] * 0.5 + 0.5) * yp;
-            oscPath.emplace_back(i *invups, yc);
-            block_pos ++;
+            oscPath.emplace_back(i * invups, yc);
+            block_pos++;
         }
 
         osc->~Oscillator();
-
     }
 
     void drawPlot(NVGcontext *vg)
@@ -259,7 +216,7 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
         {
             nvgBeginPath(vg);
             bool first{true};
-            for (const auto &[x,y] : oscPath)
+            for (const auto &[x, y] : oscPath)
             {
                 if (first)
                 {
@@ -278,6 +235,11 @@ template <int oscType> struct OSCPlotWidget : public rack::widget::TransparentWi
             nvgStrokeColor(vg, nvgRGBA(255, 0x90, 0, 50));
             nvgStrokeWidth(vg, 3);
             nvgStroke(vg);
+        }
+
+        if (!module)
+        {
+            // Draw the module name here for preview goodness
         }
     }
 };
@@ -300,14 +262,13 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     // addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(0), module, M::OUTPUT_L));
     // addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(1), module, M::OUTPUT_R));
 
-
     // auto retrigPos = rack::Vec(x0, yRes);
     // addInput(rack::createInput<rack::PJ301MPort>(retrigPos, module, M::RETRIGGER));
 
     auto t = plotStart;
     auto h = plotHeight;
-    addChild(
-        OSCPlotWidget<oscType>::create(rack::Vec(sideMargin, t), rack::Vec(box.size.x - 2 * sideMargin, h), module));
+    addChild(OSCPlotWidget<oscType>::create(rack::Vec(sideMargin, t),
+                                            rack::Vec(box.size.x - 2 * sideMargin, h), module));
 
     const auto &knobConfig = SingleConfig<oscType>::getKnobs();
 
@@ -355,12 +316,12 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
     xp = sideMargin;
     yp += columnWidth + labelHeight + sideMargin;
-    for (int i=0; i<M::n_mod_inputs; ++i)
+    for (int i = 0; i < M::n_mod_inputs; ++i)
     {
-        auto *k = rack::createWidget<SurgeUIOnlyToggleButton>(rack::Vec(xp + (columnWidth-20)/2, yp));
+        auto *k =
+            rack::createWidget<SurgeUIOnlyToggleButton>(rack::Vec(xp + (columnWidth - 20) / 2, yp));
         toggles[i] = k;
-        k->onToggle = [this, toggleIdx = i](bool isOn)
-        {
+        k->onToggle = [this, toggleIdx = i](bool isOn) {
             for (const auto &t : toggles)
                 if (t)
                     t->setState(false);
@@ -371,7 +332,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
             if (isOn)
             {
                 toggles[toggleIdx]->setState(true);
-                for (const auto &ob: overlays)
+                for (const auto &ob : overlays)
                     if (ob[toggleIdx])
                     {
                         ob[toggleIdx]->setVisible(true);
@@ -382,8 +343,9 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
         addChild(k);
 
-        addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp + columnWidth), module,
-                                                     M::OSC_MOD_INPUT + i));
+        addInput(rack::createInput<rack::PJ301MPort>(
+            rack::Vec(xp + (columnWidth - 24) / 2, yp + columnWidth), module,
+            M::OSC_MOD_INPUT + i));
 
         xp += columnWidth;
     }
@@ -391,32 +353,57 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     xp = sideMargin;
     yp += 2 * columnWidth + labelHeight + sideMargin;
 
-    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::PITCH_CV));
+    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp), module,
+                                                 M::PITCH_CV));
     xp += columnWidth;
-    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::RETRIGGER));
-    xp += columnWidth;
-
-
-    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::OUTPUT_L));
-    xp += columnWidth;
-    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth-24)/2, yp), module, M::OUTPUT_R));
+    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp), module,
+                                                 M::RETRIGGER));
     xp += columnWidth;
 
+    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp),
+                                                   module, M::OUTPUT_L));
+    xp += columnWidth;
+    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp),
+                                                   module, M::OUTPUT_R));
+    xp += columnWidth;
 }
 
+} // namespace sst::surgext_rack::vco::ui
+
+namespace vcoui = sst::surgext_rack::vco::ui;
 
 rack::Model *modelSurgeOSCClassic =
-    rack::createModel<SurgeOSCSingleWidget<ot_classic>::M, SurgeOSCSingleWidget<ot_classic>>(
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_classic>::M, vcoui::SurgeOSCSingleWidget<ot_classic>>(
         "SurgeXTOSCClassic");
 
 rack::Model *modelSurgeOSCModern =
-    rack::createModel<SurgeOSCSingleWidget<ot_modern>::M, SurgeOSCSingleWidget<ot_modern>>(
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_modern>::M, vcoui::SurgeOSCSingleWidget<ot_modern>>(
         "SurgeXTOSCModern");
 
-rack::Model *modelSurgeOSCString =
-    rack::createModel<SurgeOSCSingleWidget<ot_string>::M, SurgeOSCSingleWidget<ot_string>>(
-        "SurgeXTOSCString");
+rack::Model *modelSurgeOSCWavetable =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_wavetable>::M, vcoui::SurgeOSCSingleWidget<ot_wavetable>>(
+        "SurgeXTOSCWavetable");
+rack::Model *modelSurgeOSCWindow =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_window>::M, vcoui::SurgeOSCSingleWidget<ot_window>>(
+        "SurgeXTOSCWindow");
 
+rack::Model *modelSurgeOSCSine =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_sine>::M, vcoui::SurgeOSCSingleWidget<ot_sine>>(
+        "SurgeXTOSCSine");
+rack::Model *modelSurgeOSCFM2 =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_FM2>::M, vcoui::SurgeOSCSingleWidget<ot_FM2>>(
+        "SurgeXTOSCFM2");
+rack::Model *modelSurgeOSCFM3 =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_FM3>::M, vcoui::SurgeOSCSingleWidget<ot_FM3>>(
+        "SurgeXTOSCFM3");
+
+rack::Model *modelSurgeOSCSHNoise =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_shnoise>::M, vcoui::SurgeOSCSingleWidget<ot_shnoise>>(
+        "SurgeXTOSCSHNoise");
+
+rack::Model *modelSurgeOSCString =
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_string>::M, vcoui::SurgeOSCSingleWidget<ot_string>>(
+        "SurgeXTOSCString");
 rack::Model *modelSurgeOSCAlias =
-    rack::createModel<SurgeOSCSingleWidget<ot_alias>::M, SurgeOSCSingleWidget<ot_alias>>(
+    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_alias>::M, vcoui::SurgeOSCSingleWidget<ot_alias>>(
         "SurgeXTOSCAlias");

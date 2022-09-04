@@ -6,6 +6,8 @@
 #include <cstring>
 #include <sst/filters/HalfRateFilter.h>
 
+namespace sst::surgext_rack::vco
+{
 template <int oscType> struct SingleConfig
 {
     static constexpr bool supportsUnison() { return false; }
@@ -20,12 +22,8 @@ template <int oscType> struct SingleConfig
         std::string name;
         int id{-1};
 
-        KnobDef(int kid, const std::string &nm)
-        : type(PARAM), id(kid), name(nm)
-        {}
-        KnobDef(Type t, int kid, const std::string &nm)
-            : type(t), id(kid), name(nm)
-        {}
+        KnobDef(int kid, const std::string &nm) : type(PARAM), id(kid), name(nm) {}
+        KnobDef(Type t, int kid, const std::string &nm) : type(t), id(kid), name(nm) {}
     };
     typedef std::vector<KnobDef> knobs_t;
     static knobs_t getKnobs() { return {}; }
@@ -43,7 +41,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 
         OSC_MOD_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params,
 
-        NUM_PARAMS = OSC_MOD_PARAM_0 + (n_osc_params+1) * n_mod_inputs
+        NUM_PARAMS = OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs
     };
     enum InputIds
     {
@@ -103,7 +101,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                 OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
         }
 
-        for (int i=OSC_MOD_PARAM_0; i<OSC_MOD_PARAM_0 + (n_osc_params+1)*n_mod_inputs; ++i)
+        for (int i = OSC_MOD_PARAM_0; i < OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs; ++i)
         {
             configParam(i, -1, 1, 0);
         }
@@ -196,11 +194,11 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             // values when you need them".
             processPosition = 0;
 
-            float modMatrix[n_osc_params+1][n_mod_inputs];
+            float modMatrix[n_osc_params + 1][n_mod_inputs];
 
-            for (int i=0; i<n_osc_params+1; ++i)
+            for (int i = 0; i < n_osc_params + 1; ++i)
             {
-                for (int m=0; m<n_mod_inputs; ++m)
+                for (int m = 0; m < n_mod_inputs; ++m)
                 {
                     modMatrix[i][m] = 0.f;
                 }
@@ -209,19 +207,19 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             for (const auto k : knobConfig)
             {
                 int id = k.id - PITCH_0;
-                for (int m=0; m<n_mod_inputs; ++m)
+                for (int m = 0; m < n_mod_inputs; ++m)
                 {
                     int modid = modulatorIndexFor(k.id, m);
                     modMatrix[id][m] = getParam(modid);
                 }
             }
 
-            for (int m=0; m<n_mod_inputs; ++m)
+            for (int m = 0; m < n_mod_inputs; ++m)
                 modMatrix[0][m] *= 12; // volts per octave
 
             float modValue[rack::PORT_MAX_CHANNELS][n_osc_params + 1];
 
-            for (int c=0; c<nChan; ++c)
+            for (int c = 0; c < nChan; ++c)
             {
                 float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12.0;
 
@@ -231,7 +229,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     modValue[c][i + 1] = getParam(OSC_CTRL_PARAM_0 + i);
                 }
             }
-            for (int m=0; m<n_mod_inputs; ++m)
+            for (int m = 0; m < n_mod_inputs; ++m)
             {
                 if (inputs[OSC_MOD_INPUT + m].isConnected())
                 {
@@ -243,8 +241,8 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                         {
                             auto q = c > nModChan ? 0 : c;
                             modValue[c][i] += modMatrix[i][m] *
-                                           inputs[OSC_MOD_INPUT + m].getVoltage(q) *
-                                           RACK_TO_SURGE_CV_MUL;
+                                              inputs[OSC_MOD_INPUT + m].getVoltage(q) *
+                                              RACK_TO_SURGE_CV_MUL;
                         }
                     }
                 }
@@ -253,8 +251,8 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             for (int i = 0; i < n_osc_params; ++i)
             {
                 // This is the non-modulated version
-                //oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
-                oscstorage_display->p[i].set_value_f01(modValue[0][i+1]);
+                // oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                oscstorage_display->p[i].set_value_f01(modValue[0][i + 1]);
             }
 
             for (int c = 0; c < nChan; ++c)
@@ -271,7 +269,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
-                        oscstorage->p[i].set_value_f01(modValue[c][i+1]);
+                        oscstorage->p[i].set_value_f01(modValue[c][i + 1]);
                     }
                     if constexpr (SingleConfig<oscType>::supportsUnison())
                     {
@@ -290,7 +288,8 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     surge_osc[c]->process_block(modValue[c][0], 0, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
-                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c], BLOCK_SIZE_OS);
+                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
+                                                    BLOCK_SIZE_OS);
                 }
             }
             pc.update(this);
@@ -309,14 +308,12 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
             else
             {
                 if (outputConnected(OUTPUT_L))
-                    outputs[OUTPUT_L].setVoltage(osc_downsample[0][c][processPosition] *
-                                                     SURGE_TO_RACK_OSC_MUL,
-                                                 c);
+                    outputs[OUTPUT_L].setVoltage(
+                        osc_downsample[0][c][processPosition] * SURGE_TO_RACK_OSC_MUL, c);
 
                 if (outputConnected(OUTPUT_R))
-                    outputs[OUTPUT_R].setVoltage(osc_downsample[1][c][processPosition] *
-                                                     SURGE_TO_RACK_OSC_MUL,
-                                                 c);
+                    outputs[OUTPUT_R].setVoltage(
+                        osc_downsample[1][c][processPosition] * SURGE_TO_RACK_OSC_MUL, c);
             }
         }
 
@@ -334,3 +331,4 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 
     rack::dsp::SchmittTrigger reTrigger[MAX_POLY];
 };
+}
