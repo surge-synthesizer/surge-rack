@@ -1,3 +1,5 @@
+#if BUILD_OLD_WIDGETS
+
 #include "SurgeLFO.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -253,3 +255,4 @@ SurgeLFOWidget::SurgeLFOWidget(SurgeLFOWidget::M *module) : SurgeModuleWidgetCom
 }
 
 rack::Model *modelSurgeLFO = rack::createModel<SurgeLFOWidget::M, SurgeLFOWidget>("SurgeLFO");
+#endif

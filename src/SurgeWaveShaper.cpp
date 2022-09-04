@@ -1,3 +1,5 @@
+#if BUILD_OLD_WIDGETS
+
 #include "SurgeWaveShaper.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -103,3 +105,4 @@ SurgeWaveShaperWidget::SurgeWaveShaperWidget(SurgeWaveShaperWidget::M *module)
 
 rack::Model *modelSurgeWaveShaper =
     rack::createModel<SurgeWaveShaperWidget::M, SurgeWaveShaperWidget>("SurgeWaveShaper");
+#endif

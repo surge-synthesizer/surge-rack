@@ -18,6 +18,7 @@ void stackToInfo()
 #endif
 }
 
+#if BUILD_OLD_WIDGETS
 void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float w, float h,
                                          std::string label)
 {
@@ -205,3 +206,4 @@ void SurgeButtonBank::drawWidget(NVGcontext *vg)
             cell++;
         }
 }
+#endif

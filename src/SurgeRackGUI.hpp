@@ -10,9 +10,11 @@
 #include <functional>
 #include <map>
 
+namespace sst::surgext_rack::widgets
+{
 struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget,
-                                 SurgeStyle,
-                                 SurgeStyle::StyleListener
+                                 style::SurgeStyle,
+                                 style::StyleListener
 {
     SurgeModuleWidgetCommon() : rack::ModuleWidget()
     {
@@ -20,7 +22,7 @@ struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget,
         addStyleListener(this);
     }
     ~SurgeModuleWidgetCommon() { removeStyleListener(this); }
-    virtual void styleHasChanged() override { dirtyFB(this); }
+    virtual void onStyleChanged() override { dirtyFB(this); }
 
     void dirtyFB(rack::Widget *w)
     {
@@ -33,3 +35,4 @@ struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget,
 
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 };
+} // namespace sst::surgext_rack::widgets

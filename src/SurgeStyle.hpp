@@ -12,6 +12,9 @@
 
 namespace logger = rack::logger;
 
+namespace sst::surgext_rack::style
+{
+
 // Font dictionary
 struct InternalFontMgr
 {
@@ -28,11 +31,54 @@ struct InternalFontMgr
     }
 };
 
+struct StyleListener
+{
+    virtual void onStyleChanged() = 0;
+};
 struct SurgeStyle
 {
+    static std::unordered_set<StyleListener *> listeners;
+
+    static void addStyleListener(StyleListener *l) { listeners.insert(l); }
+    static void removeStyleListener(StyleListener *l) { listeners.erase(l); }
+    static void notifyStyleListeners()
+    {
+        for (auto l : listeners)
+            l->onStyleChanged();
+    }
+
+    // FIXME - nuke these
+    void loadStyle() {}
+    static void loadStyle(const std::string &) {}
+    static std::vector<std::string> styleList;
+
+    static const char *fontFace() { return "res/xt/fonts/quicksand/Quicksand-Regular.ttf"; };
+    static const char *fontFaceBold() { return "res/xt/fonts/quicksand/Quicksand-Bold.ttf"; };
+
+    static int fid, fidBold;
+    static int fontId(NVGcontext *vg)
+    {
+        if (fid < 0)
+            fid = InternalFontMgr::get(vg, fontFace());
+        return fid;
+    }
+    static int fontIdBold(NVGcontext *vg)
+    {
+        if (fidBold < 0)
+            fidBold = InternalFontMgr::get(vg, fontFaceBold());
+        return fidBold;
+    }
+
+#if BUILD_OLD_WIDGETS
 #define GETCOLFN(nm)                                                                               \
-    static NVGcolor nm() { return getColorFromMap(#nm); }                                          \
-    static std::string nm##_KEY() { return #nm; }
+    static NVGcolor nm()                                                                           \
+    {                                                                                              \
+        return getColorFromMap(#nm);                                                               \
+    }                                                                                              \
+    static std::string nm##_KEY()                                                                  \
+    {                                                                                              \
+        return #nm;                                                                                \
+    }
 
     GETCOLFN(panelBackground);
     GETCOLFN(panelBackgroundOutline);
@@ -440,4 +486,6 @@ struct SurgeStyle
         }
         return it->second;
     }
+#endif
 };
+} // namespace sst::surgext_rack::style

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:version="1.0 (4035a4f, 2020-05-01)" sodipodi:docname="mod-button-dark.svg" version="1.1" viewBox="0 0 24.566928 24.566928" height="6.5mm" width="6.5mm" data-name="Layer 2" id="Layer_2">
+  <metadata id="metadata3266">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs id="defs3264">
+    <linearGradient id="linear-gradient" x1="-282.93439" y1="-950.21301" x2="-259.86038" y2="-950.21301" gradientTransform="rotate(90,-610.8051,-327.87102)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#828282" id="stop3829" />
+      <stop offset="1" stop-color="#171717" id="stop3831" />
+    </linearGradient>
+    <linearGradient id="linear-gradient-9" x1="57.942791" y1="63.761051" x2="78.919167" y2="63.761051" gradientTransform="rotate(-90,12.823195,66.096015)" gradientUnits="userSpaceOnUse">
+      <stop offset=".00559" stop-color="#6b6b6b" id="stop4431" />
+      <stop offset="1" stop-color="#e8e8e8" id="stop4433" />
+    </linearGradient>
+    <linearGradient id="linear-gradient-6" x1="8.9636698" y1="4.2776198" x2="8.9636698" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" id="stop6209" />
+      <stop offset="1" stop-color="#fff" stop-opacity="0" id="stop6211" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview inkscape:current-layer="Layer_2" inkscape:window-maximized="0" inkscape:window-y="221" inkscape:window-x="203" inkscape:cy="31.127935" inkscape:cx="16.089441" inkscape:zoom="11.569609" units="mm" inkscape:document-units="mm" showgrid="false" id="namedview3262" inkscape:window-height="1188" inkscape:window-width="1904" inkscape:pageshadow="2" inkscape:pageopacity="0" guidetolerance="10" gridtolerance="10" objecttolerance="10" borderopacity="1" bordercolor="#666666" pagecolor="#ffffff" />
+  <g transform="matrix(0.96296297,0,0,0.96296297,-290.75235,-1145.8787)" id="KNOBS">
+    <g transform="translate(301.93513,1189.951)" id="g5959-5">
+      <path d="m 25.51181,12.75684 c 0,7.04435 -5.71259,12.75497 -12.75684,12.75497 C 5.71166,25.51181 0,19.80119 0,12.75684 0,5.70968 5.71166,0 12.75497,0 19.79922,0 25.51181,5.70968 25.51181,12.75684" id="path5961-3" />
+    </g>
+  </g>
+  <g id="KNOBS-5" transform="matrix(0.96296268,0,0,0.96296268,1.1737542,1.1737567)">
+    <path id="path5961-3-3" d="M 0,11.53615 C 0,5.16493 5.16673,0 11.53786,0 c 6.37028,0 11.53616,5.16494 11.53616,11.53616 0,6.37377 -5.16588,11.53786 -11.53616,11.53785 C 5.16672,23.07401 0,17.90992 0,11.53615" style="fill:url(#linear-gradient)" />
+  </g>
+  <g id="KNOBS-61" transform="matrix(0.962907,0,0,0.962907,3.6522843,19.274123)">
+    <g style="opacity:0.2" id="g6218">
+      <path d="m 8.96435,4.27762 c 3.61949,0 6.84703,-1.6693 8.96299,-4.27762 H 0 c 2.11633,2.60832 5.34437,4.27762 8.96435,4.27762 z" style="fill:url(#linear-gradient-6)" id="path6216" />
+    </g>
+  </g>
+  <g id="KNOBS-0" transform="matrix(0.96296326,0,0,0.96296282,-288.56871,-1143.6949)">
+    <g style="opacity:0.21" id="g4440">
+      <g id="g5959-5-1" transform="translate(301.93513,1189.951)">
+        <path id="path5961-3-33" d="M 10.48742,20.97638 C 4.6954,20.97638 0,16.27936 0,10.48742 0,4.69625 4.69539,0 10.48741,0 c 5.79434,0 10.48896,4.69625 10.48896,10.48741 0,5.79194 -4.69462,10.48896 -10.48896,10.48896" style="fill:url(#linear-gradient-9)" />
+      </g>
+    </g>
+  </g>
+  <g id="KNOBS-6" transform="matrix(0.96296275,0,0,0.96296275,2.8636676,2.8636702)">
+    <circle cx="9.7820997" cy="9.7820997" r="9.7795296" style="opacity:0.89;fill:#525252" id="circle5042" />
+  </g>
+</svg>

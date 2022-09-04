@@ -3,8 +3,9 @@
 #include "rack.hpp"
 #include <set>
 
-#define SCREW_WIDTH 15
-#define RACK_HEIGHT 380
+// FIXME - remove these eventually
+#define SCREW_WIDTH rack::app::RACK_GRID_WIDTH
+#define RACK_HEIGHT rack::app::RACK_GRID_HEIGHT
 
 #define MAX_POLY 16
 

@@ -3,85 +3,42 @@
 #include "SurgeRackGUI.hpp"
 
 #include "SurgeOSCSingleConfig.hpp"
+#include "XTWidgets.h"
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct SurgeOSCSingleWidget : public virtual SurgeModuleWidgetCommon
+template <int oscType> struct SurgeOSCSingleWidget : public virtual widgets::SurgeModuleWidgetCommon
 {
     typedef SurgeOSCSingle<oscType> M;
     SurgeOSCSingleWidget(M *module);
 
-    int plotStart = 18, plotHeight = 100;
-    int sideMargin = 5;
-    int numberOfScrews = 10;
-    int columnWidth = (SCREW_WIDTH * numberOfScrews - 2 * sideMargin) / 4;
-    int labelHeight = 15;
+    float plotH_MM = 36;
+    float plotW_MM = 51;
+    float plotCX_MM = 30.48;
+    float plotCY_MM = 27.35;
 
-    std::array<std::array<SurgeModulatableRing *, M::n_mod_inputs>, 8> overlays;
-    std::array<SurgeUIOnlyToggleButton *, M::n_mod_inputs> toggles;
+    float plotControlsH_MM = 5;
 
-    void moduleBackground(NVGcontext *vg)
-    {
-        auto t = plotStart;
-        auto h = plotHeight;
-        drawTextBGRect(vg, sideMargin, t, box.size.x - 2 * sideMargin, h);
+    std::array<float, 4> columnCenters_MM{9.48, 23.48, 37.48, 51.48};
+    std::array<float, 5> rowCenters_MM{55,71,85.32, 100.16, 114.5};
+    float verticalPortOffset_MM = 0.5;
 
-        const auto &knobConfig = SingleConfig<oscType>::getKnobs();
-        auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
-        for (const auto &k : knobConfig)
-        {
-            auto p = k.id;
-            auto l = k.name;
-            idx++;
-            nvgBeginPath(vg);
-            nvgFontFaceId(vg, fontId(vg));
-            nvgFontSize(vg, 11);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            nvgText(vg, xp + columnWidth * 0.5, yp + columnWidth, l.c_str(), nullptr);
+    float plotStartX = rack::mm2px(plotCX_MM - plotW_MM * 0.5);
+    float plotStartY = rack::mm2px(plotCY_MM - plotH_MM * 0.5);
+    float plotW = rack::mm2px(plotW_MM);
+    float plotH = rack::mm2px(plotH_MM - plotControlsH_MM);
 
-            if (idx == 4)
-            {
-                xp = sideMargin;
-                yp += columnWidth + labelHeight;
-            }
-            else
-            {
-                xp += columnWidth;
-            }
-        }
+    int numberOfScrews = 12;
 
-        xp = sideMargin;
-        yp += columnWidth + sideMargin + columnWidth;
-        for (int i = 0; i < M::n_mod_inputs; ++i)
-        {
-            nvgBeginPath(vg);
-            nvgFontFaceId(vg, fontId(vg));
-            nvgFontSize(vg, 11);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            auto l = std::string("MOD ") + std::to_string(i + 1);
-            nvgText(vg, xp + columnWidth * 0.5, yp, l.c_str(), nullptr);
-            xp += columnWidth;
-        }
-        xp = sideMargin;
-        yp += columnWidth + labelHeight + sideMargin;
-        std::vector<std::string> lab = {"V/OCT", "TRIG", "L/MON", "R"};
-        for (const auto &l : lab)
-        {
-            nvgBeginPath(vg);
-            nvgFontFaceId(vg, fontId(vg));
-            nvgFontSize(vg, 11);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            nvgText(vg, xp + columnWidth * 0.5, yp, l.c_str(), nullptr);
-            xp += columnWidth;
-        }
-    }
+    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
+    std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
 template <int oscType>
-struct OSCPlotWidget : public rack::widget::TransparentWidget, SurgeStyle::StyleListener
+struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListener
 {
-    OSCPlotWidget() : TransparentWidget() { SurgeStyle::addStyleListener(this); }
-    ~OSCPlotWidget() { SurgeStyle::removeStyleListener(this); }
+    OSCPlotWidget() : TransparentWidget() { style::SurgeStyle::addStyleListener(this); }
+    ~OSCPlotWidget() { style::SurgeStyle::removeStyleListener(this); }
 
     typename SurgeOSCSingleWidget<oscType>::M *module{nullptr};
     void setup(typename SurgeOSCSingleWidget<oscType>::M *m)
@@ -116,7 +73,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, SurgeStyle::Style
         }
     }
 
-    virtual void styleHasChanged() override
+    virtual void onStyleChanged() override
     {
         for (auto w : children)
         {
@@ -240,7 +197,23 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, SurgeStyle::Style
         if (!module)
         {
             // Draw the module name here for preview goodness
+            nvgBeginPath(vg);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgFontFaceId(vg, style::SurgeStyle::fontIdBold(vg));
+            nvgFontSize(vg, 30);
+            nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
+            nvgText(vg, box.size.x * 0.5,
+                    box.size.y * 0.5,
+                    osc_type_names[oscType], nullptr);
         }
+
+#define DEBUG_BOUNDS 0
+#if DEBUG_BOUNDS
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgFillColor(vg,nvgRGBA(100,100,255, 120));
+        nvgFill(vg);
+#endif
     }
 };
 
@@ -254,26 +227,19 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
         for (auto &o : ob)
             o = nullptr;
 
-    box.size = rack::Vec(SCREW_WIDTH * numberOfScrews, RACK_HEIGHT);
-    SurgeRackBG *bg = new SurgeRackBG(rack::Vec(0, 0), box.size, std::string(M::name) + " VCO");
-    bg->moduleSpecificDraw = [this](NVGcontext *vg) { this->moduleBackground(vg); };
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    auto bg = new widgets::Background(box.size, std::string(M::name));
     addChild(bg);
 
-    // addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(0), module, M::OUTPUT_L));
-    // addOutput(rack::createOutput<rack::PJ301MPort>(ioPortLocation(1), module, M::OUTPUT_R));
-
-    // auto retrigPos = rack::Vec(x0, yRes);
-    // addInput(rack::createInput<rack::PJ301MPort>(retrigPos, module, M::RETRIGGER));
-
-    auto t = plotStart;
-    auto h = plotHeight;
-    addChild(OSCPlotWidget<oscType>::create(rack::Vec(sideMargin, t),
-                                            rack::Vec(box.size.x - 2 * sideMargin, h), module));
+    auto t = plotStartY;
+    auto h = plotH;
+    addChild(OSCPlotWidget<oscType>::create(rack::Vec(plotStartX, plotStartY),
+                                            rack::Vec(plotW, plotH), module));
 
     const auto &knobConfig = SingleConfig<oscType>::getKnobs();
 
-    auto xp = sideMargin, yp = t + h + 2 * sideMargin, idx = 0;
-
+    auto idx = 0;
+    int row = 0, col  = 0;
     for (const auto k : knobConfig)
     {
         auto pid = k.id;
@@ -281,15 +247,17 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
         if (k.type == SingleConfig<oscType>::KnobDef::Type::PARAM)
         {
-            auto uxp = xp + (columnWidth - 28) * 0.5;
-            auto uyp = yp + (columnWidth - 28) * 0.5;
+            auto uxp = columnCenters_MM[col];
+            auto uyp = rowCenters_MM[row];
             auto baseKnob =
-                rack::createParam<rack::RoundBlackKnob>(rack::Vec(uxp, uyp), module, pid);
+                rack::createParamCentered<widgets::Knob9>(rack::mm2px(rack::Vec(uxp, uyp)), module, pid);
             addParam(baseKnob);
             for (int m = 0; m < M::n_mod_inputs; ++m)
             {
+                auto radius = rack::mm2px(widgets::Knob9::knobSize_MM + 2 * widgets::Knob9::ringWidth_MM);
                 int id = M::modulatorIndexFor(pid, m);
-                auto *k = SurgeModulatableRing::create(rack::Vec(uxp, uyp), 28, module, id);
+                auto *k = widgets::ModRingKnob::createCentered(rack::mm2px(rack::Vec(uxp, uyp)),
+                                                       radius, module, id);
                 overlays[idx][m] = k;
                 k->setVisible(false);
                 k->underlyerParamWidget = baseKnob;
@@ -298,28 +266,30 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
         }
         else
         {
-            auto uxp = xp + (columnWidth - 24) * 0.5;
-            auto uyp = yp + (columnWidth - 24) * 0.5;
-            addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(uxp, uyp), module, k.id));
+            auto uxp = columnCenters_MM[col];
+            auto uyp = rowCenters_MM[row];
+            addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module, k.id));
         }
         idx++;
+        col++;
         if (idx == 4)
         {
-            xp = sideMargin;
-            yp += columnWidth + labelHeight;
-        }
-        else
-        {
-            xp += columnWidth;
+           col = 0;
+           row ++;
         }
     }
 
-    xp = sideMargin;
-    yp += columnWidth + labelHeight + sideMargin;
+    col = 0;
+    row = 3;
+
+
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
+        auto uxp = columnCenters_MM[i];
+        auto uyp = rowCenters_MM[2];
+
         auto *k =
-            rack::createWidget<SurgeUIOnlyToggleButton>(rack::Vec(xp + (columnWidth - 20) / 2, yp));
+            rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
         toggles[i] = k;
         k->onToggle = [this, toggleIdx = i](bool isOn) {
             for (const auto &t : toggles)
@@ -343,29 +313,30 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
         addChild(k);
 
-        addInput(rack::createInput<rack::PJ301MPort>(
-            rack::Vec(xp + (columnWidth - 24) / 2, yp + columnWidth), module,
+        uyp = rowCenters_MM[3];
+
+        addInput(rack::createInputCentered<widgets::Port>(
+            rack::mm2px(rack::Vec(uxp, uyp)), module,
             M::OSC_MOD_INPUT + i));
 
-        xp += columnWidth;
     }
 
-    xp = sideMargin;
-    yp += 2 * columnWidth + labelHeight + sideMargin;
+    col = 0;
+    for (auto p : { M::PITCH_CV, M::RETRIGGER} )
+    {
+        auto yp = rowCenters_MM[4];
+        auto xp = columnCenters_MM[col];
+        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
+        col ++;
+    }
 
-    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp), module,
-                                                 M::PITCH_CV));
-    xp += columnWidth;
-    addInput(rack::createInput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp), module,
-                                                 M::RETRIGGER));
-    xp += columnWidth;
-
-    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp),
-                                                   module, M::OUTPUT_L));
-    xp += columnWidth;
-    addOutput(rack::createOutput<rack::PJ301MPort>(rack::Vec(xp + (columnWidth - 24) / 2, yp),
-                                                   module, M::OUTPUT_R));
-    xp += columnWidth;
+    for (auto p : { M::OUTPUT_L, M::OUTPUT_R} )
+    {
+        auto yp = rowCenters_MM[4];
+        auto xp = columnCenters_MM[col];
+        addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
+        col ++;
+    }
 }
 
 } // namespace sst::surgext_rack::vco::ui

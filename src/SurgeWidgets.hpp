@@ -8,11 +8,12 @@
 #include <execinfo.h>
 #endif
 
+void stackToInfo();
+
+#if BUILD_OLD_WIDGETS
 namespace logger = rack::logger;
 using rack::appGet;
 using rack::logger::log;
-
-void stackToInfo();
 
 struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget
 {
@@ -640,3 +641,5 @@ struct SurgeUIOnlyToggleButton : rack::widget::Widget
             bdw->dirty = true;
     }
 };
+
+#endif

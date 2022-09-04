@@ -1,3 +1,5 @@
+#if BUILD_OLD_WIDGETS
+
 #include "SurgeNoise.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -90,3 +92,4 @@ SurgeNoiseWidget::SurgeNoiseWidget(SurgeNoiseWidget::M *module) : SurgeModuleWid
 
 rack::Model *modelSurgeNoise =
     rack::createModel<SurgeNoiseWidget::M, SurgeNoiseWidget>("SurgeNoise");
+#endif
