@@ -244,39 +244,22 @@ struct ModRingKnob : rack::app::Knob
 
 struct ModToggleButton : rack::widget::Widget, style::StyleListener
 {
-    BufferedDrawFunctionWidget *bdw = nullptr;
     bool pressedState{false};
-    bool isHovered{false};
     std::function<void(bool)> onToggle = [](bool isOn) {};
+    rack::SvgWidget *svg{nullptr};
+
+    float button_MM = 6.5, light_MM = 2.75;
+    float light_pixelRadius = rack::mm2px(light_MM) * 0.5;
 
     ModToggleButton()
     {
-        box.size = rack::Vec(25, 25);
-        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
-                                             [this](auto *v) { this->drawToggle(v); });
-        addChild(bdw);
-    }
-
-    void drawToggle(NVGcontext *vg)
-    {
-        auto w = box.size.y;
-        auto h = box.size.x;
-        nvgBeginPath(vg);
-        nvgEllipse(vg, h / 2, w / 2, h * 0.45, w * 0.45);
-        if (pressedState)
-            nvgFillColor(vg, nvgRGB(0xA0, 0xA0, 0xFF));
-        else
-            nvgFillColor(vg, nvgRGB(0x60, 0x60, 0x9F));
-        nvgFill(vg);
-
-        nvgBeginPath(vg);
-        nvgEllipse(vg, h / 2, w / 2, h * 0.45, w * 0.45);
-        if (isHovered)
-            nvgFillColor(vg, nvgRGB(20, 20, 90));
-        else
-            nvgFillColor(vg, nvgRGB(0, 0, 0));
-        nvgStrokeWidth(vg, 2);
-        nvgStroke(vg);
+        svg = new rack::widget::SvgWidget();
+        svg->box.pos.x = 0;
+        svg->box.pos.y = 0;
+        svg->setSvg(rack::Svg::load(
+            rack::asset::plugin(pluginInstance, "res/xt/dark/components/mod-button.svg")));
+        box.size = svg->box.size;
+        addChild(svg);
     }
 
     void onButton(const ButtonEvent &e) override
@@ -285,18 +268,55 @@ struct ModToggleButton : rack::widget::Widget, style::StyleListener
         {
             pressedState = !pressedState;
             onToggle(pressedState);
-            if (bdw)
-                bdw->dirty = true;
             e.consume(this);
         }
     }
 
-    void setState(bool b)
+    void drawLayer(const DrawArgs &args, int layer) override
     {
-        pressedState = b;
-        if (bdw)
-            bdw->dirty = true;
+        if (layer == 1 && pressedState)
+        {
+            const float halo = rack::settings::haloBrightness;
+            auto c = box.size.div(2);
+
+            if (halo > 0.f)
+            {
+                float radius = light_pixelRadius;
+                float oradius = rack::mm2px(button_MM) * 0.5;
+
+                nvgBeginPath(args.vg);
+                nvgRect(args.vg, c.x - oradius, c.y - oradius, 2 * oradius, 2 * oradius);
+
+                NVGcolor icol = rack::color::mult(nvgRGB(0xFF, 0x90, 0x00), halo);
+                NVGcolor ocol = nvgRGBA(0, 0, 0, 0);
+                NVGpaint paint = nvgRadialGradient(args.vg, c.x, c.y, radius, oradius, icol, ocol);
+                nvgFillPaint(args.vg, paint);
+                nvgFill(args.vg);
+            }
+            nvgBeginPath(args.vg);
+            nvgFillColor(args.vg, nvgRGB(0xFF, 0x90, 0x00));
+            nvgEllipse(args.vg, c.x, c.y, light_pixelRadius, light_pixelRadius);
+            nvgFill(args.vg);
+        }
+
+        Widget::drawLayer(args, layer);
     }
+
+    void draw(const DrawArgs &args) override
+    {
+        Widget::draw(args);
+
+        if (!pressedState)
+        {
+            nvgBeginPath(args.vg);
+            nvgFillColor(args.vg, nvgRGB(0x82, 0x82, 0x82));
+            nvgEllipse(args.vg, box.size.x / 2, box.size.y / 2, light_pixelRadius,
+                       light_pixelRadius);
+            nvgFill(args.vg);
+        }
+    }
+
+    void setState(bool b) { pressedState = b; }
 
     void onStyleChanged() override { throw "Implement Me"; }
 };
