@@ -4,7 +4,7 @@
 
 #include "SurgeVCF.hpp"
 #include "Surge.hpp"
-#include "SurgeRackGUI.hpp"
+#include "SurgeModuleWidgetCommon.hpp"
 
 #include "XTWidgets.h"
 

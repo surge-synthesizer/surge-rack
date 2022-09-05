@@ -1,9 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg version="1.1" viewBox="0 0 34.015747 34.015747" height="9mm" width="9mm" data-name="Layer 2" id="Layer_2" xmlns="http://www.w3.org/2000/svg">
-  <g transform="matrix(1.333341,0,0,1.333341,3.96, 3.96)" data-name="Knob turn layer" id="Knob_turn_layer">
-    <g id="g7530">
-      <circle id="circle7526" style="opacity:0.89;fill:none" transform="rotate(-89.64002,9.7820435,9.782018)" r="9.7794704" cy="9.7820196" cx="9.7820396"/>
-      <line id="line7528" style="fill:#242427;stroke:#cccccc;stroke-width:1.4px;stroke-linecap:round;stroke-miterlimit:10" y2="4.22611" x2="9.7820597" y1="1.16469" x1="9.7820597"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:version="1.0 (4035a4f, 2020-05-01)" sodipodi:docname="knob-pointer-light.svg" version="1.1" viewBox="0 0 26.078739 26.078741" height="6.9000001mm" width="6.9000001mm" data-name="Layer 2" id="Layer_2">
+  <metadata id="metadata9355">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs id="defs9353" />
+  <sodipodi:namedview inkscape:current-layer="Layer_2" inkscape:window-maximized="0" inkscape:window-y="25" inkscape:window-x="0" inkscape:cy="9.7820148" inkscape:cx="9.7820454" inkscape:zoom="10.636576" units="mm" inkscape:document-units="mm" showgrid="false" id="namedview9351" inkscape:window-height="876" inkscape:window-width="1444" inkscape:pageshadow="2" inkscape:pageopacity="0" guidetolerance="10" gridtolerance="10" objecttolerance="10" borderopacity="1" bordercolor="#666666" pagecolor="#ffffff" />
+  <g transform="matrix(1.3333411,0,0,1.3333411,-0.00343289,-0.00340191)" data-name="Knob rotate layer" id="Knob_rotate_layer">
+    <g id="g9347">
+      <circle id="circle9343" style="opacity:0.89;fill:none" transform="rotate(-89.64002,9.7820435,9.782018)" r="9.7794704" cy="9.7820196" cx="9.7820396" />
+      <line id="line9345" style="fill:#242427;stroke:#525252;stroke-width:1.4px;stroke-linecap:round;stroke-miterlimit:10" y2="4.22611" x2="9.7820597" y1="1.16469" x1="9.7820597" />
     </g>
   </g>
 </svg>

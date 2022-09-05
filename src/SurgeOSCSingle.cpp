@@ -1,6 +1,6 @@
 #include "SurgeOSCSingle.hpp"
 #include "Surge.hpp"
-#include "SurgeRackGUI.hpp"
+#include "SurgeModuleWidgetCommon.hpp"
 
 #include "SurgeOSCSingleConfig.hpp"
 #include "XTWidgets.h"
@@ -37,9 +37,6 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual widgets::Sur
 template <int oscType>
 struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListener
 {
-    OSCPlotWidget() : TransparentWidget() { style::SurgeStyle::addStyleListener(this); }
-    ~OSCPlotWidget() { style::SurgeStyle::removeStyleListener(this); }
-
     typename SurgeOSCSingleWidget<oscType>::M *module{nullptr};
     void setup(typename SurgeOSCSingleWidget<oscType>::M *m)
     {
@@ -228,7 +225,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
             o = nullptr;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, std::string(M::name));
+    auto bg = new widgets::Background(box.size, "vco", std::string(M::name));
     addChild(bg);
 
     auto t = plotStartY;
@@ -264,7 +261,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
                 addChild(k);
             }
         }
-        else
+        else if (k.type == SingleConfig<oscType>::KnobDef::Type::INPUT)
         {
             auto uxp = columnCenters_MM[col];
             auto uyp = rowCenters_MM[row];
