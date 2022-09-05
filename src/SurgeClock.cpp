@@ -1,3 +1,4 @@
+#if BUILD_OLD_WIDGETS
 #include "SurgeClock.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -91,3 +92,4 @@ SurgeClockWidget::SurgeClockWidget(SurgeClockWidget::M *module) : SurgeModuleWid
 
 rack::Model *modelSurgeClock =
     rack::createModel<SurgeClockWidget::M, SurgeClockWidget>("SurgeClock");
+#endif

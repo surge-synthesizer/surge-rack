@@ -1,3 +1,5 @@
+#if BUILD_OLD_WIDGETS
+
 #include "SurgeFX.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -122,3 +124,4 @@ CREATE_FX(fxt_exciter, "SurgeExciter");
 CREATE_FX(fxt_combulator, "SurgeCombulator");
 CREATE_FX(fxt_ensemble, "SurgeEnsemble");
 CREATE_FX(fxt_treemonster, "SurgeTreeMonster");
+#endif

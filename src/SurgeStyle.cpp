@@ -3,11 +3,26 @@
 #include "rack.hpp"
 #include "tinyxml/tinyxml.h"
 #include "window/Svg.hpp"
+namespace sst::surgext_rack::style
+{
+std::map<std::string, int> InternalFontMgr::fontMap;
+
+std::vector<std::string> SurgeStyle::styleList;
+std::unordered_set<StyleListener *> SurgeStyle::listeners;
+int SurgeStyle::fid = -1, SurgeStyle::fidBold = -1;
+} // namespace sst::surgext_rack::style
+
+#if BUILD_OLD_WIDGETS
+
+#include "SurgeStyle.hpp"
+#include "filesystem/import.h"
+#include "rack.hpp"
+#include "tinyxml/tinyxml.h"
+#include "window/Svg.hpp"
 
 namespace logger = rack::logger;
 using rack::appGet;
 
-int SurgeStyle::fid = -1;
 int SurgeStyle::fidcond = -1;
 
 /*
@@ -263,3 +278,4 @@ void SurgeStyle::loadStyle(std::string styleXml)
 
     notifyStyleListeners();
 }
+#endif

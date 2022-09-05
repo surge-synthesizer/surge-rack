@@ -1,6 +1,7 @@
 #include "SurgeRackGUI.hpp"
 
-std::map<std::string, int> InternalFontMgr::fontMap;
+namespace sst::surgext_rack::widgets
+{
 
 /*
 ** These are internal only classes
@@ -12,7 +13,7 @@ struct SkinSelectItem : rack::ui::MenuItem
     void onAction(const rack::event::Action &e) override
     {
         std::string dir = rack::asset::plugin(pluginInstance, std::string("res/skins/") + skin);
-        SurgeStyle::loadStyle(dir);
+        style::SurgeStyle::loadStyle(dir);
     }
 };
 
@@ -22,7 +23,7 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
     {
         rack::ui::Menu *menu = new rack::ui::Menu;
 
-        for (auto sk : SurgeStyle::styleList)
+        for (auto sk : style::SurgeStyle::styleList)
         {
             auto it = new SkinSelectItem;
             it->skin = sk;
@@ -45,3 +46,4 @@ void SurgeModuleWidgetCommon::appendContextMenu(rack::ui::Menu *menu)
 
     INFO("Append Context Menu");
 }
+} // namespace sst::surgext_rack::widgets

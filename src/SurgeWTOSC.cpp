@@ -1,3 +1,4 @@
+#if BUILD_OLD_WIDGETS
 #include "SurgeWTOSC.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -254,3 +255,4 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module) : SurgeModuleWid
 
 rack::Model *modelSurgeWTOSC =
     rack::createModel<SurgeWTOSCWidget::M, SurgeWTOSCWidget>("SurgeWTOSC");
+#endif

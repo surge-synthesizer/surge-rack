@@ -1,3 +1,4 @@
+#if BUILD_OLD_WIDGETS
 #include "SurgeADSR.hpp"
 #include "Surge.hpp"
 #include "SurgeRackGUI.hpp"
@@ -163,3 +164,4 @@ SurgeADSRWidget::SurgeADSRWidget(SurgeADSRWidget::M *module) : SurgeModuleWidget
 }
 
 rack::Model *modelSurgeADSR = rack::createModel<SurgeADSRWidget::M, SurgeADSRWidget>("SurgeADSR");
+#endif
