@@ -1,4 +1,4 @@
-#include "SurgeRackGUI.hpp"
+#include "SurgeModuleWidgetCommon.hpp"
 
 namespace sst::surgext_rack::widgets
 {
@@ -9,12 +9,8 @@ namespace sst::surgext_rack::widgets
 
 struct SkinSelectItem : rack::ui::MenuItem
 {
-    std::string skin;
-    void onAction(const rack::event::Action &e) override
-    {
-        std::string dir = rack::asset::plugin(pluginInstance, std::string("res/skins/") + skin);
-        style::SurgeStyle::loadStyle(dir);
-    }
+    style::SurgeStyle::Style s;
+    void onAction(const rack::event::Action &e) override { style::SurgeStyle::setCurrentStyle(s); }
 };
 
 struct SkinsSubmenuItem : rack::ui::MenuItem
@@ -23,11 +19,12 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
     {
         rack::ui::Menu *menu = new rack::ui::Menu;
 
-        for (auto sk : style::SurgeStyle::styleList)
+        for (auto sk : {style::SurgeStyle::Style::DARK, style::SurgeStyle::Style::MID,
+                        style::SurgeStyle::Style::LIGHT})
         {
             auto it = new SkinSelectItem;
-            it->skin = sk;
-            it->text = sk;
+            it->s = sk;
+            it->text = style::SurgeStyle::styleName(sk);
             menu->addChild(it);
         }
 

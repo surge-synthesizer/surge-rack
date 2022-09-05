@@ -7,7 +7,8 @@ namespace sst::surgext_rack::style
 {
 std::map<std::string, int> InternalFontMgr::fontMap;
 
-std::vector<std::string> SurgeStyle::styleList;
+SurgeStyle::Style SurgeStyle::currentStyle{DARK};
+
 std::unordered_set<StyleListener *> SurgeStyle::listeners;
 int SurgeStyle::fid = -1, SurgeStyle::fidBold = -1;
 } // namespace sst::surgext_rack::style

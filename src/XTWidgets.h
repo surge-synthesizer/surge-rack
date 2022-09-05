@@ -37,20 +37,40 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget
 
 struct Background : public rack::TransparentWidget, style::StyleListener
 {
-    std::string panelName;
+    std::string panelName, groupName;
     std::function<void(NVGcontext *)> moduleSpecificDraw;
 
-    Background(rack::Vec size, std::string pn) : panelName(pn)
+    Background(rack::Vec size, const std::string &grp, const std::string &pn)
+        : groupName(grp), panelName(pn)
     {
         box.size = size;
-        auto svgp = new rack::app::SvgPanel();
-        svgp->box.pos = rack::Vec(0, 0);
-        svgp->box.size = size;
+        onStyleChanged();
+    }
 
-        auto panelLogo =
-            rack::Svg::load(rack::asset::plugin(pluginInstance, "res/xt/dark/panels/String.svg"));
-        svgp->setBackground(panelLogo);
-        addChild(svgp);
+    void drawStubLayer(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFillColor(vg, nvgRGB(0x20, 0x20, 0x20));
+        nvgStrokeColor(vg, nvgRGB(0xFF, 0x00, 0x00));
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgFill(vg);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
+        nvgFontFaceId(vg, style::SurgeStyle::fontId(vg));
+        nvgFontSize(vg, 17);
+
+        std::string s = groupName + "::" + panelName;
+        nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
+        nvgText(vg, box.size.x * 0.5, 2, s.c_str(), nullptr);
+
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, style::SurgeStyle::fontId(vg));
+        nvgFontSize(vg, 17);
+        nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
+        nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
+        nvgText(vg, box.size.x * 0.5, box.size.y - 2, "Missing Panel", nullptr);
     }
 
     void drawLayer(const DrawArgs &args, int layer) override
@@ -87,7 +107,32 @@ struct Background : public rack::TransparentWidget, style::StyleListener
         rack::TransparentWidget::drawLayer(args, layer);
     }
 
-    void onStyleChanged() override { throw "Implement Me"; }
+    void onStyleChanged() override
+    {
+        auto childrenCopy = children;
+        for (auto k : childrenCopy)
+            removeChild(k);
+
+        std::string asset =
+            style::SurgeStyle::skinAssetDir() + "/panels/" + groupName + "/" + panelName + ".svg";
+
+        auto panelLogo = rack::Svg::load(rack::asset::plugin(pluginInstance, asset));
+        if (panelLogo)
+        {
+            auto svgp = new rack::app::SvgPanel();
+            svgp->box.pos = rack::Vec(0, 0);
+            svgp->box.size = box.size;
+
+            svgp->setBackground(panelLogo);
+            addChild(svgp);
+        }
+        else
+        {
+            auto bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto vg) { drawStubLayer(vg); });
+            addChild(bdw);
+        }
+    }
 };
 
 struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
@@ -95,26 +140,8 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
     static constexpr float ringWidth_MM = 0.5f;
     static constexpr float ringPad_MM = 0.5f;
     static constexpr float knobSize_MM = 9.0f;
-    Knob9()
-    {
-        setSvg(rack::Svg::load(
-            rack::asset::plugin(pluginInstance, "res/xt/dark/components/knob-pointer.svg")));
-        bg->setSvg(rack::Svg::load(
-            rack::asset::plugin(pluginInstance, "res/xt/dark/components/knob-9.svg")));
-
-        auto omm = rack::mm2px(ringWidth_MM * 2 + ringPad_MM);
-        auto hmm = omm * 0.5;
-        box.size.x += omm;
-        box.size.y += omm;
-        sw->box.pos.x += hmm;
-        sw->box.pos.y += hmm;
-        bg->box.pos.x += hmm;
-        bg->box.pos.y += hmm;
-
-        bw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
-                                            [this](auto vg) { this->drawRing(vg); });
-        addChildBottom(bw);
-    }
+    static constexpr float pointerSize_MM = 6.9f;
+    Knob9() { onStyleChanged(); }
 
     void drawRing(NVGcontext *vg)
     {
@@ -129,25 +156,57 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
         nvgStroke(vg);
     }
 
-    BufferedDrawFunctionWidget *bw;
+    BufferedDrawFunctionWidget *bw{nullptr};
     void onChange(const ChangeEvent &e) override
     {
         bw->dirty = true;
         SvgKnob::onChange(e);
     }
 
-    void onStyleChanged() override { throw "Implement Me"; }
+    void onStyleChanged() override
+    {
+        auto compDir = style::SurgeStyle::skinAssetDir() + "/components";
+
+        setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/knob-pointer.svg")));
+        bg->setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/knob-9.svg")));
+
+        // SetSVG changes box.size
+        box.size = rack::mm2px(rack::Vec(knobSize_MM, knobSize_MM));
+
+        auto omm = rack::mm2px(ringWidth_MM * 2 + ringPad_MM);
+        auto hmm = omm * 0.5;
+        box.size.x += omm;
+        box.size.y += omm;
+
+        if (!bw)
+        {
+            // first time through reposition a few items to center the pointer and leave ring room
+            auto ptrOffset = rack::mm2px(knobSize_MM - pointerSize_MM) * 0.5;
+            sw->box.pos.x += ptrOffset;
+            sw->box.pos.y += ptrOffset;
+
+            sw->box.pos.x += hmm;
+            sw->box.pos.y += hmm;
+            bg->box.pos.x += hmm;
+            bg->box.pos.y += hmm;
+
+            bw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                [this](auto vg) { this->drawRing(vg); });
+            addChildBottom(bw);
+        }
+        bw->dirty = true;
+    }
 };
 
 struct Port : public rack::app::SvgPort, style::StyleListener
 {
-    Port()
-    {
-        setSvg(rack::Svg::load(
-            rack::asset::plugin(pluginInstance, "res/xt/dark/components/port.svg")));
-    }
+    Port() { onStyleChanged(); }
 
-    void onStyleChanged() override { throw "Implement Me"; }
+    void onStyleChanged() override
+    {
+        setSvg(rack::Svg::load(rack::asset::plugin(
+            pluginInstance, style::SurgeStyle::skinAssetDir() + "/components/port.svg")));
+    }
 };
 
 struct LinePlotWidget : public rack::widget::TransparentWidget, style::StyleListener
@@ -256,8 +315,7 @@ struct ModToggleButton : rack::widget::Widget, style::StyleListener
         svg = new rack::widget::SvgWidget();
         svg->box.pos.x = 0;
         svg->box.pos.y = 0;
-        svg->setSvg(rack::Svg::load(
-            rack::asset::plugin(pluginInstance, "res/xt/dark/components/mod-button.svg")));
+        onStyleChanged();
         box.size = svg->box.size;
         addChild(svg);
     }
@@ -318,7 +376,11 @@ struct ModToggleButton : rack::widget::Widget, style::StyleListener
 
     void setState(bool b) { pressedState = b; }
 
-    void onStyleChanged() override { throw "Implement Me"; }
+    void onStyleChanged() override
+    {
+        svg->setSvg(rack::Svg::load(rack::asset::plugin(
+            pluginInstance, style::SurgeStyle::skinAssetDir() + "/components/mod-button.svg")));
+    }
 };
 
 } // namespace sst::surgext_rack::widgets

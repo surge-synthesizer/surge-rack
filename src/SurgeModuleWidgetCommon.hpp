@@ -12,16 +12,8 @@
 
 namespace sst::surgext_rack::widgets
 {
-struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget,
-                                 style::SurgeStyle,
-                                 style::StyleListener
+struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, style::StyleListener
 {
-    SurgeModuleWidgetCommon() : rack::ModuleWidget()
-    {
-        loadStyle();
-        addStyleListener(this);
-    }
-    ~SurgeModuleWidgetCommon() { removeStyleListener(this); }
     virtual void onStyleChanged() override { dirtyFB(this); }
 
     void dirtyFB(rack::Widget *w)

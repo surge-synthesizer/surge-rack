@@ -20,6 +20,7 @@ template <> SingleConfig<ot_classic>::knobs_t SingleConfig<ot_classic>::getKnobs
             {M::OSC_CTRL_PARAM_0, "SHAPE"},
             {M::OSC_CTRL_PARAM_0 + 1, "WIDTH1"},
             {M::OSC_CTRL_PARAM_0 + 2, "WIDTH2"},
+            {KnobDef::BLANK},
             {M::OSC_CTRL_PARAM_0 + 3, "SUBMIX"},
             {M::OSC_CTRL_PARAM_0 + 4, "SYNC"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
@@ -47,6 +48,7 @@ template <> SingleConfig<ot_modern>::knobs_t SingleConfig<ot_modern>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 0, "SAW"},
             {M::OSC_CTRL_PARAM_0 + 1, "PULSE"},
             {M::OSC_CTRL_PARAM_0 + 2, "MULTI"},
+            {KnobDef::BLANK},
             {M::OSC_CTRL_PARAM_0 + 3, "WIDTH"},
             {M::OSC_CTRL_PARAM_0 + 4, "SYNC"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
