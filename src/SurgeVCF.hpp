@@ -5,7 +5,7 @@
 #ifndef SURGE_RACK_SURGEVCF_HPP
 #define SURGE_RACK_SURGEVCF_HPP
 
-#include "Surge.hpp"
+#include "SurgeXT.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "rack.hpp"
 #include <cstring>

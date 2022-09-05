@@ -6,7 +6,7 @@
 #define SURGEXT_RACK_XTWIDGETS_H
 
 #include <rack.hpp>
-#include "SurgeStyle.hpp"
+#include "XTStyle.hpp"
 
 namespace sst::surgext_rack::widgets
 {
@@ -35,7 +35,7 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget
     }
 };
 
-struct Background : public rack::TransparentWidget, style::StyleListener
+struct Background : public rack::TransparentWidget, style::StyleParticipant
 {
     std::string panelName, groupName;
     std::function<void(NVGcontext *)> moduleSpecificDraw;
@@ -58,7 +58,7 @@ struct Background : public rack::TransparentWidget, style::StyleListener
 
         nvgBeginPath(vg);
         nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
-        nvgFontFaceId(vg, style::SurgeStyle::fontId(vg));
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 17);
 
         std::string s = groupName + "::" + panelName;
@@ -66,45 +66,11 @@ struct Background : public rack::TransparentWidget, style::StyleListener
         nvgText(vg, box.size.x * 0.5, 2, s.c_str(), nullptr);
 
         nvgBeginPath(vg);
-        nvgFontFaceId(vg, style::SurgeStyle::fontId(vg));
+        nvgFontFaceId(vg, style()->fontId(vg));
         nvgFontSize(vg, 17);
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
         nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
         nvgText(vg, box.size.x * 0.5, box.size.y - 2, "Missing Panel", nullptr);
-    }
-
-    void drawLayer(const DrawArgs &args, int layer) override
-    {
-#if 0
-        if (layer == 1)
-        {
-            std::array<float, 4> columCenters_MM{9.48, 23.48, 37.48, 51.48};
-            std::array<float, 5> rowCenters_MM{55, 71, 85.32, 100.16, 114.5};
-
-            for (auto x : columCenters_MM)
-            {
-                auto xp = x * style::SVG_PX_PER_MM;
-                nvgBeginPath(args.vg);
-                nvgMoveTo(args.vg, xp, 0);
-                nvgLineTo(args.vg, xp, 380);
-                nvgStrokeColor(args.vg, nvgRGB(255, 0, 0));
-                nvgStrokeWidth(args.vg, 1);
-                nvgStroke(args.vg);
-            }
-
-            for (auto y : rowCenters_MM)
-            {
-                auto yp = y * style::SVG_PX_PER_MM;
-                nvgBeginPath(args.vg);
-                nvgMoveTo(args.vg, 0, yp);-
-                nvgLineTo(args.vg, 12 * 15, yp);
-                nvgStrokeColor(args.vg, nvgRGB(255, 0, 0));
-                nvgStrokeWidth(args.vg, 1);
-                nvgStroke(args.vg);
-            }
-        }
-#endif
-        rack::TransparentWidget::drawLayer(args, layer);
     }
 
     void onStyleChanged() override
@@ -114,7 +80,7 @@ struct Background : public rack::TransparentWidget, style::StyleListener
             removeChild(k);
 
         std::string asset =
-            style::SurgeStyle::skinAssetDir() + "/panels/" + groupName + "/" + panelName + ".svg";
+            style()->skinAssetDir() + "/panels/" + groupName + "/" + panelName + ".svg";
 
         auto panelLogo = rack::Svg::load(rack::asset::plugin(pluginInstance, asset));
         if (panelLogo)
@@ -135,13 +101,23 @@ struct Background : public rack::TransparentWidget, style::StyleListener
     }
 };
 
-struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
+struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 {
-    static constexpr float ringWidth_MM = 0.5f;
+    static constexpr float ringWidth_MM = 0.7f;
     static constexpr float ringPad_MM = 0.5f;
     static constexpr float knobSize_MM = 9.0f;
     static constexpr float pointerSize_MM = 6.9f;
-    Knob9() { onStyleChanged(); }
+    static constexpr float ringWidth_PX = 1.5;
+    Knob9()
+    {
+        float angleSpreadDegrees = 40.0;
+
+        minAngle = -M_PI * (180 - angleSpreadDegrees) / 180;
+        maxAngle = M_PI * (180 - angleSpreadDegrees) / 180;
+
+        onStyleChanged();
+        fb->removeChild(shadow);
+    }
 
     void drawRing(NVGcontext *vg)
     {
@@ -149,9 +125,8 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
         nvgBeginPath(vg);
         nvgArc(vg, box.size.x * 0.5, box.size.y * 0.5, radius, minAngle - M_PI_2, maxAngle - M_PI_2,
                NVG_CW);
-        nvgStrokeWidth(vg, 1);
-        // FIXME - into style
-        nvgStrokeColor(vg, nvgRGB(0x82, 0x82, 0x82));
+        nvgStrokeWidth(vg, ringWidth_PX);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
         nvgLineCap(vg, NVG_ROUND);
         nvgStroke(vg);
     }
@@ -165,7 +140,7 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
 
     void onStyleChanged() override
     {
-        auto compDir = style::SurgeStyle::skinAssetDir() + "/components";
+        auto compDir = style()->skinAssetDir() + "/components";
 
         setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/knob-pointer.svg")));
         bg->setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/knob-9.svg")));
@@ -198,22 +173,22 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleListener
     }
 };
 
-struct Port : public rack::app::SvgPort, style::StyleListener
+struct Port : public rack::app::SvgPort, style::StyleParticipant
 {
     Port() { onStyleChanged(); }
 
     void onStyleChanged() override
     {
-        setSvg(rack::Svg::load(rack::asset::plugin(
-            pluginInstance, style::SurgeStyle::skinAssetDir() + "/components/port.svg")));
+        setSvg(rack::Svg::load(
+            rack::asset::plugin(pluginInstance, style()->skinAssetDir() + "/components/port.svg")));
     }
 };
 
-struct LinePlotWidget : public rack::widget::TransparentWidget, style::StyleListener
+struct LinePlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
 {
 };
 
-struct ModRingKnob : rack::app::Knob
+struct ModRingKnob : rack::app::Knob, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
     rack::app::Knob *underlyerParamWidget{nullptr};
@@ -252,22 +227,22 @@ struct ModRingKnob : rack::app::Knob
         nvgBeginPath(vg);
         nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, angle - modAngle - M_PI_2,
                -modAngle < 0 ? NVG_CCW : NVG_CW);
-        nvgStrokeWidth(vg, 1.25);
-        nvgStrokeColor(vg, nvgRGB(180, 180, 200));
+        nvgStrokeWidth(vg, Knob9::ringWidth_PX);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MINUS));
         nvgLineCap(vg, NVG_ROUND);
         nvgStroke(vg);
 
         nvgBeginPath(vg);
         nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, angle + modAngle - M_PI_2,
                modAngle < 0 ? NVG_CCW : NVG_CW);
-        nvgStrokeWidth(vg, 1.25);
-        nvgStrokeColor(vg, nvgRGB(0xFF, 0x90, 0x00));
+        nvgStrokeWidth(vg, Knob9::ringWidth_PX);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_PLUS));
         nvgLineCap(vg, NVG_ROUND);
         nvgStroke(vg);
 
         nvgBeginPath(vg);
         nvgEllipse(vg, ox, oy, 1, 1);
-        nvgFillColor(vg, nvgRGB(255, 255, 255));
+        nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MARK));
         nvgFill(vg);
     }
 
@@ -299,9 +274,15 @@ struct ModRingKnob : rack::app::Knob
 
         rack::app::Knob::onChange(e);
     }
+
+    void onStyleChanged() override
+    {
+        if (bdw)
+            bdw->dirty = true;
+    }
 };
 
-struct ModToggleButton : rack::widget::Widget, style::StyleListener
+struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
 {
     bool pressedState{false};
     std::function<void(bool)> onToggle = [](bool isOn) {};
@@ -345,14 +326,15 @@ struct ModToggleButton : rack::widget::Widget, style::StyleListener
                 nvgBeginPath(args.vg);
                 nvgRect(args.vg, c.x - oradius, c.y - oradius, 2 * oradius, 2 * oradius);
 
-                NVGcolor icol = rack::color::mult(nvgRGB(0xFF, 0x90, 0x00), halo);
+                NVGcolor icol =
+                    rack::color::mult(style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON), halo);
                 NVGcolor ocol = nvgRGBA(0, 0, 0, 0);
                 NVGpaint paint = nvgRadialGradient(args.vg, c.x, c.y, radius, oradius, icol, ocol);
                 nvgFillPaint(args.vg, paint);
                 nvgFill(args.vg);
             }
             nvgBeginPath(args.vg);
-            nvgFillColor(args.vg, nvgRGB(0xFF, 0x90, 0x00));
+            nvgFillColor(args.vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
             nvgEllipse(args.vg, c.x, c.y, light_pixelRadius, light_pixelRadius);
             nvgFill(args.vg);
         }
@@ -367,7 +349,7 @@ struct ModToggleButton : rack::widget::Widget, style::StyleListener
         if (!pressedState)
         {
             nvgBeginPath(args.vg);
-            nvgFillColor(args.vg, nvgRGB(0x82, 0x82, 0x82));
+            nvgFillColor(args.vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
             nvgEllipse(args.vg, box.size.x / 2, box.size.y / 2, light_pixelRadius,
                        light_pixelRadius);
             nvgFill(args.vg);
@@ -379,7 +361,7 @@ struct ModToggleButton : rack::widget::Widget, style::StyleListener
     void onStyleChanged() override
     {
         svg->setSvg(rack::Svg::load(rack::asset::plugin(
-            pluginInstance, style::SurgeStyle::skinAssetDir() + "/components/mod-button.svg")));
+            pluginInstance, style()->skinAssetDir() + "/components/mod-button.svg")));
     }
 };
 

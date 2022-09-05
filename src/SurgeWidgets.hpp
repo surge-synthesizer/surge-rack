@@ -2,7 +2,7 @@
 #include <math.h>
 
 #include "SurgeModuleCommon.hpp"
-#include "SurgeStyle.hpp"
+#include "XTStyle.hpp"
 
 #if MAC
 #include <execinfo.h>
@@ -57,12 +57,12 @@ struct SurgeRackBG : public rack::TransparentWidget
 
     void drawBG(NVGcontext *vg)
     {
-        SurgeStyle::drawPanelBackground(vg, box.size.x, box.size.y, displayName, narrowMode);
+        XTStyle::drawPanelBackground(vg, box.size.x, box.size.y, displayName, narrowMode);
         moduleSpecificDraw(vg);
     }
 };
 
-struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
+struct TextDisplayLight : public rack::widget::Widget, XTStyle::StyleParticipant
 {
     typedef std::function<std::string()> stringGetter_t;
     typedef std::function<bool()> stringDirtyGetter_t;
@@ -73,8 +73,8 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     int fontsize;
     NVGcolor color;
 
-    TextDisplayLight() : Widget() { SurgeStyle::addStyleListener(this); }
-    ~TextDisplayLight() { SurgeStyle::removeStyleListener(this); }
+    TextDisplayLight() : Widget() { XTStyle::addStyleListener(this); }
+    ~TextDisplayLight() { XTStyle::removeStyleListener(this); }
 
     void setup()
     {
@@ -100,7 +100,7 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     virtual void styleHasChanged() override
     {
         if (colorKey != "")
-            color = SurgeStyle::getColorFromMap(colorKey);
+            color = XTStyle::getColorFromMap(colorKey);
 
         if (hasColorLambda)
             color = colorLambda();
@@ -114,7 +114,7 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
         }
     }
 
-    std::string font = SurgeStyle::fontFace();
+    std::string font = XTStyle::fontFace();
     int fontId = -1;
     std::string colorKey;
     bool hasColorLambda = false;
@@ -123,7 +123,7 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     static TextDisplayLight *create(rack::Vec pos, rack::Vec size, stringGetter_t gf,
                                     stringDirtyGetter_t dgf, int fsize = 15,
                                     int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-                                    std::string colorKey = SurgeStyle::parameterNameText_KEY())
+                                    std::string colorKey = XTStyle::parameterNameText_KEY())
     {
         TextDisplayLight *res = rack::createWidget<TextDisplayLight>(pos);
         res->getfn = gf;
@@ -133,7 +133,7 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
         res->fontsize = fsize;
         res->align = align;
         res->colorKey = colorKey;
-        res->color = SurgeStyle::getColorFromMap(colorKey);
+        res->color = XTStyle::getColorFromMap(colorKey);
 
         res->setup();
 
@@ -142,7 +142,7 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
 
     static TextDisplayLight *create(rack::Vec pos, rack::Vec size, const StringCache *sc,
                                     int fsize = 15, int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-                                    std::string colorKey = SurgeStyle::parameterNameText_KEY())
+                                    std::string colorKey = XTStyle::parameterNameText_KEY())
     {
         if (sc)
             return TextDisplayLight::create(pos, size, sc->getValue, sc->getDirty, fsize, align,
@@ -179,34 +179,34 @@ struct TextDisplayLight : public rack::widget::Widget, SurgeStyle::StyleListener
     }
 };
 
-struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener
+struct SurgeSmallKnob : rack::RoundKnob, XTStyle::StyleParticipant
 {
     SurgeSmallKnob()
     {
-        SurgeStyle::addStyleListener(this);
+        XTStyle::addStyleListener(this);
         setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobBG"))));
         overlay = new rack::widget::SvgWidget;
         fb->addChild(overlay);
         overlay->setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobOverlay"))));
         twfg = new rack::widget::TransformWidget;
         twfg->box.size = sw->box.size;
         fb->addChild(twfg);
         fg = new rack::widget::SvgWidget;
         fg->setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobFG"))));
         twfg->addChild(fg);
     }
-    ~SurgeSmallKnob() { SurgeStyle::removeStyleListener(this); }
+    ~SurgeSmallKnob() { XTStyle::removeStyleListener(this); }
     void styleHasChanged() override
     {
         setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobBG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobBG"))));
         overlay->setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobOverlay"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobOverlay"))));
         fg->setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobFG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobFG"))));
     }
     rack::widget::SvgWidget *overlay;
     rack::widget::TransformWidget *twfg;
@@ -222,13 +222,13 @@ struct SurgeSmallKnob : rack::RoundKnob, SurgeStyle::StyleListener
     }
 };
 
-struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener
+struct SurgeKnobRooster : rack::RoundKnob, XTStyle::StyleParticipant
 {
     SurgeKnobRooster()
     {
-        SurgeStyle::addStyleListener(this);
+        XTStyle::addStyleListener(this);
         setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterFG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobRoosterFG"))));
 
         underlay = new rack::widget::SvgWidget;
         fb->removeChild(shadow);
@@ -236,18 +236,18 @@ struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener
         fb->addChildBottom(shadow);
 
         underlay->setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobRoosterBG"))));
 
         shadow->box.size = rack::Vec(24, 24);
         shadow->box.pos = rack::Vec(5, 9.5);
     }
-    ~SurgeKnobRooster() { SurgeStyle::removeStyleListener(this); }
+    ~SurgeKnobRooster() { XTStyle::removeStyleListener(this); }
     void styleHasChanged() override
     {
         setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterFG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobRoosterFG"))));
         underlay->setSvg(APP->window->loadSvg(
-            rack::asset::plugin(pluginInstance, SurgeStyle::getAssetPath("surgeKnobRoosterBG"))));
+            rack::asset::plugin(pluginInstance, XTStyle::getAssetPath("surgeKnobRoosterBG"))));
 
         shadow->box.size = rack::Vec(24, 24);
         shadow->box.pos = rack::Vec(5, 9.5);
@@ -256,13 +256,13 @@ struct SurgeKnobRooster : rack::RoundKnob, SurgeStyle::StyleListener
     rack::widget::SvgWidget *underlay;
 };
 
-struct SurgeUpdateColorSwitch : rack::app::SvgSwitch, SurgeStyle::StyleListener
+struct SurgeUpdateColorSwitch : rack::app::SvgSwitch, XTStyle::StyleParticipant
 {
 
     int lastSvgCol = 0xFF0090FF;
     void updateColor()
     {
-        auto pt = SurgeStyle::switchHandle();
+        auto pt = XTStyle::switchHandle();
         int svgcol = (255 << 24) + (((int)(pt.b * 255)) << 16) + (((int)(pt.g * 255)) << 8) +
                      (int)(pt.r * 255);
         for (auto f : frames)
@@ -291,12 +291,12 @@ struct SurgeSwitch : SurgeUpdateColorSwitch
 {
     SurgeSwitch()
     {
-        SurgeStyle::addStyleListener(this);
+        XTStyle::addStyleListener(this);
         resetFrames();
         updateColor();
     }
 
-    ~SurgeSwitch() { SurgeStyle::removeStyleListener(this); }
+    ~SurgeSwitch() { XTStyle::removeStyleListener(this); }
 
     virtual void resetFrames() override
     {
@@ -312,12 +312,12 @@ struct SurgeDisableStateSwitch : SurgeUpdateColorSwitch
 {
     SurgeDisableStateSwitch()
     {
-        SurgeStyle::addStyleListener(this);
+        XTStyle::addStyleListener(this);
         resetFrames();
         updateColor();
     }
 
-    ~SurgeDisableStateSwitch() { SurgeStyle::removeStyleListener(this); }
+    ~SurgeDisableStateSwitch() { XTStyle::removeStyleListener(this); }
 
     virtual void onDragStart(const rack::event::DragStart &e) override
     {
@@ -372,11 +372,11 @@ struct SurgeSwitchFull : SurgeUpdateColorSwitch
 {
     SurgeSwitchFull()
     {
-        SurgeStyle::addStyleListener(this);
+        XTStyle::addStyleListener(this);
         resetFrames();
         updateColor();
     }
-    ~SurgeSwitchFull() { SurgeStyle::removeStyleListener(this); }
+    ~SurgeSwitchFull() { XTStyle::removeStyleListener(this); }
 
     virtual void resetFrames() override
     {
@@ -392,12 +392,12 @@ struct SurgeThreeSwitch : SurgeUpdateColorSwitch
 {
     SurgeThreeSwitch()
     {
-        SurgeStyle::addStyleListener(this);
+        XTStyle::addStyleListener(this);
         resetFrames();
         updateColor();
     }
 
-    ~SurgeThreeSwitch() { SurgeStyle::removeStyleListener(this); }
+    ~SurgeThreeSwitch() { XTStyle::removeStyleListener(this); }
 
     virtual void resetFrames() override
     {

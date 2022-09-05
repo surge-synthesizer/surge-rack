@@ -25,22 +25,22 @@
 
 extern rack::Plugin *pluginInstance;
 
-extern rack::Model *modelSurgeOSCClassic;
-extern rack::Model *modelSurgeOSCModern;
-extern rack::Model *modelSurgeOSCWavetable;
-extern rack::Model *modelSurgeOSCWindow;
-extern rack::Model *modelSurgeOSCSine;
-extern rack::Model *modelSurgeOSCFM2;
-extern rack::Model *modelSurgeOSCFM3;
-extern rack::Model *modelSurgeOSCSHNoise;
-extern rack::Model *modelSurgeOSCAlias;
-extern rack::Model *modelSurgeOSCString;
+extern rack::Model *modelVCOClassic;
+extern rack::Model *modelVCOModern;
+extern rack::Model *modelVCOWavetable;
+extern rack::Model *modelVCOWindow;
+extern rack::Model *modelVCOSine;
+extern rack::Model *modelVCOFM2;
+extern rack::Model *modelVCOFM3;
+extern rack::Model *modelVCOSHNoise;
+extern rack::Model *modelVCOAlias;
+extern rack::Model *modelVCOString;
 
 extern rack::Model *modelSurgeClock;
 extern rack::Model *modelSurgeADSR;
 extern rack::Model *modelSurgeLFO;
 
-extern rack::Model *modelSurgeOSC;
+extern rack::Model *modelVCO;
 
 extern rack::Model *modelSurgeWTOSC;
 extern rack::Model *modelSurgeNoise;

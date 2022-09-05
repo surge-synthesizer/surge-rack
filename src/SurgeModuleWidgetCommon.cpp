@@ -9,8 +9,8 @@ namespace sst::surgext_rack::widgets
 
 struct SkinSelectItem : rack::ui::MenuItem
 {
-    style::SurgeStyle::Style s;
-    void onAction(const rack::event::Action &e) override { style::SurgeStyle::setCurrentStyle(s); }
+    style::XTStyle::Style s;
+    void onAction(const rack::event::Action &e) override { style::XTStyle::setCurrentStyle(s); }
 };
 
 struct SkinsSubmenuItem : rack::ui::MenuItem
@@ -19,12 +19,12 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
     {
         rack::ui::Menu *menu = new rack::ui::Menu;
 
-        for (auto sk : {style::SurgeStyle::Style::DARK, style::SurgeStyle::Style::MID,
-                        style::SurgeStyle::Style::LIGHT})
+        for (auto sk : {style::XTStyle::Style::DARK, style::XTStyle::Style::MID,
+                        style::XTStyle::Style::LIGHT})
         {
             auto it = new SkinSelectItem;
             it->s = sk;
-            it->text = style::SurgeStyle::styleName(sk);
+            it->text = style::XTStyle::styleName(sk);
             menu->addChild(it);
         }
 

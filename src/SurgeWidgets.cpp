@@ -22,16 +22,16 @@ void stackToInfo()
 void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float w, float h,
                                          std::string label)
 {
-    NVGcolor gradientTop = SurgeStyle::buttonBankSelectedGradientTop();
-    NVGcolor gradientMid = SurgeStyle::buttonBankSelectedGradientMid();
-    NVGcolor gradientBot = SurgeStyle::buttonBankSelectedGradientEnd();
+    NVGcolor gradientTop = XTStyle::buttonBankSelectedGradientTop();
+    NVGcolor gradientMid = XTStyle::buttonBankSelectedGradientMid();
+    NVGcolor gradientBot = XTStyle::buttonBankSelectedGradientEnd();
 
-    NVGcolor stroke = SurgeStyle::buttonBankSelectedOutline();
-    NVGcolor lightStroke = SurgeStyle::buttonBankSelectedLightOutline();
-    NVGcolor lightFillTop = SurgeStyle::buttonBankSelectedLightGradientTop();
-    NVGcolor lightFillBot = SurgeStyle::buttonBankSelectedLightGradientEnd();
+    NVGcolor stroke = XTStyle::buttonBankSelectedOutline();
+    NVGcolor lightStroke = XTStyle::buttonBankSelectedLightOutline();
+    NVGcolor lightFillTop = XTStyle::buttonBankSelectedLightGradientTop();
+    NVGcolor lightFillBot = XTStyle::buttonBankSelectedLightGradientEnd();
 
-    NVGcolor dropShadow = SurgeStyle::buttonBankDropShadow();
+    NVGcolor dropShadow = XTStyle::buttonBankDropShadow();
 
     int lightWidth = 10;
     int lightHeight = 4;
@@ -41,7 +41,7 @@ void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float
     nvgBeginPath(vg);
     nvgRoundedRect(vg, x + 1.8, y + 2.2, w - 2, h - 2, 3);
     NVGpaint bgr = nvgBoxGradient(vg, x + 1.8, y + 1.8, w - 2, h - 2, 3, 3, dropShadow,
-                                  SurgeStyle::panelBackground());
+                                  XTStyle::panelBackground());
     nvgFillPaint(vg, bgr);
     nvgFill(vg);
 
@@ -81,7 +81,7 @@ void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float
     nvgStroke(vg);
 
     nvgBeginPath(vg);
-    nvgFillColor(vg, SurgeStyle::buttonBankSelectedLabelGlow());
+    nvgFillColor(vg, XTStyle::buttonBankSelectedLabelGlow());
     nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
     nvgFontFaceId(vg, fontId);
     nvgFontBlur(vg, 3);
@@ -89,7 +89,7 @@ void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float
     nvgText(vg, x + w / 2, y + 2, label.c_str(), NULL);
 
     nvgBeginPath(vg);
-    nvgFillColor(vg, SurgeStyle::buttonBankSelectedLabelGlow());
+    nvgFillColor(vg, XTStyle::buttonBankSelectedLabelGlow());
     nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
     nvgFontFaceId(vg, fontId);
     nvgFontSize(vg, 11);
@@ -97,7 +97,7 @@ void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float
     nvgText(vg, x + w / 2, y + 2, label.c_str(), NULL);
 
     nvgBeginPath(vg);
-    nvgFillColor(vg, SurgeStyle::buttonBankSelectedLabel());
+    nvgFillColor(vg, XTStyle::buttonBankSelectedLabel());
     nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
     nvgFontFaceId(vg, fontId);
     nvgFontSize(vg, 11);
@@ -108,16 +108,16 @@ void SurgeButtonBank::drawSelectedButton(NVGcontext *vg, float x, float y, float
 void SurgeButtonBank::drawUnselectedButton(NVGcontext *vg, float x, float y, float w, float h,
                                            std::string label)
 {
-    NVGcolor gradientTop = SurgeStyle::buttonBankUnselectedGradientTop();
-    NVGcolor gradientMid = SurgeStyle::buttonBankUnselectedGradientMid();
-    NVGcolor gradientBot = SurgeStyle::buttonBankUnselectedGradientEnd();
+    NVGcolor gradientTop = XTStyle::buttonBankUnselectedGradientTop();
+    NVGcolor gradientMid = XTStyle::buttonBankUnselectedGradientMid();
+    NVGcolor gradientBot = XTStyle::buttonBankUnselectedGradientEnd();
 
-    NVGcolor stroke = SurgeStyle::buttonBankUnselectedOutline();
+    NVGcolor stroke = XTStyle::buttonBankUnselectedOutline();
 
-    NVGcolor lightStroke = SurgeStyle::buttonBankUnselectedLightOutline();
-    NVGcolor lightFill = SurgeStyle::buttonBankUnselectedLightFill();
+    NVGcolor lightStroke = XTStyle::buttonBankUnselectedLightOutline();
+    NVGcolor lightFill = XTStyle::buttonBankUnselectedLightFill();
 
-    NVGcolor dropShadow = SurgeStyle::buttonBankDropShadow();
+    NVGcolor dropShadow = XTStyle::buttonBankDropShadow();
 
     int lightWidth = 10;
     int lightHeight = 4;
@@ -127,7 +127,7 @@ void SurgeButtonBank::drawUnselectedButton(NVGcontext *vg, float x, float y, flo
     nvgBeginPath(vg);
     nvgRoundedRect(vg, x + 2, y + 3, w - 2, h - 2, 3);
     NVGpaint bgr = nvgBoxGradient(vg, x + 2, y + 3, w - 2, h - 2, 3, 3, dropShadow,
-                                  SurgeStyle::panelBackground());
+                                  XTStyle::panelBackground());
     nvgFillPaint(vg, bgr);
     nvgFill(vg);
 
@@ -165,7 +165,7 @@ void SurgeButtonBank::drawUnselectedButton(NVGcontext *vg, float x, float y, flo
     nvgStroke(vg);
 
     nvgBeginPath(vg);
-    nvgFillColor(vg, SurgeStyle::buttonBankUnselectedLabel());
+    nvgFillColor(vg, XTStyle::buttonBankUnselectedLabel());
     nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
     nvgFontFaceId(vg, fontId);
     nvgFontSize(vg, 11);
@@ -175,7 +175,7 @@ void SurgeButtonBank::drawUnselectedButton(NVGcontext *vg, float x, float y, flo
 void SurgeButtonBank::drawWidget(NVGcontext *vg)
 {
     if (fontId < 0)
-        fontId = InternalFontMgr::get(vg, SurgeStyle::fontFace());
+        fontId = InternalFontMgr::get(vg, XTStyle::fontFace());
 
     auto bw = (box.size.x - 1.0) / rows;
     auto bh = (box.size.y - 1.0) / cols;

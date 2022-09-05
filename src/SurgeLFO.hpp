@@ -1,5 +1,5 @@
 #pragma once
-#include "Surge.hpp"
+#include "SurgeXT.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "dsp/modulators/LFOModulationSource.h"
 #include "rack.hpp"

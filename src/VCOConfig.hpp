@@ -2,20 +2,20 @@
 // Created by Paul Walker on 9/3/22.
 //
 
-#ifndef SURGEXT_RACK_SURGEOSCSINGLECONFIG_HPP
-#define SURGEXT_RACK_SURGEOSCSINGLECONFIG_HPP
+#ifndef SURGEXT_RACK_VCOCONFIG_HPP
+#define SURGEXT_RACK_VCOCONFIG_HPP
 
-#include "SurgeOSCSingle.hpp"
+#include "VCO.hpp"
 
 namespace sst::surgext_rack::vco
 {
 
-template <> constexpr bool SingleConfig<ot_modern>::supportsUnison() { return true; }
+template <> constexpr bool VCOConfig<ot_modern>::supportsUnison() { return true; }
 
-template <> constexpr bool SingleConfig<ot_classic>::supportsUnison() { return true; }
-template <> SingleConfig<ot_classic>::knobs_t SingleConfig<ot_classic>::getKnobs()
+template <> constexpr bool VCOConfig<ot_classic>::supportsUnison() { return true; }
+template <> VCOConfig<ot_classic>::knobs_t VCOConfig<ot_classic>::getKnobs()
 {
-    typedef SurgeOSCSingle<ot_classic> M;
+    typedef VCO<ot_classic> M;
     return {{M::PITCH_0, "PITCH"},
             {M::OSC_CTRL_PARAM_0, "SHAPE"},
             {M::OSC_CTRL_PARAM_0 + 1, "WIDTH1"},
@@ -26,9 +26,9 @@ template <> SingleConfig<ot_classic>::knobs_t SingleConfig<ot_classic>::getKnobs
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
 
-template <> SingleConfig<ot_string>::knobs_t SingleConfig<ot_string>::getKnobs()
+template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
 {
-    typedef SurgeOSCSingle<ot_string> M;
+    typedef VCO<ot_string> M;
 
     return {{M::PITCH_0, "PITCH"},
             {M::OSC_CTRL_PARAM_0 + 1, "LEV"},
@@ -40,9 +40,9 @@ template <> SingleConfig<ot_string>::knobs_t SingleConfig<ot_string>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 6, "STIFF"}};
 }
 
-template <> SingleConfig<ot_modern>::knobs_t SingleConfig<ot_modern>::getKnobs()
+template <> VCOConfig<ot_modern>::knobs_t VCOConfig<ot_modern>::getKnobs()
 {
-    typedef SurgeOSCSingle<ot_modern> M;
+    typedef VCO<ot_modern> M;
 
     return {{M::PITCH_0, "PITCH"},
             {M::OSC_CTRL_PARAM_0 + 0, "SAW"},
@@ -56,4 +56,4 @@ template <> SingleConfig<ot_modern>::knobs_t SingleConfig<ot_modern>::getKnobs()
 
 } // namespace sst::surgext_rack::vco
 
-#endif // SURGEXT_RACK_SURGEOSCSINGLECONFIG_HPP
+#endif // SURGEXT_RACK_VCOCONFIG_HPP
