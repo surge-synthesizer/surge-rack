@@ -29,10 +29,10 @@
       <path id="path867" d="M 159.96869,25.162 V 129.89311 H 12.8313 V 25.162 h 147.13739 m 0.0823,-1.49272 H 12.74902 c -0.77574,0 -1.41043,0.6347 -1.41043,1.41043 v 104.89567 c 0,0.77574 0.6347,1.41043 1.41043,1.41043 h 147.30196 c 0.77573,0 1.41043,-0.63469 1.41043,-1.41043 V 25.07972 c 0,-0.77574 -0.6347,-1.41043 -1.41043,-1.41043 v 0 z"/>
     </g>
   </g>
-  <g transform="scale(1.3333333)" data-name="Labels String (outline)" id="Labels_String__outline_">
-    <line id="line892" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="26.87244" y1="253.52568" x1="26.87244"/>
-    <line id="line894" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="66.55748" y1="253.52568" x1="66.55748"/>
-    <line id="line896" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="106.24252" y1="253.52568" x1="106.24252"/>
-    <line id="line898" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="145.92757" y1="253.52568" x1="145.92757"/>
+  <g transform="scale(1.3333333)" data-name="Labels Modern (outline)" id="Labels_Modern__outline_">
+    <line id="line892" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="26.87244" y1="253.2422" x1="26.87244"/>
+    <line id="line894" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="66.55748" y1="253.2422" x1="66.55748"/>
+    <line id="line896" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="106.24252" y1="253.2422" x1="106.24252"/>
+    <line id="line898" style="fill:none;stroke:#525252;stroke-linecap:round;stroke-miterlimit:10" y2="259.47842" x2="145.92757" y1="253.2422" x1="145.92757"/>
   </g>
 </svg>

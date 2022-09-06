@@ -28,14 +28,16 @@ template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
 {
     typedef VCO<ot_string> M;
 
-    return {{M::PITCH_0, "PITCH"},
-            {M::OSC_CTRL_PARAM_0 + 1, "LEV"},
-            {KnobDef::PARAM, M::OSC_CTRL_PARAM_0 + 2, "S1 - DECAY - S2", 2},
-            {M::OSC_CTRL_PARAM_0 + 3, ""},
-            {KnobDef::INPUT, M::AUDIO_INPUT, "AUDIO"},
-            {M::OSC_CTRL_PARAM_0 + 4, "DETUNE"},
-            {M::OSC_CTRL_PARAM_0 + 5, "BALANCE"},
-            {M::OSC_CTRL_PARAM_0 + 6, "STIFF"}};
+    return {
+        {M::PITCH_0, "PITCH"},
+        {M::OSC_CTRL_PARAM_0 + 1, "EXCITER"},
+        {KnobDef::PARAM, M::OSC_CTRL_PARAM_0 + 2, "S1 - DECAY - S2", 2},
+        {M::OSC_CTRL_PARAM_0 + 3, ""},
+        {KnobDef::INPUT, M::AUDIO_INPUT, "AUDIO"},
+        {M::OSC_CTRL_PARAM_0 + 6, "STIFF"},
+        {M::OSC_CTRL_PARAM_0 + 5, "BALANCE"},
+        {M::OSC_CTRL_PARAM_0 + 4, "DETUNE"},
+    };
 }
 
 template <> constexpr bool VCOConfig<ot_modern>::supportsUnison() { return true; }

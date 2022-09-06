@@ -135,6 +135,13 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
 
     case TEXT_LABEL_OUTPUT:
         return nvgRGB(201, 201, 201);
+
+    case PLOT_CONTROL_TEXT:
+    case PLOT_CONTROL_VALUE_BG:
+        return nvgRGB(0xFF, 0x90, 0x00);
+    case PLOT_CONTROL_VALUE_FG:
+        return nvgRGB(0,0,0);
+
     }
 
     return nvgRGB(255, 0, 0);
@@ -179,8 +186,24 @@ void XTStyle::notifyStyleListeners()
         l->onStyleChanged();
 }
 
-static const char *fontFace() { return "res/xt/fonts/quicksand/Quicksand-Regular.ttf"; };
-static const char *fontFaceBold() { return "res/xt/fonts/quicksand/Quicksand-Bold.ttf"; };
+#define TEST_FONTS 0
+
+static const char *fontFace()
+{
+#if TEST_FONTS
+    return "res/xt/fonts/test-fonts/UglyTypist.ttf";
+#else
+    return "res/xt/fonts/quicksand/Quicksand-Regular.ttf";
+#endif
+}
+static const char *fontFaceBold()
+{
+#if TEST_FONTS
+    return "res/xt/fonts/test-fonts/PlayfairDisplay.ttf";
+#else
+    return "res/xt/fonts/quicksand/Quicksand-Bold.ttf";
+#endif
+}
 
 int XTStyle::fontId(NVGcontext *vg)
 {

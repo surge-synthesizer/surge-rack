@@ -98,7 +98,8 @@ struct DebugPoint : rack::TransparentWidget
 struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 {
     std::string label{};
-    float size{7.5};
+    float size{7.3};
+    float tracking{0.0};
     style::XTStyle::Colors color;
     Label(const rack::Vec &pos, const rack::Vec &sz)
         : BufferedDrawFunctionWidget(pos, sz, [this](auto vg) { drawLabel(vg); })
@@ -109,7 +110,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 
     static Label *
     createWithBaselineBox(const rack::Vec &pos, const rack::Vec &size, const std::string lab,
-                          float szInPt = 7.5,
+                          float szInPt = 7.3,
                           style::XTStyle::Colors col = style::XTStyle::Colors::TEXT_LABEL)
     {
         auto res = new Label(pos, size); // FIXME on that obv
@@ -127,6 +128,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
         nvgFillColor(vg, style()->getColor(color));
         nvgStrokeColor(vg, style()->getColor(color));
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+        nvgTextLetterSpacing(vg, tracking);
         nvgText(vg, box.size.x * 0.5, box.size.y, label.c_str(), nullptr);
 
 #if DEBUG_RECT
@@ -201,6 +203,7 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         auto label = Label::createWithBaselineBox(
             rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(mainLabelBaseline_MM)), title,
             mainLabelSize_PT);
+        label->tracking = 1;
         addChild(label);
     }
 };
@@ -466,6 +469,67 @@ struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
     {
         svg->setSvg(rack::Svg::load(rack::asset::plugin(
             pluginInstance, style()->skinAssetDir() + "/components/mod-button.svg")));
+    }
+};
+
+struct OctaveControl : public rack::app::Knob, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdw{nullptr};
+    static OctaveControl *create(rack::Vec pos, rack::Vec sz, SurgeModuleCommon *module,
+                                 int paramId)
+    {
+        auto *res = rack::createWidget<OctaveControl>(pos);
+
+        res->box.pos = pos;
+        res->box.size = sz;
+
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+
+        res->bdw = new BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->addChild(res->bdw);
+
+        return res;
+    }
+
+    void drawWidget(NVGcontext *vg)
+    {
+        auto *pq = getParamQuantity();
+        if (!pq)
+            return;
+
+        auto pv = (int)std::round(pq->getValue());
+
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgText(vg, 0, box.size.y * 0.5, "OCT", nullptr);
+
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
+        nvgRect(vg, box.size.x * 0.65, 0, box.size.x * 0.35, box.size.y);
+        nvgFill(vg);
+
+        auto valString = std::to_string(pv);
+        if (pv > 0)
+            valString = "+" + valString;
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_FG));
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgText(vg, box.size.x * 0.825, box.size.y * 0.5, valString.c_str(), nullptr);
+    }
+
+    void onStyleChanged() override { bdw->dirty = true; }
+    void onChange(const ChangeEvent &e) override
+    {
+        bdw->dirty = true;
+        Widget::onChange(e);
     }
 };
 
