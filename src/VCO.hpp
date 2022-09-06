@@ -1,5 +1,5 @@
 #pragma once
-#include "Surge.hpp"
+#include "SurgeXT.hpp"
 #include "SurgeModuleCommon.hpp"
 #include "dsp/Oscillator.h"
 #include "rack.hpp"
@@ -8,7 +8,7 @@
 
 namespace sst::surgext_rack::vco
 {
-template <int oscType> struct SingleConfig
+template <int oscType> struct VCOConfig
 {
     static constexpr bool supportsUnison() { return false; }
 
@@ -31,7 +31,7 @@ template <int oscType> struct SingleConfig
     static knobs_t getKnobs() { return {}; }
 };
 
-template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
+template <int oscType> struct VCO : virtual public SurgeModuleCommon
 {
     static constexpr int n_mod_inputs{4};
 
@@ -70,7 +70,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
 
-    SurgeOSCSingle() : SurgeModuleCommon()
+    VCO() : SurgeModuleCommon()
     {
         surge_osc.fill(nullptr);
         lastUnison.fill(-1);
@@ -99,7 +99,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
 
         for (int i = 0; i < n_osc_params + 1; ++i)
         {
-            configParam<SurgeRackOSCParamQuantity<SurgeOSCSingle>>(
+            configParam<SurgeRackOSCParamQuantity<VCO>>(
                 OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
         }
 
@@ -125,7 +125,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
         return OSC_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
-    ~SurgeOSCSingle()
+    ~VCO()
     {
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -205,7 +205,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     modMatrix[i][m] = 0.f;
                 }
             }
-            const auto &knobConfig = SingleConfig<oscType>::getKnobs();
+            const auto &knobConfig = VCOConfig<oscType>::getKnobs();
             for (const auto k : knobConfig)
             {
                 int id = k.id - PITCH_0;
@@ -273,7 +273,7 @@ template <int oscType> struct SurgeOSCSingle : virtual public SurgeModuleCommon
                     {
                         oscstorage->p[i].set_value_f01(modValue[c][i + 1]);
                     }
-                    if constexpr (SingleConfig<oscType>::supportsUnison())
+                    if constexpr (VCOConfig<oscType>::supportsUnison())
                     {
                         if (oscstorage->p[n_osc_params - 1].val.i != lastUnison[c])
                         {

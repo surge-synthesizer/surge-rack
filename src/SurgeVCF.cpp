@@ -3,7 +3,7 @@
 //
 
 #include "SurgeVCF.hpp"
-#include "Surge.hpp"
+#include "SurgeXT.hpp"
 #include "SurgeModuleWidgetCommon.hpp"
 
 #include "XTWidgets.h"

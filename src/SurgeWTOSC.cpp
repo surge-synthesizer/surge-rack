@@ -232,8 +232,8 @@ SurgeWTOSCWidget::SurgeWTOSCWidget(SurgeWTOSCWidget::M *module) : SurgeModuleWid
         float fs = 15 - (i - 3) * (i - 3) / 3.0;
 
         auto cl = [distance]() {
-            auto sc = SurgeStyle::parameterScrollCenter();
-            auto se = SurgeStyle::parameterScrollEnd();
+            auto sc = XTStyle::parameterScrollCenter();
+            auto se = XTStyle::parameterScrollEnd();
             float colR = 255 * (distance * sc.r + (1 - distance) * se.r);
             float colG = 255 * (distance * sc.g + (1 - distance) * se.g);
             float colB = 255 * (distance * sc.b + (1 - distance) * se.b);

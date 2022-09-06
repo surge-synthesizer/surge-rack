@@ -8,7 +8,7 @@
 #include <locale>
 #include <string>
 
-#include "Surge.hpp"
+#include "SurgeXT.hpp"
 #include "SurgeStorage.h"
 #include "rack.hpp"
 

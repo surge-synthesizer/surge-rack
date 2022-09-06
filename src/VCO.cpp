@@ -1,16 +1,17 @@
-#include "SurgeOSCSingle.hpp"
-#include "Surge.hpp"
+#include "VCO.hpp"
+#include "VCOConfig.hpp"
+#include "XTWidgets.h"
+
+#include "SurgeXT.hpp"
 #include "SurgeModuleWidgetCommon.hpp"
 
-#include "SurgeOSCSingleConfig.hpp"
-#include "XTWidgets.h"
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct SurgeOSCSingleWidget : public virtual widgets::SurgeModuleWidgetCommon
+template <int oscType> struct VCOWidget : public virtual widgets::SurgeModuleWidgetCommon
 {
-    typedef SurgeOSCSingle<oscType> M;
-    SurgeOSCSingleWidget(M *module);
+    typedef VCO<oscType> M;
+    VCOWidget(M *module);
 
     float plotH_MM = 36;
     float plotW_MM = 51;
@@ -35,10 +36,15 @@ template <int oscType> struct SurgeOSCSingleWidget : public virtual widgets::Sur
 };
 
 template <int oscType>
-struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListener
+struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
 {
-    typename SurgeOSCSingleWidget<oscType>::M *module{nullptr};
-    void setup(typename SurgeOSCSingleWidget<oscType>::M *m)
+    ~OSCPlotWidget() {
+        // hmm this crashes why ? if(bdwPlot) delete bdwPlot;
+    }
+    typename VCOWidget<oscType>::M *module{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
+    void setup(typename VCOWidget<oscType>::M *m)
     {
         module = m;
         if (module)
@@ -46,6 +52,11 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
             storage = module->storage.get();
             oscdata = &(storage->getPatch().scene[0].osc[1]); // this is tne no-mod storage
         }
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlotBackground(vg);});
+        addChild(bdw);
+
+        // Don't add this; rather explicitly draw it in the drawLayer and delete it in the dtor
+        bdwPlot = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlot(vg);});
     }
 
     void step() override
@@ -56,17 +67,16 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
         if (isDirty())
         {
             recalcPath();
+            bdwPlot->dirty = true;
         }
         rack::widget::Widget::step();
     }
-
-    void draw(const DrawArgs &args) override { drawPlot(args.vg); }
 
     void drawLayer(const DrawArgs &args, int layer) override
     {
         if (layer == 1)
         {
-            drawPlot(args.vg);
+            bdwPlot->draw(args);
         }
     }
 
@@ -82,7 +92,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
     }
 
     static OSCPlotWidget<oscType> *create(rack::Vec pos, rack::Vec size,
-                                          typename SurgeOSCSingleWidget<oscType>::M *module)
+                                          typename VCOWidget<oscType>::M *module)
     {
         auto *res = rack::createWidget<OSCPlotWidget<oscType>>(pos);
 
@@ -129,7 +139,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
             tp[oscdata->p[i].param_id_in_scene].i = oscdata->p[i].val.i;
         }
 
-        return spawn_osc(oscdata->type.val.i, storage, oscdata, tp, oscbuffer);
+        auto res = spawn_osc(oscdata->type.val.i, storage, oscdata, tp, oscbuffer);
+        res->init_ctrltypes();
+        return res;
     }
 
     std::vector<std::pair<float, float>> oscPath;
@@ -164,6 +176,41 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
         osc->~Oscillator();
     }
 
+    void drawPlotBackground(NVGcontext *vg)
+    {
+        // This will go in layer 0
+        int nSteps = 9;
+        int mid = (nSteps - 1) / 2;
+        float dy = box.size.y * 1.f / nSteps;
+
+        float nX = std::ceil(box.size.x / dy);
+        float dx = box.size.x / nX;
+
+        auto markCol = style()->getColor(style::XTStyle::PLOT_MARKS);
+        for (int yd = 0; yd < nSteps; yd++)
+        {
+            if (yd == mid)
+                continue;
+            float y = yd * dy;
+            float x = 0;
+
+            while (x <= box.size.x)
+            {
+                nvgBeginPath(vg);
+                nvgFillColor(vg, markCol);
+                nvgEllipse(vg, x, y, 0.5, 0.5);
+                nvgFill(vg);
+                x += dx;
+            }
+        }
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, markCol);
+        nvgMoveTo(vg, 0, box.size.y * 0.5);
+        nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+    }
+
     void drawPlot(NVGcontext *vg)
     {
         if (!oscPath.empty())
@@ -182,11 +229,13 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
                 }
                 first = false;
             }
-            nvgStrokeColor(vg, nvgRGB(255, 0x90, 0));
+            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+            nvgStrokeColor(vg, col);
             nvgStrokeWidth(vg, 1.25);
             nvgStroke(vg);
 
-            nvgStrokeColor(vg, nvgRGBA(255, 0x90, 0, 50));
+            col.a = 0.1;
+            nvgStrokeColor(vg, col);
             nvgStrokeWidth(vg, 3);
             nvgStroke(vg);
         }
@@ -196,26 +245,18 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleListe
             // Draw the module name here for preview goodness
             nvgBeginPath(vg);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgFontFaceId(vg, style::SurgeStyle::fontIdBold(vg));
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 30);
-            nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
             nvgText(vg, box.size.x * 0.5,
                     box.size.y * 0.5,
                     osc_type_names[oscType], nullptr);
         }
-
-#define DEBUG_BOUNDS 0
-#if DEBUG_BOUNDS
-        nvgBeginPath(vg);
-        nvgRect(vg, 0, 0, box.size.x, box.size.y);
-        nvgFillColor(vg,nvgRGBA(100,100,255, 120));
-        nvgFill(vg);
-#endif
     }
 };
 
 template <int oscType>
-SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType>::M *module)
+VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     : SurgeModuleWidgetCommon()
 {
     setModule(module);
@@ -233,7 +274,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
     addChild(OSCPlotWidget<oscType>::create(rack::Vec(plotStartX, plotStartY),
                                             rack::Vec(plotW, plotH), module));
 
-    const auto &knobConfig = SingleConfig<oscType>::getKnobs();
+    const auto &knobConfig = VCOConfig<oscType>::getKnobs();
 
     auto idx = 0;
     int row = 0, col  = 0;
@@ -242,7 +283,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
         auto pid = k.id;
         auto label = k.name;
 
-        if (k.type == SingleConfig<oscType>::KnobDef::Type::PARAM)
+        if (k.type == VCOConfig<oscType>::KnobDef::Type::PARAM)
         {
             auto uxp = columnCenters_MM[col];
             auto uyp = rowCenters_MM[row];
@@ -261,7 +302,7 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
                 addChild(k);
             }
         }
-        else if (k.type == SingleConfig<oscType>::KnobDef::Type::INPUT)
+        else if (k.type == VCOConfig<oscType>::KnobDef::Type::INPUT)
         {
             auto uxp = columnCenters_MM[col];
             auto uyp = rowCenters_MM[row];
@@ -340,38 +381,38 @@ SurgeOSCSingleWidget<oscType>::SurgeOSCSingleWidget(SurgeOSCSingleWidget<oscType
 
 namespace vcoui = sst::surgext_rack::vco::ui;
 
-rack::Model *modelSurgeOSCClassic =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_classic>::M, vcoui::SurgeOSCSingleWidget<ot_classic>>(
+rack::Model *modelVCOClassic =
+    rack::createModel<vcoui::VCOWidget<ot_classic>::M, vcoui::VCOWidget<ot_classic>>(
         "SurgeXTOSCClassic");
 
-rack::Model *modelSurgeOSCModern =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_modern>::M, vcoui::SurgeOSCSingleWidget<ot_modern>>(
+rack::Model *modelVCOModern =
+    rack::createModel<vcoui::VCOWidget<ot_modern>::M, vcoui::VCOWidget<ot_modern>>(
         "SurgeXTOSCModern");
 
-rack::Model *modelSurgeOSCWavetable =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_wavetable>::M, vcoui::SurgeOSCSingleWidget<ot_wavetable>>(
+rack::Model *modelVCOWavetable =
+    rack::createModel<vcoui::VCOWidget<ot_wavetable>::M, vcoui::VCOWidget<ot_wavetable>>(
         "SurgeXTOSCWavetable");
-rack::Model *modelSurgeOSCWindow =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_window>::M, vcoui::SurgeOSCSingleWidget<ot_window>>(
+rack::Model *modelVCOWindow =
+    rack::createModel<vcoui::VCOWidget<ot_window>::M, vcoui::VCOWidget<ot_window>>(
         "SurgeXTOSCWindow");
 
-rack::Model *modelSurgeOSCSine =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_sine>::M, vcoui::SurgeOSCSingleWidget<ot_sine>>(
+rack::Model *modelVCOSine =
+    rack::createModel<vcoui::VCOWidget<ot_sine>::M, vcoui::VCOWidget<ot_sine>>(
         "SurgeXTOSCSine");
-rack::Model *modelSurgeOSCFM2 =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_FM2>::M, vcoui::SurgeOSCSingleWidget<ot_FM2>>(
+rack::Model *modelVCOFM2 =
+    rack::createModel<vcoui::VCOWidget<ot_FM2>::M, vcoui::VCOWidget<ot_FM2>>(
         "SurgeXTOSCFM2");
-rack::Model *modelSurgeOSCFM3 =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_FM3>::M, vcoui::SurgeOSCSingleWidget<ot_FM3>>(
+rack::Model *modelVCOFM3 =
+    rack::createModel<vcoui::VCOWidget<ot_FM3>::M, vcoui::VCOWidget<ot_FM3>>(
         "SurgeXTOSCFM3");
 
-rack::Model *modelSurgeOSCSHNoise =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_shnoise>::M, vcoui::SurgeOSCSingleWidget<ot_shnoise>>(
+rack::Model *modelVCOSHNoise =
+    rack::createModel<vcoui::VCOWidget<ot_shnoise>::M, vcoui::VCOWidget<ot_shnoise>>(
         "SurgeXTOSCSHNoise");
 
-rack::Model *modelSurgeOSCString =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_string>::M, vcoui::SurgeOSCSingleWidget<ot_string>>(
+rack::Model *modelVCOString =
+    rack::createModel<vcoui::VCOWidget<ot_string>::M, vcoui::VCOWidget<ot_string>>(
         "SurgeXTOSCString");
-rack::Model *modelSurgeOSCAlias =
-    rack::createModel<vcoui::SurgeOSCSingleWidget<ot_alias>::M, vcoui::SurgeOSCSingleWidget<ot_alias>>(
+rack::Model *modelVCOAlias =
+    rack::createModel<vcoui::VCOWidget<ot_alias>::M, vcoui::VCOWidget<ot_alias>>(
         "SurgeXTOSCAlias");

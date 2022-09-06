@@ -2,9 +2,9 @@
 ** Widgets to ease double buffering with lambdas, to create input panel areas,
 ** to have a common background widget and more
 */
-#include "Surge.hpp"
+#include "SurgeXT.hpp"
 #include "SurgeModuleCommon.hpp"
-#include "SurgeStyle.hpp"
+#include "XTStyle.hpp"
 #include "SurgeWidgets.hpp"
 #include "rack.hpp"
 #include <functional>
@@ -12,7 +12,7 @@
 
 namespace sst::surgext_rack::widgets
 {
-struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, style::StyleListener
+struct SurgeModuleWidgetCommon : public virtual rack::ModuleWidget, style::StyleParticipant
 {
     virtual void onStyleChanged() override { dirtyFB(this); }
 

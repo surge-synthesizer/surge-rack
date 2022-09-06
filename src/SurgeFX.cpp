@@ -20,9 +20,9 @@ template <int effectType> struct SurgeFXWidget : SurgeModuleWidgetCommon
 
         for (int i = 0; i < nControls; ++i)
         {
-            SurgeStyle::drawTextBGRect(vg, 4 * padMargin + 2 * portX + surgeSwitchX,
-                                       i * controlHeight + SCREW_WIDTH + padMargin, textAreaWidth,
-                                       controlHeight - padMargin);
+            XTStyle::drawTextBGRect(vg, 4 * padMargin + 2 * portX + surgeSwitchX,
+                                    i * controlHeight + SCREW_WIDTH + padMargin, textAreaWidth,
+                                    controlHeight - padMargin);
         }
 
         drawLeftRightInputOutputBackground(vg, box);
@@ -89,18 +89,18 @@ SurgeFXWidget<effectType>::SurgeFXWidget(SurgeFXWidget<effectType>::M *module)
         addChild(TextDisplayLight::create(
             rack::Vec(tx, yPos), rack::Vec(textAreaWidth, controlHeight - padMargin),
             module ? &(module->pb[i]->nameCache) : nullptr, 13, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM,
-            SurgeStyle::parameterNameText_KEY()));
+            XTStyle::parameterNameText_KEY()));
 
         addChild(TextDisplayLight::create(
             rack::Vec(tx, yPos), rack::Vec(textAreaWidth, controlHeight - padMargin),
             module ? &(module->groupCache[i]) : nullptr, 9, NVG_ALIGN_LEFT | NVG_ALIGN_TOP,
-            SurgeStyle::parameterValueText_KEY()));
+            XTStyle::parameterValueText_KEY()));
 
         addChild(TextDisplayLight::create(
             rack::Vec(tx, yPos),
             rack::Vec(textAreaWidth - 2 * padMargin, controlHeight - padMargin),
             module ? &(module->pb[i]->valCache) : nullptr, 14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE,
-            SurgeStyle::parameterValueText_KEY()));
+            XTStyle::parameterValueText_KEY()));
     }
 }
 
