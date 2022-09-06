@@ -40,7 +40,10 @@ struct XTStyle
         PLOT_MARKS,
 
         MOD_BUTTON_LIGHT_ON,
-        MOD_BUTTON_LIGHT_OFF
+        MOD_BUTTON_LIGHT_OFF,
+
+        TEXT_LABEL,
+        TEXT_LABEL_OUTPUT
     };
     const NVGcolor getColor(Colors c);
 

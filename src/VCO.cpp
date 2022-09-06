@@ -3,12 +3,11 @@
 #include "XTWidgets.h"
 
 #include "SurgeXT.hpp"
-#include "SurgeModuleWidgetCommon.hpp"
-
+#include "XTModuleWidget.hpp"
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct VCOWidget : public virtual widgets::SurgeModuleWidgetCommon
+template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
@@ -21,7 +20,11 @@ template <int oscType> struct VCOWidget : public virtual widgets::SurgeModuleWid
     float plotControlsH_MM = 5;
 
     std::array<float, 4> columnCenters_MM{9.48, 23.48, 37.48, 51.48};
-    std::array<float, 5> rowCenters_MM{55,71,85.32, 100.16, 114.5};
+    std::array<float, 5> rowCenters_MM{55,71, 85.32, 100.16, 114.5};
+    float columnWidth_MM = 14;
+
+    std::array<float, 4> labelBaselines_MM{63.873, 79.873, 95.113, 109.453 };
+
     float verticalPortOffset_MM = 0.5;
 
     float plotStartX = rack::mm2px(plotCX_MM - plotW_MM * 0.5);
@@ -33,14 +36,26 @@ template <int oscType> struct VCOWidget : public virtual widgets::SurgeModuleWid
 
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    void addLabel(int row, int col, const std::string label, style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+    {
+        auto cx = columnCenters_MM[col];
+        auto bl = labelBaselines_MM[row];
+
+        auto boxx0 = cx - columnWidth_MM * 0.5;
+        auto boxy0 = bl - 5;
+
+        auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+        auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
+
+        auto lab = widgets::Label::createWithBaselineBox(p0, s0, label, 7.5, clr);
+        addChild(lab);
+    }
 };
 
 template <int oscType>
 struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
 {
-    ~OSCPlotWidget() {
-        // hmm this crashes why ? if(bdwPlot) delete bdwPlot;
-    }
     typename VCOWidget<oscType>::M *module{nullptr};
     widgets::BufferedDrawFunctionWidget *bdw{nullptr};
     widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
@@ -55,8 +70,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlotBackground(vg);});
         addChild(bdw);
 
-        // Don't add this; rather explicitly draw it in the drawLayer and delete it in the dtor
-        bdwPlot = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlot(vg);});
+        bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlot(vg);});
+        addChild(bdwPlot);
     }
 
     void step() override
@@ -72,23 +87,10 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         rack::widget::Widget::step();
     }
 
-    void drawLayer(const DrawArgs &args, int layer) override
-    {
-        if (layer == 1)
-        {
-            bdwPlot->draw(args);
-        }
-    }
-
     virtual void onStyleChanged() override
     {
-        for (auto w : children)
-        {
-            if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w))
-            {
-                fw->dirty = true;
-            }
-        }
+        bdw->dirty = true;
+        bdwPlot->dirty = true;
     }
 
     static OSCPlotWidget<oscType> *create(rack::Vec pos, rack::Vec size,
@@ -257,7 +259,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
 template <int oscType>
 VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
-    : SurgeModuleWidgetCommon()
+    : XTModuleWidget()
 {
     setModule(module);
 
@@ -266,7 +268,12 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             o = nullptr;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "vco", std::string(M::name));
+
+    std::string panelLabel = std::string(M::name) + " VCO";
+    for (auto &q : panelLabel)
+        q = std::toupper(q);
+
+    auto bg = new widgets::Background(box.size, panelLabel, "vco", "BlankVCO");
     addChild(bg);
 
     auto t = plotStartY;
@@ -308,6 +315,28 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             auto uyp = rowCenters_MM[row];
             addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module, k.id));
         }
+
+        if (k.type != VCOConfig<oscType>::KnobDef::Type::BLANK)
+        {
+            if (k.colspan == 1)
+            {
+                addLabel(row, col, k.name);
+            }
+            else if (k.colspan == 2)
+            {
+                auto cx = (columnCenters_MM[col] + columnCenters_MM[col+1]) * 0.5;
+                auto bl = labelBaselines_MM[row];
+
+                auto boxx0 = cx - columnWidth_MM;
+                auto boxy0 = bl - 5;
+
+                auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+                auto s0 = rack::mm2px(rack::Vec(columnWidth_MM * 2, 5));
+
+                auto lab = widgets::Label::createWithBaselineBox(p0, s0, label);
+                addChild(lab);
+            }
+        }
         idx++;
         col++;
         if (idx == 4)
@@ -317,9 +346,13 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         }
     }
 
+    for (int i=0; i<M::n_mod_inputs; ++i)
+    {
+        addLabel(2, i, std::string("MOD ") + std::to_string(i + 1));
+    }
+
     col = 0;
     row = 3;
-
 
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
@@ -374,6 +407,13 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         auto xp = columnCenters_MM[col];
         addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
         col ++;
+    }
+
+    col =0;
+    for(const std::string &s : { "PITCH", "TRIG", "L/MON", "RIGHT"})
+    {
+        addLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT));
+        col++;
     }
 }
 

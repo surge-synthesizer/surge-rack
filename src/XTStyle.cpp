@@ -120,6 +120,21 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         return nvgRGB(0xFF, 0x90, 0x00);
     case MOD_BUTTON_LIGHT_OFF:
         return nvgRGB(0x82, 0x82, 0x82);
+
+    case TEXT_LABEL:
+    {
+        switch (currentStyle)
+        {
+        case DARK:
+        case MID:
+            return nvgRGB(201, 201, 201);
+        case LIGHT:
+            return nvgRGB(82, 82, 82);
+        }
+    }
+
+    case TEXT_LABEL_OUTPUT:
+        return nvgRGB(201, 201, 201);
     }
 
     return nvgRGB(255, 0, 0);
@@ -169,7 +184,7 @@ static const char *fontFaceBold() { return "res/xt/fonts/quicksand/Quicksand-Bol
 
 int XTStyle::fontId(NVGcontext *vg)
 {
-    static int fid;
+    static int fid{-1};
     if (fid < 0)
         fid = InternalFontMgr::get(vg, fontFace());
     return fid;
@@ -177,7 +192,7 @@ int XTStyle::fontId(NVGcontext *vg)
 
 int XTStyle::fontIdBold(NVGcontext *vg)
 {
-    static int fid;
+    static int fid{-1};
     if (fid < 0)
         fid = InternalFontMgr::get(vg, fontFaceBold());
     return fid;

@@ -35,13 +35,121 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget
     }
 };
 
+struct BufferedDrawFunctionWidgetOnLayer : BufferedDrawFunctionWidget
+{
+    int layer{1};
+    BufferedDrawFunctionWidgetOnLayer(rack::Vec pos, rack::Vec sz, drawfn_t draw_, int ly = 1)
+        : BufferedDrawFunctionWidget(pos, sz, draw_), layer(ly)
+    {
+    }
+
+    void draw(const DrawArgs &args) override { return; }
+    void drawLayer(const DrawArgs &args, int dl) override
+    {
+        if (dl == layer)
+        {
+            BufferedDrawFunctionWidget::draw(args);
+        }
+    }
+};
+
+struct DebugRect : rack::TransparentWidget
+{
+    static DebugRect *create(const rack::Vec &pos, const rack::Vec &size)
+    {
+        auto r = new DebugRect();
+        r->box.pos = pos;
+        r->box.size = size;
+        return r;
+    }
+    void draw(const DrawArgs &args) override
+    {
+        nvgBeginPath(args.vg);
+        nvgStrokeColor(args.vg, nvgRGB(255, 0, 0));
+        nvgFillColor(args.vg, nvgRGBA(255, 255, 0, 40));
+        nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+        nvgFill(args.vg);
+        nvgStroke(args.vg);
+    }
+};
+
+struct DebugPoint : rack::TransparentWidget
+{
+    static DebugPoint *create(const rack::Vec &pos)
+    {
+        auto r = new DebugPoint();
+        r->box.pos = pos;
+        r->box.pos.x -= 2;
+        r->box.pos.y -= 2;
+        r->box.size = rack::Vec(4, 4);
+        return r;
+    }
+    void draw(const DrawArgs &args) override
+    {
+        nvgBeginPath(args.vg);
+        nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
+        nvgFillColor(args.vg, nvgRGBA(0, 255, 255, 40));
+        nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+        nvgFill(args.vg);
+        nvgStroke(args.vg);
+    }
+};
+
+struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
+{
+    std::string label{};
+    float size{7.5};
+    style::XTStyle::Colors color;
+    Label(const rack::Vec &pos, const rack::Vec &sz)
+        : BufferedDrawFunctionWidget(pos, sz, [this](auto vg) { drawLabel(vg); })
+    {
+        box.pos = pos;
+        box.size = sz;
+    }
+
+    static Label *
+    createWithBaselineBox(const rack::Vec &pos, const rack::Vec &size, const std::string lab,
+                          float szInPt = 7.5,
+                          style::XTStyle::Colors col = style::XTStyle::Colors::TEXT_LABEL)
+    {
+        auto res = new Label(pos, size); // FIXME on that obv
+        res->label = lab;
+        res->size = szInPt;
+        res->color = col;
+        return res;
+    }
+
+    void drawLabel(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, size * 96.0 / 72.0);
+        nvgFillColor(vg, style()->getColor(color));
+        nvgStrokeColor(vg, style()->getColor(color));
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+        nvgText(vg, box.size.x * 0.5, box.size.y, label.c_str(), nullptr);
+
+#if DEBUG_RECT
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, nvgRGB(255, 0, 0));
+        nvgRect(vg, box.pos.x, box.pos.y, box.size.x, box.size.y);
+        nvgStroke(vg);
+#endif
+    }
+
+    void onStyleChanged() override { dirty = true; }
+};
+
 struct Background : public rack::TransparentWidget, style::StyleParticipant
 {
-    std::string panelName, groupName;
+    std::string panelName, groupName, title;
     std::function<void(NVGcontext *)> moduleSpecificDraw;
 
-    Background(rack::Vec size, const std::string &grp, const std::string &pn)
-        : groupName(grp), panelName(pn)
+    static constexpr float mainLabelBaseline_MM = 6.298, mainLabelSize_PT = 11;
+    Label *titleLabel{nullptr};
+
+    Background(rack::Vec size, const std::string &t, const std::string &grp, const std::string &pn)
+        : title(t), groupName(grp), panelName(pn)
     {
         box.size = size;
         onStyleChanged();
@@ -55,15 +163,6 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         nvgRect(vg, 0, 0, box.size.x, box.size.y);
         nvgFill(vg);
         nvgStroke(vg);
-
-        nvgBeginPath(vg);
-        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
-        nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 17);
-
-        std::string s = groupName + "::" + panelName;
-        nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
-        nvgText(vg, box.size.x * 0.5, 2, s.c_str(), nullptr);
 
         nvgBeginPath(vg);
         nvgFontFaceId(vg, style()->fontId(vg));
@@ -98,6 +197,11 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
                                                       [this](auto vg) { drawStubLayer(vg); });
             addChild(bdw);
         }
+
+        auto label = Label::createWithBaselineBox(
+            rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(mainLabelBaseline_MM)), title,
+            mainLabelSize_PT);
+        addChild(label);
     }
 };
 
@@ -184,10 +288,6 @@ struct Port : public rack::app::SvgPort, style::StyleParticipant
     }
 };
 
-struct LinePlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
-{
-};
-
 struct ModRingKnob : rack::app::Knob, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
@@ -225,16 +325,20 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         auto oy = h - (std::cos(angle) * radius + h / 2);
 
         nvgBeginPath(vg);
-        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, angle - modAngle - M_PI_2,
-               -modAngle < 0 ? NVG_CCW : NVG_CW);
+        auto aStart = std::clamp(angle - modAngle, underlyerParamWidget->minAngle,
+                                 underlyerParamWidget->maxAngle) -
+                      M_PI_2;
+        auto aEnd = std::clamp(angle + modAngle, underlyerParamWidget->minAngle,
+                               underlyerParamWidget->maxAngle) -
+                    M_PI_2;
+        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, aStart, -modAngle < 0 ? NVG_CCW : NVG_CW);
         nvgStrokeWidth(vg, Knob9::ringWidth_PX);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MINUS));
         nvgLineCap(vg, NVG_ROUND);
         nvgStroke(vg);
 
         nvgBeginPath(vg);
-        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, angle + modAngle - M_PI_2,
-               modAngle < 0 ? NVG_CCW : NVG_CW);
+        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, aEnd, modAngle < 0 ? NVG_CCW : NVG_CW);
         nvgStrokeWidth(vg, Knob9::ringWidth_PX);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_PLUS));
         nvgLineCap(vg, NVG_ROUND);
@@ -260,8 +364,8 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         res->paramId = paramId;
         res->initParamQuantity();
 
-        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
-                                                  [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->bdw = new BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
 
         return res;
