@@ -4,13 +4,13 @@
 
 #include "SurgeVCF.hpp"
 #include "SurgeXT.hpp"
-#include "SurgeModuleWidgetCommon.hpp"
+#include "XTModuleWidget.hpp"
 
 #include "XTWidgets.h"
 
 namespace sst::surgext_rack::vcf::ui
 {
-struct SurgeVCFWidget : widgets::SurgeModuleWidgetCommon
+struct SurgeVCFWidget : widgets::XTModuleWidget
 {
     typedef SurgeVCF M;
     SurgeVCFWidget(M *module);
@@ -18,10 +18,7 @@ struct SurgeVCFWidget : widgets::SurgeModuleWidgetCommon
     void moduleBackground(NVGcontext *vg) {}
 };
 
-SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : SurgeModuleWidgetCommon()
-{
-    setModule(module);
-}
+SurgeVCFWidget::SurgeVCFWidget(SurgeVCFWidget::M *module) : XTModuleWidget() { setModule(module); }
 } // namespace sst::surgext_rack::vcf::ui
 
 rack::Model *modelSurgeVCF =

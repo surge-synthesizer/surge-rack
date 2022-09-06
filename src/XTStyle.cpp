@@ -120,6 +120,18 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         return nvgRGB(0xFF, 0x90, 0x00);
     case MOD_BUTTON_LIGHT_OFF:
         return nvgRGB(0x82, 0x82, 0x82);
+
+    case TEXT_LABEL:
+    {
+        switch (currentStyle)
+        {
+        case DARK:
+        case MID:
+            return nvgRGB(201, 201, 201);
+        case LIGHT:
+            return nvgRGB(82, 82, 82);
+        }
+    }
     }
 
     return nvgRGB(255, 0, 0);

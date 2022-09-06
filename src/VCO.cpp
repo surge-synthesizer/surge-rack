@@ -3,12 +3,11 @@
 #include "XTWidgets.h"
 
 #include "SurgeXT.hpp"
-#include "SurgeModuleWidgetCommon.hpp"
-
+#include "XTModuleWidget.hpp"
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct VCOWidget : public virtual widgets::SurgeModuleWidgetCommon
+template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
@@ -38,9 +37,6 @@ template <int oscType> struct VCOWidget : public virtual widgets::SurgeModuleWid
 template <int oscType>
 struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
 {
-    ~OSCPlotWidget() {
-        // hmm this crashes why ? if(bdwPlot) delete bdwPlot;
-    }
     typename VCOWidget<oscType>::M *module{nullptr};
     widgets::BufferedDrawFunctionWidget *bdw{nullptr};
     widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
@@ -55,8 +51,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlotBackground(vg);});
         addChild(bdw);
 
-        // Don't add this; rather explicitly draw it in the drawLayer and delete it in the dtor
-        bdwPlot = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlot(vg);});
+        bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlot(vg);});
+        addChild(bdwPlot);
     }
 
     void step() override
@@ -72,23 +68,10 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         rack::widget::Widget::step();
     }
 
-    void drawLayer(const DrawArgs &args, int layer) override
-    {
-        if (layer == 1)
-        {
-            bdwPlot->draw(args);
-        }
-    }
-
     virtual void onStyleChanged() override
     {
-        for (auto w : children)
-        {
-            if (auto fw = dynamic_cast<rack::FramebufferWidget *>(w))
-            {
-                fw->dirty = true;
-            }
-        }
+        bdw->dirty = true;
+        bdwPlot->dirty = true;
     }
 
     static OSCPlotWidget<oscType> *create(rack::Vec pos, rack::Vec size,
@@ -257,7 +240,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
 template <int oscType>
 VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
-    : SurgeModuleWidgetCommon()
+    : XTModuleWidget()
 {
     setModule(module);
 
@@ -266,7 +249,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             o = nullptr;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "vco", std::string(M::name));
+    auto bg = new widgets::Background(box.size, "vco", "BlankVCO");
     addChild(bg);
 
     auto t = plotStartY;

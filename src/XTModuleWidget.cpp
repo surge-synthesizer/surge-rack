@@ -1,4 +1,4 @@
-#include "SurgeModuleWidgetCommon.hpp"
+#include "XTModuleWidget.hpp"
 
 namespace sst::surgext_rack::widgets
 {
@@ -32,7 +32,7 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
     }
 };
 
-void SurgeModuleWidgetCommon::appendContextMenu(rack::ui::Menu *menu)
+void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
 {
     menu->addChild(new rack::ui::MenuEntry);
 

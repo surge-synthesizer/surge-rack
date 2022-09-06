@@ -35,6 +35,24 @@ struct BufferedDrawFunctionWidget : virtual rack::FramebufferWidget
     }
 };
 
+struct BufferedDrawFunctionWidgetOnLayer : BufferedDrawFunctionWidget
+{
+    int layer{1};
+    BufferedDrawFunctionWidgetOnLayer(rack::Vec pos, rack::Vec sz, drawfn_t draw_, int ly = 1)
+        : BufferedDrawFunctionWidget(pos, sz, draw_), layer(ly)
+    {
+    }
+
+    void draw(const DrawArgs &args) override { return; }
+    void drawLayer(const DrawArgs &args, int dl) override
+    {
+        if (dl == layer)
+        {
+            BufferedDrawFunctionWidget::draw(args);
+        }
+    }
+};
+
 struct Background : public rack::TransparentWidget, style::StyleParticipant
 {
     std::string panelName, groupName;
@@ -184,10 +202,6 @@ struct Port : public rack::app::SvgPort, style::StyleParticipant
     }
 };
 
-struct LinePlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
-{
-};
-
 struct ModRingKnob : rack::app::Knob, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
@@ -225,16 +239,20 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         auto oy = h - (std::cos(angle) * radius + h / 2);
 
         nvgBeginPath(vg);
-        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, angle - modAngle - M_PI_2,
-               -modAngle < 0 ? NVG_CCW : NVG_CW);
+        auto aStart = std::clamp(angle - modAngle, underlyerParamWidget->minAngle,
+                                 underlyerParamWidget->maxAngle) -
+                      M_PI_2;
+        auto aEnd = std::clamp(angle + modAngle, underlyerParamWidget->minAngle,
+                               underlyerParamWidget->maxAngle) -
+                    M_PI_2;
+        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, aStart, -modAngle < 0 ? NVG_CCW : NVG_CW);
         nvgStrokeWidth(vg, Knob9::ringWidth_PX);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MINUS));
         nvgLineCap(vg, NVG_ROUND);
         nvgStroke(vg);
 
         nvgBeginPath(vg);
-        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, angle + modAngle - M_PI_2,
-               modAngle < 0 ? NVG_CCW : NVG_CW);
+        nvgArc(vg, w / 2, h / 2, radius, angle - M_PI_2, aEnd, modAngle < 0 ? NVG_CCW : NVG_CW);
         nvgStrokeWidth(vg, Knob9::ringWidth_PX);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_PLUS));
         nvgLineCap(vg, NVG_ROUND);
@@ -260,8 +278,8 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         res->paramId = paramId;
         res->initParamQuantity();
 
-        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
-                                                  [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->bdw = new BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
 
         return res;
