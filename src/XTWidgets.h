@@ -472,16 +472,24 @@ struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
     }
 };
 
-struct OctaveControl : public rack::app::Knob, style::StyleParticipant
+struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
 {
+    static constexpr float pad_MM = 1.1;
+    static constexpr float box_px = 13;
     BufferedDrawFunctionWidget *bdw{nullptr};
-    static OctaveControl *create(rack::Vec pos, rack::Vec sz, SurgeModuleCommon *module,
-                                 int paramId)
+    std::string label;
+    std::function<std::string(float, const std::string &)> formatLabel;
+
+    static LabeledPlotAreaControl *create(rack::Vec pos, rack::Vec sz, const std::string &lab,
+                                          SurgeModuleCommon *module, int paramId)
     {
-        auto *res = rack::createWidget<OctaveControl>(pos);
+        auto *res = rack::createWidget<LabeledPlotAreaControl>(pos);
 
         res->box.pos = pos;
+        res->box.pos.y += rack::mm2px(pad_MM);
         res->box.size = sz;
+        res->box.size.y -= rack::mm2px(pad_MM);
+        res->label = lab;
 
         res->module = module;
         res->paramId = paramId;
@@ -490,6 +498,10 @@ struct OctaveControl : public rack::app::Knob, style::StyleParticipant
         res->bdw = new BufferedDrawFunctionWidgetOnLayer(
             rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
+        res->formatLabel = [](float f, const std::string &s) {
+            auto sp = s.find(" ");
+            return s.substr(0, sp);
+        };
 
         return res;
     }
@@ -500,29 +512,26 @@ struct OctaveControl : public rack::app::Knob, style::StyleParticipant
         if (!pq)
             return;
 
-        auto pv = (int)std::round(pq->getValue());
+        auto pv = formatLabel(pq->getValue(), pq->getDisplayValueString());
 
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 7.3 * 96 / 72);
-        nvgText(vg, 0, box.size.y * 0.5, "OCT", nullptr);
+        nvgText(vg, 0, box.size.y * 0.5, label.c_str(), nullptr);
 
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
-        nvgRect(vg, box.size.x * 0.65, 0, box.size.x * 0.35, box.size.y);
+        nvgRect(vg, box.size.x - box_px, 0, box_px, box.size.y);
         nvgFill(vg);
 
-        auto valString = std::to_string(pv);
-        if (pv > 0)
-            valString = "+" + valString;
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_FG));
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 7.3 * 96 / 72);
-        nvgText(vg, box.size.x * 0.825, box.size.y * 0.5, valString.c_str(), nullptr);
+        nvgText(vg, box.size.x - box_px * 0.5, box.size.y * 0.5, pv.c_str(), nullptr);
     }
 
     void onStyleChanged() override { bdw->dirty = true; }
