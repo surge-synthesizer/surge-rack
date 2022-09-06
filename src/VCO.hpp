@@ -45,7 +45,9 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
 
         OSC_MOD_PARAM_0 = OSC_CTRL_PARAM_0 + n_osc_params,
 
-        NUM_PARAMS = OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs
+        OCTAVE_SHIFT = OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs,
+
+        NUM_PARAMS
     };
     enum InputIds
     {
@@ -98,6 +100,8 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
         }
 
         configParam(PITCH_0, 1, 127, 60, "Pitch in Midi Note");
+        auto os = configParam(OCTAVE_SHIFT, -3, 3, 0, "Octave Shift");
+        os->snapEnabled = true;
 
         for (int i = 0; i < n_osc_params + 1; ++i)
         {
@@ -113,6 +117,13 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
         pc.update(this);
 
         config_osc->~Oscillator();
+
+        auto display_config_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
+                                    storage->getPatch().scenedata[0], oscdisplaybuffer);
+        display_config_osc->init(72.0);
+        display_config_osc->init_ctrltypes();
+        display_config_osc->init_default_values();
+        display_config_osc->~Oscillator();
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -173,7 +184,7 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
 
             for (int c = 0; c < nChan; ++c)
             {
-                float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12;
+                float pitch0 = getParam(PITCH_0) + (getParam(OCTAVE_SHIFT) + inputs[PITCH_CV].getVoltage(c)) * 12;
                 if (!surge_osc[c])
                 {
                     surge_osc[c] = spawn_osc(oscType, storage.get(), oscstorage,
@@ -225,7 +236,7 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
 
             for (int c = 0; c < nChan; ++c)
             {
-                float pitch0 = getParam(PITCH_0) + inputs[PITCH_CV].getVoltage(c) * 12.0;
+                float pitch0 = getParam(PITCH_0) + (getParam(OCTAVE_SHIFT) + inputs[PITCH_CV].getVoltage(c)) * 12.0;
 
                 modValue[c][0] = pitch0;
                 for (int i = 0; i < n_osc_params; ++i)

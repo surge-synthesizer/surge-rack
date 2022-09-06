@@ -23,7 +23,7 @@ template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
     std::array<float, 5> rowCenters_MM{55,71, 85.32, 100.16, 114.5};
     float columnWidth_MM = 14;
 
-    std::array<float, 4> labelBaselines_MM{63.873, 79.873, 95.113, 109.453 };
+    std::array<float, 4> labelBaselines_MM{63.573, 79.573, 94.864, 109.203 };
 
     float verticalPortOffset_MM = 0.5;
 
@@ -31,6 +31,9 @@ template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
     float plotStartY = rack::mm2px(plotCY_MM - plotH_MM * 0.5);
     float plotW = rack::mm2px(plotW_MM);
     float plotH = rack::mm2px(plotH_MM - plotControlsH_MM);
+
+    float underPlotStartY = plotStartY + plotH;
+    float underPlotH = rack::mm2px(plotControlsH_MM);
 
     int numberOfScrews = 12;
 
@@ -48,7 +51,7 @@ template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
         auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
         auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
 
-        auto lab = widgets::Label::createWithBaselineBox(p0, s0, label, 7.5, clr);
+        auto lab = widgets::Label::createWithBaselineBox(p0, s0, label, 7.3, clr);
         addChild(lab);
     }
 };
@@ -281,8 +284,15 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     addChild(OSCPlotWidget<oscType>::create(rack::Vec(plotStartX, plotStartY),
                                             rack::Vec(plotW, plotH), module));
 
-    const auto &knobConfig = VCOConfig<oscType>::getKnobs();
+    float underX = plotStartX;
+    auto oct = widgets::OctaveControl::create(rack::Vec(underX, underPlotStartY),
+                                              rack::Vec(36, underPlotH),
+                                              module,
+                                              M::OCTAVE_SHIFT);
+    addChild(oct);
+    underX += 36;
 
+    const auto &knobConfig = VCOConfig<oscType>::getKnobs();
     auto idx = 0;
     int row = 0, col  = 0;
     for (const auto k : knobConfig)
@@ -312,7 +322,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         else if (k.type == VCOConfig<oscType>::KnobDef::Type::INPUT)
         {
             auto uxp = columnCenters_MM[col];
-            auto uyp = rowCenters_MM[row];
+            auto uyp = rowCenters_MM[row] + verticalPortOffset_MM;
             addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module, k.id));
         }
 
@@ -410,7 +420,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     }
 
     col =0;
-    for(const std::string &s : { "PITCH", "TRIG", "L/MON", "RIGHT"})
+    for(const std::string &s : { "V/OCT", "TRIG", "L/MON", "RIGHT"})
     {
         addLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT));
         col++;
