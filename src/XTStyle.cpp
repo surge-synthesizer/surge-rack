@@ -132,6 +132,9 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
             return nvgRGB(82, 82, 82);
         }
     }
+
+    case TEXT_LABEL_OUTPUT:
+        return nvgRGB(201, 201, 201);
     }
 
     return nvgRGB(255, 0, 0);

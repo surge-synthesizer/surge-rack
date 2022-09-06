@@ -21,10 +21,12 @@ template <int oscType> struct VCOConfig
             BLANK
         } type{PARAM};
         std::string name;
+        int colspan{1};
         int id{-1};
 
         KnobDef(int kid, const std::string &nm) : type(PARAM), id(kid), name(nm) {}
         KnobDef(Type t, int kid, const std::string &nm) : type(t), id(kid), name(nm) {}
+        KnobDef(Type t, int kid, const std::string &nm, int colspan) : type(t), id(kid), name(nm), colspan(colspan) {}
         KnobDef(Type t) : type(t) {}
     };
     typedef std::vector<KnobDef> knobs_t;

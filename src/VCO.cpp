@@ -37,7 +37,7 @@ template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
-    void addLabel(int row, int col, const std::string label)
+    void addLabel(int row, int col, const std::string label, style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
     {
         auto cx = columnCenters_MM[col];
         auto bl = labelBaselines_MM[row];
@@ -48,7 +48,7 @@ template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
         auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
         auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
 
-        auto lab = widgets::Label::createWithBaselineBox(p0, s0, label);
+        auto lab = widgets::Label::createWithBaselineBox(p0, s0, label, 7.5, clr);
         addChild(lab);
     }
 };
@@ -318,7 +318,24 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
         if (k.type != VCOConfig<oscType>::KnobDef::Type::BLANK)
         {
-            addLabel(row, col, k.name);
+            if (k.colspan == 1)
+            {
+                addLabel(row, col, k.name);
+            }
+            else if (k.colspan == 2)
+            {
+                auto cx = (columnCenters_MM[col] + columnCenters_MM[col+1]) * 0.5;
+                auto bl = labelBaselines_MM[row];
+
+                auto boxx0 = cx - columnWidth_MM;
+                auto boxy0 = bl - 5;
+
+                auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+                auto s0 = rack::mm2px(rack::Vec(columnWidth_MM * 2, 5));
+
+                auto lab = widgets::Label::createWithBaselineBox(p0, s0, label);
+                addChild(lab);
+            }
         }
         idx++;
         col++;
@@ -395,7 +412,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     col =0;
     for(const std::string &s : { "PITCH", "TRIG", "L/MON", "RIGHT"})
     {
-        addLabel(3, col, s);
+        addLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT));
         col++;
     }
 }

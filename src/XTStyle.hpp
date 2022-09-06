@@ -42,7 +42,8 @@ struct XTStyle
         MOD_BUTTON_LIGHT_ON,
         MOD_BUTTON_LIGHT_OFF,
 
-        TEXT_LABEL
+        TEXT_LABEL,
+        TEXT_LABEL_OUTPUT
     };
     const NVGcolor getColor(Colors c);
 
