@@ -214,12 +214,29 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         nvgLineTo(vg, box.size.x, box.size.y * 0.5);
         nvgStrokeWidth(vg, 1);
         nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, markCol);
+        nvgMoveTo(vg, 0, box.size.y);
+        nvgLineTo(vg, box.size.x, box.size.y);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, markCol);
+        nvgMoveTo(vg, 0, 0);
+        nvgLineTo(vg, box.size.x, 0);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
     }
 
     void drawPlot(NVGcontext *vg)
     {
         if (!oscPath.empty())
         {
+            nvgSave(vg);
+            nvgScissor(vg, 0, 1, box.size.x, box.size.y-2);
             nvgBeginPath(vg);
             bool first{true};
             for (const auto &[x, y] : oscPath)
@@ -243,6 +260,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgStrokeColor(vg, col);
             nvgStrokeWidth(vg, 3);
             nvgStroke(vg);
+            nvgRestore(vg);
         }
 
         if (!module)
@@ -284,13 +302,27 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     addChild(OSCPlotWidget<oscType>::create(rack::Vec(plotStartX, plotStartY),
                                             rack::Vec(plotW, plotH), module));
 
-    float underX = plotStartX;
-    auto oct = widgets::OctaveControl::create(rack::Vec(underX, underPlotStartY),
-                                              rack::Vec(36, underPlotH),
+    float underX = plotStartX + 2;
+    auto oct = widgets::LabeledPlotAreaControl::create(rack::Vec(underX, underPlotStartY),
+                                              rack::Vec(36, underPlotH), "OCT",
                                               module,
                                               M::OCTAVE_SHIFT);
+    oct->formatLabel = [](float f, const std::string &s)
+    {
+        std::string r = s;
+        if (f > 0)
+            r = "+" + r;
+        return r;
+    };
     addChild(oct);
-    underX += 36;
+    underX += 40;
+
+    if constexpr (VCOConfig<oscType>::supportsUnison())
+    {
+        auto oct = widgets::LabeledPlotAreaControl::create(
+            rack::Vec(underX, underPlotStartY), rack::Vec(33, underPlotH), "UNI", module, M::OSC_CTRL_PARAM_0 + 6);
+        addChild(oct);
+    }
 
     const auto &knobConfig = VCOConfig<oscType>::getKnobs();
     auto idx = 0;
@@ -420,7 +452,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     }
 
     col =0;
-    for(const std::string &s : { "V/OCT", "TRIG", "L/MON", "RIGHT"})
+    for(const std::string &s : { "V/OCT", "TRIG", "LEFT", "RIGHT"})
     {
         addLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT));
         col++;
