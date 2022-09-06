@@ -181,7 +181,7 @@ static const char *fontFaceBold() { return "res/xt/fonts/quicksand/Quicksand-Bol
 
 int XTStyle::fontId(NVGcontext *vg)
 {
-    static int fid;
+    static int fid{-1};
     if (fid < 0)
         fid = InternalFontMgr::get(vg, fontFace());
     return fid;
@@ -189,7 +189,7 @@ int XTStyle::fontId(NVGcontext *vg)
 
 int XTStyle::fontIdBold(NVGcontext *vg)
 {
-    static int fid;
+    static int fid{-1};
     if (fid < 0)
         fid = InternalFontMgr::get(vg, fontFaceBold());
     return fid;
