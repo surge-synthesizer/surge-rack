@@ -304,7 +304,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
     float underX = plotStartX + 2;
     auto oct = widgets::LabeledPlotAreaControl::create(rack::Vec(underX, underPlotStartY),
-                                              rack::Vec(36, underPlotH), "OCT",
+                                              rack::Vec(34, underPlotH), "OCT",
                                               module,
                                               M::OCTAVE_SHIFT);
     oct->formatLabel = [](float f, const std::string &s)
@@ -315,12 +315,12 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         return r;
     };
     addChild(oct);
-    underX += 40;
+    underX += 34 + 2;
 
     if constexpr (VCOConfig<oscType>::supportsUnison())
     {
         auto oct = widgets::LabeledPlotAreaControl::create(
-            rack::Vec(underX, underPlotStartY), rack::Vec(33, underPlotH), "UNI", module, M::OSC_CTRL_PARAM_0 + 6);
+            rack::Vec(underX, underPlotStartY), rack::Vec(32, underPlotH), "UNI", module, M::OSC_CTRL_PARAM_0 + 6);
         addChild(oct);
     }
 

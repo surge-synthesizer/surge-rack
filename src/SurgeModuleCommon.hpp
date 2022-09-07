@@ -447,13 +447,10 @@ template <typename T> struct SurgeRackOSCParamQuantity : public rack::engine::Pa
             int opid = paramId - T::OSC_CTRL_PARAM_0;
             auto *p = &(mc->oscstorage->p[opid]);
 
-            if (p->can_setvalue_from_string())
-            {
-                std::string emsg;
-                p->set_value_from_string(s, emsg);
-                setValue(p->get_value_f01());
-                return;
-            }
+            std::string emsg;
+            p->set_value_from_string(s, emsg);
+            setValue(p->get_value_f01());
+            return;
         }
         ParamQuantity::setDisplayValueString(s);
     }
