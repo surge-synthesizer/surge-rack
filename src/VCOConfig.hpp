@@ -41,6 +41,7 @@ template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
         {M::OSC_CTRL_PARAM_0 + 4, "DETUNE"},
     };
 }
+template <> int VCOConfig<ot_string>::rightMenuParamId() { return 0; }
 
 template <> constexpr bool VCOConfig<ot_modern>::supportsUnison() { return true; }
 template <> VCOConfig<ot_modern>::knobs_t VCOConfig<ot_modern>::getKnobs()
@@ -175,6 +176,7 @@ template <> VCOConfig<ot_alias>::knobs_t VCOConfig<ot_alias>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 4, "BITCRSH"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
+template <> int VCOConfig<ot_alias>::rightMenuParamId() { return 0; }
 
 template <> constexpr bool VCOConfig<ot_shnoise>::supportsUnison() { return true; }
 template <> VCOConfig<ot_shnoise>::knobs_t VCOConfig<ot_shnoise>::getKnobs()
