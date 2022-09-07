@@ -7,6 +7,8 @@
 
 #include "VCO.hpp"
 
+#include "dsp/oscillators/SineOscillator.h"
+
 namespace sst::surgext_rack::vco
 {
 
@@ -100,6 +102,35 @@ template <> VCOConfig<ot_sine>::knobs_t VCOConfig<ot_sine>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 3, "LOCUT"},
             {M::OSC_CTRL_PARAM_0 + 4, "HICUT"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
+}
+
+template <> VCOConfig<ot_sine>::lightOnTo_t VCOConfig<ot_sine>::getLightsOnKnobsTo()
+{
+    return {{5, 0}, {6, 1}};
+}
+
+template <> int VCOConfig<ot_sine>::rightMenuParamId() { return 0; }
+
+template <> void VCOConfig<ot_sine>::oscillatorSpecificSetup(VCO<ot_sine> *m)
+{
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        s->p[SineOscillator::sine_feedback].set_extend_range(true);
+    }
+}
+
+template <> void VCOConfig<ot_sine>::processLightParameters(VCO<ot_sine> *m)
+{
+    auto l0 = (bool)(m->getParam(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0) > 0.5);
+    auto l1 = (bool)(m->getParam(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1) > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        if (l0 != !s->p[SineOscillator::sine_lowcut].deactivated)
+            s->p[SineOscillator::sine_lowcut].deactivated = !l0;
+        if (l1 != !s->p[SineOscillator::sine_highcut].deactivated)
+            s->p[SineOscillator::sine_highcut].deactivated = !l1;
+    }
 }
 
 template <> VCOConfig<ot_FM2>::knobs_t VCOConfig<ot_FM2>::getKnobs()

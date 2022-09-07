@@ -441,6 +441,56 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
     }
 };
 
+struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdw{nullptr}, *bdwLight{nullptr};
+    float radius;
+    ActivateKnobSwitch()
+    {
+        box.size = rack::mm2px(rack::Vec(3, 3));
+        radius = rack::mm2px(1.1);
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                             [this](auto v) { this->drawBackground(v); });
+        bdwLight = new BufferedDrawFunctionWidgetOnLayer(rack::Vec(0, 0), box.size,
+                                                         [this](auto v) { this->drawLight(v); });
+        addChild(bdw);
+        addChild(bdwLight);
+    }
+
+    void drawBackground(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius, radius);
+        nvgFill(vg);
+        nvgStrokeWidth(vg, 0.75);
+        nvgStroke(vg);
+    }
+
+    void drawLight(NVGcontext *vg)
+    {
+        if (!getParamQuantity())
+            return;
+        auto q = getParamQuantity()->getValue();
+        if (q < 0.5)
+            return;
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, nvgRGB(0, 0, 0));
+        nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * 0.9, radius * 0.9);
+        nvgFill(vg);
+    }
+
+    void onChange(const ChangeEvent &e) override
+    {
+        bdw->dirty = true;
+        bdwLight->dirty = true;
+        Widget::onChange(e);
+    }
+    void onStyleChanged() override {}
+};
+
 struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
 {
     bool pressedState{false};
@@ -548,8 +598,8 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         res->paramId = paramId;
         res->initParamQuantity();
 
-        res->bdw = new BufferedDrawFunctionWidgetOnLayer(
-            rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
+                                                  [res](NVGcontext *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
         res->formatLabel = [](float f, const std::string &s) {
             auto sp = s.find(" ");
@@ -585,6 +635,65 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 7.3 * 96 / 72);
         nvgText(vg, box.size.x - box_px * 0.5, box.size.y * 0.5, pv.c_str(), nullptr);
+    }
+
+    void onStyleChanged() override { bdw->dirty = true; }
+    void onChange(const ChangeEvent &e) override
+    {
+        bdw->dirty = true;
+        Widget::onChange(e);
+    }
+};
+
+struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
+{
+    static constexpr float padTop_MM = 1.4;
+    static constexpr float padBot_MM = 1.6;
+    BufferedDrawFunctionWidget *bdw{nullptr};
+    std::function<std::string(float, const std::string &)> formatLabel;
+
+    static PlotAreaMenuItem *create(rack::Vec pos, rack::Vec sz, SurgeModuleCommon *module,
+                                    int paramId)
+    {
+        auto *res = rack::createWidget<PlotAreaMenuItem>(pos);
+
+        res->box.pos = pos;
+        res->box.pos.y += rack::mm2px(padTop_MM);
+        res->box.size = sz;
+        res->box.size.y -= rack::mm2px(padBot_MM);
+
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
+                                                  [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->addChild(res->bdw);
+        res->formatLabel = [](float f, const std::string &s) {
+            auto sp = s.find(" ");
+            return s.substr(0, sp);
+        };
+
+        return res;
+    }
+
+    void drawWidget(NVGcontext *vg)
+    {
+        auto *pq = getParamQuantity();
+        if (!pq)
+            return;
+
+        auto pv = pq->getDisplayValueString();
+        for (auto &q : pv)
+            q = std::toupper(q);
+
+
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgText(vg, box.size.x, box.size.y * 0.5, pv.c_str(), nullptr);
     }
 
     void onStyleChanged() override { bdw->dirty = true; }
