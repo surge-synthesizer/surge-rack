@@ -11,6 +11,7 @@ namespace sst::surgext_rack::vco
 template <int oscType> struct VCOConfig
 {
     static constexpr bool supportsUnison() { return false; }
+    static constexpr bool requiresWavetables() { return false; }
 
     struct KnobDef
     {
@@ -86,6 +87,13 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
         oscstorage->type.val.i = oscType;
         oscstorage_display->type.val.i = oscType;
         setupStorageRanges(&(oscstorage->type), &(oscstorage->retrigger));
+
+        if constexpr (VCOConfig<oscType>::requiresWavetables())
+        {
+            oscstorage->wt.queue_id = 0;
+            oscstorage_display->wt.queue_id = 0;
+            storage->perform_queued_wtloads();
+        }
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
                                     storage->getPatch().scenedata[0], oscdisplaybuffer);

@@ -55,6 +55,53 @@ template <> VCOConfig<ot_modern>::knobs_t VCOConfig<ot_modern>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
 
+template <> constexpr bool VCOConfig<ot_wavetable>::supportsUnison() { return true; }
+template <> constexpr bool VCOConfig<ot_wavetable>::requiresWavetables() { return true; }
+template <> VCOConfig<ot_wavetable>::knobs_t VCOConfig<ot_wavetable>::getKnobs()
+{
+    typedef VCO<ot_wavetable> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 0, "MORPH"},
+            {M::OSC_CTRL_PARAM_0 + 2, "SATUR"},
+            {M::OSC_CTRL_PARAM_0 + 3, "FORMANT"},
+            {KnobDef::BLANK},
+            {M::OSC_CTRL_PARAM_0 + 1, "V SKEW"},
+            {M::OSC_CTRL_PARAM_0 + 4, "H SKEW"},
+            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
+}
+
+template <> constexpr bool VCOConfig<ot_window>::supportsUnison() { return true; }
+template <> constexpr bool VCOConfig<ot_window>::requiresWavetables() { return true; }
+template <> VCOConfig<ot_window>::knobs_t VCOConfig<ot_window>::getKnobs()
+{
+    typedef VCO<ot_window> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 0, "MORPH"},
+            {M::OSC_CTRL_PARAM_0 + 1, "FORMANT"},
+            {KnobDef::BLANK},
+            {KnobDef::BLANK},
+            {M::OSC_CTRL_PARAM_0 + 3, "LOCUT"},
+            {M::OSC_CTRL_PARAM_0 + 4, "HICUT"},
+            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
+}
+
+template <> constexpr bool VCOConfig<ot_sine>::supportsUnison() { return true; }
+template <> VCOConfig<ot_sine>::knobs_t VCOConfig<ot_sine>::getKnobs()
+{
+    typedef VCO<ot_sine> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 1, "FEEDBACK"},
+            {KnobDef::BLANK},
+            {KnobDef::BLANK},
+            {KnobDef::BLANK},
+            {M::OSC_CTRL_PARAM_0 + 3, "LOCUT"},
+            {M::OSC_CTRL_PARAM_0 + 4, "HICUT"},
+            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
+}
+
 template <> VCOConfig<ot_FM2>::knobs_t VCOConfig<ot_FM2>::getKnobs()
 {
     typedef VCO<ot_FM2> M;
@@ -67,6 +114,35 @@ template <> VCOConfig<ot_FM2>::knobs_t VCOConfig<ot_FM2>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 5, "PHASE"},
             {M::OSC_CTRL_PARAM_0 + 2, "M2 AMT"},
             {M::OSC_CTRL_PARAM_0 + 3, "M2 RATIO"}};
+}
+
+template <> VCOConfig<ot_FM3>::knobs_t VCOConfig<ot_FM3>::getKnobs()
+{
+    typedef VCO<ot_FM3> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 6, "FBACK"},
+            {M::OSC_CTRL_PARAM_0 + 0, "M1 AMT"},
+            {M::OSC_CTRL_PARAM_0 + 1, "M1 RATIO"},
+            {M::OSC_CTRL_PARAM_0 + 2, "M2 AMT"},
+            {M::OSC_CTRL_PARAM_0 + 3, "M2 RATIO"},
+            {M::OSC_CTRL_PARAM_0 + 4, "M3 AMT"},
+            {M::OSC_CTRL_PARAM_0 + 5, "M3 FREQ"}};
+}
+
+template <> constexpr bool VCOConfig<ot_alias>::supportsUnison() { return true; }
+template <> VCOConfig<ot_alias>::knobs_t VCOConfig<ot_alias>::getKnobs()
+{
+    typedef VCO<ot_alias> M;
+
+    return {{M::PITCH_0, "PITCH"},
+            {M::OSC_CTRL_PARAM_0 + 1, "WARP"},
+            {M::OSC_CTRL_PARAM_0 + 2, "MASK"},
+            {KnobDef::BLANK},
+            {KnobDef::BLANK},
+            {M::OSC_CTRL_PARAM_0 + 3, "THRESH"},
+            {M::OSC_CTRL_PARAM_0 + 4, "BITCRSH"},
+            {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
 
 template <> constexpr bool VCOConfig<ot_shnoise>::supportsUnison() { return true; }

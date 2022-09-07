@@ -140,8 +140,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case PLOT_CONTROL_VALUE_BG:
         return nvgRGB(0xFF, 0x90, 0x00);
     case PLOT_CONTROL_VALUE_FG:
-        return nvgRGB(0,0,0);
-
+        return nvgRGB(0, 0, 0);
     }
 
     return nvgRGB(255, 0, 0);
