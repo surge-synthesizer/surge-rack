@@ -353,7 +353,7 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         nvgFill(vg);
     }
 
-    static ModRingKnob *createCentered(rack::Vec pos, int diameter, SurgeModuleCommon *module,
+    static ModRingKnob *createCentered(rack::Vec pos, int diameter, rack::Module *module,
                                        int paramId)
     {
         auto *res = rack::createWidget<ModRingKnob>(pos);
@@ -584,7 +584,7 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
     std::function<std::string(float, const std::string &)> formatLabel;
 
     static LabeledPlotAreaControl *create(rack::Vec pos, rack::Vec sz, const std::string &lab,
-                                          SurgeModuleCommon *module, int paramId)
+                                          rack::Module *module, int paramId)
     {
         auto *res = rack::createWidget<LabeledPlotAreaControl>(pos);
 
@@ -652,8 +652,7 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::function<std::string(float, const std::string &)> formatLabel;
 
-    static PlotAreaMenuItem *create(rack::Vec pos, rack::Vec sz, SurgeModuleCommon *module,
-                                    int paramId)
+    static PlotAreaMenuItem *create(rack::Vec pos, rack::Vec sz, rack::Module *module, int paramId)
     {
         auto *res = rack::createWidget<PlotAreaMenuItem>(pos);
 
@@ -686,7 +685,6 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
         auto pv = pq->getDisplayValueString();
         for (auto &q : pv)
             q = std::toupper(q);
-
 
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));

@@ -7,53 +7,14 @@
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct VCOWidget : public virtual widgets::XTModuleWidget
+template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
+                        widgets::VCOVCFConstants
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
 
-    float plotH_MM = 36;
-    float plotW_MM = 51;
-    float plotCX_MM = 30.48;
-    float plotCY_MM = 27.35;
-
-    float plotControlsH_MM = 5;
-
-    std::array<float, 4> columnCenters_MM{9.48, 23.48, 37.48, 51.48};
-    std::array<float, 5> rowCenters_MM{55,71, 85.32, 100.16, 114.5};
-    float columnWidth_MM = 14;
-
-    std::array<float, 4> labelBaselines_MM{63.573, 79.573, 94.864, 109.203 };
-
-    float verticalPortOffset_MM = 0.5;
-
-    float plotStartX = rack::mm2px(plotCX_MM - plotW_MM * 0.5);
-    float plotStartY = rack::mm2px(plotCY_MM - plotH_MM * 0.5);
-    float plotW = rack::mm2px(plotW_MM);
-    float plotH = rack::mm2px(plotH_MM - plotControlsH_MM);
-
-    float underPlotStartY = plotStartY + plotH;
-    float underPlotH = rack::mm2px(plotControlsH_MM);
-
-    int numberOfScrews = 12;
-
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
-
-    void addLabel(int row, int col, const std::string label, style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
-    {
-        auto cx = columnCenters_MM[col];
-        auto bl = labelBaselines_MM[row];
-
-        auto boxx0 = cx - columnWidth_MM * 0.5;
-        auto boxy0 = bl - 5;
-
-        auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-        auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
-
-        auto lab = widgets::Label::createWithBaselineBox(p0, s0, label, 7.3, clr);
-        addChild(lab);
-    }
 };
 
 template <int oscType>
@@ -395,7 +356,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         {
             if (k.colspan == 1)
             {
-                addLabel(row, col, k.name);
+                addChild(makeLabel(row, col, k.name));
             }
             else if (k.colspan == 2)
             {
@@ -423,7 +384,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
     for (int i=0; i<M::n_mod_inputs; ++i)
     {
-        addLabel(2, i, std::string("MOD ") + std::to_string(i + 1));
+        addChild(makeLabel(2, i, std::string("MOD ") + std::to_string(i + 1)));
     }
 
     col = 0;
@@ -487,7 +448,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     col =0;
     for(const std::string &s : { "V/OCT", "TRIG", "LEFT", "RIGHT"})
     {
-        addLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT));
+        addChild(makeLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT)));
         col++;
     }
 }
