@@ -348,6 +348,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                 overlays[idx][m] = k;
                 k->setVisible(false);
                 k->underlyerParamWidget = baseKnob;
+                baseKnob->modRings.insert(k);
                 addChild(k);
             }
         }

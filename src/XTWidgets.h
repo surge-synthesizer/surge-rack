@@ -208,6 +208,8 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
     }
 };
 
+struct ModRingKnob;
+
 struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 {
     static constexpr float ringWidth_MM = 0.7f;
@@ -238,12 +240,10 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleParticipant
         nvgStroke(vg);
     }
 
+    std::unordered_set<ModRingKnob *> modRings;
+
     BufferedDrawFunctionWidget *bw{nullptr};
-    void onChange(const ChangeEvent &e) override
-    {
-        bw->dirty = true;
-        SvgKnob::onChange(e);
-    }
+    void onChange(const ChangeEvent &e) override;
 
     void onStyleChanged() override
     {
@@ -386,6 +386,58 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
     {
         if (bdw)
             bdw->dirty = true;
+    }
+    bool bypassGesture()
+    {
+        if (APP->window)
+        {
+            int mods = APP->window->getMods();
+            if ((mods & RACK_MOD_MASK) == (GLFW_MOD_ALT | GLFW_MOD_SHIFT))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    void onHover(const HoverEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onHover(e);
+    }
+    void onButton(const ButtonEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onButton(e);
+    }
+    void onDragStart(const DragStartEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onDragStart(e);
+    }
+    void onDragEnd(const DragEndEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onDragEnd(e);
+    }
+    void onDragMove(const DragMoveEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onDragMove(e);
+    }
+    void onDragLeave(const DragLeaveEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onDragLeave(e);
+    }
+    void onHoverScroll(const HoverScrollEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onHoverScroll(e);
+    }
+    void onLeave(const LeaveEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::Knob::onLeave(e);
     }
 };
 
@@ -542,6 +594,16 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         Widget::onChange(e);
     }
 };
+
+inline void Knob9::onChange(const rack::widget::Widget::ChangeEvent &e)
+{
+    bw->dirty = true;
+    for (auto *m : modRings)
+    {
+        m->bdw->dirty = true;
+    }
+    SvgKnob::onChange(e);
+}
 
 } // namespace sst::surgext_rack::widgets
 
