@@ -203,7 +203,7 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         auto label = Label::createWithBaselineBox(
             rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(mainLabelBaseline_MM)), title,
             mainLabelSize_PT);
-        label->tracking = 1;
+        label->tracking = 0.7;
         addChild(label);
     }
 };
@@ -474,7 +474,8 @@ struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
 
 struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
 {
-    static constexpr float pad_MM = 1.1;
+    static constexpr float padTop_MM = 1.4;
+    static constexpr float padBot_MM = 1.6;
     static constexpr float box_px = 13;
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::string label;
@@ -486,9 +487,9 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         auto *res = rack::createWidget<LabeledPlotAreaControl>(pos);
 
         res->box.pos = pos;
-        res->box.pos.y += rack::mm2px(pad_MM);
+        res->box.pos.y += rack::mm2px(padTop_MM);
         res->box.size = sz;
-        res->box.size.y -= rack::mm2px(pad_MM);
+        res->box.size.y -= rack::mm2px(padBot_MM);
         res->label = lab;
 
         res->module = module;

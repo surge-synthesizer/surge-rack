@@ -83,19 +83,8 @@ void SurgeRackParamBinding::updateInt(const ParamCache &pc, int polyChannel, Sur
 
 void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS)
 {
-    INFO("[SurgeRack] Update this code for XT");
     std::string dataPath;
     dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
-    std::string cxml = dataPath + "configuration.xml";
-    FILE *cxmlF = fopen(cxml.c_str(), "r");
-    if (cxmlF)
-    {
-        fclose(cxmlF);
-    }
-    else
-    {
-        dataPath = rack::asset::plugin(pluginInstance, "surge-data/");
-    }
 
     showBuildInfo();
     storage.reset(new SurgeStorage(dataPath));
@@ -104,8 +93,8 @@ void SurgeModuleCommon::setupSurgeCommon(int NUM_PARAMS)
     if (!showedPathsOnce)
     {
         showedPathsOnce = true;
-        INFO("[SurgeRack] storage::dataPath = '%s'", storage->datapath.c_str());
-        INFO("[SurgeRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
+        INFO("[SurgeXTRack] storage::dataPath = '%s'", storage->datapath.c_str());
+        INFO("[SurgeXTRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
     }
 
     onSampleRateChange();

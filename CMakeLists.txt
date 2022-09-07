@@ -19,7 +19,23 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_custom_command(TARGET ${PROJECT_NAME}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dep/surge-build
+        COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make -j surge-common
+        USES_TERMINAL)
+
+add_custom_command(TARGET ${PROJECT_NAME}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        # COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make dist -j
+        COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make -j
+        COMMAND ${CMAKE_COMMAND} -E copy plugin.dylib /Users/paul/Documents/Rack2/plugins/SurgeXTRack
+        USES_TERMINAL)
+
+
+# This is the full build
+add_custom_target(${PROJECT_NAME}_FULL)
+add_dependencies(${PROJECT_NAME}_FULL ${PROJECT_NAME})
+add_custom_command(TARGET ${PROJECT_NAME}_FULL
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make dist -j
         COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make install -j
         USES_TERMINAL)
+
