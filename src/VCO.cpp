@@ -111,6 +111,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
     bool firstDirty{false};
     int dirtyCount{0};
+    int sumDeact{-1};
     bool isDirty()
     {
         if (!firstDirty)
@@ -122,9 +123,17 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         bool dval{false};
         if (module)
         {
+            auto lSumDeact = 0;
             for (int i = 0; i < n_osc_params; i++)
             {
                 dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
+                lSumDeact += oscdata->p[i].deactivated * ( 1 << i );
+            }
+
+            if (lSumDeact != sumDeact)
+            {
+                sumDeact = lSumDeact;
+                dval = true;
             }
         }
         return dval;
@@ -173,7 +182,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 block_pos = 0;
             }
 
-            float yc = (-osc->output[block_pos] * 0.5 + 0.5) * yp;
+            float yc = (-osc->output[block_pos] * 0.47 + 0.5) * yp;
             oscPath.emplace_back(i * invups, yc);
             block_pos++;
         }
@@ -186,7 +195,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         // This will go in layer 0
         int nSteps = 9;
         int mid = (nSteps - 1) / 2;
-        float dy = box.size.y * 1.f / nSteps;
+        float dy = box.size.y * 1.f / (nSteps-1);
 
         float nX = std::ceil(box.size.x / dy);
         float dx = box.size.x / nX;
@@ -236,7 +245,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         if (!oscPath.empty())
         {
             nvgSave(vg);
-            nvgScissor(vg, 0, 1, box.size.x, box.size.y-2);
+            nvgScissor(vg, 0, 0.5, box.size.x, box.size.y-1);
             nvgBeginPath(vg);
             bool first{true};
             for (const auto &[x, y] : oscPath)
@@ -322,7 +331,18 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         auto oct = widgets::LabeledPlotAreaControl::create(
             rack::Vec(underX, underPlotStartY), rack::Vec(32, underPlotH), "UNI", module, M::OSC_CTRL_PARAM_0 + 6);
         addChild(oct);
+        underX += 32 + 2;
     }
+
+    if (VCOConfig<oscType>::rightMenuParamId() >= 0)
+    {
+        auto restSz = plotW - underX + plotStartX;
+        auto plt = widgets::PlotAreaMenuItem::create(
+            rack::Vec(underX, underPlotStartY), rack::Vec(restSz, underPlotH), module, M::OSC_CTRL_PARAM_0 + VCOConfig<oscType>::rightMenuParamId());
+        addChild(plt);
+    }
+
+
 
     const auto &knobConfig = VCOConfig<oscType>::getKnobs();
     auto idx = 0;
@@ -350,6 +370,18 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                 k->underlyerParamWidget = baseKnob;
                 baseKnob->modRings.insert(k);
                 addChild(k);
+            }
+
+            // This is a little inefficient but
+            for (const auto &[lidx, lid] : VCOConfig<oscType>::getLightsOnKnobsTo())
+            {
+                if (lidx == idx)
+                {
+                    addParam(rack::createParamCentered<widgets::ActivateKnobSwitch>(
+                        rack::Vec(baseKnob->box.pos.x + baseKnob->box.size.x + 2.5,
+                                  baseKnob->box.pos.y + 3),
+                        module, M::ARBITRARY_SWITCH_0 + lid));
+                }
             }
         }
         else if (k.type == VCOConfig<oscType>::KnobDef::Type::INPUT)

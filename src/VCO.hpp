@@ -8,6 +8,8 @@
 
 namespace sst::surgext_rack::vco
 {
+template <int oscType> struct VCO;
+
 template <int oscType> struct VCOConfig
 {
     static constexpr bool supportsUnison() { return false; }
@@ -32,11 +34,20 @@ template <int oscType> struct VCOConfig
     };
     typedef std::vector<KnobDef> knobs_t;
     static knobs_t getKnobs() { return {}; }
+
+    typedef std::vector<std::pair<int,int>> lightOnTo_t;
+    static lightOnTo_t getLightsOnKnobsTo() { return {}; }
+
+    static int rightMenuParamId() { return -1; }
+
+    static void oscillatorSpecificSetup(VCO<oscType> *) {}
+    static void processLightParameters(VCO<oscType> *) {}
 };
 
 template <int oscType> struct VCO : virtual public SurgeModuleCommon
 {
     static constexpr int n_mod_inputs{4};
+    static constexpr int n_arbitrary_switches{4};
 
     enum ParamIds
     {
@@ -48,7 +59,9 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
 
         OCTAVE_SHIFT = OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs,
 
-        NUM_PARAMS
+        ARBITRARY_SWITCH_0,
+
+        NUM_PARAMS = ARBITRARY_SWITCH_0 + n_arbitrary_switches
     };
     enum InputIds
     {
@@ -122,6 +135,11 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             configParam(i, -1, 1, 0);
         }
 
+        for (int i=0; i<n_arbitrary_switches; ++i)
+        {
+            configParam(ARBITRARY_SWITCH_0 + i, 0, 1, 0);
+        }
+
         pc.update(this);
 
         config_osc->~Oscillator();
@@ -138,6 +156,8 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             halfbandOUT.emplace_back(6, true);
             halfbandOUT[i].reset();
         }
+
+        VCOConfig<oscType>::oscillatorSpecificSetup(this);
     }
 
     static int modulatorIndexFor(int baseParam, int modulator)
@@ -216,6 +236,8 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             // As @Vortico says "think like a hardware engineer; only snap
             // values when you need them".
             processPosition = 0;
+
+            VCOConfig<oscType>::processLightParameters(this);
 
             float modMatrix[n_osc_params + 1][n_mod_inputs];
 
