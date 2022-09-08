@@ -34,7 +34,7 @@ DEPS += $(libsurge)
 
 $(libsurge):
 	# Out-of-source build dir
-	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8
+	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8
 	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
 	cd $(SURGE_BLD) && make -j 4 surge-common
 
