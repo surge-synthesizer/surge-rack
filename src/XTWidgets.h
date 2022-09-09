@@ -356,16 +356,16 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         auto uv = uq->getSmoothValue();
         auto pv = pq->getSmoothValue();
 
-        auto toAngle = [this](float q, auto *qq) {
+        auto toAngle = [this](float q, auto *qq, float fac) {
             float angle;
             angle =
-                rack::math::rescale(q, qq->getMinValue(), qq->getMaxValue(),
+                rack::math::rescale(q, fac * qq->getMinValue(), fac * qq->getMaxValue(),
                                     underlyerParamWidget->minAngle, underlyerParamWidget->maxAngle);
             angle = std::fmod(angle, 2 * M_PI);
             return angle;
         };
-        float angle = toAngle(uv, uq);
-        float modAngle = toAngle(pv, pq);
+        float angle = toAngle(uv, uq, 1.0);
+        float modAngle = toAngle(pv, pq, 0.5);
 
         auto w = box.size.y;
         auto h = box.size.x;

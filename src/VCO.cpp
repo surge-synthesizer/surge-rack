@@ -43,6 +43,10 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         if (!module)
             return;
 
+        /*
+         * if wavetable changed and draw wavetable bdw->dirty = true
+         */
+
         if (isDirty())
         {
             recalcPath();
@@ -122,36 +126,290 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     std::vector<std::pair<float, float>> oscPath;
     void recalcPath()
     {
-        auto xp = box.size.x;
-        auto yp = box.size.y;
-
         oscPath.clear();
-        auto osc = setupOscillator();
-        const float ups = 3.0, invups = 1.0 / ups;
 
-        float disp_pitch_rs =
-            12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
-
-        osc->init(disp_pitch_rs, true, true);
-
-        int block_pos{BLOCK_SIZE_OS + 1};
-        for (int i = 0; i < xp * ups; ++i)
+        if (draw3DWavetable)
         {
-            if (block_pos >= BLOCK_SIZE_OS)
+            auto wtlockguard = std::lock_guard<std::mutex>(module->storage->waveTableDataMutex);
+            auto &wt = oscdata->wt;
+            auto pos = -1.f;
+
+            // OK so now go backwards through the tables but also tilt and raise for the 3D effect
+            auto smp = wt.size;
+            auto smpinv = 1.0 / smp;
+            auto w = box.size.x;
+            auto h = box.size.y;
+
+            // Now we have a sort of skew back and offset as we go. The skew is sort of a rotation
+            // and the depth is sort of how flattened it is. Finally the hCompress augments height.
+            auto skewPct = 0.4;
+            auto depthPct = 0.6;
+            auto hCompress = 0.55;
+
+            bool off = false;
+            switch (oscdata->type.val.i)
             {
-                osc->process_block(disp_pitch_rs);
-                block_pos = 0;
+            case ot_wavetable:
+            case ot_window:
+                pos = oscdata->p[0].val.f;
+                off = oscdata->p[0].extend_range;
+                break;
+            default:
+                pos = 0.f;
+                break;
+            };
+
+            auto tpos = pos * (wt.n_tables - off);
+
+            auto sel = std::clamp(tpos, 0.f, (wt.n_tables - 1.f));
+            auto tb = wt.TableF32WeakPointers[0][(int)std::floor(sel)];
+            float tpct = 1.0 * sel / std::max((int)(wt.n_tables - 1), 1);
+
+            if (wt.n_tables == 1)
+            {
+                tpct = 0.f;
             }
 
-            float yc = (-osc->output[block_pos] * 0.47 + 0.5) * yp;
-            oscPath.emplace_back(i * invups, yc);
-            block_pos++;
-        }
+            float x0 = tpct * skewPct * w;
+            float y0 = (1.0 - tpct) * depthPct * h;
+            auto lw = w * (1.0 - skewPct);
+            auto hw = h * depthPct * hCompress;
 
-        osc->~Oscillator();
+            auto osc = setupOscillator();
+
+            if (!osc)
+            {
+                return;
+            }
+
+            int totalSamples = box.size.x;
+            // We want totalSamples to be one cycle so
+            // totalSamples = sampleRate / frequency
+            // frequency = sampleRate / totalSamples
+            // 440 * 2^((pitch-69)/12) = sampleRate / totalSamples
+            // pitch-69 = 12 * log2(sampleRate / totalSamples / 400)
+            // but these run oversample so add an octave
+            float disp_pitch_rs =
+                12.f * std::log2f(storage->samplerate / (totalSamples-4) / 440.f) + 69.f + 12 + 0.1;
+
+            osc->init(disp_pitch_rs, true, true);
+
+            int block_pos = BLOCK_SIZE_OS;
+
+            for (int i = 0; i < totalSamples; i++)
+            {
+                if (block_pos >= BLOCK_SIZE_OS)
+                {
+                    osc->process_block(disp_pitch_rs);
+                    block_pos = 0;
+                }
+
+                float val = 0.f;
+
+                val = osc->output[block_pos];
+                block_pos++;
+
+                if (i >= 4)
+                {
+
+                    float xc = 1.f * (i - 4) / totalSamples;
+                    float yc = val;
+
+                    /*
+                     * auto tf =
+                        juce::AffineTransform().scaled(w * 0.61, h * -0.17).translated(x0, y0 + (0.5 * hw));
+                     */
+                    xc = xc * w * 0.61 + x0;
+                    yc = yc * h * (-0.17) + ( y0 + 0.5 * hw);
+
+                    oscPath.emplace_back(xc, yc);
+                }
+            }
+
+            osc->~Oscillator();
+        }
+        else
+        {
+            auto xp = box.size.x;
+            auto yp = box.size.y;
+
+            auto osc = setupOscillator();
+            const float ups = 3.0, invups = 1.0 / ups;
+
+            float disp_pitch_rs =
+                12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
+
+            osc->init(disp_pitch_rs, true, true);
+
+            int block_pos{BLOCK_SIZE_OS + 1};
+            for (int i = 0; i < xp * ups; ++i)
+            {
+                if (block_pos >= BLOCK_SIZE_OS)
+                {
+                    osc->process_block(disp_pitch_rs);
+                    block_pos = 0;
+                }
+
+                float yc = (-osc->output[block_pos] * 0.47 + 0.5) * yp;
+                oscPath.emplace_back(i * invups, yc);
+                block_pos++;
+            }
+
+            osc->~Oscillator();
+        }
     }
 
-    void drawPlotBackground(NVGcontext *vg)
+    bool draw3DWavetable = VCOConfig<oscType>::requiresWavetables();
+
+    void drawPlotBackground(NVGcontext *vg) {
+        if (draw3DWavetable)
+        {
+            draw3DBackground(vg);
+        }
+        else
+        {
+            draw2DBackground(vg);
+        }
+    }
+
+    void draw3DBackground(NVGcontext *vg)
+    {
+        if (!module)
+            return;
+
+        auto wtlockguard = std::lock_guard<std::mutex>(module->storage->waveTableDataMutex);
+        auto &wt = oscdata->wt;
+        auto pos = -1.f;
+
+        // OK so now go backwards through the tables but also tilt and raise for the 3D effect
+        auto smp = wt.size;
+        auto smpinv = 1.0 / smp;
+        auto w = box.size.x;
+        auto h = box.size.y;
+
+        // Now we have a sort of skew back and offset as we go. The skew is sort of a rotation
+        // and the depth is sort of how flattened it is. Finally the hCompress augments height.
+        auto skewPct = 0.4;
+        auto depthPct = 0.6;
+        auto hCompress = 0.55;
+
+        // calculate thinning factor for frame drawing
+        int thintbl = 1;
+        int nt = wt.n_tables;
+
+        while (nt > 16)
+        {
+            thintbl <<= 1;
+            nt >>= 1;
+        }
+
+        // calculate thinning factor for sample drawing
+        int thinsmp = 1;
+        int s = smp;
+
+        while (s > 128)
+        {
+            thinsmp <<= 1;
+            s >>= 1;
+        }
+
+        static constexpr float backingScale = 2.f;
+
+        auto wxf = w;
+        auto hxf = h;
+
+
+        // draw the wavetable frames
+        std::vector<int> ts;
+
+        for (int t = wt.n_tables - 1; t >= 0; t = t - thintbl)
+        {
+            ts.push_back(t);
+        }
+
+        if (ts.back() != 0)
+        {
+            ts.push_back(0);
+        }
+
+        for (auto t : ts)
+        {
+            auto tb = wt.TableF32WeakPointers[0][t];
+            float tpct = 1.0 * t / std::max((int)(wt.n_tables - 1), 1);
+
+            if (wt.n_tables == 1)
+            {
+                tpct = 0.f;
+            }
+
+            float x0 = tpct * skewPct * wxf;
+            float y0 = (1.0 - tpct) * depthPct * hxf;
+            auto lw = wxf * (1.0 - skewPct);
+            auto hw = hxf * depthPct * hCompress;
+
+            std::vector<std::pair<float,float>> p;
+            std::vector<std::pair<float,float>> ribbon;
+
+            p.emplace_back(x0, y0 + (-tb[0] + 1) * 0.5 * hw);
+            p.emplace_back(x0, y0 + (-tb[0] + 1) * 0.5 * hw);
+
+            for (int s = 1; s < smp; s = s + thinsmp)
+            {
+                auto x = x0 + s * smpinv * lw;
+
+                p.template emplace_back(x, y0 + (-tb[s] + 1) * 0.5 * hw);
+                ribbon.emplace_back(x, y0 + (-tb[s] + 1) * 0.5 * hw);
+            }
+
+            if (t > 0)
+            {
+                nt = std::max(t - thintbl, 0);
+                tpct = 1.0 * nt / (wt.n_tables - 1);
+                tb = wt.TableF32WeakPointers[0][nt];
+                x0 = tpct * skewPct * wxf;
+                y0 = (1.0 - tpct) * depthPct * hxf;
+                lw = w * (1.0 - skewPct);
+
+                for (int s = smp - 1; s >= 0; s = s - thinsmp)
+                {
+                    auto x = x0 + s * smpinv * lw;
+
+                    ribbon.template emplace_back(x, y0 + (-tb[s] + 1) * 0.5 * hw);
+                }
+            }
+
+            if (t > 0)
+            {
+                nvgBeginPath(vg);
+                bool first = true;
+                for (const auto &[x,y] : ribbon)
+                {
+                    if (first)
+                        nvgMoveTo(vg, x, y);
+                    else
+                        nvgLineTo(vg, x, y);
+                    first = false;
+                }
+                nvgFillColor(vg, nvgRGBA(0xFF, 0x90, 0x00, 0x20));
+                nvgFill(vg);
+            }
+
+            nvgBeginPath(vg);
+            bool first = true;
+            for (const auto &[x,y] : p)
+            {
+                if (first)
+                    nvgMoveTo(vg, x, y);
+                else
+                    nvgLineTo(vg, x, y);
+                first = false;
+            }
+            nvgStrokeColor(vg, nvgRGBA(0xFF, 0x90, 0x00, 0x60));
+            nvgStroke(vg);
+        }
+    }
+
+    void draw2DBackground(NVGcontext *vg)
     {
         // This will go in layer 0
         int nSteps = 9;
@@ -203,7 +461,19 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
     void drawPlot(NVGcontext *vg)
     {
-        if (!oscPath.empty())
+        if (!module)
+        {
+            // Draw the module name here for preview goodness
+            nvgBeginPath(vg);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, 30);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgText(vg, box.size.x * 0.5,
+                    box.size.y * 0.5,
+                    osc_type_names[oscType], nullptr);
+        }
+        else if (!oscPath.empty())
         {
             nvgSave(vg);
             nvgScissor(vg, 0, 0.5, box.size.x, box.size.y-1);
@@ -231,19 +501,6 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgStrokeWidth(vg, 3);
             nvgStroke(vg);
             nvgRestore(vg);
-        }
-
-        if (!module)
-        {
-            // Draw the module name here for preview goodness
-            nvgBeginPath(vg);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 30);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgText(vg, box.size.x * 0.5,
-                    box.size.y * 0.5,
-                    osc_type_names[oscType], nullptr);
         }
     }
 };
