@@ -399,7 +399,7 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
         nvgFill(vg);
     }
 
-    static ModRingKnob *createCentered(rack::Vec pos, int diameter, rack::Module *module,
+    static ModRingKnob *createCentered(rack::Vec pos, float diameter, rack::Module *module,
                                        int paramId)
     {
         auto *res = rack::createWidget<ModRingKnob>(pos);
