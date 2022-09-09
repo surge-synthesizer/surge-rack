@@ -17,7 +17,7 @@ void XTStyle::initialize()
     json_t *fd = json_load_file(defaultsFile.c_str(), 0, &error);
     if (!fd)
     {
-        setCurrentStyle(DARK);
+        setCurrentStyle(MID);
     }
     else
     {
@@ -50,7 +50,7 @@ struct InternalFontMgr
     }
 };
 
-static XTStyle::Style currentStyle{XTStyle::DARK};
+static XTStyle::Style currentStyle{XTStyle::MID};
 static std::shared_ptr<XTStyle> currentStyleP;
 void XTStyle::setCurrentStyle(sst::surgext_rack::style::XTStyle::Style s)
 {

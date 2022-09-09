@@ -322,7 +322,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             addParam(baseKnob);
             for (int m = 0; m < M::n_mod_inputs; ++m)
             {
-                auto radius = rack::mm2px(widgets::Knob9::knobSize_MM + 2 * widgets::Knob9::ringWidth_MM);
+                auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
                 int id = M::modulatorIndexFor(pid, m);
                 auto *k = widgets::ModRingKnob::createCentered(rack::mm2px(rack::Vec(uxp, uyp)),
                                                        radius, module, id);

@@ -6,6 +6,7 @@
 #define SURGEXT_RACK_XTWIDGETS_H
 
 #include <rack.hpp>
+#include <iostream>
 #include "XTStyle.hpp"
 
 namespace sst::surgext_rack::widgets
@@ -210,23 +211,30 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
 
 struct ModRingKnob;
 
-struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleParticipant
+struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 {
     static constexpr float ringWidth_MM = 0.7f;
     static constexpr float ringPad_MM = 0.5f;
-    static constexpr float knobSize_MM = 9.0f;
-    static constexpr float pointerSize_MM = 6.9f;
     static constexpr float ringWidth_PX = 1.5;
-    Knob9()
+
+    float knobSize_MM = -1;
+    float pointerSize_MM = -1;
+    std::string knobPointerAsset, knobBackgroundAsset;
+
+    KnobN() {}
+
+    void completeConstructor()
     {
         float angleSpreadDegrees = 40.0;
 
         minAngle = -M_PI * (180 - angleSpreadDegrees) / 180;
         maxAngle = M_PI * (180 - angleSpreadDegrees) / 180;
 
-        onStyleChanged();
+        setupWidgets();
         fb->removeChild(shadow);
     }
+
+    virtual void setupProperties() {}
 
     void drawRing(NVGcontext *vg)
     {
@@ -244,13 +252,15 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 
     BufferedDrawFunctionWidget *bw{nullptr};
     void onChange(const ChangeEvent &e) override;
-
-    void onStyleChanged() override
+    void onStyleChanged() override { setupWidgets(); }
+    void setupWidgets()
     {
         auto compDir = style()->skinAssetDir() + "/components";
 
-        setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/knob-pointer.svg")));
-        bg->setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/knob-9.svg")));
+        setSvg(
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + knobPointerAsset)));
+        bg->setSvg(rack::Svg::load(
+            rack::asset::plugin(pluginInstance, compDir + "/" + knobBackgroundAsset)));
 
         // SetSVG changes box.size
         box.size = rack::mm2px(rack::Vec(knobSize_MM, knobSize_MM));
@@ -277,6 +287,42 @@ struct Knob9 : public rack::componentlibrary::RoundKnob, style::StyleParticipant
             addChildBottom(bw);
         }
         bw->dirty = true;
+    }
+};
+
+struct Knob9 : KnobN
+{
+    Knob9() : KnobN()
+    {
+        knobSize_MM = 9;
+        pointerSize_MM = 6.9;
+        knobPointerAsset = "knob-pointer-9.svg";
+        knobBackgroundAsset = "knob-9.svg";
+        completeConstructor();
+    }
+};
+
+struct Knob12 : KnobN
+{
+    Knob12() : KnobN()
+    {
+        knobSize_MM = 12;
+        pointerSize_MM = 9.9;
+        knobPointerAsset = "knob-pointer-12.svg";
+        knobBackgroundAsset = "knob-12.svg";
+        completeConstructor();
+    }
+};
+
+struct Knob16 : KnobN
+{
+    Knob16() : KnobN()
+    {
+        knobSize_MM = 16;
+        pointerSize_MM = 13.9;
+        knobPointerAsset = "knob-pointer-16.svg";
+        knobBackgroundAsset = "knob-16.svg";
+        completeConstructor();
     }
 };
 
@@ -702,7 +748,7 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     }
 };
 
-inline void Knob9::onChange(const rack::widget::Widget::ChangeEvent &e)
+inline void KnobN::onChange(const rack::widget::Widget::ChangeEvent &e)
 {
     bw->dirty = true;
     for (auto *m : modRings)

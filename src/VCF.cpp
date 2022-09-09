@@ -40,31 +40,33 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
         auto uxp = columnCenters_MM[col];
         auto uyp = rowCenters_MM[row];
 
+        widgets::KnobN *baseKnob{nullptr};
         if (row == 0 && col == 0)
         {
             uxp = (columnCenters_MM[0] + columnCenters_MM[1]) * 0.5f;
             uyp = (rowCenters_MM[0] + rowCenters_MM[1]) * 0.5f;
 
             auto boxx0 = uxp - columnWidth_MM;
-            auto boxy0 = uyp + 7;
+            auto boxy0 = uyp + 8;
 
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
             auto s0 = rack::mm2px(rack::Vec(columnWidth_MM * 2, 5));
 
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, label);
             addChild(lab);
+            baseKnob = rack::createParamCentered<widgets::Knob16>(rack::mm2px(rack::Vec(uxp, uyp)),
+                                                                  module, pid);
         }
         else
         {
             addChild(makeLabel(row, col, label));
+            baseKnob = rack::createParamCentered<widgets::Knob9>(rack::mm2px(rack::Vec(uxp, uyp)),
+                                                                 module, pid);
         }
-        auto baseKnob = rack::createParamCentered<widgets::Knob9>(rack::mm2px(rack::Vec(uxp, uyp)),
-                                                                  module, pid);
         addParam(baseKnob);
         for (int m = 0; m < M::n_mod_inputs; ++m)
         {
-            auto radius =
-                rack::mm2px(widgets::Knob9::knobSize_MM + 2 * widgets::Knob9::ringWidth_MM);
+            auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
             int id = M::modulatorIndexFor(pid, m);
             auto *k = widgets::ModRingKnob::createCentered(rack::mm2px(rack::Vec(uxp, uyp)), radius,
                                                            module, id);
