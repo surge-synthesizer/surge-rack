@@ -42,6 +42,13 @@ template <int oscType> struct VCOConfig
 
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processLightParameters(VCO<oscType> *) {}
+
+    /*
+     * Wavetable Updates from the UI to the Processing Thread.
+     * This queue can be pretty small. You can't change more quickly than we
+     * load em really
+     */
+    static constexpr int wavetableQueueSize() { return requiresWavetables() ? 32 : 1; }
 };
 
 template <int oscType> struct VCO : virtual public SurgeModuleCommon
@@ -186,6 +193,22 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
     int processPosition = BLOCK_SIZE + 1;
 
     virtual void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
+
+    struct WavetableMessage
+    {
+        int index{-1};
+        char filename[1024];
+    };
+    rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()> wavetableQueue;
+    std::atomic<int> wavetableIndex{-1};
+    std::string getWavetableName()
+    {
+        int idx = wavetableIndex;
+        if (idx >= 0)
+            return storage->wt_list[idx].name;
+        else
+            return oscstorage->wavetable_display_name;
+    }
 
     std::array<int, MAX_POLY> lastUnison{-1};
     int lastNChan{-1};
