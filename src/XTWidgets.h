@@ -750,10 +750,91 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
 
 struct PresetJogSelector : public rack::Widget, style::StyleParticipant
 {
+    BufferedDrawFunctionWidget *bdw{nullptr};
 
+    PresetJogSelector() {}
+
+    rack::Vec leftJogSize, rightJogSize, leftJogPos, rightJogPos;
+
+    void setup()
+    {
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), rack::Vec(box.size.x, box.size.y),
+                                             [this](auto *v) { this->drawSelector(v); });
+        addChild(bdw);
+
+        leftJogSize = rack::Vec(box.size.y, box.size.y);
+        rightJogSize = leftJogSize;
+
+        leftJogPos = rack::Vec(0, 0);
+        rightJogPos = rack::Vec(box.size.x - box.size.y, 0);
+    }
+
+    void drawSelector(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, getPresetName().c_str(), nullptr);
+
+        // left arrow
+        float onemm = rack::mm2px(1.0);
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
+        nvgMoveTo(vg, leftJogPos.x + onemm, leftJogPos.y + leftJogSize.y * 0.5);
+        nvgLineTo(vg, leftJogPos.x + leftJogSize.x - onemm, leftJogPos.y + onemm);
+        nvgLineTo(vg, leftJogPos.x + leftJogSize.x - onemm, leftJogPos.y + leftJogSize.y - onemm);
+        nvgFill(vg);
+
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
+        nvgMoveTo(vg, rightJogPos.x + rightJogSize.x - onemm, rightJogPos.y + rightJogSize.y * 0.5);
+        nvgLineTo(vg, rightJogPos.x + onemm, rightJogPos.y + onemm);
+        nvgLineTo(vg, rightJogPos.x + onemm, rightJogPos.y + rightJogSize.y - onemm);
+        nvgFill(vg);
+    }
+
+    void step() override
+    {
+        if (isDirty())
+        {
+            bdw->dirty = true;
+        }
+        Widget::step();
+    }
     virtual void onPresetJog(int dir /* +/- 1 */) = 0;
     virtual void onShowMenu() = 0;
     virtual std::string getPresetName() = 0;
+    virtual bool isDirty() = 0;
+
+    void onButton(const ButtonEvent &e) override
+    {
+        if (e.action == GLFW_PRESS)
+        {
+            if (e.pos.x >= leftJogPos.x && e.pos.x <= leftJogPos.x + leftJogSize.x &&
+                e.pos.y >= leftJogPos.y && e.pos.y <= leftJogPos.y + leftJogSize.y)
+            {
+                onPresetJog(-1);
+            }
+            else if (e.pos.x >= rightJogPos.x && e.pos.x <= rightJogPos.x + rightJogSize.x &&
+                     e.pos.y >= rightJogPos.y && e.pos.y <= rightJogPos.y + rightJogSize.y)
+            {
+                onPresetJog(1);
+            }
+            else
+            {
+                onShowMenu();
+            }
+            e.consume(this);
+            bdw->dirty = true;
+        }
+        if (e.action == GLFW_RELEASE)
+        {
+            e.consume(this);
+            bdw->dirty = true;
+        }
+    }
 
     void onStyleChanged() override {}
 };

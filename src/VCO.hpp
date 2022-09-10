@@ -113,6 +113,7 @@ template <int oscType> struct VCO : public modules::XTModule
             oscstorage->wt.queue_id = 0;
             oscstorage_display->wt.queue_id = 0;
             storage->perform_queued_wtloads();
+            wavetableIndex = oscstorage->wt.current_id;
         }
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
@@ -208,6 +209,8 @@ template <int oscType> struct VCO : public modules::XTModule
     };
     rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()> wavetableQueue;
     std::atomic<int> wavetableIndex{-1};
+    std::atomic<uint32_t> wavetableLoads{0};
+
     std::string getWavetableName()
     {
         int idx = wavetableIndex;
@@ -220,6 +223,8 @@ template <int oscType> struct VCO : public modules::XTModule
     std::array<int, MAX_POLY> lastUnison{-1};
     int lastNChan{-1};
     bool forceRespawnDueToSampleRate = false;
+    static constexpr int checkWaveTableEvery{512};
+    int checkedWaveTable{checkWaveTableEvery};
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = std::max(1, inputs[PITCH_CV].getChannels());
@@ -227,6 +232,30 @@ template <int oscType> struct VCO : public modules::XTModule
         outputs[OUTPUT_R].setChannels(nChan);
         std::array<bool, MAX_POLY> respawned;
         respawned.fill(false);
+
+        if (checkedWaveTable >= checkWaveTableEvery)
+        {
+            checkedWaveTable = 0;
+
+            bool read{false};
+            WavetableMessage msg;
+            while (!wavetableQueue.empty())
+            {
+                msg = wavetableQueue.shift();
+                read = true;
+            }
+
+            if (read)
+            {
+                // We really should do this off audio thread but for now
+                auto nid = std::clamp((int)msg.index, (int)0, (int)storage->wt_list.size());
+                oscstorage->wt.queue_id = nid;
+                oscstorage_display->wt.queue_id = nid;
+                storage->perform_queued_wtloads();
+                wavetableIndex = oscstorage->wt.current_id;
+                wavetableLoads ++;
+            }
+        }
 
         if (nChan != lastNChan || forceRespawnDueToSampleRate)
         {
@@ -393,6 +422,7 @@ template <int oscType> struct VCO : public modules::XTModule
         }
 
         processPosition++;
+        checkedWaveTable++;
     }
 
     // With surge-xt the oscillator memory is owned by the synth after spawn
