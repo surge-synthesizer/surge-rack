@@ -1,6 +1,6 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "dsp/Effect.h"
 #include "rack.hpp"
 #include <cstring>
@@ -104,7 +104,7 @@ template <> struct SurgeFXTraits<fxt_vocoder>
     static bool constexpr hasModulatorSignal = true;
 };
 
-template <int effectNum> struct SurgeFX : virtual SurgeModuleCommon
+template <int effectNum> struct SurgeFX : virtual XTModule
 {
     enum ParamIds
     {
@@ -145,7 +145,7 @@ template <int effectNum> struct SurgeFX : virtual SurgeModuleCommon
 
     StringCache groupCache[NUM_FX_PARAMS];
 
-    SurgeFX() : SurgeModuleCommon()
+    SurgeFX() : XTModule()
     {
         setupSurge();
 

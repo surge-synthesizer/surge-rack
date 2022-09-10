@@ -52,6 +52,7 @@ FLAGS += -Isurge/src/common \
 	-Isurge/libs/sst/sst-plugininfra/include \
 	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
 	-Isurge/libs/sst/sst-plugininfra/libs/filesystem \
+	-Isurge/libs/fmt/include \
 	-Isurge/libs/LuaJitLib/LuaJIT/src  \
 	-I$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/include \
 	-Isurge/libs/strnatcmp \

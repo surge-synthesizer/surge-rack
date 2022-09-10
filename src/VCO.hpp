@@ -1,6 +1,6 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "dsp/Oscillator.h"
 #include "rack.hpp"
 #include <cstring>
@@ -51,7 +51,7 @@ template <int oscType> struct VCOConfig
     static constexpr int wavetableQueueSize() { return requiresWavetables() ? 32 : 1; }
 };
 
-template <int oscType> struct VCO : virtual public SurgeModuleCommon
+template <int oscType> struct VCO : public modules::XTModule
 {
     static constexpr int n_mod_inputs{4};
     static constexpr int n_arbitrary_switches{4};
@@ -95,12 +95,12 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
 
-    VCO() : SurgeModuleCommon()
+    VCO() : XTModule()
     {
         surge_osc.fill(nullptr);
         lastUnison.fill(-1);
 
-        setupSurgeCommon(NUM_PARAMS);
+        setupSurgeCommon(NUM_PARAMS, VCOConfig<oscType>::requiresWavetables());
 
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
         oscstorage_display = &(storage->getPatch().scene[0].osc[1]);
@@ -127,13 +127,13 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             paramNames[i] = oscstorage->p[i].get_name();
         }
 
-        configParam(PITCH_0, 1, 127, 60, "Pitch in Midi Note");
+        configParam<modules::MidiNoteParamQuantity<0>>(PITCH_0, 1, 127, 60, "Pitch");
         auto os = configParam(OCTAVE_SHIFT, -3, 3, 0, "Octave Shift");
         os->snapEnabled = true;
 
         for (int i = 0; i < n_osc_params + 1; ++i)
         {
-            configParam<SurgeRackOSCParamQuantity<VCO>>(
+            configParam<modules::SurgeParameterParamQuantity>(
                 OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
         }
 
@@ -147,7 +147,7 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             configParam(ARBITRARY_SWITCH_0 + i, 0, 1, 0);
         }
 
-        pc.update(this);
+        // pc.update(this);
 
         config_osc->~Oscillator();
 
@@ -183,16 +183,23 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
         }
     }
 
-    virtual std::string getName() override
+    std::string getName() override
     {
-        return std::string("OSCSingle") + std::to_string(oscType);
+        return std::string("VCO<") + osc_type_names[oscType] + ">";
     }
 
-    StringCache paramNameCache[n_osc_params];
+
+    Parameter *surgeParameterForParamId(int paramId) override {
+        if (paramId < OSC_CTRL_PARAM_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
+            return nullptr;
+
+        return &oscstorage->p[paramId-OSC_CTRL_PARAM_0];
+    }
+
 
     int processPosition = BLOCK_SIZE + 1;
 
-    virtual void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
+    void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
 
     struct WavetableMessage
     {
@@ -227,15 +234,15 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             // Set up unmodulated values
             for (int i = 0; i < n_osc_params; ++i)
             {
-                oscstorage->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
-                oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                oscstorage->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
+                oscstorage_display->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
             }
 
             copyScenedataSubset(0, storage_id_start, storage_id_end);
 
             for (int c = 0; c < nChan; ++c)
             {
-                float pitch0 = getParam(PITCH_0) + (getParam(OCTAVE_SHIFT) + inputs[PITCH_CV].getVoltage(c)) * 12;
+                float pitch0 = params[PITCH_0].getValue() + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
                 if (!surge_osc[c])
                 {
                     surge_osc[c] = spawn_osc(oscType, storage.get(), oscstorage,
@@ -278,7 +285,7 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
                 for (int m = 0; m < n_mod_inputs; ++m)
                 {
                     int modid = modulatorIndexFor(k.id, m);
-                    modMatrix[id][m] = getParam(modid);
+                    modMatrix[id][m] = params[modid].getValue();
                 }
             }
 
@@ -289,12 +296,12 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
 
             for (int c = 0; c < nChan; ++c)
             {
-                float pitch0 = getParam(PITCH_0) + (getParam(OCTAVE_SHIFT) + inputs[PITCH_CV].getVoltage(c)) * 12.0;
+                float pitch0 = params[PITCH_0].getValue() + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12.0;
 
                 modValue[c][0] = pitch0;
                 for (int i = 0; i < n_osc_params; ++i)
                 {
-                    modValue[c][i + 1] = getParam(OSC_CTRL_PARAM_0 + i);
+                    modValue[c][i + 1] = params[OSC_CTRL_PARAM_0 + i].getValue();
                 }
             }
             for (int m = 0; m < n_mod_inputs; ++m)
@@ -319,7 +326,7 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             for (int i = 0; i < n_osc_params; ++i)
             {
                 // This is the non-modulated version
-                // oscstorage_display->p[i].set_value_f01(getParam(OSC_CTRL_PARAM_0 + i));
+                // oscstorage_display->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
                 oscstorage_display->p[i].set_value_f01(modValue[0][i + 1]);
             }
 
@@ -327,13 +334,13 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             {
                 bool needsReInit{false};
 
-                if (inputConnected(RETRIGGER) &&
+                if (inputs[RETRIGGER].isConnected() &&
                     reTrigger[c].process(inputs[RETRIGGER].getVoltage(c)))
                 {
                     needsReInit = true;
                 }
 
-                if (outputConnected(OUTPUT_L) || outputConnected(OUTPUT_R))
+                if (outputs[OUTPUT_L].isConnected() || outputs[OUTPUT_R].isConnected())
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
@@ -360,12 +367,12 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
                                                     BLOCK_SIZE_OS);
                 }
             }
-            pc.update(this);
+            // pc.update(this);
         }
 
         for (int c = 0; c < nChan; ++c)
         {
-            if (outputConnected(OUTPUT_L) && !outputConnected(OUTPUT_R))
+            if (outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected())
             {
                 // Special mono mode
                 float output = (osc_downsample[0][c][processPosition] +
@@ -375,11 +382,11 @@ template <int oscType> struct VCO : virtual public SurgeModuleCommon
             }
             else
             {
-                if (outputConnected(OUTPUT_L))
+                if (outputs[OUTPUT_L].isConnected())
                     outputs[OUTPUT_L].setVoltage(
                         osc_downsample[0][c][processPosition] * SURGE_TO_RACK_OSC_MUL, c);
 
-                if (outputConnected(OUTPUT_R))
+                if (outputs[OUTPUT_R].isConnected())
                     outputs[OUTPUT_R].setVoltage(
                         osc_downsample[1][c][processPosition] * SURGE_TO_RACK_OSC_MUL, c);
             }

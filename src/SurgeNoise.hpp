@@ -1,11 +1,11 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "dsp/utilities/DSPUtils.h"
 #include "rack.hpp"
 #include <cstring>
 
-struct SurgeNoise : virtual public SurgeModuleCommon
+struct SurgeNoise : virtual public XTModule
 {
     enum ParamIds
     {
@@ -27,7 +27,7 @@ struct SurgeNoise : virtual public SurgeModuleCommon
         NUM_LIGHTS
     };
 
-    SurgeNoise() : SurgeModuleCommon()
+    SurgeNoise() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(CORRELATION_PARAM, -1.0, 1.0, -0.2, "Correlation");

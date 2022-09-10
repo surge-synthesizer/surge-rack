@@ -12,7 +12,7 @@ namespace sst::surgext_rack::vcf::ui
 {
 struct VCFWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
 {
-    typedef VCF M;
+    typedef vcf::VCF M;
     VCFWidget(M *module);
 
     void moduleBackground(NVGcontext *vg) {}

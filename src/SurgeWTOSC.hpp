@@ -1,12 +1,12 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "dsp/Oscillator.h"
 #include "rack.hpp"
 #include <cstring>
 #include <sst/filters/HalfRateFilter.h>
 
-struct SurgeWTOSC : virtual public SurgeModuleCommon
+struct SurgeWTOSC : virtual public XTModule
 {
     enum ParamIds
     {
@@ -49,7 +49,7 @@ struct SurgeWTOSC : virtual public SurgeModuleCommon
         NUM_LIGHTS
     };
 
-    SurgeWTOSC() : SurgeModuleCommon()
+    SurgeWTOSC() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(OUTPUT_GAIN, 0, 1, 1, "Output Gain");

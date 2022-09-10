@@ -1,12 +1,12 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "dsp/modulators/ADSRModulationSource.h"
 #include "rack.hpp"
 #include <cstring>
 #include <simd/Vector.hpp>
 
-struct SurgeADSR : virtual public SurgeModuleCommon
+struct SurgeADSR : virtual public XTModule
 {
     enum ParamIds
     {
@@ -54,7 +54,7 @@ struct SurgeADSR : virtual public SurgeModuleCommon
 
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
 
-    SurgeADSR() : SurgeModuleCommon()
+    SurgeADSR() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = A_PARAM; i <= R_PARAM; ++i)

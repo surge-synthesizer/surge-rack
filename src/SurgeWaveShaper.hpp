@@ -1,10 +1,10 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "rack.hpp"
 #include <cstring>
 
-struct SurgeWaveShaper : virtual public SurgeModuleCommon
+struct SurgeWaveShaper : virtual public XTModule
 {
     enum ParamIds
     {
@@ -30,7 +30,7 @@ struct SurgeWaveShaper : virtual public SurgeModuleCommon
 
     static constexpr int n_ws_types = 1; // FIXME
 
-    SurgeWaveShaper() : SurgeModuleCommon()
+    SurgeWaveShaper() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(MODE_PARAM, 0, n_ws_types - 1, 0, "Mode");

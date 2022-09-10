@@ -1,11 +1,11 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "dsp/modulators/LFOModulationSource.h"
 #include "rack.hpp"
 #include <cstring>
 
-struct SurgeLFO : virtual public SurgeModuleCommon
+struct SurgeLFO : virtual public XTModule
 {
     enum ParamIds
     {
@@ -73,7 +73,7 @@ struct SurgeLFO : virtual public SurgeModuleCommon
 
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
 
-    SurgeLFO() : SurgeModuleCommon()
+    SurgeLFO() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
