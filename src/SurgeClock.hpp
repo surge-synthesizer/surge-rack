@@ -1,10 +1,10 @@
 #pragma once
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "rack.hpp"
 #include <cstring>
 
-struct SurgeClock : virtual public SurgeModuleCommon
+struct SurgeClock : virtual public XTModule
 {
     enum ParamIds
     {
@@ -27,7 +27,7 @@ struct SurgeClock : virtual public SurgeModuleCommon
         NUM_LIGHTS
     };
 
-    SurgeClock() : SurgeModuleCommon()
+    SurgeClock() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(CLOCK_CV, -2, 6, 1, "Rate");

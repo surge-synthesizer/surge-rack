@@ -89,6 +89,7 @@ template <> VCOConfig<ot_window>::knobs_t VCOConfig<ot_window>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 4, "HICUT"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
+template <> int VCOConfig<ot_window>::rightMenuParamId() { return 2; }
 
 template <> constexpr bool VCOConfig<ot_sine>::supportsUnison() { return true; }
 template <> VCOConfig<ot_sine>::knobs_t VCOConfig<ot_sine>::getKnobs()
@@ -122,8 +123,8 @@ template <> void VCOConfig<ot_sine>::oscillatorSpecificSetup(VCO<ot_sine> *m)
 
 template <> void VCOConfig<ot_sine>::processLightParameters(VCO<ot_sine> *m)
 {
-    auto l0 = (bool)(m->getParam(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0) > 0.5);
-    auto l1 = (bool)(m->getParam(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1) > 0.5);
+    auto l0 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+    auto l1 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
 
     for (auto s : {m->oscstorage, m->oscstorage_display})
     {

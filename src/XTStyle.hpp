@@ -55,7 +55,7 @@ struct XTStyle
     int fontId(NVGcontext *vg);
     int fontIdBold(NVGcontext *vg);
 
-    friend class StyleParticipant;
+    friend struct StyleParticipant;
 
   private:
     static std::unordered_set<StyleParticipant *> listeners;

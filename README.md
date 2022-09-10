@@ -1,24 +1,24 @@
-# Surge in Rack
+# SurgeXT in Rack
 
-This repository houses the implementation of the [Surge Synthesizer](https://surge-synthesizer.github.io/) as
-collection of modules for [VCVRack](https://vcvrack.com/). The modules are fully documented in the 
-[Surge for Rack Manual](https://surge-synthesizer.github.io/rack_manual/).
+This repository builds SurgeXT Rack extensions, our reboot of the old Surge 1.7 Rack modules
+with more features, better design, and lots of other exciting stuff, which is still basically not done.
 
-The easiest way to use these modules is to download VCVRack and include the modules in the Rack Plugin Manager.
-The library link is [here](https://vcvrack.com/plugins.html#Surge%20for%20Rack).
+If you are looking for the source of the Surge modules in the VCV Rack library please check the `release/2.1.7.0`
+branch.
 
-If you would like to use the latest version of the software, which is always equal to or ahead of the version in
-the plugin manager, but which may not be as stable as the plugin manager version, you can get a zip file from
-[our release page](https://github.com/surge-synthesizer/surge-rack/releases/tag/Nightly) and place the platform
-appropriate version of the zip in your Rack `plugins-v1` directory.
+These modules are still incomplete. We are planning an official launch but have decided to develop
+them in the open. But as such we ask a few things
 
-If you would like to request a feature or report a bug, please 
-[open a github issue](https://github.com/surge-synthesizer/surge-rack/issues)
-with a clear description of the feature or bug, the operating system you use, and the version of the plugins.
+1. If you do use them please be aware that parameters, streaming, modules, and more may change in
+   breaking ways until our first release. Also there is no manual yet and no documentation for users.
+2. If you package modules into various forks of VCV Rack, you are welcome to do a test build, but please
+   do not release these modules into a distribution of a fork until we have our official 1.0 release. (Of course
+   the GPL3 license would allow you to ignore this request, but please don't).
+   [Subscribe to this issue](https://github.com/surge-synthesizer/surge-rack/issues/360)
+   if you want to know when the release happens.
+3. If you want to help with the code please hit us up in the #surge-rack channel in our discord.
 
-Finally, if you want to build these modules, they build using the 
-[standard Rack plugin building mechanism](https://vcvrack.com/manual/Building.html). Once your environment
-is configured, those steps are
+There's binaries here in the Nightly tag but also you can build it yourself as follows:
 
 ```
 git clone https://github.com/surge-synthesizer/surge-rack/
@@ -28,11 +28,10 @@ export RACK_DIR=location-of-rack-SDK-or-source
 make dist
 ```
 
-
 ## License and Copyright
 
 This software is licensed under the Gnu Public License v3. It is a derived work of both Surge (which is GPL3)
-and VCVRack 1.0 (which is GPL3). It contains the Encode font which is licensed under OpenFontLicense 1.1.
+and VCVRack 1.0 (which is GPL3). It contains the quicksand font which is licensed under OpenFontLicense 1.1.
 Copyright to this software is held by the authors with authorship indicated by the github transaction log.
 
-Copyright 2019, Various authors.
+Copyright 2022, Various authors.

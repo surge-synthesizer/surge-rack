@@ -748,6 +748,16 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     }
 };
 
+struct PresetJogSelector : public rack::Widget, style::StyleParticipant
+{
+
+    virtual void onPresetJog(int dir /* +/- 1 */) = 0;
+    virtual void onShowMenu() = 0;
+    virtual std::string getPresetName() = 0;
+
+    void onStyleChanged() override {}
+};
+
 inline void KnobN::onChange(const rack::widget::Widget::ChangeEvent &e)
 {
     bw->dirty = true;

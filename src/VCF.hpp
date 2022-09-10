@@ -6,12 +6,15 @@
 #define SURGE_RACK_SURGEVCF_HPP
 
 #include "SurgeXT.hpp"
-#include "SurgeModuleCommon.hpp"
+#include "XTModule.hpp"
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"
 
-struct VCF : public SurgeModuleCommon
+
+namespace sst::surgext_rack::vcf
+{
+struct VCF : public modules::XTModule
 {
     static constexpr int n_vcf_params{5};
     static constexpr int n_mod_inputs{4};
@@ -55,13 +58,13 @@ struct VCF : public SurgeModuleCommon
         return VCF_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
-    VCF() : SurgeModuleCommon()
+    VCF() : XTModule()
     {
-        setupSurgeCommon(NUM_PARAMS);
+        setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         // FIXME attach formatters here
-        configParam(FREQUENCY, 0, 127, 60);
+        configParam<modules::MidiNoteParamQuantity<69>>(FREQUENCY, -60, 70, 0);
         configParam(RESONANCE, 0, 1, 0, "Resonance", "%", 0.f, 100.f);
         configParam(IN_GAIN, 0, 2, 1);
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
@@ -75,18 +78,17 @@ struct VCF : public SurgeModuleCommon
         setupSurge();
     }
 
-    virtual std::string getName() override { return "VCF"; }
+    std::string getName() override { return "VCF"; }
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
     sst::filters::QuadFilterUnitState qfus[nQFUs];
     __m128 qfuRCache[sst::filters::n_filter_registers][nQFUs];
     sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker[nQFUs];
     float delayBuffer[nQFUs][4][sst::filters::utilities::MAX_FB_COMB +
-                                      sst::filters::utilities::SincTable::FIRipol_N];
+                                sst::filters::utilities::SincTable::FIRipol_N];
 
-    virtual void setupSurge()
+    void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS);
         processPosition = BLOCK_SIZE;
 
         restackSIMD();
@@ -103,7 +105,7 @@ struct VCF : public SurgeModuleCommon
 
     void moduleSpecificSampleRateChange() override
     {
-        for (auto c=0; c<nQFUs; ++c)
+        for (auto c = 0; c < nQFUs; ++c)
         {
             coefMaker[c].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
         }
@@ -113,8 +115,7 @@ struct VCF : public SurgeModuleCommon
     {
         for (auto c = 0; c < nQFUs; ++c)
         {
-            std::fill(qfus[c].R, &qfus[c].R[sst::filters::n_filter_registers],
-                      _mm_setzero_ps());
+            std::fill(qfus[c].R, &qfus[c].R[sst::filters::n_filter_registers], _mm_setzero_ps());
             memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
             for (int i = 0; i < 4; ++i)
             {
@@ -189,7 +190,7 @@ struct VCF : public SurgeModuleCommon
 
         if (processPosition >= BLOCK_SIZE)
         {
-            for (int c=0; c<nQFUs; ++c)
+            for (int c = 0; c < nQFUs; ++c)
             {
                 memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
             }
@@ -220,14 +221,14 @@ struct VCF : public SurgeModuleCommon
             // HAMMER - we can and must be smarter about this
             for (int c = 0; c < nQFUs; ++c)
             {
-                for (int f=0; f<sst::filters::n_cm_coeffs; ++f)
+                for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
                 {
                     coefMaker[c].C[f] = qfus[c].C[f][0];
                 }
 
-                coefMaker[c].MakeCoeffs(getParam(FREQUENCY) - 69, getParam(RESONANCE),
-                                     sst::filters::fut_obxd_4pole, sst::filters::st_lpmoog_24dB,
-                                     storage.get(), false);
+                coefMaker[c].MakeCoeffs(params[FREQUENCY].getValue(),
+                                        params[RESONANCE].getValue(), sst::filters::fut_obxd_4pole,
+                                        sst::filters::st_lpmoog_24dB, storage.get(), false);
                 for (int p = 0; p < 4; ++p)
                 {
                     coefMaker[c].updateState(qfus[c], p);
@@ -240,11 +241,11 @@ struct VCF : public SurgeModuleCommon
         float outvalues alignas(16)[2 * MAX_POLY];
         // fix me - not every sample pls
         std::memset(invalues, 0, 2 * MAX_POLY * sizeof(float));
-        for (int c=0; c<2; ++c)
+        for (int c = 0; c < 2; ++c)
         {
-            auto it = (c==0? INPUT_L : INPUT_R);
-            auto pl = (c==0? lastPolyL : lastPolyR);
-            for (int p=0; p<pl; ++p)
+            auto it = (c == 0 ? INPUT_L : INPUT_R);
+            auto pl = (c == 0 ? lastPolyL : lastPolyR);
+            for (int p = 0; p < pl; ++p)
             {
                 auto idx = channelToSIMD[c][p][0] * 4 + channelToSIMD[c][p][1];
                 invalues[idx] = inputs[it].getVoltage(p) * RACK_TO_SURGE_OSC_MUL;
@@ -252,32 +253,33 @@ struct VCF : public SurgeModuleCommon
         }
 
         auto fptr = sst::filters::GetQFPtrFilterUnit(sst::filters::FilterType::fut_obxd_4pole,
-                                                sst::filters::FilterSubType::st_lpmoog_24dB);
+                                                     sst::filters::FilterSubType::st_lpmoog_24dB);
 
-        for (int s=0; s<nSIMDSlots; ++s)
+        for (int s = 0; s < nSIMDSlots; ++s)
         {
             auto in = _mm_load_ps(&invalues[s * 4]);
 
             auto out = fptr(&qfus[s], in);
-            _mm_store_ps(&outvalues[s*4], out);
+            _mm_store_ps(&outvalues[s * 4], out);
         }
 
-        for (int c=0; c<2; ++c)
+        for (int c = 0; c < 2; ++c)
         {
-            auto it = (c==0? OUTPUT_L : OUTPUT_R);
-            auto pl = (c==0? lastPolyL : lastPolyR);
-            for (int p=0; p<pl; ++p)
+            auto it = (c == 0 ? OUTPUT_L : OUTPUT_R);
+            auto pl = (c == 0 ? lastPolyL : lastPolyR);
+            for (int p = 0; p < pl; ++p)
             {
                 auto idx = channelToSIMD[c][p][0] * 4 + channelToSIMD[c][p][1];
                 outputs[it].setVoltage(outvalues[idx] * SURGE_TO_RACK_OSC_MUL, p);
             }
         }
 
-        dumpEvery ++;
+        dumpEvery++;
         if (dumpEvery == 44000)
             dumpEvery = 0;
         processPosition++;
     }
 };
+}
 
 #endif // SURGE_RACK_SURGEVCF_HPP

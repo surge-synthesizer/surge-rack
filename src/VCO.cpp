@@ -17,6 +17,18 @@ template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
+struct WavetableSelector : widgets::PresetJogSelector
+{
+    int wtNo{0};
+    void onPresetJog(int dir) override {
+        wtNo += dir;
+    }
+    void onShowMenu() override {}
+    std::string getPresetName() override {
+        return std::string( "DummyWT" ) + std::to_string(wtNo);
+    }
+};
+
 template <int oscType>
 struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
 {
