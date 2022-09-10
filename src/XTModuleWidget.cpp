@@ -17,7 +17,7 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
 {
     rack::ui::Menu *createChildMenu() override
     {
-        rack::ui::Menu *menu = new rack::ui::Menu;
+        auto menu = new rack::ui::Menu;
 
         for (auto sk : {style::XTStyle::Style::DARK, style::XTStyle::Style::MID,
                         style::XTStyle::Style::LIGHT})
@@ -32,15 +32,46 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
     }
 };
 
+struct LightSelectItem : rack::ui::MenuItem
+{
+    style::XTStyle::LightColor s;
+    void onAction(const rack::event::Action &e) override
+    {
+        style::XTStyle::setCurrentLightColor(s);
+    }
+};
+
+struct LightsSubmenuItem : rack::ui::MenuItem
+{
+    rack::ui::Menu *createChildMenu() override
+    {
+        auto menu = new rack::ui::Menu;
+
+        for (auto sk : {style::XTStyle::LightColor::ORANGE, style::XTStyle::LightColor::RED,
+                        style::XTStyle::LightColor::BLUE, style::XTStyle::LightColor::GREEN})
+        {
+            auto it = new LightSelectItem;
+            it->s = sk;
+            it->text = style::XTStyle::lightColorName(sk);
+            menu->addChild(it);
+        }
+
+        return menu;
+    }
+};
+
 void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
 {
     menu->addChild(new rack::ui::MenuEntry);
 
-    SkinsSubmenuItem *skins = new SkinsSubmenuItem;
-    skins->text = "Skins";
+    auto *skins = new SkinsSubmenuItem;
+    skins->text = "Skin";
     skins->rightText = RIGHT_ARROW;
     menu->addChild(skins);
 
-    INFO("Append Context Menu");
+    auto *lights = new LightsSubmenuItem;
+    lights->text = "LED Colors";
+    lights->rightText = RIGHT_ARROW;
+    menu->addChild(lights);
 }
 } // namespace sst::surgext_rack::widgets

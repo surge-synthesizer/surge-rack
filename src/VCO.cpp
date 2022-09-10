@@ -402,7 +402,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                         nvgLineTo(vg, x, y);
                     first = false;
                 }
-                nvgFillColor(vg, nvgRGBA(0xFF, 0x90, 0x00, 0x20));
+                auto pc = style()->getColor(style::XTStyle::PLOT_CURVE);
+                pc.a = 1.f * 0x20 / 0xFF;
+                nvgFillColor(vg, pc);
                 nvgFill(vg);
             }
 
@@ -416,7 +418,10 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                     nvgLineTo(vg, x, y);
                 first = false;
             }
-            nvgStrokeColor(vg, nvgRGBA(0xFF, 0x90, 0x00, 0x60));
+            auto pc = style()->getColor(style::XTStyle::PLOT_CURVE);
+            pc.a = 1.f * 0x60 / 0xFF;
+
+            nvgStrokeColor(vg, pc);
             nvgStroke(vg);
         }
     }

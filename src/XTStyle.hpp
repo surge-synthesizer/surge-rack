@@ -29,6 +29,16 @@ struct XTStyle
     static void setCurrentStyle(Style s);
     static void initialize();
 
+    enum LightColor
+    {
+        ORANGE = 900001, // must be first
+        BLUE,
+        RED,
+        GREEN // must be last or update the ranges in teh style code
+    };
+    static std::string lightColorName(LightColor c);
+    static void setCurrentLightColor(LightColor c);
+
     enum Colors
     {
         KNOB_RING,
@@ -62,6 +72,7 @@ struct XTStyle
     static void addStyleListener(StyleParticipant *l) { listeners.insert(l); }
     static void removeStyleListener(StyleParticipant *l) { listeners.erase(l); }
     static void notifyStyleListeners();
+    static void updateJSON();
 };
 
 struct StyleParticipant
