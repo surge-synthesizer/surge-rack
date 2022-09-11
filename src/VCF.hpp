@@ -30,7 +30,9 @@ struct VCF : public modules::XTModule
 
         VCF_MOD_PARAM_0,
 
-        NUM_PARAMS = VCF_MOD_PARAM_0 + n_vcf_params * n_mod_inputs
+        VCF_TYPE = VCF_MOD_PARAM_0 + n_vcf_params * n_mod_inputs,
+        VCF_SUBTYPE,
+        NUM_PARAMS
     };
     enum InputIds
     {
@@ -69,6 +71,14 @@ struct VCF : public modules::XTModule
         configParam(IN_GAIN, 0, 2, 1);
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
         configParam(OUT_GAIN, 0, 2, 1);
+
+        configParam(VCF_TYPE, 0, sst::filters::num_filter_types, sst::filters::fut_obxd_4pole);
+
+        int mfst = 0;
+        for (auto fc : sst::filters::fut_subcount)
+            mfst = std::max(mfst, fc);
+
+        configParam(VCF_SUBTYPE, 0, mfst, 0);
 
         for (int i = 0; i < n_vcf_params * n_mod_inputs; ++i)
         {
@@ -115,7 +125,9 @@ struct VCF : public modules::XTModule
     {
         for (auto c = 0; c < nQFUs; ++c)
         {
+            coefMaker[c].Reset();
             std::fill(qfus[c].R, &qfus[c].R[sst::filters::n_filter_registers], _mm_setzero_ps());
+            std::fill(qfus[c].C, &qfus[c].C[sst::filters::n_cm_coeffs], _mm_setzero_ps());
             memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
             for (int i = 0; i < 4; ++i)
             {
@@ -184,12 +196,26 @@ struct VCF : public modules::XTModule
         resetFilterRegisters();
     }
 
+    sst::filters::FilterType lastType = sst::filters::FilterType::fut_none;
+    sst::filters::FilterSubType lastSubType = sst::filters::FilterSubType::st_Standard;
+    sst::filters::FilterUnitQFPtr filterPtr{nullptr};
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         static int dumpEvery = 0;
+        auto ftype = (sst::filters::FilterType)(int)(std::round(params[VCF_TYPE].getValue()));
+        auto fsubtype = (sst::filters::FilterSubType)(int)(std::round(params[VCF_SUBTYPE].getValue()));;
 
-        if (processPosition >= BLOCK_SIZE)
+        if (processPosition >= BLOCK_SIZE )
         {
+            if (ftype != lastType || fsubtype != lastSubType)
+            {
+                resetFilterRegisters();
+            }
+            lastType = ftype;
+            lastSubType = fsubtype;
+            filterPtr = sst::filters::GetQFPtrFilterUnit(ftype, fsubtype);
+
             for (int c = 0; c < nQFUs; ++c)
             {
                 memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
@@ -227,8 +253,8 @@ struct VCF : public modules::XTModule
                 }
 
                 coefMaker[c].MakeCoeffs(params[FREQUENCY].getValue(),
-                                        params[RESONANCE].getValue(), sst::filters::fut_obxd_4pole,
-                                        sst::filters::st_lpmoog_24dB, storage.get(), false);
+                                        params[RESONANCE].getValue(),
+                                        ftype, fsubtype, storage.get(), false);
                 for (int p = 0; p < 4; ++p)
                 {
                     coefMaker[c].updateState(qfus[c], p);
@@ -252,15 +278,20 @@ struct VCF : public modules::XTModule
             }
         }
 
-        auto fptr = sst::filters::GetQFPtrFilterUnit(sst::filters::FilterType::fut_obxd_4pole,
-                                                     sst::filters::FilterSubType::st_lpmoog_24dB);
 
-        for (int s = 0; s < nSIMDSlots; ++s)
+        if (filterPtr)
         {
-            auto in = _mm_load_ps(&invalues[s * 4]);
+            for (int s = 0; s < nSIMDSlots; ++s)
+            {
+                auto in = _mm_load_ps(&invalues[s * 4]);
 
-            auto out = fptr(&qfus[s], in);
-            _mm_store_ps(&outvalues[s * 4], out);
+                auto out = filterPtr(&qfus[s], in);
+                _mm_store_ps(&outvalues[s * 4], out);
+            }
+        }
+        else
+        {
+            std::memcpy(outvalues, invalues, nSIMDSlots * 4 * sizeof(float));
         }
 
         for (int c = 0; c < 2; ++c)

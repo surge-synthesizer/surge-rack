@@ -21,6 +21,284 @@ struct VCFWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
+struct VCFSelector : widgets::ParamJogSelector
+{
+    FilterSelectorMapper fsm;
+    std::vector<int> fsmOrdering;
+
+    VCFSelector() { fsmOrdering = fsm.totalIndexOrdering(); }
+    static VCFSelector *create(const rack::Vec &pos, const rack::Vec &size, VCF *module,
+                               int paramId)
+    {
+        auto res = new VCFSelector();
+        res->box.pos = pos;
+        res->box.size = size;
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+        res->setup();
+
+        return res;
+    }
+
+    void onPresetJog(int dir) override
+    {
+        if (!getParamQuantity())
+            return;
+
+        int type = (int)std::round(getParamQuantity()->getValue());
+        auto di = fsm.remapStreamedIndexToDisplayIndex(type);
+        di += dir;
+        if (di >= fsmOrdering.size())
+            di = 0;
+        if (di < 0)
+            di = fsmOrdering.size() - 1;
+        getParamQuantity()->setValue(fsmOrdering[di]);
+    }
+
+    rack::ui::Menu *menuForGroup(rack::ui::Menu *menu, const std::string &group)
+    {
+        for (const auto &[id, gn] : fsm.mapping)
+        {
+            if (gn == group)
+            {
+                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], "",
+                                                    [this, cid = id]() { setType(cid); }));
+            }
+        }
+        return menu;
+    }
+
+    void onShowMenu() override
+    {
+        if (!module)
+            return;
+        auto menu = rack::createMenu();
+        menu->addChild(rack::createMenuLabel("Filter Types"));
+
+        std::string currentGroup{"-not-a-filter-group-"};
+
+        for (const auto &[id, gn] : fsm.mapping)
+        {
+            if (gn == "")
+            {
+                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], "",
+                                                    [this, cid = id]() { setType(cid); }));
+            }
+            else if (gn != currentGroup)
+            {
+                menu->addChild(rack::createSubmenuItem(
+                    gn, "", [this, cgn = gn](auto *x) { menuForGroup(x, cgn); }));
+                currentGroup = gn;
+            }
+        }
+    }
+    bool forceDirty{false};
+    void setType(int id)
+    {
+        forceDirty = true;
+        if (!module)
+            return;
+        if (!getParamQuantity())
+            return;
+        getParamQuantity()->setValue(id);
+        // FixMe: have a default type per type
+        module->params[VCF::VCF_SUBTYPE].setValue(0.f);
+    }
+
+    bool isDirty() override
+    {
+        if (forceDirty)
+        {
+            forceDirty = false;
+            return true;
+        }
+        return false;
+    }
+    std::string getPresetName() override
+    {
+        if (!getParamQuantity())
+            return "FILTER";
+        int type = (int)std::round(getParamQuantity()->getValue());
+        return sst::filters::filter_type_names[type];
+    }
+};
+
+struct VCFSubtypeSelector : widgets::ParamJogSelector
+{
+    FilterSelectorMapper fsm;
+
+    static VCFSubtypeSelector *create(const rack::Vec &pos, const rack::Vec &size, VCF *module,
+                                      int paramId)
+    {
+        auto res = new VCFSubtypeSelector();
+        res->box.pos = pos;
+        res->box.size = size;
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+        res->setup();
+
+        return res;
+    }
+
+    int filterType()
+    {
+        if (!module)
+            return 0;
+        auto vcfm = static_cast<VCF *>(module);
+        int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+        return type;
+    }
+    void onPresetJog(int dir) override
+    {
+        if (!module)
+            return;
+        auto type = filterType();
+        int i = std::clamp((int)std::round(getParamQuantity()->getValue()), 0,
+                           sst::filters::fut_subcount[type]);
+        if (sst::filters::fut_subcount[type] == 0)
+            return;
+
+        i += dir;
+        if (i < 0)
+            i = sst::filters::fut_subcount[type];
+        if (i >= sst::filters::fut_subcount[type])
+            i = 0;
+
+        getParamQuantity()->setValue(i);
+    }
+
+    bool hasPresets() override
+    {
+        if (!module)
+            return true;
+        auto type = filterType();
+        return (sst::filters::fut_subcount[type] != 0);
+    }
+    void onShowMenu() override {}
+    bool forceDirty{false};
+    void setSubType(int id)
+    {
+        forceDirty = true;
+        if (!getParamQuantity())
+            return;
+        getParamQuantity()->setValue(id);
+    }
+
+    int lastType{-1};
+    bool isDirty() override
+    {
+        if (forceDirty)
+        {
+            forceDirty = false;
+            return true;
+        }
+        if (!module)
+            return false;
+
+        auto vcfm = static_cast<VCF *>(module);
+        int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+        if (type != lastType)
+        {
+            lastType = type;
+            return true;
+        }
+        return false;
+    }
+    std::string getPresetName() override
+    {
+        if (!module)
+            return "None";
+
+        using sst::filters::FilterType;
+
+        auto vcfm = static_cast<VCF *>(module);
+        int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+
+        int i = std::clamp((int)std::round(getParamQuantity()->getValue()), 0,
+                           sst::filters::fut_subcount[type]);
+
+        const auto fType = (FilterType)type;
+        if (sst::filters::fut_subcount[type] == 0)
+        {
+            return "None";
+        }
+        else
+        {
+            switch (fType)
+            {
+            case FilterType::fut_lpmoog:
+            case FilterType::fut_diode:
+                return sst::filters::fut_ldr_subtypes[i];
+                break;
+            case FilterType::fut_notch12:
+            case FilterType::fut_notch24:
+            case FilterType::fut_apf:
+                return sst::filters::fut_notch_subtypes[i];
+                break;
+            case FilterType::fut_comb_pos:
+            case FilterType::fut_comb_neg:
+                return sst::filters::fut_comb_subtypes[i];
+                break;
+            case FilterType::fut_vintageladder:
+                return sst::filters::fut_vintageladder_subtypes[i];
+                break;
+            case FilterType::fut_obxd_2pole_lp:
+            case FilterType::fut_obxd_2pole_hp:
+            case FilterType::fut_obxd_2pole_n:
+            case FilterType::fut_obxd_2pole_bp:
+                return sst::filters::fut_obxd_2p_subtypes[i];
+                break;
+            case FilterType::fut_obxd_4pole:
+                return sst::filters::fut_obxd_4p_subtypes[i];
+                break;
+            case FilterType::fut_k35_lp:
+            case FilterType::fut_k35_hp:
+                return sst::filters::fut_k35_subtypes[i];
+                break;
+            case FilterType::fut_cutoffwarp_lp:
+            case FilterType::fut_cutoffwarp_hp:
+            case FilterType::fut_cutoffwarp_n:
+            case FilterType::fut_cutoffwarp_bp:
+            case FilterType::fut_cutoffwarp_ap:
+            case FilterType::fut_resonancewarp_lp:
+            case FilterType::fut_resonancewarp_hp:
+            case FilterType::fut_resonancewarp_n:
+            case FilterType::fut_resonancewarp_bp:
+            case FilterType::fut_resonancewarp_ap:
+                // "i & 3" selects the lower two bits that represent the stage count
+                // "(i >> 2) & 3" selects the next two bits that represent the
+                // saturator
+                return fmt::format("{} {}", sst::filters::fut_nlf_subtypes[i & 3],
+                                   sst::filters::fut_nlf_saturators[(i >> 2) & 3]);
+                break;
+            // don't default any more so compiler catches new ones we add
+            case FilterType::fut_none:
+            case FilterType::fut_lp12:
+            case FilterType::fut_lp24:
+            case FilterType::fut_bp12:
+            case FilterType::fut_bp24:
+            case FilterType::fut_hp12:
+            case FilterType::fut_hp24:
+            case FilterType::fut_SNH:
+                return sst::filters::fut_def_subtypes[i];
+                break;
+            case FilterType::fut_tripole:
+                // "i & 3" selects the lower two bits that represent the filter mode
+                // "(i >> 2) & 3" selects the next two bits that represent the
+                // output stage
+                return fmt::format("{} {}", sst::filters::fut_tripole_subtypes[i & 3],
+                                   sst::filters::fut_tripole_output_stage[(i >> 2) & 3]);
+                break;
+            case FilterType::num_filter_types:
+                return "ERROR";
+                break;
+            }
+        }
+    }
+};
+
 VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
@@ -31,6 +309,17 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
 
     int idx = 0;
 
+    auto fivemm = rack::mm2px(5);
+    auto halfmm = rack::mm2px(0.5);
+    auto wts = VCFSelector::create(rack::Vec(plotStartX, plotStartY),
+                                   rack::Vec(plotW, fivemm - halfmm), module, VCF::VCF_TYPE);
+    addChild(wts);
+    plotStartY += fivemm;
+    plotH -= fivemm;
+
+    auto subType = VCFSubtypeSelector::create(rack::Vec(plotStartX, underPlotStartY),
+                                              rack::Vec(plotW, underPlotH), module, M::VCF_SUBTYPE);
+    addChild(subType);
     for (const auto &[row, col, pid, label] :
          {std::make_tuple(0, 0, M::FREQUENCY, "FREQUENCY"),
           std::make_tuple(0, 2, M::RESONANCE, "RESO"), std::make_tuple(0, 3, M::MIX, "MIX"),

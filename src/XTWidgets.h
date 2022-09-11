@@ -748,51 +748,59 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     }
 };
 
-struct PresetJogSelector : public rack::Widget, style::StyleParticipant
+template <typename T> struct GenericPresetJogSelector : public T, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
-
-    PresetJogSelector() {}
 
     rack::Vec leftJogSize, rightJogSize, leftJogPos, rightJogPos;
 
     void setup()
     {
-        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), rack::Vec(box.size.x, box.size.y),
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0),
+                                             rack::Vec(this->box.size.x, this->box.size.y),
                                              [this](auto *v) { this->drawSelector(v); });
-        addChild(bdw);
+        this->addChild(bdw);
 
-        leftJogSize = rack::Vec(box.size.y, box.size.y);
+        leftJogSize = rack::Vec(this->box.size.y, this->box.size.y);
         rightJogSize = leftJogSize;
 
         leftJogPos = rack::Vec(0, 0);
-        rightJogPos = rack::Vec(box.size.x - box.size.y, 0);
+        rightJogPos = rack::Vec(this->box.size.x - this->box.size.y, 0);
     }
 
     void drawSelector(NVGcontext *vg)
     {
         nvgBeginPath(vg);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        auto txtColor = style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT);
+        if (!hasPresets())
+            txtColor.a = 0.30;
+        nvgFillColor(vg, txtColor);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 7.3 * 96 / 72);
-        nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, getPresetName().c_str(), nullptr);
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y * 0.5, getPresetName().c_str(),
+                nullptr);
 
-        // left arrow
-        float onemm = rack::mm2px(1.0);
-        nvgBeginPath(vg);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
-        nvgMoveTo(vg, leftJogPos.x + onemm, leftJogPos.y + leftJogSize.y * 0.5);
-        nvgLineTo(vg, leftJogPos.x + leftJogSize.x - onemm, leftJogPos.y + onemm);
-        nvgLineTo(vg, leftJogPos.x + leftJogSize.x - onemm, leftJogPos.y + leftJogSize.y - onemm);
-        nvgFill(vg);
+        if (hasPresets())
+        {
+            // left arrow
+            float onemm = rack::mm2px(1.0);
+            nvgBeginPath(vg);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
+            nvgMoveTo(vg, leftJogPos.x + onemm, leftJogPos.y + leftJogSize.y * 0.5);
+            nvgLineTo(vg, leftJogPos.x + leftJogSize.x - onemm, leftJogPos.y + onemm);
+            nvgLineTo(vg, leftJogPos.x + leftJogSize.x - onemm,
+                      leftJogPos.y + leftJogSize.y - onemm);
+            nvgFill(vg);
 
-        nvgBeginPath(vg);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
-        nvgMoveTo(vg, rightJogPos.x + rightJogSize.x - onemm, rightJogPos.y + rightJogSize.y * 0.5);
-        nvgLineTo(vg, rightJogPos.x + onemm, rightJogPos.y + onemm);
-        nvgLineTo(vg, rightJogPos.x + onemm, rightJogPos.y + rightJogSize.y - onemm);
-        nvgFill(vg);
+            nvgBeginPath(vg);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
+            nvgMoveTo(vg, rightJogPos.x + rightJogSize.x - onemm,
+                      rightJogPos.y + rightJogSize.y * 0.5);
+            nvgLineTo(vg, rightJogPos.x + onemm, rightJogPos.y + onemm);
+            nvgLineTo(vg, rightJogPos.x + onemm, rightJogPos.y + rightJogSize.y - onemm);
+            nvgFill(vg);
+        }
     }
 
     void step() override
@@ -801,14 +809,15 @@ struct PresetJogSelector : public rack::Widget, style::StyleParticipant
         {
             bdw->dirty = true;
         }
-        Widget::step();
+        T::step();
     }
     virtual void onPresetJog(int dir /* +/- 1 */) = 0;
     virtual void onShowMenu() = 0;
     virtual std::string getPresetName() = 0;
     virtual bool isDirty() = 0;
+    virtual bool hasPresets() { return true; }
 
-    void onButton(const ButtonEvent &e) override
+    void onButton(const typename T::ButtonEvent &e) override
     {
         if (e.action == GLFW_PRESS)
         {
@@ -838,6 +847,9 @@ struct PresetJogSelector : public rack::Widget, style::StyleParticipant
 
     void onStyleChanged() override {}
 };
+
+typedef GenericPresetJogSelector<rack::Widget> PresetJogSelector;
+typedef GenericPresetJogSelector<rack::ParamWidget> ParamJogSelector;
 
 inline void KnobN::onChange(const rack::widget::Widget::ChangeEvent &e)
 {
