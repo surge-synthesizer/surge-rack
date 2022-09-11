@@ -238,7 +238,7 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
 
 template <int centerOffset> struct MidiNoteParamQuantity : public rack::engine::ParamQuantity
 {
-    virtual void setDisplayValueString(std::string s) override
+    void setDisplayValueString(std::string s) override
     {
         auto f = std::atof(s.c_str());
         if (f > 0)
@@ -309,6 +309,37 @@ template <int centerOffset> struct MidiNoteParamQuantity : public rack::engine::
                                                        "F#", "G",  "G#", "A",  "A#", "B"};
 
         return fmt::format("{:6.2f} Hz (~{}{})", freq, names[noteO], oct);
+    }
+};
+
+struct DecibelParamQuantity : rack::engine::ParamQuantity
+{
+    std::string getDisplayValueString() override
+    {
+        auto v = getValue();
+        if (v < 0.0001)
+            return "-inf dB";
+        auto dbv = 18.0 * std::log2(v);
+        return fmt::format("{:.4} dB", dbv);
+    }
+
+    void setDisplayValueString(std::string s) override
+    {
+        if (s.find("-inf") != std::string::npos)
+        {
+            setValue(0.f);
+            return;
+        }
+
+        auto q = std::atof(s.c_str());
+        auto v = pow(2.f, q / 18.0);
+        if (v >= 0 && v <= 2)
+        {
+            setValue(v);
+            return;
+        }
+
+        setValue(1.f);
     }
 };
 } // namespace sst::surgext_rack::modules

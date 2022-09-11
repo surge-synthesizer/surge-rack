@@ -5,7 +5,6 @@
 #include "VCF.hpp"
 #include "SurgeXT.hpp"
 #include "XTModuleWidget.hpp"
-
 #include "XTWidgets.h"
 
 namespace sst::surgext_rack::vcf::ui
@@ -53,7 +52,7 @@ struct VCFSelector : widgets::ParamJogSelector
             di = 0;
         if (di < 0)
             di = fsmOrdering.size() - 1;
-        getParamQuantity()->setValue(fsmOrdering[di]);
+        setType(fsmOrdering[di]);
     }
 
     rack::ui::Menu *menuForGroup(rack::ui::Menu *menu, const std::string &group)
@@ -103,7 +102,8 @@ struct VCFSelector : widgets::ParamJogSelector
             return;
         getParamQuantity()->setValue(id);
         // FixMe: have a default type per type
-        module->params[VCF::VCF_SUBTYPE].setValue(0.f);
+        auto vcfm = static_cast<VCF *>(module);
+        module->params[VCF::VCF_SUBTYPE].setValue(vcfm->defaultSubtype[id]);
     }
 
     bool isDirty() override
@@ -176,7 +176,26 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         auto type = filterType();
         return (sst::filters::fut_subcount[type] != 0);
     }
-    void onShowMenu() override {}
+    void onShowMenu() override
+    {
+        if (!module)
+            return;
+
+        int type = filterType();
+        int ct = sst::filters::fut_subcount[type];
+        if (ct == 0)
+            return;
+
+        auto menu = rack::createMenu();
+        menu->addChild(rack::createMenuLabel("Filter SubTypes"));
+        for (int i = 0; i < ct; ++i)
+        {
+            menu->addChild(rack::createMenuItem(VCF::subtypeLabel(type, i), "", [this, i]() {
+                this->getParamQuantity()->setValue(i);
+                forceDirty = true;
+            }));
+        }
+    }
     bool forceDirty{false};
     void setSubType(int id)
     {
@@ -186,7 +205,7 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         getParamQuantity()->setValue(id);
     }
 
-    int lastType{-1};
+    int lastType{-1}, lastSubType{-1};
     bool isDirty() override
     {
         if (forceDirty)
@@ -197,11 +216,17 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         if (!module)
             return false;
 
-        auto vcfm = static_cast<VCF *>(module);
-        int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+        int type = filterType();
         if (type != lastType)
         {
             lastType = type;
+            return true;
+        }
+
+        auto st = (int)std::round(getParamQuantity()->getValue());
+        if (lastSubType != st)
+        {
+            lastSubType = st;
             return true;
         }
         return false;
@@ -211,92 +236,135 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         if (!module)
             return "None";
 
-        using sst::filters::FilterType;
-
-        auto vcfm = static_cast<VCF *>(module);
-        int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
-
+        int type = filterType();
         int i = std::clamp((int)std::round(getParamQuantity()->getValue()), 0,
                            sst::filters::fut_subcount[type]);
 
-        const auto fType = (FilterType)type;
-        if (sst::filters::fut_subcount[type] == 0)
+        return VCF::subtypeLabel(type, i);
+    }
+};
+
+#if 0
+struct FilterAnalzer
+{
+    FilterAnalzer() { analysisThread = std::make_unique<std::thread>(callRunThread, this); }
+    ~FilterAnalzer()
+    {
         {
-            return "None";
+            auto lock = std::unique_lock<std::mutex>(dataLock);
+            continueWaiting = false;
         }
-        else
+        cv.notify_one();
+        analysisThread->join();
+    }
+
+    static void callRunThread(FilterAnalzer *that) { that->runThread(); }
+    void runThread()
+    {
+        uint64_t lastIB = 0;
+        auto fp = sst::filters::FilterPlotter(15);
+        while (continueWaiting)
         {
-            switch (fType)
+            if (lastIB == inboundUpdates)
             {
-            case FilterType::fut_lpmoog:
-            case FilterType::fut_diode:
-                return sst::filters::fut_ldr_subtypes[i];
-                break;
-            case FilterType::fut_notch12:
-            case FilterType::fut_notch24:
-            case FilterType::fut_apf:
-                return sst::filters::fut_notch_subtypes[i];
-                break;
-            case FilterType::fut_comb_pos:
-            case FilterType::fut_comb_neg:
-                return sst::filters::fut_comb_subtypes[i];
-                break;
-            case FilterType::fut_vintageladder:
-                return sst::filters::fut_vintageladder_subtypes[i];
-                break;
-            case FilterType::fut_obxd_2pole_lp:
-            case FilterType::fut_obxd_2pole_hp:
-            case FilterType::fut_obxd_2pole_n:
-            case FilterType::fut_obxd_2pole_bp:
-                return sst::filters::fut_obxd_2p_subtypes[i];
-                break;
-            case FilterType::fut_obxd_4pole:
-                return sst::filters::fut_obxd_4p_subtypes[i];
-                break;
-            case FilterType::fut_k35_lp:
-            case FilterType::fut_k35_hp:
-                return sst::filters::fut_k35_subtypes[i];
-                break;
-            case FilterType::fut_cutoffwarp_lp:
-            case FilterType::fut_cutoffwarp_hp:
-            case FilterType::fut_cutoffwarp_n:
-            case FilterType::fut_cutoffwarp_bp:
-            case FilterType::fut_cutoffwarp_ap:
-            case FilterType::fut_resonancewarp_lp:
-            case FilterType::fut_resonancewarp_hp:
-            case FilterType::fut_resonancewarp_n:
-            case FilterType::fut_resonancewarp_bp:
-            case FilterType::fut_resonancewarp_ap:
-                // "i & 3" selects the lower two bits that represent the stage count
-                // "(i >> 2) & 3" selects the next two bits that represent the
-                // saturator
-                return fmt::format("{} {}", sst::filters::fut_nlf_subtypes[i & 3],
-                                   sst::filters::fut_nlf_saturators[(i >> 2) & 3]);
-                break;
-            // don't default any more so compiler catches new ones we add
-            case FilterType::fut_none:
-            case FilterType::fut_lp12:
-            case FilterType::fut_lp24:
-            case FilterType::fut_bp12:
-            case FilterType::fut_bp24:
-            case FilterType::fut_hp12:
-            case FilterType::fut_hp24:
-            case FilterType::fut_SNH:
-                return sst::filters::fut_def_subtypes[i];
-                break;
-            case FilterType::fut_tripole:
-                // "i & 3" selects the lower two bits that represent the filter mode
-                // "(i >> 2) & 3" selects the next two bits that represent the
-                // output stage
-                return fmt::format("{} {}", sst::filters::fut_tripole_subtypes[i & 3],
-                                   sst::filters::fut_tripole_output_stage[(i >> 2) & 3]);
-                break;
-            case FilterType::num_filter_types:
-                return "ERROR";
-                break;
+                auto lock = std::unique_lock<std::mutex>(dataLock);
+                cv.wait(lock);
+            }
+
+            if (lastIB != inboundUpdates)
+            {
+                int cty, csu;
+                float ccu, cre, cgn;
+                {
+                    auto lock = std::unique_lock<std::mutex>(dataLock);
+                    cty = type;
+                    csu = subtype;
+                    ccu = cutoff;
+                    cre = resonance;
+                    cgn = gain;
+                    lastIB = inboundUpdates;
+                }
+
+                auto par = sst::filters::FilterPlotParameters();
+                par.inputAmplitude *= cgn;
+                auto data = fp.plotFilterMagnitudeResponse(
+                    (sst::filters::FilterType)cty, (sst::filters::FilterSubType)csu, ccu, cre, par);
+
+                {
+                    auto lock = std::unique_lock<std::mutex>(dataLock);
+                    outboundUpdates++;
+                    dataCopy = data;
+                }
             }
         }
     }
+
+    void request(int t, int s, float c, float r, float g)
+    {
+        {
+            auto lock = std::unique_lock<std::mutex>(dataLock);
+
+            type = t;
+            subtype = s;
+            cutoff = c;
+            resonance = r;
+            gain = powf(2.f, g / 18.f);
+            inboundUpdates++;
+        }
+        cv.notify_one();
+    }
+
+    std::pair<std::vector<float>, std::vector<float>> dataCopy;
+    std::atomic<uint64_t> inboundUpdates{1}, outboundUpdates{1};
+    int type{0}, subtype{0};
+    float cutoff{60}, resonance{0}, gain{1.f};
+    std::mutex dataLock;
+    std::condition_variable cv;
+    std::unique_ptr<std::thread> analysisThread;
+    bool hasWork{false}, continueWaiting{true};
+};
+#endif
+
+struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipant
+{
+    // std::unique_ptr<FilterAnalzer> analyzer;
+    VCF *module{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+
+    FilterPlotWidget() {}
+
+    static FilterPlotWidget *create(const rack::Vec &pos, const rack::Vec &size, VCF *module)
+    {
+        auto res = new FilterPlotWidget();
+        res->box.pos = pos;
+        res->box.size = size;
+        res->module = module;
+        res->setup();
+
+        return res;
+    }
+
+    float fr, re;
+
+    void setup()
+    {
+        // analyzer = std::make_unique<FilterAnalzer>();
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto vg) { this->drawUnder(vg); });
+        addChild(bdw);
+    }
+    void drawUnder(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 14 * 96 / 72);
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y * 0.5, "Plot Soon", nullptr);
+    }
+
+    void onStyleChanged() override { bdw->dirty = true; }
 };
 
 VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
@@ -317,14 +385,17 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
     plotStartY += fivemm;
     plotH -= fivemm;
 
+    auto fpw = FilterPlotWidget::create(rack::Vec(plotStartX, plotStartY), rack::Vec(plotW, plotH),
+                                        module);
+    addChild(fpw);
+
     auto subType = VCFSubtypeSelector::create(rack::Vec(plotStartX, underPlotStartY),
                                               rack::Vec(plotW, underPlotH), module, M::VCF_SUBTYPE);
     addChild(subType);
     for (const auto &[row, col, pid, label] :
          {std::make_tuple(0, 0, M::FREQUENCY, "FREQUENCY"),
           std::make_tuple(0, 2, M::RESONANCE, "RESO"), std::make_tuple(0, 3, M::MIX, "MIX"),
-          std::make_tuple(1, 2, M::IN_GAIN, "IN GAIN"),
-          std::make_tuple(1, 3, M::OUT_GAIN, "OUT GAIN")})
+          std::make_tuple(1, 2, M::IN_GAIN, "GAIN"), std::make_tuple(1, 3, M::OUT_GAIN, "GAIN")})
     {
         auto uxp = columnCenters_MM[col];
         auto uyp = rowCenters_MM[row];
@@ -442,6 +513,8 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
     }
 }
 } // namespace sst::surgext_rack::vcf::ui
+
+// namespace sst::surgext_rack::vcf::ui
 
 rack::Model *modelSurgeVCF = rack::createModel<sst::surgext_rack::vcf::ui::VCFWidget::M,
                                                sst::surgext_rack::vcf::ui::VCFWidget>("SurgeXTVCF");
