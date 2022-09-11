@@ -17,15 +17,139 @@ template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
+template<int oscType>
 struct WavetableSelector : widgets::PresetJogSelector
 {
-    int wtNo{0};
-    void onPresetJog(int dir) override {
-        wtNo += dir;
+    VCO<oscType> *module{nullptr};
+    uint32_t wtloadCompare{842932918};
+
+    static WavetableSelector *create(const rack::Vec &pos,
+                                     const rack::Vec &size,
+                                     VCO<oscType> *module)
+    {
+        auto res = new WavetableSelector();
+        res->box.pos = pos;
+        res->box.size = size;
+        res->module = module;
+        res->setup();
+
+        return res;
     }
-    void onShowMenu() override {}
+    int wtNo{100};
+    void onPresetJog(int dir) override {
+        if (!module) return;
+        // FIX ME - ordering aware jog pls
+        bool wantNext = dir > 0;
+        auto nt = module->storage->getAdjacentWaveTable(module->wavetableIndex, wantNext);
+        sendLoadFor(nt);
+    }
+
+    void sendLoadFor(int nt)
+    {
+        auto msg = typename vco::VCO<oscType>::WavetableMessage();
+        msg.index = nt;
+        module->wavetableQueue.push(msg);
+
+    }
+
+    rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, int categoryId)
+    {
+        if (!module) return nullptr;
+        auto storage = module->storage.get();
+        auto &cat = storage->wt_category[categoryId];
+
+        for (auto p : storage->wtOrdering)
+        {
+            if (storage->wt_list[p].category == categoryId)
+            {
+                menu->addChild(rack::createMenuItem(storage->wt_list[p].name,
+                                                    "",
+                                                    [this,p](){
+                                                        this->sendLoadFor(p);
+                                                    }
+                            ));
+
+            }
+        }
+        // menu->addChild(rack::createMenuItem(name));
+
+        for (auto child : cat.children)
+        {
+            if (child.numberOfPatchesInCategoryAndChildren > 0)
+            {
+                // this isn't the best approach but it works
+                int cidx = 0;
+
+                for (auto &cc : storage->wt_category)
+                {
+                    if (cc.name == child.name)
+                    {
+                        break;
+                    }
+
+                    cidx++;
+                }
+                auto &kidcat = storage->wt_category[cidx];
+
+                std::string catName = kidcat.name;
+                std::size_t sepPos = catName.find_last_of(PATH_SEPARATOR);
+                if (sepPos != std::string::npos)
+                {
+                    catName = catName.substr(sepPos + 1);
+                }
+
+                menu->addChild(rack::createSubmenuItem(catName, "",
+                                                       [cidx, menu, this](auto *x)
+                                                       {
+                                                           this->menuForCategory(x, cidx);
+                                                       }));
+            }
+        }
+
+        return menu;
+    }
+
+    void onShowMenu() override {
+        if (!module) return;
+        auto menu = rack::createMenu();
+        menu->addChild(rack::createMenuLabel("WaveTables"));
+        auto storage = module->storage.get();
+        int idx{0};
+        for (auto c : storage->wtCategoryOrdering)
+        {
+            idx++;
+            PatchCategory cat = storage->wt_category[c];
+
+            if (cat.numberOfPatchesInCategoryAndChildren == 0)
+            {
+                continue;
+            }
+
+            if (cat.isRoot)
+            {
+                menu->addChild(rack::createSubmenuItem(cat.name, "",
+                                                            [c, this](auto *x) { return menuForCategory(x, c);}));
+            }
+        }
+    }
+
     std::string getPresetName() override {
-        return std::string( "DummyWT" ) + std::to_string(wtNo);
+        if (module)
+            return module->getWavetableName();
+        return "WaveTable Name";
+    }
+
+    bool isDirty() override {
+        if (!module)
+            return false;
+
+        if (wtloadCompare != module->wavetableLoads)
+        {
+            wtloadCompare = module->wavetableLoads;
+            return true;
+        }
+
+        return false; // cache wavetable load from module
     }
 };
 
@@ -64,6 +188,17 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             recalcPath();
             bdwPlot->dirty = true;
         }
+
+        if constexpr (VCOConfig<oscType>::requiresWavetables())
+        {
+            if (wtloadCompare != module->wavetableLoads)
+            {
+                wtloadCompare = module->wavetableLoads;
+                bdw->dirty = true;
+                bdwPlot->dirty = true;
+            }
+        }
+
         rack::widget::Widget::step();
     }
 
@@ -89,6 +224,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     bool firstDirty{false};
     int dirtyCount{0};
     int sumDeact{-1};
+    uint32_t wtloadCompare{842932918};
+
     bool isDirty()
     {
         if (!firstDirty)
@@ -543,6 +680,18 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
     auto t = plotStartY;
     auto h = plotH;
+
+    if (VCOConfig<oscType>::requiresWavetables())
+    {
+        auto fivemm = rack::mm2px(5);
+        auto halfmm = rack::mm2px(0.5);
+        auto wts = WavetableSelector<oscType>::create(rack::Vec(plotStartX, plotStartY),
+                                             rack::Vec(plotW, fivemm - halfmm),
+                                             module);
+        addChild(wts);
+        plotStartY += fivemm;
+        plotH -= fivemm;
+    }
     addChild(OSCPlotWidget<oscType>::create(rack::Vec(plotStartX, plotStartY),
                                             rack::Vec(plotW, plotH), module));
 
