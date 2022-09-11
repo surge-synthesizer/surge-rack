@@ -230,9 +230,8 @@ template <int oscType> struct VCO : public modules::XTModule
         int nChan = std::max(1, inputs[PITCH_CV].getChannels());
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
-        std::array<bool, MAX_POLY> respawned;
-        respawned.fill(false);
 
+        bool reInitEveryOSC{false};
         if (checkedWaveTable >= checkWaveTableEvery)
         {
             checkedWaveTable = 0;
@@ -254,6 +253,7 @@ template <int oscType> struct VCO : public modules::XTModule
                 storage->perform_queued_wtloads();
                 wavetableIndex = oscstorage->wt.current_id;
                 wavetableLoads ++;
+                reInitEveryOSC = true;
             }
         }
 
@@ -284,7 +284,6 @@ template <int oscType> struct VCO : public modules::XTModule
                 {
                     surge_osc[c]->init(pitch0);
                 }
-                respawned[c] = true;
             }
             forceRespawnDueToSampleRate = false;
             processPosition = BLOCK_SIZE + 1;
@@ -361,7 +360,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
             for (int c = 0; c < nChan; ++c)
             {
-                bool needsReInit{false};
+                bool needsReInit{reInitEveryOSC};
 
                 if (inputs[RETRIGGER].isConnected() &&
                     reTrigger[c].process(inputs[RETRIGGER].getVoltage(c)))
