@@ -14,6 +14,27 @@
 
 namespace sst::surgext_rack::vcf
 {
+struct VCFTypeParamQuanity : rack::ParamQuantity
+{
+    std::string getLabel() override
+    {
+        return "Filter Model";
+    }
+    std::string getDisplayValueString() override {
+        int val = (int)std::round(getValue());
+        return sst::filters::filter_type_names[val];
+    }
+};
+
+struct VCFSubTypeParamQuanity : rack::ParamQuantity
+{
+    std::string getLabel() override
+    {
+        return "Filter SubType";
+    }
+    std::string getDisplayValueString() override;
+};
+
 struct VCF : public modules::XTModule
 {
     static constexpr int n_vcf_params{5};
@@ -60,6 +81,9 @@ struct VCF : public modules::XTModule
         return VCF_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
+
+    std::array<int, sst::filters::num_filter_types> defaultSubtype;
+
     VCF() : XTModule()
     {
         setupSurgeCommon(NUM_PARAMS, false);
@@ -68,17 +92,17 @@ struct VCF : public modules::XTModule
         // FIXME attach formatters here
         configParam<modules::MidiNoteParamQuantity<69>>(FREQUENCY, -60, 70, 0);
         configParam(RESONANCE, 0, 1, 0, "Resonance", "%", 0.f, 100.f);
-        configParam(IN_GAIN, 0, 2, 1);
+        configParam<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1);
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
-        configParam(OUT_GAIN, 0, 2, 1);
+        configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1);
 
-        configParam(VCF_TYPE, 0, sst::filters::num_filter_types, sst::filters::fut_obxd_4pole);
+        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types, sst::filters::fut_obxd_4pole);
 
         int mfst = 0;
         for (auto fc : sst::filters::fut_subcount)
             mfst = std::max(mfst, fc);
 
-        configParam(VCF_SUBTYPE, 0, mfst, 0);
+        configParam<VCFSubTypeParamQuanity>(VCF_SUBTYPE, 0, mfst, 0);
 
         for (int i = 0; i < n_vcf_params * n_mod_inputs; ++i)
         {
@@ -86,9 +110,17 @@ struct VCF : public modules::XTModule
         }
 
         setupSurge();
+
+        for (auto &st : defaultSubtype)
+            st = 0;
+        defaultSubtype[sst::filters::fut_obxd_4pole] = 3;
+        defaultSubtype[sst::filters::fut_lpmoog] = 3;
+        defaultSubtype[sst::filters::fut_comb_pos] = 1;
+        defaultSubtype[sst::filters::fut_comb_neg] = 1;
     }
 
     std::string getName() override { return "VCF"; }
+
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
     sst::filters::QuadFilterUnitState qfus[nQFUs];
@@ -214,6 +246,7 @@ struct VCF : public modules::XTModule
             }
             lastType = ftype;
             lastSubType = fsubtype;
+            defaultSubtype[lastType] = lastSubType;
             filterPtr = sst::filters::GetQFPtrFilterUnit(ftype, fsubtype);
 
             for (int c = 0; c < nQFUs; ++c)
@@ -310,7 +343,100 @@ struct VCF : public modules::XTModule
             dumpEvery = 0;
         processPosition++;
     }
+
+
+        static std::string subtypeLabel(int type, int subtype)
+        {
+            using sst::filters::FilterType;
+            int i = subtype;
+            const auto fType = (FilterType)type;
+            if (sst::filters::fut_subcount[type] == 0)
+            {
+                return "None";
+            }
+            else
+            {
+                switch (fType)
+                {
+                case FilterType::fut_lpmoog:
+                case FilterType::fut_diode:
+                    return sst::filters::fut_ldr_subtypes[i];
+                    break;
+                case FilterType::fut_notch12:
+                case FilterType::fut_notch24:
+                case FilterType::fut_apf:
+                    return sst::filters::fut_notch_subtypes[i];
+                    break;
+                case FilterType::fut_comb_pos:
+                case FilterType::fut_comb_neg:
+                    return sst::filters::fut_comb_subtypes[i];
+                    break;
+                case FilterType::fut_vintageladder:
+                    return sst::filters::fut_vintageladder_subtypes[i];
+                    break;
+                case FilterType::fut_obxd_2pole_lp:
+                case FilterType::fut_obxd_2pole_hp:
+                case FilterType::fut_obxd_2pole_n:
+                case FilterType::fut_obxd_2pole_bp:
+                    return sst::filters::fut_obxd_2p_subtypes[i];
+                    break;
+                case FilterType::fut_obxd_4pole:
+                    return sst::filters::fut_obxd_4p_subtypes[i];
+                    break;
+                case FilterType::fut_k35_lp:
+                case FilterType::fut_k35_hp:
+                    return sst::filters::fut_k35_subtypes[i];
+                    break;
+                case FilterType::fut_cutoffwarp_lp:
+                case FilterType::fut_cutoffwarp_hp:
+                case FilterType::fut_cutoffwarp_n:
+                case FilterType::fut_cutoffwarp_bp:
+                case FilterType::fut_cutoffwarp_ap:
+                case FilterType::fut_resonancewarp_lp:
+                case FilterType::fut_resonancewarp_hp:
+                case FilterType::fut_resonancewarp_n:
+                case FilterType::fut_resonancewarp_bp:
+                case FilterType::fut_resonancewarp_ap:
+                    // "i & 3" selects the lower two bits that represent the stage count
+                    // "(i >> 2) & 3" selects the next two bits that represent the
+                    // saturator
+                    return fmt::format("{} {}", sst::filters::fut_nlf_subtypes[i & 3],
+                                       sst::filters::fut_nlf_saturators[(i >> 2) & 3]);
+                    break;
+                // don't default any more so compiler catches new ones we add
+                case FilterType::fut_none:
+                case FilterType::fut_lp12:
+                case FilterType::fut_lp24:
+                case FilterType::fut_bp12:
+                case FilterType::fut_bp24:
+                case FilterType::fut_hp12:
+                case FilterType::fut_hp24:
+                case FilterType::fut_SNH:
+                    return sst::filters::fut_def_subtypes[i];
+                    break;
+                case FilterType::fut_tripole:
+                    // "i & 3" selects the lower two bits that represent the filter mode
+                    // "(i >> 2) & 3" selects the next two bits that represent the
+                    // output stage
+                    return fmt::format("{} {}", sst::filters::fut_tripole_subtypes[i & 3],
+                                       sst::filters::fut_tripole_output_stage[(i >> 2) & 3]);
+                    break;
+                case FilterType::num_filter_types:
+                    return "ERROR";
+                    break;
+                }
+            }
+        }
 };
+
+inline std::string VCFSubTypeParamQuanity::getDisplayValueString() {
+    if (!module)
+        return "None";
+
+    int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+    int val = (int)std::round(getValue());
+    return VCF::subtypeLabel(type, val);
+}
 }
 
 #endif // SURGE_RACK_SURGEVCF_HPP
