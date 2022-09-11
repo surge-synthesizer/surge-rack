@@ -49,7 +49,6 @@ struct WavetableSelector : widgets::PresetJogSelector
         auto msg = typename vco::VCO<oscType>::WavetableMessage();
         msg.index = nt;
         module->wavetableQueue.push(msg);
-
     }
 
     rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, int categoryId)
@@ -194,6 +193,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             if (wtloadCompare != module->wavetableLoads)
             {
                 wtloadCompare = module->wavetableLoads;
+                recalcPath();
                 bdw->dirty = true;
                 bdwPlot->dirty = true;
             }
