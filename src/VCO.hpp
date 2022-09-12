@@ -110,10 +110,13 @@ template <int oscType> struct VCO : public modules::XTModule
 
         if constexpr (VCOConfig<oscType>::requiresWavetables())
         {
-            oscstorage->wt.queue_id = 0;
-            oscstorage_display->wt.queue_id = 0;
-            storage->perform_queued_wtloads();
-            wavetableIndex = oscstorage->wt.current_id;
+            if (!oscstorage->wt.everBuilt)
+            {
+                oscstorage->wt.queue_id = 0;
+                oscstorage_display->wt.queue_id = 0;
+                storage->perform_queued_wtloads();
+                wavetableIndex = oscstorage->wt.current_id;
+            }
         }
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
@@ -251,6 +254,7 @@ template <int oscType> struct VCO : public modules::XTModule
                 oscstorage->wt.queue_id = nid;
                 oscstorage_display->wt.queue_id = nid;
                 storage->perform_queued_wtloads();
+
                 wavetableIndex = oscstorage->wt.current_id;
                 wavetableLoads ++;
                 reInitEveryOSC = true;
@@ -434,5 +438,83 @@ template <int oscType> struct VCO : public modules::XTModule
     std::vector<sst::filters::HalfRate::HalfRateFilter> halfbandOUT;
 
     rack::dsp::SchmittTrigger reTrigger[MAX_POLY];
+
+    json_t *makeModuleSpecificJson() override {
+        auto vco = json_object();
+        if (VCOConfig<oscType>::requiresWavetables())
+        {
+            auto *wtT = json_object();
+            json_object_set(wtT, "display_name",
+                            json_string(oscstorage->wavetable_display_name));
+
+            auto &wt = oscstorage->wt;
+            json_object_set(wtT, "n_tables", json_integer(wt.n_tables));
+            json_object_set(wtT, "n_samples", json_integer(wt.size));
+            json_object_set(wtT, "flags", json_integer(wt.flags));
+
+            wt_header wth;
+            memset(wth.tag, 0, 4);
+            wth.n_samples = wt.size;
+            wth.n_tables = wt.n_tables;
+            wth.flags = wt.flags | wtf_int16;
+            unsigned int wtsize =
+                wth.n_samples * wt.n_tables * sizeof(uint16_t) +
+                sizeof(wt_header);
+
+            auto *data = new uint8_t[wtsize];
+            auto *odata = data;
+            memcpy(data, &wth, sizeof(wt_header));
+            data += sizeof(wt_header);
+
+            for (int j=0; j<wth.n_tables; ++j)
+            {
+                std::memcpy(data, &wt.TableI16WeakPointers[0][j][FIRoffsetI16],
+                            wth.n_samples * sizeof(uint16_t));
+                data += wth.n_samples * sizeof(uint16_t);
+            }
+            auto b64 = rack::string::toBase64(odata, wtsize);
+            delete[] odata;
+            json_object_set(wtT, "data", json_string(b64.c_str()));
+            json_object_set(vco, "wavetable", wtT);
+        }
+        return vco;
+    }
+    void readModuleSpecificJson(json_t *modJ) override {
+        if (VCOConfig<oscType>::requiresWavetables())
+        {
+            auto wtJ = json_object_get(modJ, "wavetable");
+            if (!wtJ)
+                return;
+            auto dj = json_object_get(wtJ, "data");
+            if (!dj)
+                return;
+            auto *sv = json_string_value(dj);
+            if (!sv)
+                return;
+
+            auto dataV = rack::string::fromBase64(sv);
+            auto *data = &dataV[0];
+
+            wt_header wth;
+            memcpy(&wth, data, sizeof(wt_header));
+            data += sizeof(wt_header);
+            storage->waveTableDataMutex.lock();
+            oscstorage->wt.BuildWT(data, wth, false);
+            oscstorage_display->wt.BuildWT(data, wth, false);
+            storage->waveTableDataMutex.unlock();
+
+            auto nm = json_object_get(wtJ, "display_name");
+            if (nm)
+            {
+                oscstorage->wt.current_id = -1;
+                strncpy(oscstorage->wavetable_display_name, json_string_value(nm), 256);
+
+                oscstorage_display->wt.current_id = -1;
+                strncpy(oscstorage_display->wavetable_display_name, json_string_value(nm), 256);
+
+                wavetableIndex = -1;
+            }
+        }
+    }
 };
 }
