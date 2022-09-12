@@ -697,6 +697,7 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     static constexpr float padBot_MM = 1.6;
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::function<std::string(float, const std::string &)> formatLabel;
+    std::function<void()> onShowMenu = []() {};
 
     static PlotAreaMenuItem *create(rack::Vec pos, rack::Vec sz, rack::Module *module, int paramId)
     {
@@ -737,7 +738,19 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
         nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 7.3 * 96 / 72);
-        nvgText(vg, box.size.x, box.size.y * 0.5, pv.c_str(), nullptr);
+        nvgText(vg, box.size.x - box.size.y - rack::mm2px(0.5), box.size.y * 0.5, pv.c_str(),
+                nullptr);
+
+        float gapX = rack::mm2px(0.5);
+        float gapY = rack::mm2px(0.7);
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgMoveTo(vg, box.size.x - box.size.y + gapX, gapY);
+        nvgLineTo(vg, box.size.x - gapX, gapY);
+        nvgLineTo(vg, box.size.x - box.size.y * 0.5, box.size.y - gapY);
+        nvgFill(vg);
+        nvgStroke(vg);
     }
 
     void onStyleChanged() override { bdw->dirty = true; }
@@ -745,6 +758,12 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     {
         bdw->dirty = true;
         Widget::onChange(e);
+    }
+
+    void onAction(const ActionEvent &e) override
+    {
+        onShowMenu();
+        e.consume(this);
     }
 };
 
