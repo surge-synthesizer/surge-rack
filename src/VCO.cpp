@@ -4,6 +4,7 @@
 
 #include "SurgeXT.hpp"
 #include "XTModuleWidget.hpp"
+#include "osdialog.h"
 
 namespace sst::surgext_rack::vco::ui
 {
@@ -71,7 +72,6 @@ struct WavetableSelector : widgets::PresetJogSelector
             }
         }
         // menu->addChild(rack::createMenuItem(name));
-
         for (auto child : cat.children)
         {
             if (child.numberOfPatchesInCategoryAndChildren > 0)
@@ -114,10 +114,19 @@ struct WavetableSelector : widgets::PresetJogSelector
         menu->addChild(rack::createMenuLabel("WaveTables"));
         auto storage = module->storage.get();
         int idx{0};
+        bool addSepIfMaking{false};
         for (auto c : storage->wtCategoryOrdering)
         {
-            idx++;
             PatchCategory cat = storage->wt_category[c];
+
+            if (idx == storage->firstThirdPartyWTCategory ||
+                (idx == storage->firstUserWTCategory &&
+                 storage->firstUserWTCategory != storage->wt_category.size()))
+            {
+               addSepIfMaking = true;
+            }
+
+            idx++;
 
             if (cat.numberOfPatchesInCategoryAndChildren == 0)
             {
@@ -126,10 +135,34 @@ struct WavetableSelector : widgets::PresetJogSelector
 
             if (cat.isRoot)
             {
+                if (addSepIfMaking)
+                {
+                    menu->addChild(new rack::ui::MenuSeparator);
+                    addSepIfMaking = false;
+                }
                 menu->addChild(rack::createSubmenuItem(cat.name, "",
                                                             [c, this](auto *x) { return menuForCategory(x, c);}));
             }
         }
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createMenuItem("Open User Wavetables", "",
+                                            [this]() {
+                                                rack::system::openDirectory(
+                                                    (module->storage->userDataPath / "Wavetables").u8string()
+                                                    );
+                                            }));
+
+        menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
+                                            [this]() {
+                                                module->storage->refresh_wtlist();
+                                            }));
+
+        menu->addChild(rack::createMenuItem("Load Wavetable File", "",
+                                            [this]() {
+                                                osdialog_message(OSDIALOG_INFO,
+                                                                 OSDIALOG_OK,
+                                                                 "Direct Load Coming Soon");
+                                            }));
     }
 
     std::string getPresetName() override {
@@ -723,6 +756,35 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         auto restSz = plotW - underX + plotStartX;
         auto plt = widgets::PlotAreaMenuItem::create(
             rack::Vec(underX, underPlotStartY), rack::Vec(restSz, underPlotH), module, M::OSC_CTRL_PARAM_0 + VCOConfig<oscType>::rightMenuParamId());
+        plt->onShowMenu = [this, plt]()
+        {
+            if (!this->module)
+                return;
+
+            auto *vcm = static_cast<VCO<oscType> *>(this->module);
+
+            auto pq = plt->getParamQuantity();
+            if (!pq)
+                return;
+
+            auto &surgePar = vcm->oscstorage->p[VCOConfig<oscType>::rightMenuParamId()];
+            if (!(surgePar.valtype == vt_int))
+                return;
+
+            auto men = rack::createMenu();
+            men->addChild(rack::createMenuLabel(pq->getLabel()));
+
+            for (int i=surgePar.val_min.i; i <= surgePar.val_max.i; i++)
+            {
+                char txt[256];
+                auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
+                surgePar.get_display(txt, true, fv);
+                men->addChild(rack::createMenuItem(txt, "", [plt, pq, fv]() {
+                    pq->setValue(fv);
+                }));
+            }
+
+        };
         addChild(plt);
     }
 

@@ -8,6 +8,9 @@
 #include "VCO.hpp"
 
 #include "dsp/oscillators/SineOscillator.h"
+#include "dsp/oscillators/StringOscillator.h"
+#include "dsp/oscillators/SampleAndHoldOscillator.h"
+#include "dsp/oscillators/WindowOscillator.h"
 
 namespace sst::surgext_rack::vco
 {
@@ -42,6 +45,14 @@ template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
     };
 }
 template <> int VCOConfig<ot_string>::rightMenuParamId() { return 0; }
+
+template <> void VCOConfig<ot_string>::oscillatorSpecificSetup(VCO<ot_string> *m)
+{
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        s->p[StringOscillator::str_stiffness].deform_type = StringOscillator::filter_compensate;
+    }
+}
 
 template <> constexpr bool VCOConfig<ot_modern>::supportsUnison() { return true; }
 template <> VCOConfig<ot_modern>::knobs_t VCOConfig<ot_modern>::getKnobs()
@@ -89,7 +100,35 @@ template <> VCOConfig<ot_window>::knobs_t VCOConfig<ot_window>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 4, "HICUT"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
+
+template <> VCOConfig<ot_window>::lightOnTo_t VCOConfig<ot_window>::getLightsOnKnobsTo()
+{
+    return {{5, 0}, {6, 1}};
+}
+
 template <> int VCOConfig<ot_window>::rightMenuParamId() { return 2; }
+
+template <> void VCOConfig<ot_window>::oscillatorSpecificSetup(VCO<ot_window> *m)
+{
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        s->p[WindowOscillator::win_morph].set_extend_range(true);
+    }
+}
+
+template <> void VCOConfig<ot_window>::processLightParameters(VCO<ot_window> *m)
+{
+    auto l0 = (bool)(m->params[VCO<ot_window>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+    auto l1 = (bool)(m->params[VCO<ot_window>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        if (l0 != !s->p[WindowOscillator::win_lowcut].deactivated)
+            s->p[WindowOscillator::win_lowcut].deactivated = !l0;
+        if (l1 != !s->p[WindowOscillator::win_highcut].deactivated)
+            s->p[WindowOscillator::win_highcut].deactivated = !l1;
+    }
+}
 
 template <> constexpr bool VCOConfig<ot_sine>::supportsUnison() { return true; }
 template <> VCOConfig<ot_sine>::knobs_t VCOConfig<ot_sine>::getKnobs()
@@ -194,6 +233,25 @@ template <> VCOConfig<ot_shnoise>::knobs_t VCOConfig<ot_shnoise>::getKnobs()
         {M::OSC_CTRL_PARAM_0 + 3, "HICUT"},
         {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"},
     };
+}
+
+template <> VCOConfig<ot_shnoise>::lightOnTo_t VCOConfig<ot_shnoise>::getLightsOnKnobsTo()
+{
+    return {{5, 0}, {6, 1}};
+}
+
+template <> void VCOConfig<ot_shnoise>::processLightParameters(VCO<ot_shnoise> *m)
+{
+    auto l0 = (bool)(m->params[VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+    auto l1 = (bool)(m->params[VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        if (l0 != !s->p[SampleAndHoldOscillator::shn_lowcut].deactivated)
+            s->p[SampleAndHoldOscillator::shn_lowcut].deactivated = !l0;
+        if (l1 != !s->p[SampleAndHoldOscillator::shn_highcut].deactivated)
+            s->p[SampleAndHoldOscillator::shn_highcut].deactivated = !l1;
+    }
 }
 
 } // namespace sst::surgext_rack::vco

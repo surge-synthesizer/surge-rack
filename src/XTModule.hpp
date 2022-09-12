@@ -71,8 +71,10 @@ struct XTModule : public rack::Module
 
     void setupSurgeCommon(int NUM_PARAMS, bool loadWavetables)
     {
-        std::string dataPath;
-        dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
+        std::string dataPath = SurgeStorage::skipPatchLoadDataPathSentinel;
+
+        if (loadWavetables)
+            dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
 
         showBuildInfo();
         storage = std::make_unique<SurgeStorage>(dataPath);
