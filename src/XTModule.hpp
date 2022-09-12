@@ -162,28 +162,43 @@ struct XTModule : public rack::Module
     std::unique_ptr<SurgeStorage> storage;
     int storage_id_start, storage_id_end;
 
-    std::string comment = "No Comment";
-    virtual json_t *makeCommonDataJson()
+    json_t *makeCommonDataJson()
     {
         json_t *rootJ = json_object();
-        json_object_set_new(rootJ, "comment", json_string(comment.c_str()));
         json_object_set_new(rootJ, "buildInfo", json_string(getBuildInfo().c_str()));
         return rootJ;
     }
 
-    virtual void readCommonDataJson(json_t *rootJ)
-    {
-        json_t *com = json_object_get(rootJ, "comment");
-        const char *comchar = json_string_value(com);
-        comment = comchar;
-    }
+    void readCommonDataJson(json_t *commonJ) {}
+
+    virtual json_t *makeModuleSpecificJson() { return nullptr; }
+    virtual void readModuleSpecificJson(json_t *modJ) {}
 
     virtual json_t *dataToJson() override
     {
-        json_t *rootJ = makeCommonDataJson();
+        json_t *commonJ = makeCommonDataJson();
+        json_t *moduleSpecificJ = makeModuleSpecificJson();
+
+        json_t *rootJ = json_object();
+        if (commonJ)
+        {
+            json_object_set(rootJ, "xtshared", commonJ);
+        }
+        if (moduleSpecificJ)
+        {
+            json_object_set(rootJ, "modulespecific", moduleSpecificJ);
+        }
         return rootJ;
     }
-    virtual void dataFromJson(json_t *rootJ) override { readCommonDataJson(rootJ); }
+    virtual void dataFromJson(json_t *rootJ) override
+    {
+        auto commonJ = json_object_get(rootJ, "xtshared");
+        auto specificJ = json_object_get(rootJ, "modulespecific");
+        if (commonJ)
+            readCommonDataJson(commonJ);
+        if (specificJ)
+            readModuleSpecificJson(specificJ);
+    }
 };
 
 struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
