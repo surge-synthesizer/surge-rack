@@ -91,7 +91,7 @@ struct VCF : public modules::XTModule
 
         // FIXME attach formatters here
         configParam<modules::MidiNoteParamQuantity<69>>(FREQUENCY, -60, 70, 0);
-        configParam(RESONANCE, 0, 1, 0, "Resonance", "%", 0.f, 100.f);
+        configParam(RESONANCE, 0, 1, sqrt(2) * 0.5, "Resonance", "%", 0.f, 100.f);
         configParam<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1);
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
         configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1);
@@ -102,7 +102,7 @@ struct VCF : public modules::XTModule
         for (auto fc : sst::filters::fut_subcount)
             mfst = std::max(mfst, fc);
 
-        configParam<VCFSubTypeParamQuanity>(VCF_SUBTYPE, 0, mfst, 0);
+        configParam<VCFSubTypeParamQuanity>(VCF_SUBTYPE, 0, mfst, 3);
 
         for (int i = 0; i < n_vcf_params * n_mod_inputs; ++i)
         {

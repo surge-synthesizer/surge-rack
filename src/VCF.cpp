@@ -6,6 +6,7 @@
 #include "SurgeXT.hpp"
 #include "XTModuleWidget.hpp"
 #include "XTWidgets.h"
+#include "dsp/DSPExternalAdapterUtils.h"
 
 namespace sst::surgext_rack::vcf::ui
 {
@@ -244,7 +245,15 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
     }
 };
 
-#if 0
+struct FilterPlotParameters
+{
+    float sampleRate = 96000.0f;
+    float startFreqHz = 20.0f;
+    float endFreqHz = 20000.0f;
+    float inputAmplitude = 1.0f / 1.414213562373095; // root 2
+    float freqSmoothOctaves = 1.0f / 12.0f;
+};
+
 struct FilterAnalzer
 {
     FilterAnalzer() { analysisThread = std::make_unique<std::thread>(callRunThread, this); }
@@ -262,7 +271,6 @@ struct FilterAnalzer
     void runThread()
     {
         uint64_t lastIB = 0;
-        auto fp = sst::filters::FilterPlotter(15);
         while (continueWaiting)
         {
             if (lastIB == inboundUpdates)
@@ -285,10 +293,8 @@ struct FilterAnalzer
                     lastIB = inboundUpdates;
                 }
 
-                auto par = sst::filters::FilterPlotParameters();
-                par.inputAmplitude *= cgn;
-                auto data = fp.plotFilterMagnitudeResponse(
-                    (sst::filters::FilterType)cty, (sst::filters::FilterSubType)csu, ccu, cre, par);
+                auto data = surge::calculateFilterResponseCurve(
+                    (sst::filters::FilterType)cty, (sst::filters::FilterSubType)csu, ccu, cre, cgn);
 
                 {
                     auto lock = std::unique_lock<std::mutex>(dataLock);
@@ -323,13 +329,13 @@ struct FilterAnalzer
     std::unique_ptr<std::thread> analysisThread;
     bool hasWork{false}, continueWaiting{true};
 };
-#endif
 
 struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipant
 {
-    // std::unique_ptr<FilterAnalzer> analyzer;
+    std::unique_ptr<FilterAnalzer> analyzer;
     VCF *module{nullptr};
     widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
 
     FilterPlotWidget() {}
 
@@ -348,20 +354,146 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
 
     void setup()
     {
-        // analyzer = std::make_unique<FilterAnalzer>();
+        if (module)
+            analyzer = std::make_unique<FilterAnalzer>();
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
                                                       [this](auto vg) { this->drawUnder(vg); });
+        bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), box.size, [this](auto vg) { this->drawPlot(vg); });
         addChild(bdw);
+        addChild(bdwPlot);
     }
+
+    uint64_t lastOutbound{1};
+    float lastFreq{-1}, lastReso{-1}, lastTy{-1}, lastSub{-1}, lastGn{-1};
+
+    std::pair<std::vector<float>, std::vector<float>> responseCurve;
+    void step() override
+    {
+        if (!module)
+            return;
+        if (!analyzer)
+            return;
+
+        if (analyzer->outboundUpdates != lastOutbound)
+        {
+            {
+                std::lock_guard<std::mutex> g(analyzer->dataLock);
+                responseCurve = analyzer->dataCopy;
+                lastOutbound = analyzer->outboundUpdates;
+            }
+            bdwPlot->dirty = true;
+        }
+
+        auto fr = module->params[VCF::FREQUENCY].getValue();
+        auto re = module->params[VCF::RESONANCE].getValue();
+        auto ty = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+        auto sty = (int)std::round(module->params[VCF::VCF_SUBTYPE].getValue());
+        auto gn = (int)std::round(module->params[VCF::IN_GAIN].getValue());
+
+        if (fr != lastFreq || re != lastReso || ty != lastTy || sty != lastSub || gn != lastGn)
+        {
+            lastFreq = fr;
+            lastReso = re;
+            lastSub = sty;
+            lastTy = ty;
+            lastGn = gn;
+            analyzer->request(ty, sty, fr, re, gn);
+        }
+    }
+    static constexpr float lowFreq = 10.f;
+    static constexpr float highFreq = 18000.f;
+    static constexpr float dbMin = -42.f;
+    static constexpr float dbMax = 12.f;
+    static constexpr float dbRange = dbMax - dbMin;
+
+    float freqToX(float freq, int width)
+    {
+        auto xNorm = std::log(freq / lowFreq) / std::log(highFreq / lowFreq);
+        return xNorm * (float)width;
+    };
+
+    float dbToY(float db, int height) { return (float)height * (dbMax - db) / dbRange; };
+
     void drawUnder(NVGcontext *vg)
     {
-        nvgBeginPath(vg);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
 
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-        nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 14 * 96 / 72);
-        nvgText(vg, this->box.size.x * 0.5, this->box.size.y * 0.5, "Plot Soon", nullptr);
+        for (const auto freq: {100, 1000, 10000})
+        {
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgMoveTo(vg, freqToX(freq, box.size.x), 0);
+            nvgLineTo(vg, freqToX(freq, box.size.x), box.size.y);
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+        }
+
+        for (const auto db : {-36, -24, -12, 0, 12})
+        {
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgMoveTo(vg, 0, dbToY(db, box.size.y));
+            nvgLineTo(vg, box.size.x, dbToY(db, box.size.y));
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+        }
+    }
+
+    void drawPlot(NVGcontext *vg)
+    {
+        if (!module)
+        {
+            // Draw the module name here for preview goodness
+            nvgBeginPath(vg);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, 30);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "Filters", nullptr);
+            return;
+        }
+        const auto &freq = responseCurve.first;
+        const auto &resp = responseCurve.second;
+        auto sz = std::min(freq.size(), resp.size());
+        nvgSave(vg);
+        nvgScissor(vg, 0, 0.5, box.size.x, box.size.y - 1);
+
+        int curr = 0;
+        nvgBeginPath(vg);
+        bool first{true};
+        while (curr < sz)
+        {
+            auto f = freq[curr];
+            auto r = resp[curr];
+
+            if (f >= lowFreq && f <= highFreq)
+            {
+                float fscale = freqToX(f, box.size.x);
+                float yscale = dbToY(r, box.size.y);
+
+                if (first)
+                {
+                    nvgMoveTo(vg, fscale, yscale);
+                }
+                else
+                {
+                    nvgLineTo(vg, fscale, yscale);
+                }
+                first = false;
+            }
+
+            ++curr;
+        }
+        auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+        nvgStrokeColor(vg, col);
+        nvgStrokeWidth(vg, 1.25);
+        nvgStroke(vg);
+
+        col.a = 0.1;
+        nvgStrokeColor(vg, col);
+        nvgStrokeWidth(vg, 3);
+        nvgStroke(vg);
+        nvgRestore(vg);
     }
 
     void onStyleChanged() override { bdw->dirty = true; }
