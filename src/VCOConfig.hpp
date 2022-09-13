@@ -13,6 +13,7 @@
 #include "dsp/oscillators/StringOscillator.h"
 #include "dsp/oscillators/SampleAndHoldOscillator.h"
 #include "dsp/oscillators/WindowOscillator.h"
+#include "dsp/oscillators/TwistOscillator.h"
 
 namespace sst::surgext_rack::vco
 {
@@ -255,6 +256,38 @@ template <> void VCOConfig<ot_shnoise>::processLightParameters(VCO<ot_shnoise> *
             s->p[SampleAndHoldOscillator::shn_lowcut].deactivated = !l0;
         if (l1 != !s->p[SampleAndHoldOscillator::shn_highcut].deactivated)
             s->p[SampleAndHoldOscillator::shn_highcut].deactivated = !l1;
+    }
+}
+
+template <> VCOConfig<ot_twist>::knobs_t VCOConfig<ot_twist>::getKnobs()
+{
+    typedef VCO<ot_twist> M;
+
+    return {
+        {M::PITCH_0, "PITCH"},
+        {KnobDef::BLANK},
+        {M::OSC_CTRL_PARAM_0 + 1, "HARM"},
+        {M::OSC_CTRL_PARAM_0 + 2, "TIMBRE"},
+        {M::OSC_CTRL_PARAM_0 + 5, "RESPONSE"},
+        {M::OSC_CTRL_PARAM_0 + 6, "DECAY"},
+        {M::OSC_CTRL_PARAM_0 + 3, "MORPH"},
+        {M::OSC_CTRL_PARAM_0 + 4, "MIX"},
+    };
+}
+template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }
+
+template <> VCOConfig<ot_twist>::lightOnTo_t VCOConfig<ot_twist>::getLightsOnKnobsTo()
+{
+    return {{4, 0}};
+}
+
+template <> void VCOConfig<ot_twist>::processLightParameters(VCO<ot_twist> *m)
+{
+    auto l0 = (bool)(m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        s->p[TwistOscillator::twist_lpg_response].deactivated = !l0;
     }
 }
 
