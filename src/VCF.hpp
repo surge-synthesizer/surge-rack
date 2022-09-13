@@ -121,6 +121,10 @@ struct VCF : public modules::XTModule
 
     std::string getName() override { return "VCF"; }
 
+    bool isBipolar(int paramId) override {
+        if (paramId == IN_GAIN || paramId == OUT_GAIN) return true;
+        return false;
+    }
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
     sst::filters::QuadFilterUnitState qfus[nQFUs];
@@ -251,7 +255,7 @@ struct VCF : public modules::XTModule
 
             for (int c = 0; c < nQFUs; ++c)
             {
-                memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
+                //memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
             }
 
             int thisPolyL{-1}, thisPolyR{-1};
@@ -276,23 +280,59 @@ struct VCF : public modules::XTModule
             }
 
             // Setup Coefficients if changed or modulated etc
+            float modMatrix[n_vcf_params][n_mod_inputs];
+            memset(modMatrix, 0, n_vcf_params * n_mod_inputs * sizeof(float));
+            for (int p=0; p<n_vcf_params; ++p)
+            {
+                for (int inp = 0; inp < n_mod_inputs; ++inp)
+                {
+                    auto mp = modulatorIndexFor(p, inp);
+                    modMatrix[p][inp] = params[mp].getValue();
+                }
+            }
+
+            float modValues[n_vcf_params][MAX_POLY];
+            memset(modValues, 0, n_vcf_params * MAX_POLY * sizeof(float));
+            for (int p=0; p<n_vcf_params; ++p)
+            {
+                for (int c=0; c<std::max(lastPolyL, lastPolyR); ++c)
+                {
+                    modValues[p][c] = params[p].getValue();
+                    for (int m=0; m<n_mod_inputs; ++m)
+                    {
+                        auto fac = p == FREQUENCY ? 20 : 1;
+                        modValues[p][c] += fac * modMatrix[p][m] * inputs[m].getVoltage(c);
+                    }
+                }
+            }
 
             // HAMMER - we can and must be smarter about this
-            for (int c = 0; c < nQFUs; ++c)
+            for (int qf = 0; qf < nQFUs; ++qf)
             {
-                for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
-                {
-                    coefMaker[c].C[f] = qfus[c].C[f][0];
-                }
-
-                coefMaker[c].MakeCoeffs(params[FREQUENCY].getValue(),
-                                        params[RESONANCE].getValue(),
-                                        ftype, fsubtype, storage.get(), false);
                 for (int p = 0; p < 4; ++p)
                 {
-                    coefMaker[c].updateState(qfus[c], p);
+                    for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
+                    {
+                        coefMaker[qf].C[f] = qfus[qf].C[f][p];
+                    }
+
+                    int chan{0};
+                    if (stereoStack)
+                    {
+                        chan = qf * 2 + p / 2;
+                    }
+                    else
+                    {
+                        chan = qf * 4 + p;
+                    }
+                    chan = std::min(chan, MAX_POLY);
+                    coefMaker[qf].MakeCoeffs(modValues[FREQUENCY][chan],
+                                            modValues[RESONANCE][chan],
+                                            ftype, fsubtype, storage.get(), false);
+
+                    coefMaker[qf].updateState(qfus[qf], p);
                 }
-                memcpy(qfus[c].R, qfuRCache[c], sst::filters::n_filter_registers * sizeof(__m128));
+                //memcpy(qfus[c].R, qfuRCache[c], sst::filters::n_filter_registers * sizeof(__m128));
             }
             processPosition = 0;
         }

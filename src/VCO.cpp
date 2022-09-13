@@ -15,6 +15,7 @@ template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
     VCOWidget(M *module);
 
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
+    std::array<widgets::KnobN *, 8> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
@@ -698,6 +699,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 {
     setModule(module);
 
+    for (auto &uk : underKnobs)
+        uk = nullptr;
+
     for (auto &ob : overlays)
         for (auto &o : ob)
             o = nullptr;
@@ -805,6 +809,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             auto baseKnob =
                 rack::createParamCentered<widgets::Knob9>(rack::mm2px(rack::Vec(uxp, uyp)), module, pid);
             addParam(baseKnob);
+            underKnobs[idx] = baseKnob;
             for (int m = 0; m < M::n_mod_inputs; ++m)
             {
                 auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
@@ -900,6 +905,15 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                         ob[toggleIdx]->setVisible(true);
                         ob[toggleIdx]->bdw->dirty = true;
                     }
+                for (const auto &uk : underKnobs)
+                    if (uk)
+                        uk->setIsModEditing(true);
+            }
+            else
+            {
+                for (const auto &uk : underKnobs)
+                    if (uk)
+                        uk->setIsModEditing(false);
             }
         };
 
