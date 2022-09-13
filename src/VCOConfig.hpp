@@ -47,6 +47,7 @@ template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
     };
 }
 template <> int VCOConfig<ot_string>::rightMenuParamId() { return 0; }
+template <> constexpr bool VCOConfig<ot_string>::supportsAudioIn() { return true; }
 
 template <> void VCOConfig<ot_string>::oscillatorSpecificSetup(VCO<ot_string> *m)
 {

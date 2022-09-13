@@ -14,6 +14,7 @@ template <int oscType> struct VCOConfig
 {
     static constexpr bool supportsUnison() { return false; }
     static constexpr bool requiresWavetables() { return false; }
+    static constexpr bool supportsAudioIn() { return false; }
 
     struct KnobDef
     {
@@ -96,11 +97,12 @@ template <int oscType> struct VCO : public modules::XTModule
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
 
-    VCO() : XTModule()
+    VCO() : XTModule(), halfbandIN(6, true)
     {
         surge_osc.fill(nullptr);
         lastUnison.fill(-1);
 
+        memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
         setupSurgeCommon(NUM_PARAMS, VCOConfig<oscType>::requiresWavetables());
 
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
@@ -123,16 +125,16 @@ template <int oscType> struct VCO : public modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
-                                    storage->getPatch().scenedata[0], oscdisplaybuffer);
+                                    storage->getPatch().scenedata[0], oscdisplaybuffer[0]);
         config_osc->init(72.0);
         config_osc->init_ctrltypes();
         config_osc->init_default_values();
 
-        auto display_config_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
-                                            storage->getPatch().scenedata[0], oscdisplaybuffer);
-        display_config_osc->init(72.0);
-        display_config_osc->init_ctrltypes();
-        display_config_osc->init_default_values();
+        auto display_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
+                                            storage->getPatch().scenedata[0], oscdisplaybuffer[1]);
+        display_osc->init(72.0, true);
+        display_osc->init_ctrltypes();
+        display_osc->init_default_values();
 
         VCOConfig<oscType>::oscillatorSpecificSetup(this);
 
@@ -157,15 +159,16 @@ template <int oscType> struct VCO : public modules::XTModule
         }
 
         VCOConfig<oscType>::configureArbitrarySwitches(this);
-
         config_osc->~Oscillator();
-        display_config_osc->~Oscillator();
+        display_osc->~Oscillator();
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
             halfbandOUT.emplace_back(6, true);
             halfbandOUT[i].reset();
         }
+
+        halfbandIN.reset();
 
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
     }
@@ -328,6 +331,12 @@ template <int oscType> struct VCO : public modules::XTModule
             // values when you need them".
             processPosition = 0;
 
+            if constexpr (VCOConfig<oscType>::supportsAudioIn())
+            {
+                halfbandIN.process_block_U2(audioInBuffer, audioInBuffer, storage->audio_in[0], storage->audio_in[1], BLOCK_SIZE_OS);
+                memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
+            }
+
             VCOConfig<oscType>::processLightParameters(this);
 
             float modMatrix[n_osc_params + 1][n_mod_inputs];
@@ -467,6 +476,16 @@ template <int oscType> struct VCO : public modules::XTModule
             }
         }
 
+        if constexpr (VCOConfig<oscType>::supportsAudioIn())
+        {
+            float val = 0;
+            if (inputs[AUDIO_INPUT].isConnected())
+            {
+                val = inputs[AUDIO_INPUT].getVoltage() * RACK_TO_SURGE_OSC_MUL;
+            }
+            audioInBuffer[processPosition] = val;
+        }
+
         processPosition++;
         checkedWaveTable++;
     }
@@ -474,11 +493,13 @@ template <int oscType> struct VCO : public modules::XTModule
     // With surge-xt the oscillator memory is owned by the synth after spawn
     std::array<Oscillator *, MAX_POLY> surge_osc;
     unsigned char oscbuffer alignas(16)[MAX_POLY][oscillator_buffer_size];
-    unsigned char oscdisplaybuffer alignas(16)[oscillator_buffer_size];
+    unsigned char oscdisplaybuffer alignas(16)[2][oscillator_buffer_size];
 
     OscillatorStorage *oscstorage, *oscstorage_display;
     float osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
     std::vector<sst::filters::HalfRate::HalfRateFilter> halfbandOUT;
+    sst::filters::HalfRate::HalfRateFilter halfbandIN;
+    float audioInBuffer[BLOCK_SIZE_OS];
 
     rack::dsp::SchmittTrigger reTrigger[MAX_POLY];
 
