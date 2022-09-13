@@ -7,6 +7,8 @@
 
 #include "VCO.hpp"
 
+#include "dsp/oscillators/FM2Oscillator.h"
+#include "dsp/oscillators/FM3Oscillator.h"
 #include "dsp/oscillators/SineOscillator.h"
 #include "dsp/oscillators/StringOscillator.h"
 #include "dsp/oscillators/SampleAndHoldOscillator.h"

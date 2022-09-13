@@ -53,6 +53,15 @@ struct WavetableSelector : widgets::PresetJogSelector
         module->wavetableQueue.push(msg);
     }
 
+    void sendLoadForPath(const char* fn)
+    {
+        auto msg = typename vco::VCO<oscType>::WavetableMessage();
+        strncpy(msg.filename, fn, 256);
+        msg.filename[255] = 0;
+        msg.index  = -1;
+        module->wavetableQueue.push(msg);
+    }
+
     rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, int categoryId)
     {
         if (!module) return nullptr;
@@ -160,9 +169,14 @@ struct WavetableSelector : widgets::PresetJogSelector
 
         menu->addChild(rack::createMenuItem("Load Wavetable File", "",
                                             [this]() {
-                                                osdialog_message(OSDIALOG_INFO,
-                                                                 OSDIALOG_OK,
-                                                                 "Direct Load Coming Soon");
+                                                auto filters = osdialog_filters_parse("Wavetables:wav,.wt");
+                                                DEFER({osdialog_filters_free(filters);});
+                                                char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
+                                                if (openF)
+                                                {
+                                                    DEFER({std::free(openF);});
+                                                    sendLoadForPath(openF);
+                                                }
                                             }));
     }
 
@@ -311,7 +325,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     {
         oscPath.clear();
 
-        if (draw3DWavetable)
+        if (module && module->draw3DWavetable)
         {
             auto wtlockguard = std::lock_guard<std::mutex>(module->storage->waveTableDataMutex);
             auto &wt = oscdata->wt;
@@ -442,10 +456,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         }
     }
 
-    bool draw3DWavetable = VCOConfig<oscType>::requiresWavetables();
+
+    const float xs3d{rack::mm2px(5)};
+    const float ys3d{rack::mm2px(3.5)};
 
     void drawPlotBackground(NVGcontext *vg) {
-        if (draw3DWavetable)
+        if (module && VCOConfig<oscType>::requiresWavetables() && module->draw3DWavetable)
         {
             draw3DBackground(vg);
         }
@@ -453,6 +469,41 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         {
             draw2DBackground(vg);
         }
+
+        if (module && VCOConfig<oscType>::requiresWavetables())
+        {
+            bool on = module->draw3DWavetable;
+
+            if (on)
+            {
+                nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+            }
+            else
+            {
+                nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            }
+
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, 7.3 * 96 / 72);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgText(vg, xs3d * 0.5, ys3d*0.5, "3D", nullptr);
+        }
+    }
+
+    void onButton(const ButtonEvent &e) override {
+        if (!module)
+            return;
+        if (e.pos.x < xs3d && e.pos.y < ys3d && e.action == GLFW_RELEASE)
+        {
+            module->draw3DWavetable = !module->draw3DWavetable;
+            bdw->dirty = true;
+            bdwPlot->dirty = true;
+            recalcPath();
+            e.consume(this);
+            return;
+        }
+
+        TransparentWidget::onButton(e);
     }
 
     void draw3DBackground(NVGcontext *vg)

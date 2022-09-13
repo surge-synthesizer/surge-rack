@@ -42,6 +42,7 @@ template <int oscType> struct VCOConfig
 
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processLightParameters(VCO<oscType> *) {}
+    static void configureArbitrarySwitches(VCO<oscType> *);
 
     /*
      * Wavetable Updates from the UI to the Processing Thread.
@@ -119,12 +120,21 @@ template <int oscType> struct VCO : public modules::XTModule
             }
         }
 
+        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
                                     storage->getPatch().scenedata[0], oscdisplaybuffer);
         config_osc->init(72.0);
         config_osc->init_ctrltypes();
         config_osc->init_default_values();
-        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
+        auto display_config_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
+                                            storage->getPatch().scenedata[0], oscdisplaybuffer);
+        display_config_osc->init(72.0);
+        display_config_osc->init_ctrltypes();
+        display_config_osc->init_default_values();
+
+        VCOConfig<oscType>::oscillatorSpecificSetup(this);
 
         for (int i = 0; i < n_osc_params; ++i)
         {
@@ -146,20 +156,9 @@ template <int oscType> struct VCO : public modules::XTModule
             configParam(i, -1, 1, 0);
         }
 
-        for (int i=0; i<n_arbitrary_switches; ++i)
-        {
-            configParam(ARBITRARY_SWITCH_0 + i, 0, 1, 0);
-        }
-
-        // pc.update(this);
+        VCOConfig<oscType>::configureArbitrarySwitches(this);
 
         config_osc->~Oscillator();
-
-        auto display_config_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
-                                    storage->getPatch().scenedata[0], oscdisplaybuffer);
-        display_config_osc->init(72.0);
-        display_config_osc->init_ctrltypes();
-        display_config_osc->init_default_values();
         display_config_osc->~Oscillator();
 
         for (int i = 0; i < MAX_POLY; ++i)
@@ -167,8 +166,6 @@ template <int oscType> struct VCO : public modules::XTModule
             halfbandOUT.emplace_back(6, true);
             halfbandOUT[i].reset();
         }
-
-        VCOConfig<oscType>::oscillatorSpecificSetup(this);
 
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
     }
@@ -225,11 +222,12 @@ template <int oscType> struct VCO : public modules::XTModule
     struct WavetableMessage
     {
         int index{-1};
-        char filename[1024];
+        char filename[256];
     };
     rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()> wavetableQueue;
     std::atomic<int> wavetableIndex{-1};
     std::atomic<uint32_t> wavetableLoads{0};
+    std::atomic<bool> draw3DWavetable{VCOConfig<oscType>::requiresWavetables()};
 
     std::string getWavetableName()
     {
@@ -252,29 +250,43 @@ template <int oscType> struct VCO : public modules::XTModule
         outputs[OUTPUT_R].setChannels(nChan);
 
         bool reInitEveryOSC{false};
-        if (checkedWaveTable >= checkWaveTableEvery)
+        if constexpr (VCOConfig<oscType>::requiresWavetables())
         {
-            checkedWaveTable = 0;
-
-            bool read{false};
-            WavetableMessage msg;
-            while (!wavetableQueue.empty())
+            if (checkedWaveTable >= checkWaveTableEvery)
             {
-                msg = wavetableQueue.shift();
-                read = true;
-            }
+                checkedWaveTable = 0;
 
-            if (read)
-            {
-                // We really should do this off audio thread but for now
-                auto nid = std::clamp((int)msg.index, (int)0, (int)storage->wt_list.size());
-                oscstorage->wt.queue_id = nid;
-                oscstorage_display->wt.queue_id = nid;
-                storage->perform_queued_wtloads();
+                bool read{false};
+                WavetableMessage msg;
+                while (!wavetableQueue.empty())
+                {
+                    msg = wavetableQueue.shift();
+                    read = true;
+                }
 
-                wavetableIndex = oscstorage->wt.current_id;
-                wavetableLoads ++;
-                reInitEveryOSC = true;
+                if (read)
+                {
+                    if (msg.index >= 0)
+                    {
+                        // We really should do this off audio thread but for now
+                        auto nid = std::clamp((int)msg.index, (int)0, (int)storage->wt_list.size());
+                        oscstorage->wt.queue_id = nid;
+                        oscstorage_display->wt.queue_id = nid;
+                        storage->perform_queued_wtloads();
+
+                        wavetableIndex = oscstorage->wt.current_id;
+                    }
+                    else
+                    {
+                        strncpy(oscstorage->wt.queue_filename, msg.filename, 256);
+                        strncpy(oscstorage_display->wt.queue_filename, msg.filename, 256);
+                        storage->perform_queued_wtloads();
+
+                        wavetableIndex = -1;
+                    }
+                    wavetableLoads++;
+                    reInitEveryOSC = true;
+                }
             }
         }
 
@@ -475,6 +487,9 @@ template <int oscType> struct VCO : public modules::XTModule
         if (VCOConfig<oscType>::requiresWavetables())
         {
             auto *wtT = json_object();
+            json_object_set(wtT, "draw3D",
+                            json_boolean(draw3DWavetable));
+
             json_object_set(wtT, "display_name",
                             json_string(oscstorage->wavetable_display_name));
 
@@ -523,6 +538,12 @@ template <int oscType> struct VCO : public modules::XTModule
             if (!sv)
                 return;
 
+            auto d3 = json_object_get(wtJ, "draw3D");
+            if (d3)
+            {
+                draw3DWavetable = json_boolean_value(d3);
+            }
+
             auto dataV = rack::string::fromBase64(sv);
             auto *data = &dataV[0];
 
@@ -548,4 +569,13 @@ template <int oscType> struct VCO : public modules::XTModule
         }
     }
 };
+
+template<int oscType>
+inline void VCOConfig<oscType>::configureArbitrarySwitches(VCO<oscType> *m)
+{
+    for (int i=0; i<VCO<oscType>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<oscType>::ARBITRARY_SWITCH_0 + i, 0, 1, 0);
+    }
+}
 }
