@@ -35,6 +35,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelVCOSHNoise);
     p->addModel(modelVCOAlias);
     p->addModel(modelVCOString);
+    p->addModel(modelVCOTwist);
 
     // Add the ported ones
     p->addModel(modelSurgeVCF);

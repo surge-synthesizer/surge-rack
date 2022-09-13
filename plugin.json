@@ -109,6 +109,15 @@
         "VCO",
         "Polyphonic"
       ]
+    },
+    {
+      "slug": "SurgeXTOSCTwist",
+      "name": "SXT Twist VCO",
+      "description": "The Surge Twist Oscillator, based on a famous EuroRack module",
+      "tags": [
+        "VCO",
+        "Polyphonic"
+      ]
     }
   ]
 }

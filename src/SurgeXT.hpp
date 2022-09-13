@@ -35,6 +35,7 @@ extern rack::Model *modelVCOFM3;
 extern rack::Model *modelVCOSHNoise;
 extern rack::Model *modelVCOAlias;
 extern rack::Model *modelVCOString;
+extern rack::Model *modelVCOTwist;
 
 extern rack::Model *modelSurgeClock;
 extern rack::Model *modelSurgeADSR;

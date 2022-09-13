@@ -252,6 +252,12 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
 
         char txt[256];
         par->get_display(txt, true, getValue());
+        char talt[256];
+        par->get_display_alt(talt, true, getValue());
+        if (strlen(talt))
+        {
+            return std::string(txt) + " (" + talt + ")";
+        }
         return txt;
     }
 };

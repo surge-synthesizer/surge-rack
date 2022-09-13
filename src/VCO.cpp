@@ -1042,3 +1042,6 @@ rack::Model *modelVCOString =
 rack::Model *modelVCOAlias =
     rack::createModel<vcoui::VCOWidget<ot_alias>::M, vcoui::VCOWidget<ot_alias>>(
         "SurgeXTOSCAlias");
+rack::Model *modelVCOTwist =
+    rack::createModel<vcoui::VCOWidget<ot_twist>::M, vcoui::VCOWidget<ot_twist>>(
+        "SurgeXTOSCTwist");
