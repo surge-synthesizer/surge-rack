@@ -368,4 +368,132 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
         setValue(1.f);
     }
 };
+
+template <typename M, uint32_t nPar, uint32_t par0, uint32_t polyIn, uint32_t nInputs,
+          uint32_t input0>
+struct ModulationAssistant
+{
+    float f[nPar], fInv[nPar];
+    float mu[nPar][nInputs];
+    __m128 muSSE[nPar][nInputs];
+    float values alignas(16)[nPar][MAX_POLY];
+    float animValues[nPar];
+    bool connected[nInputs];
+    void initialize(M *m)
+    {
+        for (auto p = 0; p < nPar; ++p)
+        {
+            auto pq = m->paramQuantities[p + par0];
+            f[p] = (pq->maxValue - pq->minValue);
+            fInv[p] = 1.0 / f[p];
+        }
+        setupMatrix(m);
+    }
+
+    void setupMatrix(M *m)
+    {
+        for (auto p = 0; p < nPar; ++p)
+        {
+            for (auto i = 0; i < nInputs; ++i)
+            {
+                auto idx = m->modulatorIndexFor(p + par0, i);
+                mu[p][i] = m->params[idx].getValue() * f[p];
+                muSSE[p][i] = _mm_load1_ps(&mu[p][i]);
+            }
+        }
+    }
+
+    void updateValues(M *m)
+    {
+        auto ci = 0;
+        bool broadcast[nInputs];
+        auto chans = std::max({1, m->inputs[polyIn].getChannels(), ci});
+
+        for (int i = 0; i < nInputs; ++i)
+        {
+            connected[i] = m->inputs[i + input0].isConnected();
+            if (connected[i])
+            {
+                auto ch = m->inputs[i + input0].getChannels();
+                ci = std::max(ci, ch);
+                broadcast[i] = ch != chans;
+            }
+            else
+            {
+                broadcast[i] = false; // to have a value at least
+            }
+        }
+
+        if (chans == 1)
+        {
+            // Special case: chans = 1 can skip all the channel loops
+            float inp[nInputs];
+            for (int i = 0; i < nInputs; ++i)
+            {
+                inp[i] = m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+            }
+            for (int p = 0; p < nPar; ++p)
+            {
+                // Set up the base values
+                auto mv = 0.f;
+                for (int i = 0; i < nInputs; ++i)
+                {
+                    mv += connected[i] * mu[p][i] * inp[i];
+                }
+                values[p][0] = mv + m->params[p + par0].getValue();
+                animValues[p] = fInv[p] * mv;
+            }
+        }
+        else
+        {
+            // general poly-poly case. So what do we need to do?
+            // We we have the matrix as SSEs so we need to make
+            // that from the inputs and voia. But we need to deal with
+            // the broadcast inputs first.
+            //
+            // This is structured so we can do SIMD later but lets
+            // do regular way first
+            float snapInputs[nInputs][MAX_POLY];
+            for (int i=0; i<nInputs; ++i)
+            {
+                if (broadcast[i])
+                {
+                    auto iv = connected[i] * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+                    for (int c=0; c<chans; ++c)
+                    {
+                        snapInputs[i][c] = iv;
+                    }
+                }
+                else
+                {
+                    // This loop can SIMD-ize
+                    for (int c=0; c<chans; ++c)
+                    {
+                        auto iv = connected[i] * m->inputs[i + input0].getVoltage(c) * RACK_TO_SURGE_CV_MUL;
+                        snapInputs[i][c] = iv;
+                    }
+                }
+            }
+            for (int p=0; p<nPar; ++p)
+            {
+                float mv[MAX_POLY];
+                memset(mv, 0, chans * sizeof(float));
+
+                for (int i=0; i<nInputs; ++i)
+                {
+                    // This is the loop we will simd-4 stride
+                    for (int c=0; c<chans; ++c)
+                    {
+                        mv[c] += connected[i] * mu[p][i] * snapInputs[i][c];
+                    }
+                }
+                auto v0 = m->params[p+par0].getValue();
+                for (int c=0; c<chans; ++c)
+                    values[p][c] = mv[c] + v0;
+
+                animValues[p] = fInv[p] * mv[0];
+            }
+        }
+    }
+};
 } // namespace sst::surgext_rack::modules

@@ -96,6 +96,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
+    modules::ModulationAssistant<VCO<oscType>, n_osc_params + 1, PITCH_0,
+        PITCH_CV, n_mod_inputs, OSC_MOD_INPUT> modAssist;
 
     VCO() : XTModule(), halfbandIN(6, true)
     {
@@ -171,6 +173,7 @@ template <int oscType> struct VCO : public modules::XTModule
         halfbandIN.reset();
 
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
+        modAssist.initialize(this);
     }
 
     static int modulatorIndexFor(int baseParam, int modulator)
@@ -246,6 +249,8 @@ template <int oscType> struct VCO : public modules::XTModule
     bool forceRespawnDueToSampleRate = false;
     static constexpr int checkWaveTableEvery{512};
     int checkedWaveTable{checkWaveTableEvery};
+    static constexpr int calcModMatrixEvery{256};
+    int calcedModMatrix{calcModMatrixEvery};
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = std::max(1, inputs[PITCH_CV].getChannels());
@@ -327,6 +332,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
         if (processPosition >= BLOCK_SIZE)
         {
+            modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
             // As @Vortico says "think like a hardware engineer; only snap
             // values when you need them".
             processPosition = 0;
@@ -339,80 +346,15 @@ template <int oscType> struct VCO : public modules::XTModule
 
             VCOConfig<oscType>::processLightParameters(this);
 
-            float modMatrix[n_osc_params + 1][n_mod_inputs];
-
-            for (int i = 0; i < n_osc_params + 1; ++i)
-            {
-                for (int m = 0; m < n_mod_inputs; ++m)
-                {
-                    modMatrix[i][m] = 0.f;
-                }
-            }
-            const auto &knobConfig = VCOConfig<oscType>::getKnobs();
-            for (const auto k : knobConfig)
-            {
-                int id = k.id - PITCH_0;
-                for (int m = 0; m < n_mod_inputs; ++m)
-                {
-                    int modid = modulatorIndexFor(k.id, m);
-                    modMatrix[id][m] = params[modid].getValue();
-                }
-            }
-
-            for (int m = 0; m < n_mod_inputs; ++m)
-                modMatrix[0][m] *= 12; // volts per octave
-
-            float modValue[rack::PORT_MAX_CHANNELS][n_osc_params + 1];
-
-            for (int c = 0; c < nChan; ++c)
-            {
-                float pitch0 = params[PITCH_0].getValue() + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12.0;
-
-                modValue[c][0] = pitch0;
-                for (int i = 0; i < n_osc_params; ++i)
-                {
-                    modValue[c][i + 1] = params[OSC_CTRL_PARAM_0 + i].getValue();
-                }
-            }
-            for (int m = 0; m < n_mod_inputs; ++m)
-            {
-                if (inputs[OSC_MOD_INPUT + m].isConnected())
-                {
-                    auto nModChan = inputs[OSC_MOD_INPUT + m].getChannels();
-
-                    for (int i = 0; i < n_osc_params + 1; ++i)
-                    {
-                        for (int c = 0; c < nChan; ++c)
-                        {
-                            auto q = c > nModChan ? 0 : c;
-                            modValue[c][i] += modMatrix[i][m] *
-                                              inputs[OSC_MOD_INPUT + m].getVoltage(q) *
-                                              RACK_TO_SURGE_CV_MUL;
-                        }
-                    }
-                }
-            }
-
             for (int i = 0; i < n_osc_params; ++i)
             {
                 // This is the non-modulated version
                 // oscstorage_display->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
-                oscstorage_display->p[i].set_value_f01(modValue[0][i+1]);
+                oscstorage_display->p[i].set_value_f01(modAssist.values[i+1][0]);
             }
 
             // This is super gross and inefficient. Think about all of this
-            memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
-            for (int m=0; m<n_mod_inputs; ++m)
-            {
-                if (inputs[OSC_MOD_INPUT + m].isConnected())
-                {
-                    for (int i = 0; i < n_osc_params + 1; ++i)
-                    {
-                        int modid = modulatorIndexFor(i + PITCH_0, m);
-                        modulationDisplayValues[i] += params[modid].getValue() * inputs[OSC_MOD_INPUT + m].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
-                    }
-                }
-            }
+            memcpy(modulationDisplayValues, modAssist.animValues, sizeof(modAssist.animValues));
 
             for (int c = 0; c < nChan; ++c)
             {
@@ -428,7 +370,7 @@ template <int oscType> struct VCO : public modules::XTModule
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
-                        oscstorage->p[i].set_value_f01(modValue[c][i + 1]);
+                        oscstorage->p[i].set_value_f01(modAssist.values[i+1][c]);
                     }
                     if constexpr (VCOConfig<oscType>::supportsUnison())
                     {
@@ -439,12 +381,14 @@ template <int oscType> struct VCO : public modules::XTModule
                         }
                     }
 
+                    float pitch0 = modAssist.values[0][c] + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
+
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     if (needsReInit)
                     {
-                        surge_osc[c]->init(modValue[c][0]);
+                        surge_osc[c]->init(pitch0);
                     }
-                    surge_osc[c]->process_block(modValue[c][0], 0, true);
+                    surge_osc[c]->process_block(pitch0, 0, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
                     halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
@@ -488,6 +432,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         processPosition++;
         checkedWaveTable++;
+        calcedModMatrix++;
     }
 
     // With surge-xt the oscillator memory is owned by the synth after spawn
