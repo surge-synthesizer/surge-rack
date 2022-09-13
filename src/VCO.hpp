@@ -169,6 +169,8 @@ template <int oscType> struct VCO : public modules::XTModule
         }
 
         VCOConfig<oscType>::oscillatorSpecificSetup(this);
+
+        memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
     }
 
     static int modulatorIndexFor(int baseParam, int modulator)
@@ -192,6 +194,21 @@ template <int oscType> struct VCO : public modules::XTModule
         return std::string("VCO<") + osc_type_names[oscType] + ">";
     }
 
+    bool isBipolar(int paramId) override {
+        if (paramId >= OSC_CTRL_PARAM_0 && paramId <= OSC_CTRL_PARAM_0 + n_osc_params)
+        {
+            return oscstorage->p[paramId-OSC_CTRL_PARAM_0].is_bipolar();
+        }
+        return false;
+    }
+    float modulationDisplayValues[n_osc_params + 1];
+    float modulationDisplayValue(int paramId) override
+    {
+        int idx = paramId - PITCH_0;
+        if (idx < 0 || idx >= n_osc_params + 1)
+            return 0;
+        return modulationDisplayValues[idx];
+    }
 
     Parameter *surgeParameterForParamId(int paramId) override {
         if (paramId < OSC_CTRL_PARAM_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
@@ -359,7 +376,21 @@ template <int oscType> struct VCO : public modules::XTModule
             {
                 // This is the non-modulated version
                 // oscstorage_display->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
-                oscstorage_display->p[i].set_value_f01(modValue[0][i + 1]);
+                oscstorage_display->p[i].set_value_f01(modValue[0][i+1]);
+            }
+
+            // This is super gross and inefficient. Think about all of this
+            memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
+            for (int m=0; m<n_mod_inputs; ++m)
+            {
+                if (inputs[OSC_MOD_INPUT + m].isConnected())
+                {
+                    for (int i = 0; i < n_osc_params + 1; ++i)
+                    {
+                        int modid = modulatorIndexFor(i + PITCH_0, m);
+                        modulationDisplayValues[i] += params[modid].getValue() * inputs[OSC_MOD_INPUT + m].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+                    }
+                }
             }
 
             for (int c = 0; c < nChan; ++c)

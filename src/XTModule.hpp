@@ -120,6 +120,9 @@ struct XTModule : public rack::Module
         return true;
     }
 
+    virtual bool isBipolar(int paramId) { return false; }
+    virtual float modulationDisplayValue(int paramId) { return 0; }
+
     void copyScenedataSubset(int scene, int start, int end)
     {
         int s = storage->getPatch().scene_start[scene];

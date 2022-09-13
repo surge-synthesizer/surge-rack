@@ -45,6 +45,7 @@ struct XTStyle
         KNOB_MOD_PLUS,
         KNOB_MOD_MINUS,
         KNOB_MOD_MARK,
+        KNOB_RING_VALUE,
 
         PLOT_CURVE,
         PLOT_MARKS,

@@ -8,6 +8,7 @@
 #include <rack.hpp>
 #include <iostream>
 #include "XTStyle.hpp"
+#include "XTModule.hpp"
 
 namespace sst::surgext_rack::widgets
 {
@@ -223,6 +224,30 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 
     KnobN() {}
 
+    bool isBipolar()
+    {
+        auto xtm = dynamic_cast<modules::XTModule *>(module);
+        if (xtm)
+            return xtm->isBipolar(paramId);
+        return false;
+    }
+
+    float modDepthForAnimation()
+    {
+        auto xtm = dynamic_cast<modules::XTModule *>(module);
+        if (xtm)
+            return xtm->modulationDisplayValue(paramId);
+        return 0;
+    }
+
+    bool isModEditing{false};
+    void setIsModEditing(bool b)
+    {
+        isModEditing = b;
+        bwValue->dirty = true;
+        bw->dirty = true;
+    }
+
     void completeConstructor()
     {
         float angleSpreadDegrees = 40.0;
@@ -248,9 +273,61 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
         nvgStroke(vg);
     }
 
+    void drawValueRing(NVGcontext *vg)
+    {
+        if (isModEditing)
+            return;
+        auto *pq = getParamQuantity();
+        if (!pq)
+            return;
+
+        auto pv = pq->getSmoothValue();
+
+        float angle;
+        angle = rack::math::rescale(pv, pq->getMinValue(), pq->getMaxValue(), minAngle, maxAngle);
+        float startAngle = minAngle;
+        if (isBipolar())
+            startAngle = 0;
+
+        float radius = rack::mm2px(ringWidth_MM * 2 + knobSize_MM) * 0.5;
+        nvgBeginPath(vg);
+        nvgArc(vg, box.size.x * 0.5, box.size.y * 0.5, radius, startAngle - M_PI_2, angle - M_PI_2,
+               startAngle < angle ? NVG_CW : NVG_CCW);
+        nvgStrokeWidth(vg, ringWidth_PX);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
+        nvgLineCap(vg, NVG_ROUND);
+        nvgStroke(vg);
+
+        float mda = modDepthForAnimation();
+        if (mda != 0)
+        {
+            auto modAngle =
+                std::clamp(rack::math::rescale(mda, -0.5, 0.5, minAngle, maxAngle) + angle,
+                           minAngle, maxAngle);
+            nvgBeginPath(vg);
+            nvgArc(vg, box.size.x * 0.5, box.size.y * 0.5, radius, modAngle - M_PI_2,
+                   angle - M_PI_2, modAngle < angle ? NVG_CW : NVG_CCW);
+            nvgStrokeWidth(vg, ringWidth_PX);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_PLUS));
+            nvgLineCap(vg, NVG_ROUND);
+            nvgStroke(vg);
+        }
+
+        auto w = box.size.y;
+        auto h = box.size.x;
+
+        auto ox = std::sin(angle) * radius + w / 2;
+        auto oy = h - (std::cos(angle) * radius + h / 2);
+
+        nvgBeginPath(vg);
+        nvgEllipse(vg, ox, oy, 1, 1);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MARK));
+        nvgFill(vg);
+    }
+
     std::unordered_set<ModRingKnob *> modRings;
 
-    BufferedDrawFunctionWidget *bw{nullptr};
+    BufferedDrawFunctionWidget *bw{nullptr}, *bwValue{nullptr};
     void onChange(const ChangeEvent &e) override;
     void onStyleChanged() override { setupWidgets(); }
     void setupWidgets()
@@ -285,8 +362,27 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
             bw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
                                                 [this](auto vg) { this->drawRing(vg); });
             addChildBottom(bw);
+
+            bwValue = new BufferedDrawFunctionWidgetOnLayer(
+                rack::Vec(0, 0), box.size, [this](auto vg) { this->drawValueRing(vg); });
+            addChild(bwValue);
         }
         bw->dirty = true;
+    }
+
+    float priorMDA{0};
+    void step() override
+    {
+        if (module)
+        {
+            auto mda = modDepthForAnimation();
+            if (mda != priorMDA)
+            {
+                bwValue->dirty = true;
+                priorMDA = mda;
+            }
+        }
+        rack::componentlibrary::RoundKnob::step();
     }
 };
 
@@ -873,13 +969,13 @@ typedef GenericPresetJogSelector<rack::ParamWidget> ParamJogSelector;
 inline void KnobN::onChange(const rack::widget::Widget::ChangeEvent &e)
 {
     bw->dirty = true;
+    bwValue->dirty = true;
     for (auto *m : modRings)
     {
         m->bdw->dirty = true;
     }
     SvgKnob::onChange(e);
 }
-
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H

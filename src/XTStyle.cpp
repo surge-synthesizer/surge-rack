@@ -146,6 +146,8 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
             return nvgRGB(194, 194, 194);
         }
     }
+    case KNOB_MOD_PLUS:
+        return nvgRGB(58, 157, 255);
     case KNOB_MOD_MINUS:
         return nvgRGB(180, 180, 220);
     case KNOB_MOD_MARK:
@@ -175,7 +177,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case PLOT_CONTROL_VALUE_FG:
         return nvgRGB(0, 0, 0);
 
-    case KNOB_MOD_PLUS:
+    case KNOB_RING_VALUE:
     case PLOT_CURVE:
     case PLOT_CONTROL_TEXT:
     case PLOT_CONTROL_VALUE_BG:
