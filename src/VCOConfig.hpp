@@ -214,12 +214,13 @@ template <> VCOConfig<ot_alias>::knobs_t VCOConfig<ot_alias>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 1, "WARP"},
             {M::OSC_CTRL_PARAM_0 + 2, "MASK"},
             {KnobDef::BLANK},
-            {KnobDef::BLANK},
+            {KnobDef::INPUT, M::AUDIO_INPUT, "AUDIO"},
             {M::OSC_CTRL_PARAM_0 + 3, "THRESH"},
             {M::OSC_CTRL_PARAM_0 + 4, "BITCRSH"},
             {M::OSC_CTRL_PARAM_0 + 5, "DETUNE"}};
 }
 template <> int VCOConfig<ot_alias>::rightMenuParamId() { return 0; }
+// template <> constexpr bool VCOConfig<ot_alias>::supportsAudioIn() { return true; }
 
 template <> constexpr bool VCOConfig<ot_shnoise>::supportsUnison() { return true; }
 template <> VCOConfig<ot_shnoise>::knobs_t VCOConfig<ot_shnoise>::getKnobs()
