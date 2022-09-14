@@ -10,17 +10,15 @@
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"
-
+#include "globals.h"
 
 namespace sst::surgext_rack::vcf
 {
 struct VCFTypeParamQuanity : rack::ParamQuantity
 {
-    std::string getLabel() override
+    std::string getLabel() override { return "Filter Model"; }
+    std::string getDisplayValueString() override
     {
-        return "Filter Model";
-    }
-    std::string getDisplayValueString() override {
         int val = (int)std::round(getValue());
         return sst::filters::filter_type_names[val];
     }
@@ -28,10 +26,7 @@ struct VCFTypeParamQuanity : rack::ParamQuantity
 
 struct VCFSubTypeParamQuanity : rack::ParamQuantity
 {
-    std::string getLabel() override
-    {
-        return "Filter SubType";
-    }
+    std::string getLabel() override { return "Filter SubType"; }
     std::string getDisplayValueString() override;
 };
 
@@ -81,6 +76,8 @@ struct VCF : public modules::XTModule
         return VCF_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
+    modules::ModulationAssistant<VCF, 5, FREQUENCY, INPUT_L, n_mod_inputs, VCF_MOD_INPUT>
+        modulationAssistant;
 
     std::array<int, sst::filters::num_filter_types> defaultSubtype;
 
@@ -96,7 +93,8 @@ struct VCF : public modules::XTModule
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
         configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1);
 
-        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types, sst::filters::fut_obxd_4pole);
+        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types,
+                                         sst::filters::fut_obxd_4pole);
 
         int mfst = 0;
         for (auto fc : sst::filters::fut_subcount)
@@ -117,19 +115,22 @@ struct VCF : public modules::XTModule
         defaultSubtype[sst::filters::fut_lpmoog] = 3;
         defaultSubtype[sst::filters::fut_comb_pos] = 1;
         defaultSubtype[sst::filters::fut_comb_neg] = 1;
+
+        modulationAssistant.initialize(this);
     }
 
     std::string getName() override { return "VCF"; }
 
-    bool isBipolar(int paramId) override {
-        if (paramId == IN_GAIN || paramId == OUT_GAIN) return true;
+    bool isBipolar(int paramId) override
+    {
+        if (paramId == IN_GAIN || paramId == OUT_GAIN)
+            return true;
         return false;
     }
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
     sst::filters::QuadFilterUnitState qfus[nQFUs];
-    __m128 qfuRCache[sst::filters::n_filter_registers][nQFUs];
-    sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker[nQFUs];
+    sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker;
     float delayBuffer[nQFUs][4][sst::filters::utilities::MAX_FB_COMB +
                                 sst::filters::utilities::SincTable::FIRipol_N];
 
@@ -139,36 +140,28 @@ struct VCF : public modules::XTModule
 
         restackSIMD();
 
-        for (auto c = 0; c < nQFUs; ++c)
-        {
-            coefMaker[c].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
-            for (auto i = 0; i < 4; ++i)
-            {
-                qfus[c].DB[i] = &(delayBuffer[c][i][0]);
-            }
-        }
+        coefMaker.setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
+        resetFilterRegisters();
     }
 
     void moduleSpecificSampleRateChange() override
     {
-        for (auto c = 0; c < nQFUs; ++c)
-        {
-            coefMaker[c].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
-        }
+        coefMaker.setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
+        resetFilterRegisters();
     }
 
     void resetFilterRegisters()
     {
+        coefMaker.Reset();
         for (auto c = 0; c < nQFUs; ++c)
         {
-            coefMaker[c].Reset();
             std::fill(qfus[c].R, &qfus[c].R[sst::filters::n_filter_registers], _mm_setzero_ps());
             std::fill(qfus[c].C, &qfus[c].C[sst::filters::n_cm_coeffs], _mm_setzero_ps());
-            memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
             for (int i = 0; i < 4; ++i)
             {
                 qfus[c].WP[i] = 0;
                 qfus[c].active[i] = 0xFFFFFFFF;
+                qfus[c].DB[i] = &(delayBuffer[c][i][0]);
             }
         }
     }
@@ -179,6 +172,7 @@ struct VCF : public modules::XTModule
     int nVoices{0}, nSIMDSlots{0};
 
     int lastPolyL{-2}, lastPolyR{-2};
+    int monoChannelOffset{0};
 
     void restackSIMD()
     {
@@ -194,11 +188,7 @@ struct VCF : public modules::XTModule
             nSIMDSlots = 0;
         }
 
-        if (lastPolyL == -1 && lastPolyR == -1)
-        {
-            // blank is fine
-        }
-        else if (lastPolyR == -1 || lastPolyL == -1)
+        if (lastPolyR == -1 || lastPolyL == -1)
         {
             int channel = (lastPolyR == -1) ? 0 : 1;
             int poly = (lastPolyR == -1) ? lastPolyL : lastPolyR;
@@ -211,20 +201,16 @@ struct VCF : public modules::XTModule
 
             nVoices = poly;
             nSIMDSlots = (poly - 1) / 4 + 1;
+
+            monoChannelOffset = channel;
         }
         else
         {
-            int poly = std::max(lastPolyR, lastPolyL);
+            // So the items come in SSE order from the inputs so we want
+            // to preserve that. Which means stack all the Ls first and Rs
+            // second.
             stereoStack = true;
-            for (int p = 0; p < poly; p++)
-            {
-                auto idx = p * 2;
-                channelToSIMD[0][p][0] = idx / 4;
-                channelToSIMD[0][p][1] = idx % 4;
-                channelToSIMD[1][p][0] = (idx + 1) / 4;
-                channelToSIMD[1][p][1] = (idx + 1) % 4;
-            }
-            nVoices = poly * 2;
+            nVoices = lastPolyR + lastPolyL;
             nSIMDSlots = (nVoices - 1) / 4 + 1;
         }
 
@@ -236,14 +222,23 @@ struct VCF : public modules::XTModule
     sst::filters::FilterSubType lastSubType = sst::filters::FilterSubType::st_Standard;
     sst::filters::FilterUnitQFPtr filterPtr{nullptr};
 
+    static __m128 dupInToOut(sst::filters::QuadFilterUnitState *__restrict, __m128 in)
+    {
+        return in;
+    }
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         static int dumpEvery = 0;
         auto ftype = (sst::filters::FilterType)(int)(std::round(params[VCF_TYPE].getValue()));
-        auto fsubtype = (sst::filters::FilterSubType)(int)(std::round(params[VCF_SUBTYPE].getValue()));;
+        auto fsubtype =
+            (sst::filters::FilterSubType)(int)(std::round(params[VCF_SUBTYPE].getValue()));
 
-        if (processPosition >= BLOCK_SIZE )
+        if (processPosition >= BLOCK_SIZE)
         {
+            modulationAssistant.setupMatrix(this);
+            modulationAssistant.updateValues(this);
+
             if (ftype != lastType || fsubtype != lastSubType)
             {
                 resetFilterRegisters();
@@ -252,10 +247,9 @@ struct VCF : public modules::XTModule
             lastSubType = fsubtype;
             defaultSubtype[lastType] = lastSubType;
             filterPtr = sst::filters::GetQFPtrFilterUnit(ftype, fsubtype);
-
-            for (int c = 0; c < nQFUs; ++c)
+            if (!filterPtr)
             {
-                //memcpy(qfuRCache[c], qfus[c].R, sst::filters::n_filter_registers * sizeof(__m128));
+                filterPtr = dupInToOut;
             }
 
             int thisPolyL{-1}, thisPolyR{-1};
@@ -273,108 +267,64 @@ struct VCF : public modules::XTModule
                 lastPolyL = thisPolyL;
                 lastPolyR = thisPolyR;
 
-                outputs[OUTPUT_L].setChannels(std::max(1, thisPolyL));
-                outputs[OUTPUT_R].setChannels(std::max(1, thisPolyR));
-
                 restackSIMD();
             }
 
-            // Setup Coefficients if changed or modulated etc
-            float modMatrix[n_vcf_params][n_mod_inputs];
-            memset(modMatrix, 0, n_vcf_params * n_mod_inputs * sizeof(float));
-            for (int p=0; p<n_vcf_params; ++p)
+            outputs[OUTPUT_L].setChannels(std::max(1, thisPolyL));
+            outputs[OUTPUT_R].setChannels(std::max(1, thisPolyR));
+
+            if (stereoStack)
             {
-                for (int inp = 0; inp < n_mod_inputs; ++inp)
-                {
-                    auto mp = modulatorIndexFor(p, inp);
-                    modMatrix[p][inp] = params[mp].getValue();
-                }
             }
-
-            float modValues[n_vcf_params][MAX_POLY];
-            memset(modValues, 0, n_vcf_params * MAX_POLY * sizeof(float));
-            for (int p=0; p<n_vcf_params; ++p)
+            else
             {
-                for (int c=0; c<std::max(lastPolyL, lastPolyR); ++c)
+                for (int qf = 0; qf < nSIMDSlots; ++qf)
                 {
-                    modValues[p][c] = params[p].getValue();
-                    for (int m=0; m<n_mod_inputs; ++m)
+                    int lim = (qf == nSIMDSlots - 1) ? (nVoices % 4) + 1 : 4;
+                    for (int p = 0; p < lim; ++p)
                     {
-                        auto fac = p == FREQUENCY ? 20 : 1;
-                        modValues[p][c] += fac * modMatrix[p][m] * inputs[m].getVoltage(c);
-                    }
-                }
-            }
+                        for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
+                        {
+                            coefMaker.C[f] = qfus[qf].C[f][p];
+                        }
 
-            // HAMMER - we can and must be smarter about this
-            for (int qf = 0; qf < nQFUs; ++qf)
-            {
-                for (int p = 0; p < 4; ++p)
-                {
-                    for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
-                    {
-                        coefMaker[qf].C[f] = qfus[qf].C[f][p];
-                    }
-
-                    int chan{0};
-                    if (stereoStack)
-                    {
-                        chan = qf * 2 + p / 2;
-                    }
-                    else
-                    {
+                        int chan{0};
                         chan = qf * 4 + p;
-                    }
-                    chan = std::min(chan, MAX_POLY);
-                    coefMaker[qf].MakeCoeffs(modValues[FREQUENCY][chan],
-                                            modValues[RESONANCE][chan],
-                                            ftype, fsubtype, storage.get(), false);
+                        coefMaker.MakeCoeffs(
+                            modulationAssistant.values[FREQUENCY - FREQUENCY][chan],
+                            modulationAssistant.values[RESONANCE - FREQUENCY][chan], ftype,
+                            fsubtype, storage.get(), false);
 
-                    coefMaker[qf].updateState(qfus[qf], p);
+                        coefMaker.updateState(qfus[qf], p);
+                    }
                 }
-                //memcpy(qfus[c].R, qfuRCache[c], sst::filters::n_filter_registers * sizeof(__m128));
             }
+
             processPosition = 0;
         }
-        float invalues alignas(16)[2 * MAX_POLY];
-        float outvalues alignas(16)[2 * MAX_POLY];
-        // fix me - not every sample pls
-        std::memset(invalues, 0, 2 * MAX_POLY * sizeof(float));
-        for (int c = 0; c < 2; ++c)
+
+        if (stereoStack)
         {
-            auto it = (c == 0 ? INPUT_L : INPUT_R);
-            auto pl = (c == 0 ? lastPolyL : lastPolyR);
-            for (int p = 0; p < pl; ++p)
-            {
-                auto idx = channelToSIMD[c][p][0] * 4 + channelToSIMD[c][p][1];
-                invalues[idx] = inputs[it].getVoltage(p) * RACK_TO_SURGE_OSC_MUL;
-            }
-        }
-
-
-        if (filterPtr)
-        {
-            for (int s = 0; s < nSIMDSlots; ++s)
-            {
-                auto in = _mm_load_ps(&invalues[s * 4]);
-
-                auto out = filterPtr(&qfus[s], in);
-                _mm_store_ps(&outvalues[s * 4], out);
-            }
         }
         else
         {
-            std::memcpy(outvalues, invalues, nSIMDSlots * 4 * sizeof(float));
-        }
+            float *iv = inputs[INPUT_L + monoChannelOffset].getVoltages();
+            float *ov = outputs[OUTPUT_L + monoChannelOffset].getVoltages();
 
-        for (int c = 0; c < 2; ++c)
-        {
-            auto it = (c == 0 ? OUTPUT_L : OUTPUT_R);
-            auto pl = (c == 0 ? lastPolyL : lastPolyR);
-            for (int p = 0; p < pl; ++p)
+            for (int i = 0; i < nSIMDSlots; ++i)
             {
-                auto idx = channelToSIMD[c][p][0] * 4 + channelToSIMD[c][p][1];
-                outputs[it].setVoltage(outvalues[idx] * SURGE_TO_RACK_OSC_MUL, p);
+                const auto &mvsse = modulationAssistant.valuesSSE;
+
+                auto in = _mm_loadu_ps(iv + (i >> 2));
+                auto pre = _mm_mul_ps(in, mvsse[IN_GAIN - FREQUENCY][i]);
+                auto filt = filterPtr(&qfus[i], pre);
+                
+                auto post = _mm_mul_ps(filt, mvsse[OUT_GAIN - FREQUENCY][i]);
+                auto omm = _mm_sub_ps(_mm_set1_ps(1.f), mvsse[MIX - FREQUENCY][i]);
+
+                auto fin =
+                    _mm_add_ps(_mm_mul_ps(mvsse[MIX - FREQUENCY][i], post), _mm_mul_ps(omm, in));
+                _mm_storeu_ps(ov + (i >> 2), fin);
             }
         }
 
@@ -384,92 +334,92 @@ struct VCF : public modules::XTModule
         processPosition++;
     }
 
-
-        static std::string subtypeLabel(int type, int subtype)
+    static std::string subtypeLabel(int type, int subtype)
+    {
+        using sst::filters::FilterType;
+        int i = subtype;
+        const auto fType = (FilterType)type;
+        if (sst::filters::fut_subcount[type] == 0)
         {
-            using sst::filters::FilterType;
-            int i = subtype;
-            const auto fType = (FilterType)type;
-            if (sst::filters::fut_subcount[type] == 0)
+            return "None";
+        }
+        else
+        {
+            switch (fType)
             {
-                return "None";
-            }
-            else
-            {
-                switch (fType)
-                {
-                case FilterType::fut_lpmoog:
-                case FilterType::fut_diode:
-                    return sst::filters::fut_ldr_subtypes[i];
-                    break;
-                case FilterType::fut_notch12:
-                case FilterType::fut_notch24:
-                case FilterType::fut_apf:
-                    return sst::filters::fut_notch_subtypes[i];
-                    break;
-                case FilterType::fut_comb_pos:
-                case FilterType::fut_comb_neg:
-                    return sst::filters::fut_comb_subtypes[i];
-                    break;
-                case FilterType::fut_vintageladder:
-                    return sst::filters::fut_vintageladder_subtypes[i];
-                    break;
-                case FilterType::fut_obxd_2pole_lp:
-                case FilterType::fut_obxd_2pole_hp:
-                case FilterType::fut_obxd_2pole_n:
-                case FilterType::fut_obxd_2pole_bp:
-                    return sst::filters::fut_obxd_2p_subtypes[i];
-                    break;
-                case FilterType::fut_obxd_4pole:
-                    return sst::filters::fut_obxd_4p_subtypes[i];
-                    break;
-                case FilterType::fut_k35_lp:
-                case FilterType::fut_k35_hp:
-                    return sst::filters::fut_k35_subtypes[i];
-                    break;
-                case FilterType::fut_cutoffwarp_lp:
-                case FilterType::fut_cutoffwarp_hp:
-                case FilterType::fut_cutoffwarp_n:
-                case FilterType::fut_cutoffwarp_bp:
-                case FilterType::fut_cutoffwarp_ap:
-                case FilterType::fut_resonancewarp_lp:
-                case FilterType::fut_resonancewarp_hp:
-                case FilterType::fut_resonancewarp_n:
-                case FilterType::fut_resonancewarp_bp:
-                case FilterType::fut_resonancewarp_ap:
-                    // "i & 3" selects the lower two bits that represent the stage count
-                    // "(i >> 2) & 3" selects the next two bits that represent the
-                    // saturator
-                    return fmt::format("{} {}", sst::filters::fut_nlf_subtypes[i & 3],
-                                       sst::filters::fut_nlf_saturators[(i >> 2) & 3]);
-                    break;
-                // don't default any more so compiler catches new ones we add
-                case FilterType::fut_none:
-                case FilterType::fut_lp12:
-                case FilterType::fut_lp24:
-                case FilterType::fut_bp12:
-                case FilterType::fut_bp24:
-                case FilterType::fut_hp12:
-                case FilterType::fut_hp24:
-                case FilterType::fut_SNH:
-                    return sst::filters::fut_def_subtypes[i];
-                    break;
-                case FilterType::fut_tripole:
-                    // "i & 3" selects the lower two bits that represent the filter mode
-                    // "(i >> 2) & 3" selects the next two bits that represent the
-                    // output stage
-                    return fmt::format("{} {}", sst::filters::fut_tripole_subtypes[i & 3],
-                                       sst::filters::fut_tripole_output_stage[(i >> 2) & 3]);
-                    break;
-                case FilterType::num_filter_types:
-                    return "ERROR";
-                    break;
-                }
+            case FilterType::fut_lpmoog:
+            case FilterType::fut_diode:
+                return sst::filters::fut_ldr_subtypes[i];
+                break;
+            case FilterType::fut_notch12:
+            case FilterType::fut_notch24:
+            case FilterType::fut_apf:
+                return sst::filters::fut_notch_subtypes[i];
+                break;
+            case FilterType::fut_comb_pos:
+            case FilterType::fut_comb_neg:
+                return sst::filters::fut_comb_subtypes[i];
+                break;
+            case FilterType::fut_vintageladder:
+                return sst::filters::fut_vintageladder_subtypes[i];
+                break;
+            case FilterType::fut_obxd_2pole_lp:
+            case FilterType::fut_obxd_2pole_hp:
+            case FilterType::fut_obxd_2pole_n:
+            case FilterType::fut_obxd_2pole_bp:
+                return sst::filters::fut_obxd_2p_subtypes[i];
+                break;
+            case FilterType::fut_obxd_4pole:
+                return sst::filters::fut_obxd_4p_subtypes[i];
+                break;
+            case FilterType::fut_k35_lp:
+            case FilterType::fut_k35_hp:
+                return sst::filters::fut_k35_subtypes[i];
+                break;
+            case FilterType::fut_cutoffwarp_lp:
+            case FilterType::fut_cutoffwarp_hp:
+            case FilterType::fut_cutoffwarp_n:
+            case FilterType::fut_cutoffwarp_bp:
+            case FilterType::fut_cutoffwarp_ap:
+            case FilterType::fut_resonancewarp_lp:
+            case FilterType::fut_resonancewarp_hp:
+            case FilterType::fut_resonancewarp_n:
+            case FilterType::fut_resonancewarp_bp:
+            case FilterType::fut_resonancewarp_ap:
+                // "i & 3" selects the lower two bits that represent the stage count
+                // "(i >> 2) & 3" selects the next two bits that represent the
+                // saturator
+                return fmt::format("{} {}", sst::filters::fut_nlf_subtypes[i & 3],
+                                   sst::filters::fut_nlf_saturators[(i >> 2) & 3]);
+                break;
+            // don't default any more so compiler catches new ones we add
+            case FilterType::fut_none:
+            case FilterType::fut_lp12:
+            case FilterType::fut_lp24:
+            case FilterType::fut_bp12:
+            case FilterType::fut_bp24:
+            case FilterType::fut_hp12:
+            case FilterType::fut_hp24:
+            case FilterType::fut_SNH:
+                return sst::filters::fut_def_subtypes[i];
+                break;
+            case FilterType::fut_tripole:
+                // "i & 3" selects the lower two bits that represent the filter mode
+                // "(i >> 2) & 3" selects the next two bits that represent the
+                // output stage
+                return fmt::format("{} {}", sst::filters::fut_tripole_subtypes[i & 3],
+                                   sst::filters::fut_tripole_output_stage[(i >> 2) & 3]);
+                break;
+            case FilterType::num_filter_types:
+                return "ERROR";
+                break;
             }
         }
+    }
 };
 
-inline std::string VCFSubTypeParamQuanity::getDisplayValueString() {
+inline std::string VCFSubTypeParamQuanity::getDisplayValueString()
+{
     if (!module)
         return "None";
 
@@ -477,6 +427,6 @@ inline std::string VCFSubTypeParamQuanity::getDisplayValueString() {
     int val = (int)std::round(getValue());
     return VCF::subtypeLabel(type, val);
 }
-}
+} // namespace sst::surgext_rack::vcf
 
 #endif // SURGE_RACK_SURGEVCF_HPP

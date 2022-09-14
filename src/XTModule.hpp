@@ -377,6 +377,7 @@ struct ModulationAssistant
     float mu[nPar][nInputs];
     __m128 muSSE[nPar][nInputs];
     float values alignas(16)[nPar][MAX_POLY];
+    __m128 valuesSSE [nPar][MAX_POLY >> 2];
     float animValues[nPar];
     bool connected[nInputs];
     void initialize(M *m)
@@ -492,6 +493,14 @@ struct ModulationAssistant
                     values[p][c] = mv[c] + v0;
 
                 animValues[p] = fInv[p] * mv[0];
+            }
+        }
+
+        for (int p=0; p<nPar; ++p)
+        {
+            for (auto csse=0; csse < (MAX_POLY>>2); csse++)
+            {
+                valuesSSE[p][csse] = _mm_load_ps(&values[p][csse << 2]);
             }
         }
     }

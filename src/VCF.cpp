@@ -418,7 +418,7 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
     void drawUnder(NVGcontext *vg)
     {
 
-        for (const auto freq: {100, 1000, 10000})
+        for (const auto freq : {100, 1000, 10000})
         {
             nvgBeginPath(vg);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
@@ -527,7 +527,7 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
     for (const auto &[row, col, pid, label] :
          {std::make_tuple(0, 0, M::FREQUENCY, "FREQUENCY"),
           std::make_tuple(0, 2, M::RESONANCE, "RESO"), std::make_tuple(0, 3, M::MIX, "MIX"),
-          std::make_tuple(1, 2, M::IN_GAIN, "GAIN"), std::make_tuple(1, 3, M::OUT_GAIN, "GAIN")})
+          std::make_tuple(1, 2, M::IN_GAIN, "DRIVE"), std::make_tuple(1, 3, M::OUT_GAIN, "GAIN")})
     {
         auto uxp = columnCenters_MM[col];
         auto uyp = rowCenters_MM[row];
