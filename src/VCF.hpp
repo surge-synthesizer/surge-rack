@@ -318,16 +318,16 @@ struct VCF : public modules::XTModule
             {
                 const auto &mvsse = modulationAssistant.valuesSSE;
 
-                auto in = _mm_loadu_ps(iv + (i >> 2));
+                auto in = _mm_loadu_ps(iv + (i << 2));
                 auto pre = _mm_mul_ps(in, mvsse[IN_GAIN - FREQUENCY][i]);
                 auto filt = filterPtr(&qfus[i], pre);
-
+                
                 auto post = _mm_mul_ps(filt, mvsse[OUT_GAIN - FREQUENCY][i]);
                 auto omm = _mm_sub_ps(_mm_set1_ps(1.f), mvsse[MIX - FREQUENCY][i]);
 
                 auto fin =
                     _mm_add_ps(_mm_mul_ps(mvsse[MIX - FREQUENCY][i], post), _mm_mul_ps(omm, in));
-                _mm_storeu_ps(ov + (i >> 2), fin);
+                _mm_storeu_ps(ov + (i << 2), fin);
             }
         }
 
