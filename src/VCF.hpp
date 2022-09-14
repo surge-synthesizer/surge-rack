@@ -130,7 +130,7 @@ struct VCF : public modules::XTModule
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
     sst::filters::QuadFilterUnitState qfus[nQFUs];
-    sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker;
+    sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker[MAX_POLY];
     float delayBuffer[nQFUs][4][sst::filters::utilities::MAX_FB_COMB +
                                 sst::filters::utilities::SincTable::FIRipol_N];
 
@@ -140,19 +140,22 @@ struct VCF : public modules::XTModule
 
         restackSIMD();
 
-        coefMaker.setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
+        for (auto i = 0; i < MAX_POLY; ++i)
+            coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
         resetFilterRegisters();
     }
 
     void moduleSpecificSampleRateChange() override
     {
-        coefMaker.setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
+        for (auto i = 0; i < MAX_POLY; ++i)
+            coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
         resetFilterRegisters();
     }
 
     void resetFilterRegisters()
     {
-        coefMaker.Reset();
+        for (auto i = 0; i < MAX_POLY; ++i)
+            coefMaker[i].Reset();
         for (auto c = 0; c < nQFUs; ++c)
         {
             std::fill(qfus[c].R, &qfus[c].R[sst::filters::n_filter_registers], _mm_setzero_ps());
@@ -167,42 +170,44 @@ struct VCF : public modules::XTModule
     }
 
     int processPosition;
-    int32_t channelToSIMD[2 /* channels */][MAX_POLY][2 /* register and slot */];
     bool stereoStack{false};
     int nVoices{0}, nSIMDSlots{0};
+    int qfuIndexForVoice[2][MAX_POLY][2]; // L-R, Voice, {QFU, SIMD Slot}
 
     int lastPolyL{-2}, lastPolyR{-2};
     int monoChannelOffset{0};
 
     void restackSIMD()
     {
-        for (int c = 0; c < 2; ++c)
+        stereoStack = false;
+        nVoices = 0;
+        nSIMDSlots = 0;
+        for (int c = 0; c < MAX_POLY; ++c)
         {
-            for (int p = 0; p < MAX_POLY; ++p)
-            {
-                channelToSIMD[c][p][0] = -1;
-                channelToSIMD[c][p][1] = -1;
-            }
-            stereoStack = false;
-            nVoices = 0;
-            nSIMDSlots = 0;
+            qfuIndexForVoice[0][c][0] = -1;
+            qfuIndexForVoice[1][c][0] = -1;
         }
 
-        if (lastPolyR == -1 || lastPolyL == -1)
+        if (lastPolyL == -1 && lastPolyR == -1)
         {
-            int channel = (lastPolyR == -1) ? 0 : 1;
+        }
+        else if (lastPolyR == -1 || lastPolyL == -1)
+        {
+            int channels = std::max(lastPolyL, lastPolyR);
+            monoChannelOffset = (lastPolyR == -1) ? 0 : 1;
             int poly = (lastPolyR == -1) ? lastPolyL : lastPolyR;
-
-            for (int p = 0; p < poly; ++p)
-            {
-                channelToSIMD[channel][p][0] = p / 4;
-                channelToSIMD[channel][p][1] = p % 4;
-            }
 
             nVoices = poly;
             nSIMDSlots = (poly - 1) / 4 + 1;
+            stereoStack = false;
 
-            monoChannelOffset = channel;
+            for (int c = 0; c < channels; ++c)
+            {
+                auto qid = c >> 2;
+                auto qslt = c % 4;
+                qfuIndexForVoice[monoChannelOffset][c][0] = qid;
+                qfuIndexForVoice[monoChannelOffset][c][1] = qslt;
+            }
         }
         else
         {
@@ -273,31 +278,29 @@ struct VCF : public modules::XTModule
             outputs[OUTPUT_L].setChannels(std::max(1, thisPolyL));
             outputs[OUTPUT_R].setChannels(std::max(1, thisPolyR));
 
-            if (stereoStack)
+            for (int v = 0; v < nVoices; ++v)
             {
-            }
-            else
-            {
-                for (int qf = 0; qf < nSIMDSlots; ++qf)
+                int qfl = qfuIndexForVoice[0][v][0];
+                int qpl = qfuIndexForVoice[0][v][1];
+                int qfr = qfuIndexForVoice[1][v][0];
+                int qpr = qfuIndexForVoice[1][v][1];
+                int qf = qfl >= 0 ? qfl : qfr;
+                int qp = qfl >= 0 ? qpl : qpr; // that qfl in the condition is correct.
+                // match both qp and qf;
+
+                for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
                 {
-                    int lim = (qf == nSIMDSlots - 1) ? (nVoices % 4) + 1 : 4;
-                    for (int p = 0; p < lim; ++p)
-                    {
-                        for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
-                        {
-                            coefMaker.C[f] = qfus[qf].C[f][p];
-                        }
-
-                        int chan{0};
-                        chan = qf * 4 + p;
-                        coefMaker.MakeCoeffs(
-                            modulationAssistant.values[FREQUENCY - FREQUENCY][chan],
-                            modulationAssistant.values[RESONANCE - FREQUENCY][chan], ftype,
-                            fsubtype, storage.get(), false);
-
-                        coefMaker.updateState(qfus[qf], p);
-                    }
+                    coefMaker[v].C[f] = qfus[qf].C[f][qp];
                 }
+                coefMaker[v].MakeCoeffs(modulationAssistant.values[FREQUENCY - FREQUENCY][v],
+                                        modulationAssistant.values[RESONANCE - FREQUENCY][v], ftype,
+                                        fsubtype, storage.get(), false);
+
+                if (qfl >= 0)
+                    coefMaker[v].updateState(qfus[qfl], qpl);
+
+                if (qfr >= 0)
+                    coefMaker[v].updateState(qfus[qfr], qpr);
             }
 
             processPosition = 0;
@@ -315,7 +318,7 @@ struct VCF : public modules::XTModule
             {
                 const auto &mvsse = modulationAssistant.valuesSSE;
 
-                auto in = _mm_loadu_ps(iv + (i >> 2));
+                auto in = _mm_loadu_ps(iv + (i << 2));
                 auto pre = _mm_mul_ps(in, mvsse[IN_GAIN - FREQUENCY][i]);
                 auto filt = filterPtr(&qfus[i], pre);
                 
@@ -324,7 +327,7 @@ struct VCF : public modules::XTModule
 
                 auto fin =
                     _mm_add_ps(_mm_mul_ps(mvsse[MIX - FREQUENCY][i], post), _mm_mul_ps(omm, in));
-                _mm_storeu_ps(ov + (i >> 2), fin);
+                _mm_storeu_ps(ov + (i << 2), fin);
             }
         }
 
