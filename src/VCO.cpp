@@ -996,7 +996,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     }
 
     col =0;
-    for(const std::string &s : { "V/OCT", "TRIG", "LEFT", "RIGHT"})
+    for(const std::string &s : { std::string("V/OCT"), VCOConfig<oscType>::retriggerLabel(), {"LEFT"}, {"RIGHT"}})
     {
         addChild(makeLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT)));
         col++;

@@ -385,8 +385,12 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
             bdwPlot->dirty = true;
         }
 
-        auto fr = module->params[VCF::FREQUENCY].getValue();
-        auto re = module->params[VCF::RESONANCE].getValue();
+        // This is how we do the 'unanimated' version
+        // auto fr = module->params[VCF::FREQUENCY].getValue();
+        // auto re = module->params[VCF::RESONANCE].getValue();
+        auto fr = module->modulationAssistant.values[VCF::FREQUENCY][0];
+        auto re = module->modulationAssistant.values[VCF::RESONANCE][0];
+
         auto ty = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
         auto sty = (int)std::round(module->params[VCF::VCF_SUBTYPE].getValue());
         auto gn = (int)std::round(module->params[VCF::IN_GAIN].getValue());

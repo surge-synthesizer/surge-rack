@@ -369,7 +369,7 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     }
 };
 
-template <typename M, uint32_t nPar, uint32_t par0, uint32_t polyIn, uint32_t nInputs,
+template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs,
           uint32_t input0>
 struct ModulationAssistant
 {
@@ -408,7 +408,7 @@ struct ModulationAssistant
     {
         auto ci = 0;
         bool broadcast[nInputs];
-        auto chans = std::max({1, m->inputs[polyIn].getChannels(), ci});
+        auto chans = std::max({1, m->polyChannelCount(), ci});
 
         for (int i = 0; i < nInputs; ++i)
         {

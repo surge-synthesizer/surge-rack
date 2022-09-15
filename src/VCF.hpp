@@ -76,7 +76,7 @@ struct VCF : public modules::XTModule
         return VCF_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
-    modules::ModulationAssistant<VCF, 5, FREQUENCY, INPUT_L, n_mod_inputs, VCF_MOD_INPUT>
+    modules::ModulationAssistant<VCF, 5, FREQUENCY, n_mod_inputs, VCF_MOD_INPUT>
         modulationAssistant;
 
     std::array<int, sst::filters::num_filter_types> defaultSubtype;
@@ -107,6 +107,17 @@ struct VCF : public modules::XTModule
             configParam(VCF_MOD_PARAM_0 + i, -1, 1, 0);
         }
 
+
+        configInput(INPUT_L, "Left");
+        configInput(INPUT_R, "Right");
+        for (int m=0; m < n_mod_inputs; ++m)
+        {
+            auto s = std::string( "Modulation Signal " ) + std::to_string(m+1);
+            configInput(VCF_MOD_INPUT + m, s);
+        }
+        configOutput(OUTPUT_L, "Left");
+        configOutput(OUTPUT_R, "Right");
+
         setupSurge();
 
         for (auto &st : defaultSubtype)
@@ -126,6 +137,12 @@ struct VCF : public modules::XTModule
         if (paramId == IN_GAIN || paramId == OUT_GAIN)
             return true;
         return false;
+    }
+
+
+    inline int polyChannelCount()
+    {
+        return std::max({1, inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels()});
     }
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo

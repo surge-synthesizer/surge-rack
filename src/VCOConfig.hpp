@@ -49,6 +49,7 @@ template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
 }
 template <> int VCOConfig<ot_string>::rightMenuParamId() { return 0; }
 template <> constexpr bool VCOConfig<ot_string>::supportsAudioIn() { return true; }
+template <> std::string VCOConfig<ot_string>::retriggerLabel() { return "TRIG"; }
 
 template <> void VCOConfig<ot_string>::oscillatorSpecificSetup(VCO<ot_string> *m)
 {
@@ -275,6 +276,7 @@ template <> VCOConfig<ot_twist>::knobs_t VCOConfig<ot_twist>::getKnobs()
     };
 }
 template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }
+template <> std::string VCOConfig<ot_twist>::retriggerLabel() { return "TRIG"; }
 
 template <> VCOConfig<ot_twist>::lightOnTo_t VCOConfig<ot_twist>::getLightsOnKnobsTo()
 {
