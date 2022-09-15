@@ -43,6 +43,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelFXReverb2);
     p->addModel(modelFXFrequencyShifter);
     p->addModel(modelFXFlanger);
+    p->addModel(modelFXDelay);
 
 #if 0
     if (fxModels != nullptr)

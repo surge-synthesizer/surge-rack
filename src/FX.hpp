@@ -2,6 +2,7 @@
 #define SURGE_XT_RACK_FXHPP
 
 #include "SurgeXT.hpp"
+#include "dsp/Effect.h"
 #include "XTModule.hpp"
 #include "rack.hpp"
 #include <cstring>
@@ -13,6 +14,7 @@ template <int fxType> struct FXConfig
     static constexpr int extraInputs() { return 0; }
     static constexpr int specificParamCount() { return 0; }
     static constexpr int panelWidthInScrews() { return 12; }
+    static constexpr int usesSideband() { return false; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -32,6 +34,8 @@ template <int fxType> struct FX : modules::XTModule
     {
         INPUT_L,
         INPUT_R,
+        SIDEBAND_L,
+        SIDEBAND_R,
         INPUT_CLOCK,
         MOD_INPUT_0,
         INPUT_SPECIFIC_0 = MOD_INPUT_0 + n_mod_inputs,
@@ -54,6 +58,11 @@ template <int fxType> struct FX : modules::XTModule
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
+        for (int i=0; i<NUM_INPUTS; ++i)
+        {
+            configParam(i, 0, 1, 0);
+        }
+
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
         configInput(INPUT_CLOCK, "Clock/Tempo CV");
@@ -64,10 +73,101 @@ template <int fxType> struct FX : modules::XTModule
         }
         configOutput(OUTPUT_L, "Left (or Mono merged)");
         configOutput(OUTPUT_R, "Right");
+
+        setupSurge();
+    }
+
+    void setupSurge()
+    {
+        setupSurgeCommon(NUM_PARAMS, false);
+
+        fxstorage = &(storage->getPatch().fx[0]);
+        fxstorage->type.val.i = fxType;
+
+        surge_effect.reset(spawn_effect(fxType, storage.get(), &(storage->getPatch().fx[0]),
+                                        storage->getPatch().globaldata));
+        surge_effect->init();
+        surge_effect->init_ctrltypes();
+        surge_effect->init_default_values();
+
+        fxstorage->return_level.id = -1;
+        setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params - 1]));
+
+        std::fill(processedL, processedL + BLOCK_SIZE, 0);
+        std::fill(processedR, processedR + BLOCK_SIZE, 0);
     }
 
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
-    void process(const typename rack::Module::ProcessArgs &args) override {}
+
+    int bufferPos{0};
+    float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
+    float modulatorL alignas(16)[BLOCK_SIZE], modulatorR alignas(16)[BLOCK_SIZE];
+    float processedL alignas(16)[BLOCK_SIZE], processedR alignas(16)[BLOCK_SIZE];
+
+    void process(const typename rack::Module::ProcessArgs &args) override {
+        float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+        float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+
+        if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
+        {
+            bufferL[bufferPos] = inl;
+            bufferR[bufferPos] = inl;
+        }
+        else
+        {
+            bufferL[bufferPos] = inl;
+            bufferR[bufferPos] = inr;
+        }
+        bufferPos ++;
+
+        if constexpr (FXConfig<fxType>::usesSideband())
+        {
+           if (inputConnected(SIDEBAND_L) && !inputConnected(SIDEBAND_R))
+           {
+               float ml = inputs[SIDEBAND_L].getVoltageSum();
+               modulatorL[bufferPos] = ml;
+               modulatorR[bufferPos] = ml;
+           }
+           else
+           {
+               modulatorL[bufferPos] = inputs[SIDEBAND_L].getVoltageSum();;
+               modulatorR[bufferPos] = inputs[SIDEBAND_R].getVoltageSum();;
+           }
+       }
+
+        if (bufferPos >= BLOCK_SIZE)
+        {
+            std::memcpy(processedL, bufferL, BLOCK_SIZE * sizeof(float));
+            std::memcpy(processedR, bufferR, BLOCK_SIZE * sizeof(float));
+
+            if constexpr (FXConfig<fxType>::usesSideband())
+            {
+                std::memcpy(storage->audio_in_nonOS[0], modulatorL, BLOCK_SIZE * sizeof(float));
+                std::memcpy(storage->audio_in_nonOS[1], modulatorR, BLOCK_SIZE * sizeof(float));
+            }
+
+            copyGlobaldataSubset(storage_id_start, storage_id_end);
+            surge_effect->process_ringout(processedL, processedR, true);
+
+            bufferPos = 0;
+        }
+
+        float outl = processedL[bufferPos] * SURGE_TO_RACK_OSC_MUL;
+        float outr = processedR[bufferPos] * SURGE_TO_RACK_OSC_MUL;
+
+        if (outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected())
+        {
+            outputs[OUTPUT_L].setVoltage(0.5 * (outl + outr));
+        }
+        else
+        {
+            outputs[OUTPUT_L].setVoltage(outl);
+            outputs[OUTPUT_R].setVoltage(outr);
+        }
+    }
+
+    std::unique_ptr<Effect> surge_effect;
+    FxStorage *fxstorage{nullptr};
 };
 } // namespace sst::surgext_rack::fx
 #endif
