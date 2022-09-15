@@ -44,6 +44,7 @@ template <int oscType> struct VCOConfig
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processLightParameters(VCO<oscType> *) {}
     static void configureArbitrarySwitches(VCO<oscType> *);
+    static std::string retriggerLabel() { return "RESET";}
 
     /*
      * Wavetable Updates from the UI to the Processing Thread.
@@ -51,6 +52,7 @@ template <int oscType> struct VCOConfig
      * load em really
      */
     static constexpr int wavetableQueueSize() { return requiresWavetables() ? 32 : 1; }
+
 };
 
 template <int oscType> struct VCO : public modules::XTModule
@@ -96,7 +98,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
-    modules::ModulationAssistant<VCO<oscType>, n_osc_params + 1, PITCH_0,
+    modules::ModulationAssistant<VCO<oscType>, n_osc_params + 1,
         PITCH_CV, n_mod_inputs, OSC_MOD_INPUT> modAssist;
 
     VCO() : XTModule(), halfbandIN(6, true)
@@ -172,6 +174,16 @@ template <int oscType> struct VCO : public modules::XTModule
 
         halfbandIN.reset();
 
+        configInput(PITCH_CV, "V/Oct");
+        configInput(RETRIGGER, "Reset/Retrigger");
+        for (int m=0; m < n_mod_inputs; ++m)
+        {
+            auto s = std::string( "Modulation Signal " ) + std::to_string(m+1);
+            configInput(OSC_MOD_INPUT + m, s);
+        }
+        configOutput(OUTPUT_L, "Left (or Mono merged)");
+        configOutput(OUTPUT_R, "Right");
+
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
         modAssist.initialize(this);
     }
@@ -190,6 +202,11 @@ template <int oscType> struct VCO : public modules::XTModule
                 surge_osc[i]->~Oscillator();
             surge_osc[i] = nullptr;
         }
+    }
+
+    inline int polyChannelCount()
+    {
+        return std::max({1, inputs[PITCH_CV].getChannels(), inputs[RETRIGGER].getChannels()});
     }
 
     std::string getName() override
@@ -253,7 +270,7 @@ template <int oscType> struct VCO : public modules::XTModule
     int calcedModMatrix{calcModMatrixEvery};
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        int nChan = std::max(1, inputs[PITCH_CV].getChannels());
+        int nChan = polyChannelCount();
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
 
