@@ -133,6 +133,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
         nvgTextLetterSpacing(vg, tracking);
         nvgText(vg, box.size.x * 0.5, box.size.y, label.c_str(), nullptr);
 
+#define DEBUG_RECT 0
 #if DEBUG_RECT
         nvgBeginPath(vg);
         nvgStrokeColor(vg, nvgRGB(255, 0, 0));

@@ -9,10 +9,31 @@
 
 namespace sst::surgext_rack::fx
 {
+template <int fxType> struct FX;
+
 template <int fxType> struct FXConfig
 {
+    struct LayoutItem
+    {
+        // order matters a bit on this enum. knobs contiguous pls
+        enum Type { KNOB9, KNOB12, KNOB16, PORT, GROUP_LABEL, ERROR } type{ERROR};
+        std::string label{"ERR"};
+        int parId{-1};
+        float xcmm{-1}, ycmm{-1};
+        float spanmm{0}; // for group label only
+    };
+    typedef std::vector<LayoutItem> layout_t;
+    static layout_t getLayout() { return {}; }
+
+
     static constexpr int extraInputs() { return 0; }
+    static void configExtraInputs(FX<fxType> *M) {}
+    static void processExtraInputs(FX<fxType> *M) {}
+
     static constexpr int specificParamCount() { return 0; }
+    static void configSpecificParams(FX<fxType> *M) {}
+    static void processSpecificParams(FX<fxType> *M) {}
+
     static constexpr int panelWidthInScrews() { return 12; }
     static constexpr int usesSideband() { return false; }
 };
@@ -54,14 +75,26 @@ template <int fxType> struct FX : modules::XTModule
         NUM_LIGHTS
     };
 
+    modules::ModulationAssistant<FX<fxType>, n_fx_params, FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
+        modAssist;
+
     FX() : XTModule()
     {
+        setupSurge();
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        for (int i=0; i<NUM_INPUTS; ++i)
+        for (int i = 0; i < n_fx_params; ++i)
         {
-            configParam(i, 0, 1, 0);
+            configParam<modules::SurgeParameterParamQuantity>(FX_PARAM_0 + i, 0, 1,
+                                                              fxstorage->p[i].get_value_f01());
         }
+
+        for (int i = 0; i < n_fx_params * n_mod_inputs; ++i)
+        {
+            configParam(FX_MOD_PARAM_0 + i, -1, 1, 0);
+        }
+
+        FXConfig<fxType>::configSpecificParams(this);
 
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
@@ -71,10 +104,11 @@ template <int fxType> struct FX : modules::XTModule
             auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
             configInput(MOD_INPUT_0 + m, s);
         }
+        FXConfig<fxType>::configExtraInputs(this);
         configOutput(OUTPUT_L, "Left (or Mono merged)");
         configOutput(OUTPUT_R, "Right");
 
-        setupSurge();
+        modAssist.initialize(this);
     }
 
     void setupSurge()
@@ -84,17 +118,33 @@ template <int fxType> struct FX : modules::XTModule
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
-        surge_effect.reset(spawn_effect(fxType, storage.get(), &(storage->getPatch().fx[0]),
+        surge_effect.reset(spawn_effect(fxType, storage.get(), fxstorage,
                                         storage->getPatch().globaldata));
         surge_effect->init();
         surge_effect->init_ctrltypes();
         surge_effect->init_default_values();
 
+        // This is a micro-hack to stop ranges blowing up
         fxstorage->return_level.id = -1;
         setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params - 1]));
 
         std::fill(processedL, processedL + BLOCK_SIZE, 0);
         std::fill(processedR, processedR + BLOCK_SIZE, 0);
+    }
+
+    Parameter *surgeParameterForParamId(int paramId) override
+    {
+        if (paramId < FX_PARAM_0 || paramId >= FX_PARAM_0 + n_fx_params)
+            return nullptr;
+
+        return &fxstorage->p[paramId - FX_PARAM_0];
+    }
+
+
+    static int modulatorIndexFor(int baseParam, int modulator)
+    {
+        int offset = baseParam - FX_PARAM_0;
+        return FX_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
@@ -104,7 +154,8 @@ template <int fxType> struct FX : modules::XTModule
     float modulatorL alignas(16)[BLOCK_SIZE], modulatorR alignas(16)[BLOCK_SIZE];
     float processedL alignas(16)[BLOCK_SIZE], processedR alignas(16)[BLOCK_SIZE];
 
-    void process(const typename rack::Module::ProcessArgs &args) override {
+    void process(const typename rack::Module::ProcessArgs &args) override
+    {
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
@@ -118,25 +169,28 @@ template <int fxType> struct FX : modules::XTModule
             bufferL[bufferPos] = inl;
             bufferR[bufferPos] = inr;
         }
-        bufferPos ++;
+        bufferPos++;
 
         if constexpr (FXConfig<fxType>::usesSideband())
         {
-           if (inputConnected(SIDEBAND_L) && !inputConnected(SIDEBAND_R))
-           {
-               float ml = inputs[SIDEBAND_L].getVoltageSum();
-               modulatorL[bufferPos] = ml;
-               modulatorR[bufferPos] = ml;
-           }
-           else
-           {
-               modulatorL[bufferPos] = inputs[SIDEBAND_L].getVoltageSum();;
-               modulatorR[bufferPos] = inputs[SIDEBAND_R].getVoltageSum();;
-           }
-       }
+            if (inputConnected(SIDEBAND_L) && !inputConnected(SIDEBAND_R))
+            {
+                float ml = inputs[SIDEBAND_L].getVoltageSum();
+                modulatorL[bufferPos] = ml;
+                modulatorR[bufferPos] = ml;
+            }
+            else
+            {
+                modulatorL[bufferPos] = inputs[SIDEBAND_L].getVoltageSum();
+                modulatorR[bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
+            }
+        }
 
         if (bufferPos >= BLOCK_SIZE)
         {
+            modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
+
             std::memcpy(processedL, bufferL, BLOCK_SIZE * sizeof(float));
             std::memcpy(processedR, bufferR, BLOCK_SIZE * sizeof(float));
 
@@ -145,6 +199,13 @@ template <int fxType> struct FX : modules::XTModule
                 std::memcpy(storage->audio_in_nonOS[0], modulatorL, BLOCK_SIZE * sizeof(float));
                 std::memcpy(storage->audio_in_nonOS[1], modulatorR, BLOCK_SIZE * sizeof(float));
             }
+
+            for (int i = 0; i < n_fx_params; ++i)
+            {
+                fxstorage->p[i].set_value_f01(modAssist.values[i][0]);
+            }
+
+            FXConfig<fxType>::processExtraInputs(this);
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
             surge_effect->process_ringout(processedL, processedR, true);
@@ -166,6 +227,10 @@ template <int fxType> struct FX : modules::XTModule
         }
     }
 
+    int polyChannelCount()
+    {
+        return 1; // these arent' polyphonic fx
+    }
     std::unique_ptr<Effect> surge_effect;
     FxStorage *fxstorage{nullptr};
 };

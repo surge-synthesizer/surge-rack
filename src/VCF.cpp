@@ -10,7 +10,7 @@
 
 namespace sst::surgext_rack::vcf::ui
 {
-struct VCFWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
+struct VCFWidget : widgets::XTModuleWidget, widgets::GriddedPanelConstants
 {
     typedef vcf::VCF M;
     VCFWidget(M *module);

@@ -6,7 +6,8 @@
 
 namespace sst::surgext_rack::fx::ui
 {
-template <int fxType> struct FXWidget : public widgets::XTModuleWidget, widgets::VCOVCFConstants
+template <int fxType>
+struct FXWidget : public widgets::XTModuleWidget, widgets::GriddedPanelConstants
 {
     typedef FX<fxType> M;
     FXWidget(M *module);
@@ -28,6 +29,57 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
 
     auto bg = new widgets::Background(box.size, panelLabel, "fx", "BlankNoDisplay");
     addChild(bg);
+
+    for (const auto &lay : FXConfig<fxType>::getLayout())
+    {
+        switch (lay.type)
+        {
+        case FXConfig<fxType>::LayoutItem::KNOB9:
+        case FXConfig<fxType>::LayoutItem::KNOB12:
+        case FXConfig<fxType>::LayoutItem::KNOB16:
+        {
+            widgets::KnobN *knob{nullptr};
+            int diff = lay.type - FXConfig<fxType>::LayoutItem::KNOB9;
+            auto pos = rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm));
+            auto par = M::FX_PARAM_0 + lay.parId;
+            if (diff == 0)
+                knob = rack::createParamCentered<widgets::Knob9>(pos, module, par);
+            if (diff == 1)
+                knob = rack::createParamCentered<widgets::Knob12>(pos, module, par);
+            if (diff == 2)
+                knob = rack::createParamCentered<widgets::Knob16>(pos, module, par);
+            if (knob)
+            {
+                addChild(knob);
+                auto boxbl = rack::Vec(rack::mm2px(lay.xcmm - columnWidth_MM * 0.5),
+                                       knob->box.pos.y + knob->box.size.y);
+                auto lab = widgets::Label::createWithBaselineBox(
+                    boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 3.5)), lay.label);
+                addChild(lab);
+            }
+        }
+        break;
+        case FXConfig<fxType>::LayoutItem::PORT:
+        {
+            auto port = rack::createInputCentered<widgets::Port>(
+                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm)), module, lay.parId);
+            addChild(port);
+            auto boxbl = rack::Vec(rack::mm2px(lay.xcmm - columnWidth_MM * 0.5),
+                                   port->box.pos.y + port->box.size.y);
+            auto lab = widgets::Label::createWithBaselineBox(
+                boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 3.5)), lay.label);
+            addChild(lab);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+
+    for (int i = 0; i < M::n_mod_inputs; ++i)
+    {
+        addChild(makeLabel(2, i, std::string("MOD ") + std::to_string(i + 1)));
+    }
 
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
@@ -115,3 +167,4 @@ FXMODEL(fxt_reverb2, Reverb2);
 FXMODEL(fxt_freqshift, FrequencyShifter);
 FXMODEL(fxt_flanger, Flanger);
 FXMODEL(fxt_delay, Delay);
+FXMODEL(fxt_spring_reverb, SpringReverb);

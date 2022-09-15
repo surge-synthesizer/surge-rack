@@ -9,7 +9,7 @@
 namespace sst::surgext_rack::vco::ui
 {
 template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
-                        widgets::VCOVCFConstants
+                        widgets::GriddedPanelConstants
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
