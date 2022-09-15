@@ -1,0 +1,4 @@
+#ifndef SURGE_XT_RACK_FXCONFIGHPP
+#define SURGE_XT_RACK_FXCONFIGHPP
+
+#endif

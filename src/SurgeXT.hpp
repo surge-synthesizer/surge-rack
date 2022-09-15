@@ -25,6 +25,7 @@
 
 extern rack::Plugin *pluginInstance;
 
+// VCOs
 extern rack::Model *modelVCOClassic;
 extern rack::Model *modelVCOModern;
 extern rack::Model *modelVCOWavetable;
@@ -37,19 +38,9 @@ extern rack::Model *modelVCOAlias;
 extern rack::Model *modelVCOString;
 extern rack::Model *modelVCOTwist;
 
-extern rack::Model *modelSurgeClock;
-extern rack::Model *modelSurgeADSR;
-extern rack::Model *modelSurgeLFO;
-
-extern rack::Model *modelVCO;
-
-extern rack::Model *modelSurgeWTOSC;
-extern rack::Model *modelSurgeNoise;
-extern rack::Model *modelSurgeWaveShaper;
-
-extern rack::Model *modelSurgePatchPlayer;
-
 extern rack::Model *modelSurgeVCF;
-extern rack::Model *modelSurgeBiquad;
 
-extern int addFX(rack::Model *, int type);
+// FX
+extern rack::Model *modelFXReverb2;
+extern rack::Model *modelFXFrequencyShifter;
+extern rack::Model *modelFXFlanger;

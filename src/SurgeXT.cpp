@@ -40,6 +40,10 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     // Add the ported ones
     p->addModel(modelSurgeVCF);
 
+    p->addModel(modelFXReverb2);
+    p->addModel(modelFXFrequencyShifter);
+    p->addModel(modelFXFlanger);
+
 #if 0
     if (fxModels != nullptr)
         for (auto i = 0; i < n_fx_types; ++i)

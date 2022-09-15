@@ -18,6 +18,7 @@ struct VCFWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
     void moduleBackground(NVGcontext *vg) {}
 
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 5> overlays;
+    std::array<widgets::KnobN *, VCF::n_vcf_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
@@ -506,8 +507,8 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
 VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
 
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "FILTER", "vco", "BlankVCO");
     addChild(bg);
 
@@ -560,6 +561,7 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
                                                                  module, pid);
         }
         addParam(baseKnob);
+        underKnobs[idx] = baseKnob;
         for (int m = 0; m < M::n_mod_inputs; ++m)
         {
             auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
@@ -610,6 +612,15 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
                         ob[toggleIdx]->setVisible(true);
                         ob[toggleIdx]->bdw->dirty = true;
                     }
+                for (const auto &uk : underKnobs)
+                    if (uk)
+                        uk->setIsModEditing(true);
+            }
+            else
+            {
+                for (const auto &uk : underKnobs)
+                    if (uk)
+                        uk->setIsModEditing(false);
             }
         };
 

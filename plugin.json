@@ -118,6 +118,32 @@
         "VCO",
         "Polyphonic"
       ]
+    },
+    {
+      "slug": "SurgeXTFXFlanger",
+      "name": "SXT Flanger",
+      "description": "The Surge XT Flanger",
+      "tags": [
+        "FX",
+        "Flanger"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXReverb2",
+      "name": "SXT Reverb2",
+      "description": "The Surge XT Reverb2",
+      "tags": [
+        "FX",
+        "Reverb"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXFrequencyShifter",
+      "name": "SXT Frequency Shifter",
+      "description": "The Surge XT FrequencyShifter",
+      "tags": [
+        "FX"
+      ]
     }
   ]
 }
