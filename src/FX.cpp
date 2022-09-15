@@ -114,3 +114,4 @@ namespace fxui = sst::surgext_rack::fx::ui;
 FXMODEL(fxt_reverb2, Reverb2);
 FXMODEL(fxt_freqshift, FrequencyShifter);
 FXMODEL(fxt_flanger, Flanger);
+FXMODEL(fxt_delay, Delay);
