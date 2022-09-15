@@ -153,6 +153,15 @@
         "FX",
         "Delay"
       ]
+    },
+    {
+      "slug": "SurgeXTFXSpringReverb",
+      "name": "SXT Spring Reverb",
+      "description": "The Surge XT Spring Reverb",
+      "tags": [
+        "FX",
+        "Reverb"
+      ]
     }
   ]
 }

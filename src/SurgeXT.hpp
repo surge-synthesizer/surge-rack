@@ -45,3 +45,4 @@ extern rack::Model *modelFXReverb2;
 extern rack::Model *modelFXFrequencyShifter;
 extern rack::Model *modelFXFlanger;
 extern rack::Model *modelFXDelay;
+extern rack::Model *modelFXSpringReverb;

@@ -21,7 +21,7 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 };
 
-struct VCOVCFConstants
+struct GriddedPanelConstants
 {
     float plotH_MM = 36;
     float plotW_MM = 51;
