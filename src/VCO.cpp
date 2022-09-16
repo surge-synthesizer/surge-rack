@@ -716,8 +716,56 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         {
             nvgSave(vg);
             nvgScissor(vg, 0, 0.5, box.size.x, box.size.y-1);
-            nvgBeginPath(vg);
+
+            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+            auto gcp = col;
+            gcp.a = 0.5;
+            auto gcn = col;
+            gcn.a = 0.0;
+
             bool first{true};
+
+            nvgBeginPath(vg);
+            for (const auto &[x, y] : oscPath)
+            {
+                auto uy = std::min(y * 1.0, box.size.y * 0.5);
+                if (first)
+                {
+                    nvgMoveTo(vg, x, uy);
+                }
+                else
+                {
+                    nvgLineTo(vg, x, uy);
+                }
+                first = false;
+            }
+            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+            nvgLineTo(vg, 0, box.size.y * 0.5);
+            nvgFillPaint(vg, nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp, gcn));
+            nvgFill(vg);
+
+            nvgBeginPath(vg);
+            first = true;
+            for (const auto &[x, y] : oscPath)
+            {
+                auto uy = std::max(y * 1.0, box.size.y * 0.5);
+                if (first)
+                {
+                    nvgMoveTo(vg, x, uy);
+                }
+                else
+                {
+                    nvgLineTo(vg, x, uy);
+                }
+                first = false;
+            }
+            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+            nvgLineTo(vg, 0, box.size.y * 0.5);
+            nvgFillPaint(vg, nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn, gcp));
+            nvgFill(vg);
+
+            nvgBeginPath(vg);
+            first = true;
             for (const auto &[x, y] : oscPath)
             {
                 if (first)
@@ -730,7 +778,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 }
                 first = false;
             }
-            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+
             nvgStrokeColor(vg, col);
             nvgStrokeWidth(vg, 1.25);
             nvgStroke(vg);
