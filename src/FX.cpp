@@ -20,6 +20,14 @@ struct FXWidget : public widgets::XTModuleWidget, widgets::GriddedPanelConstants
 template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
 {
     setModule(module);
+
+    for (auto &uk : underKnobs)
+        uk = nullptr;
+
+    for (auto &ob : overlays)
+        for (auto &o : ob)
+            o = nullptr;
+
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * FXConfig<fxType>::panelWidthInScrews(),
                          rack::app::RACK_GRID_HEIGHT);
 
@@ -56,6 +64,20 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
                 auto lab = widgets::Label::createWithBaselineBox(
                     boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 3.5)), lay.label);
                 addChild(lab);
+
+                underKnobs[lay.parId] = knob;
+
+                for (int m = 0; m < M::n_mod_inputs; ++m)
+                {
+                    auto radius = rack::mm2px(knob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
+                    int id = M::modulatorIndexFor(lay.parId + M::FX_PARAM_0, m);
+                    auto *k = widgets::ModRingKnob::createCentered(pos, radius, module, id);
+                    overlays[lay.parId][m] = k;
+                    k->setVisible(false);
+                    k->underlyerParamWidget = knob;
+                    knob->modRings.insert(k);
+                    addChild(k);
+                }
             }
         }
         break;
@@ -90,9 +112,6 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
         toggles[i] = k;
         k->onToggle = [this, toggleIdx = i](bool isOn) {
-            std::cout << __FILE__ << ":" << __LINE__ << " SET UP THIS TOGGLE WITH THE IFDEF"
-                      << std::endl;
-#if 0
             for (const auto &t : toggles)
                 if (t)
                     t->setState(false);
@@ -119,7 +138,6 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
                     if (uk)
                         uk->setIsModEditing(false);
             }
-#endif
         };
 
         addChild(k);

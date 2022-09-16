@@ -144,7 +144,15 @@ template <int fxType> struct FX : modules::XTModule
     static int modulatorIndexFor(int baseParam, int modulator)
     {
         int offset = baseParam - FX_PARAM_0;
-        return FX_PARAM_0 + offset * n_mod_inputs + modulator;
+        return FX_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
+    }
+
+    float modulationDisplayValue(int paramId) override
+    {
+        int idx = paramId - FX_PARAM_0;
+        if (idx < 0 || idx >= n_fx_params)
+            return 0;
+        return modAssist.animValues[idx];
     }
 
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
