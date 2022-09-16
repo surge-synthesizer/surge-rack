@@ -43,6 +43,23 @@ template <> void FXConfig<fxt_spring_reverb>::processExtraInputs(FX<fxt_spring_r
     }
 }
 
+// Gross hack so I can test
+template <> FXConfig<fxt_delay>::layout_t FXConfig<fxt_delay>::getLayout()
+{
+    // clang-format off
+    return {
+        {LayoutItem::KNOB16, "LEFT", 0, 12, 28},
+        {LayoutItem::KNOB16, "RIGHT", 1, 32, 28},
+        {LayoutItem::KNOB9, "FBACK", 2, 51.48, 20},
+        {LayoutItem::KNOB9, "XFEED", 3, 51.48, 36},
+
+        {LayoutItem::KNOB9, "WIDTH", 11, 37.48, 65},
+        {LayoutItem::KNOB9, "MIX", 10, 51.48, 65},
+    };
+
+    // clang-format on
+}
+
 #if 0
 // Top Row is Grouped
 group header span 4 "reverb"
