@@ -463,33 +463,56 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
         nvgSave(vg);
         nvgScissor(vg, 0, 0.5, box.size.x, box.size.y - 1);
 
-        int curr = 0;
-        nvgBeginPath(vg);
-        bool first{true};
-        while (curr < sz)
-        {
-            auto f = freq[curr];
-            auto r = resp[curr];
-
-            if (f >= lowFreq && f <= highFreq)
+        auto makePath = [&]() -> std::pair<float, float> {
+            int curr = 0;
+            nvgBeginPath(vg);
+            bool first{true};
+            float firstf = 0, lastf = 0;
+            while (curr < sz)
             {
-                float fscale = freqToX(f, box.size.x);
-                float yscale = dbToY(r, box.size.y);
+                auto f = freq[curr];
+                auto r = resp[curr];
 
-                if (first)
+                if (f >= lowFreq && f <= highFreq)
                 {
-                    nvgMoveTo(vg, fscale, yscale);
+                    float fscale = freqToX(f, box.size.x);
+                    float yscale = dbToY(r, box.size.y);
+
+                    if (first)
+                    {
+                        nvgMoveTo(vg, fscale, yscale);
+                        firstf = fscale;
+                    }
+                    else
+                    {
+                        lastf = fscale;
+                        nvgLineTo(vg, fscale, yscale);
+                    }
+                    first = false;
                 }
-                else
-                {
-                    nvgLineTo(vg, fscale, yscale);
-                }
-                first = false;
+
+                ++curr;
             }
+            return {firstf, lastf};
+        };
 
-            ++curr;
-        }
         auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+
+        auto ff = makePath();
+        nvgLineTo(vg, ff.second, box.size.y);
+        nvgLineTo(vg, ff.first, box.size.y);
+        auto gsp = dbToY(6, box.size.y);
+        auto gsn = box.size.y;
+        auto gcp = col;
+        gcp.a = 0.5;
+        auto gcn = col;
+        gcn.a = 0.0;
+        auto gr = nvgLinearGradient(vg, 0, gsp, 0, gsn, gcp, gcn);
+        // nvgFillColor(vg, nvgRGBA(255, 0, 0, 80));
+        nvgFillPaint(vg, gr);
+        nvgFill(vg);
+
+        makePath();
         nvgStrokeColor(vg, col);
         nvgStrokeWidth(vg, 1.25);
         nvgStroke(vg);
