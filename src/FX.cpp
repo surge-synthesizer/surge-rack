@@ -7,7 +7,7 @@
 namespace sst::surgext_rack::fx::ui
 {
 template <int fxType>
-struct FXWidget : public widgets::XTModuleWidget, widgets::GriddedPanelConstants
+struct FXWidget : public widgets::XTModuleWidget, widgets::StandardWidthWithModulationConstants
 {
     typedef FX<fxType> M;
     FXWidget(M *module);
@@ -15,6 +15,25 @@ struct FXWidget : public widgets::XTModuleWidget, widgets::GriddedPanelConstants
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, n_fx_params> overlays;
     std::array<widgets::KnobN *, n_fx_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    /*
+     * @baconpaul some figures that might help you with FX layout (more to come later)
+
+AS you know, on the VCO's there was a 16mm vertical offset between knob rows.
+
+On the FX, where there is no group title on a row, the offset will be the same. But if there is a group title on a row, then the offset to the next row of regular sized knobs will be 20mm instead
+
+We will work up from the bottom, so all the 2 lower rows of jacks/mods and the first row of knobs will be in exactly the same place as on the VCOs, and we work the spacing up from there.
+In other words, having group titles on a row adds 4mm to the vertical offset
+spiritlevel — Yesterday at 5:09 PM
+So:
+16mm up to the next reg. knob row if current knob row has no group titles
+20mm up to next reg. knob row if current knob row has group titles
+Add an extra 1.5mm if next row up is medium knobs
+Add an extra 3mm if next row up is large knobs
+
+This should work for all FX - hope that makes sense!
+     */
 };
 
 template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
@@ -100,13 +119,13 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
 
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
-        addChild(makeLabel(2, i, std::string("MOD ") + std::to_string(i + 1)));
+        addChild(makeModLabel(i));
     }
 
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
         auto uxp = columnCenters_MM[i];
-        auto uyp = rowCenters_MM[2];
+        auto uyp = modulationRowCenters_MM[0];
 
         auto *k =
             rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
@@ -141,7 +160,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         };
 
         addChild(k);
-        uyp = rowCenters_MM[3];
+        uyp = modulationRowCenters_MM[1];
         addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module,
                                                           M::MOD_INPUT_0 + i));
     }
@@ -149,7 +168,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
     int col = 0;
     for (auto p : {M::INPUT_L, M::INPUT_R})
     {
-        auto yp = rowCenters_MM[4];
+        auto yp = inputRowCenter_MM;
         auto xp = columnCenters_MM[col];
         addInput(
             rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
@@ -158,7 +177,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
 
     for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
     {
-        auto yp = rowCenters_MM[4];
+        auto yp = inputRowCenter_MM;
         auto xp = columnCenters_MM[col];
         addOutput(
             rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
@@ -168,8 +187,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
     col = 0;
     for (const std::string &s : {"LEFT", "RIGHT", "LEFT", "RIGHT"})
     {
-        addChild(makeLabel(
-            3, col, s, (col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT)));
+        addChild(makeIORowLabel(col, s, col < 2));
         col++;
     }
 }

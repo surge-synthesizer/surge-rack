@@ -10,7 +10,7 @@
 
 namespace sst::surgext_rack::vcf::ui
 {
-struct VCFWidget : widgets::XTModuleWidget, widgets::GriddedPanelConstants
+struct VCFWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
 {
     typedef vcf::VCF M;
     VCFWidget(M *module);
@@ -604,7 +604,7 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
     int row{0}, col{0};
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
-        addChild(makeLabel(2, i, std::string("MOD ") + std::to_string(i + 1)));
+        addChild(makeModLabel(i));
     }
 
     col = 0;
@@ -677,8 +677,7 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
     col = 0;
     for (const std::string &s : {"LEFT", "RIGHT", "LEFT", "RIGHT"})
     {
-        addChild(makeLabel(
-            3, col, s, (col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT)));
+        addChild(makeIORowLabel(col, s, col < 2));
         col++;
     }
 }

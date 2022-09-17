@@ -269,7 +269,7 @@ template <> VCOConfig<ot_twist>::knobs_t VCOConfig<ot_twist>::getKnobs()
         {KnobDef::BLANK},
         {M::OSC_CTRL_PARAM_0 + 1, "HARM"},
         {M::OSC_CTRL_PARAM_0 + 2, "TIMBRE"},
-        {M::OSC_CTRL_PARAM_0 + 5, "RESPONSE"},
+        {M::OSC_CTRL_PARAM_0 + 5, "RESP"},
         {M::OSC_CTRL_PARAM_0 + 6, "DECAY"},
         {M::OSC_CTRL_PARAM_0 + 3, "MORPH"},
         {M::OSC_CTRL_PARAM_0 + 4, "MIX"},
