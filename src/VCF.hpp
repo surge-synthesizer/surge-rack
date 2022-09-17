@@ -386,7 +386,7 @@ struct VCF : public modules::XTModule
                 for (int p=0; p<n_vcf_params; ++p)
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
-                auto in = _mm_loadu_ps(tmpVal + (i << 2));
+                auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
                 auto pre = _mm_mul_ps(in, mods[IN_GAIN - FREQUENCY]);
                 auto filt = filterPtr(&qfus[i], pre);
 
@@ -396,6 +396,7 @@ struct VCF : public modules::XTModule
                 auto fin =
                     _mm_add_ps(_mm_mul_ps(mods[MIX - FREQUENCY], post), _mm_mul_ps(omm, in));
 
+                fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(tmpValOut + (i << 2), fin);
             }
 
@@ -420,7 +421,7 @@ struct VCF : public modules::XTModule
 
             for (int i = 0; i < nSIMDSlots; ++i)
             {
-                auto in = _mm_loadu_ps(iv + (i << 2));
+                auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
 
                 auto pre = _mm_mul_ps(in, mvsse[IN_GAIN - FREQUENCY][i]);
                 auto filt = filterPtr(&qfus[i], pre);
@@ -430,6 +431,7 @@ struct VCF : public modules::XTModule
 
                 auto fin =
                     _mm_add_ps(_mm_mul_ps(mvsse[MIX - FREQUENCY][i], post), _mm_mul_ps(omm, in));
+                fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(ov + (i << 2), fin);
             }
         }
