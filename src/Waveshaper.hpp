@@ -2,52 +2,48 @@
 // Created by Paul Walker on 8/29/22.
 //
 
-#ifndef SURGE_RACK_SURGEVCF_HPP
-#define SURGE_RACK_SURGEVCF_HPP
+#ifndef SURGE_RACK_SURGEWAVESHAPER_HPP
+#define SURGE_RACK_SURGEWAVESHAPER_HPP
 
 #include "SurgeXT.hpp"
 #include "XTModule.hpp"
 #include "rack.hpp"
 #include <cstring>
-#include "DebugHelpers.h"
 #include "globals.h"
+#include <sst/waveshapers.h>
 
-namespace sst::surgext_rack::vcf
+namespace sst::surgext_rack::waveshaper
 {
-struct VCFTypeParamQuanity : rack::ParamQuantity
+struct WaveshaperTypeParamQuanity : rack::ParamQuantity
 {
-    std::string getLabel() override { return "Filter Model"; }
+    std::string getLabel() override { return "Waveshaper Model"; }
     std::string getDisplayValueString() override
     {
         int val = (int)std::round(getValue());
-        return sst::filters::filter_type_names[val];
+        return sst::waveshapers::wst_names[val];
     }
 };
 
-struct VCFSubTypeParamQuanity : rack::ParamQuantity
+struct Waveshaper : public modules::XTModule
 {
-    std::string getLabel() override { return "Filter SubType"; }
-    std::string getDisplayValueString() override;
-};
-
-struct VCF : public modules::XTModule
-{
-    static constexpr int n_vcf_params{5};
+    static constexpr int n_wshp_params{5};
     static constexpr int n_mod_inputs{4};
     static constexpr int n_arbitrary_switches{4};
 
     enum ParamIds
     {
-        FREQUENCY,
-        RESONANCE,
-        IN_GAIN,
-        MIX,
+        DRIVE,
+        BIAS,
         OUT_GAIN,
+        LOCUT,
+        HICUT,
 
-        VCF_MOD_PARAM_0,
+        WSHP_MOD_PARAM_0,
 
-        VCF_TYPE = VCF_MOD_PARAM_0 + n_vcf_params * n_mod_inputs,
-        VCF_SUBTYPE,
+        WSHP_TYPE = WSHP_MOD_PARAM_0 + n_wshp_params * n_mod_inputs,
+        LOCUT_ENABLED,
+        HICUT_ENABLED,
+
         NUM_PARAMS
     };
     enum InputIds
@@ -55,8 +51,8 @@ struct VCF : public modules::XTModule
         INPUT_L,
         INPUT_R,
 
-        VCF_MOD_INPUT,
-        NUM_INPUTS = VCF_MOD_INPUT + n_mod_inputs,
+        WSHP_MOD_INPUT,
+        NUM_INPUTS = WSHP_MOD_INPUT + n_mod_inputs,
 
     };
     enum OutputIds
@@ -72,73 +68,59 @@ struct VCF : public modules::XTModule
 
     static int modulatorIndexFor(int baseParam, int modulator)
     {
-        int offset = baseParam - FREQUENCY;
-        return VCF_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
+        int offset = baseParam - DRIVE;
+        return WSHP_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
-    modules::ModulationAssistant<VCF, 5, FREQUENCY, n_mod_inputs, VCF_MOD_INPUT>
+    modules::ModulationAssistant<Waveshaper, 5, DRIVE, n_mod_inputs, WSHP_MOD_INPUT>
         modulationAssistant;
 
-    std::array<int, sst::filters::num_filter_types> defaultSubtype;
-
-    VCF() : XTModule()
+    Waveshaper() : XTModule()
     {
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         // FIXME attach formatters here
-        configParam<modules::MidiNoteParamQuantity<69>>(FREQUENCY, -60, 70, 0);
-        configParam(RESONANCE, 0, 1, sqrt(2) * 0.5, "Resonance", "%", 0.f, 100.f);
-        configParam<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1);
-        configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
+        configParam<modules::DecibelParamQuantity>(DRIVE, 0, 2, 1); // UNITS
+        configParam(BIAS, -1, 1, 0);
         configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1);
+        configParam(LOCUT, 0, 1, 0);
+        configParam(HICUT, 0, 1, 1);
+        configParam(LOCUT_ENABLED, 0, 1, 0);
+        configParam(HICUT_ENABLED, 0, 1, 0);
 
-        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types,
-                                         sst::filters::fut_obxd_4pole);
+        configParam<WaveshaperTypeParamQuanity>(WSHP_TYPE, 0,
+                                                (int)sst::waveshapers::WaveshaperType::n_ws_types,
+                                                (int)sst::waveshapers::WaveshaperType::wst_ojd);
 
-        int mfst = 0;
-        for (auto fc : sst::filters::fut_subcount)
-            mfst = std::max(mfst, fc);
-
-        configParam<VCFSubTypeParamQuanity>(VCF_SUBTYPE, 0, mfst, 3);
-
-        for (int i = 0; i < n_vcf_params * n_mod_inputs; ++i)
+        for (int i = 0; i < n_wshp_params * n_mod_inputs; ++i)
         {
-            configParam(VCF_MOD_PARAM_0 + i, -1, 1, 0);
+            configParam(WSHP_MOD_PARAM_0 + i, -1, 1, 0);
         }
-
 
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
-        for (int m=0; m < n_mod_inputs; ++m)
+        for (int m = 0; m < n_mod_inputs; ++m)
         {
-            auto s = std::string( "Modulation Signal " ) + std::to_string(m+1);
-            configInput(VCF_MOD_INPUT + m, s);
+            auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
+            configInput(WSHP_MOD_INPUT + m, s);
         }
         configOutput(OUTPUT_L, "Left");
         configOutput(OUTPUT_R, "Right");
 
         setupSurge();
 
-        for (auto &st : defaultSubtype)
-            st = 0;
-        defaultSubtype[sst::filters::fut_obxd_4pole] = 3;
-        defaultSubtype[sst::filters::fut_lpmoog] = 3;
-        defaultSubtype[sst::filters::fut_comb_pos] = 1;
-        defaultSubtype[sst::filters::fut_comb_neg] = 1;
-
         modulationAssistant.initialize(this);
     }
 
-    std::string getName() override { return "VCF"; }
+    std::string getName() override { return "WSHP"; }
 
     bool isBipolar(int paramId) override
     {
-        if (paramId == IN_GAIN || paramId == OUT_GAIN)
+        if (paramId == DRIVE || paramId == BIAS || paramId == OUT_GAIN)
             return true;
         return false;
     }
-
 
     inline int polyChannelCount()
     {
@@ -159,37 +141,39 @@ struct VCF : public modules::XTModule
 
         for (auto i = 0; i < MAX_POLY; ++i)
             coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
-        resetFilterRegisters();
+        resetWaveshaperRegisters();
     }
 
     void moduleSpecificSampleRateChange() override
     {
         for (auto i = 0; i < MAX_POLY; ++i)
             coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
-        resetFilterRegisters();
+        resetWaveshaperRegisters();
     }
 
-    void resetFilterRegisters()
+    void resetWaveshaperRegisters()
     {
-        for (auto i = 0; i < MAX_POLY; ++i)
-            coefMaker[i].Reset();
-        for (auto c = 0; c < nQFUs; ++c)
+        auto wstype = (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
+
+        float R[4];
+
+        initializeWaveshaperRegister(wstype, R);
+
+        for (int q=0; q<nQFUs; ++q)
         {
-            std::fill(qfus[c].R, &qfus[c].R[sst::filters::n_filter_registers], _mm_setzero_ps());
-            std::fill(qfus[c].C, &qfus[c].C[sst::filters::n_cm_coeffs], _mm_setzero_ps());
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
             {
-                qfus[c].WP[i] = 0;
-                qfus[c].active[i] = 0xFFFFFFFF;
-                qfus[c].DB[i] = &(delayBuffer[c][i][0]);
+                wss[q].R[i] = _mm_set1_ps(R[i]);
             }
+
+            wss[q].init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
         }
     }
 
     int processPosition;
     bool stereoStack{false};
     int nVoices{0}, nSIMDSlots{0};
-    int qfuIndexForVoice[MAX_POLY << 1][2]; // L-R Voice, {QFU, SIMD Slot}
+    int qfuIndexForVoice[MAX_POLY << 1][2];  // L-R Voice, {QFU, SIMD Slot}
     int voiceIndexForPolyPos[MAX_POLY << 1]; // only used in stereo mode
 
     int lastPolyL{-2}, lastPolyR{-2};
@@ -240,7 +224,7 @@ struct VCF : public modules::XTModule
             nSIMDSlots = (nVoices - 1) / 4 + 1;
 
             int idx = 0;
-            for (int l=0; l<lastPolyL; ++l)
+            for (int l = 0; l < lastPolyL; ++l)
             {
                 auto qid = idx >> 2;
                 auto qslt = idx % 4;
@@ -248,55 +232,69 @@ struct VCF : public modules::XTModule
                 qfuIndexForVoice[idx][1] = qslt;
                 voiceIndexForPolyPos[idx] = l;
 
-                idx ++;
+                idx++;
             }
-            for (int r=0; r<lastPolyR; ++r)
+            for (int r = 0; r < lastPolyR; ++r)
             {
                 auto qid = idx >> 2;
                 auto qslt = idx % 4;
                 qfuIndexForVoice[idx][0] = qid;
                 qfuIndexForVoice[idx][1] = qslt;
                 voiceIndexForPolyPos[idx] = r;
-                idx ++;
+                idx++;
             }
         }
 
         // reset all filters
-        resetFilterRegisters();
+        resetWaveshaperRegisters();
     }
 
-    sst::filters::FilterType lastType = sst::filters::FilterType::fut_none;
-    sst::filters::FilterSubType lastSubType = sst::filters::FilterSubType::st_Standard;
-    sst::filters::FilterUnitQFPtr filterPtr{nullptr};
+    sst::waveshapers::WaveshaperType lastType = sst::waveshapers::WaveshaperType::wst_none;
+    sst::filters::FilterUnitQFPtr filterPtrLo{nullptr};
+    sst::filters::FilterUnitQFPtr filterPtrHi{nullptr};
+    sst::waveshapers::QuadWaveshaperPtr wsPtr{nullptr};
+    sst::waveshapers::QuadWaveshaperState wss[nQFUs];
 
-    static __m128 dupInToOut(sst::filters::QuadFilterUnitState *__restrict, __m128 in)
+
+    static __m128 filterDupInToOut(sst::filters::QuadFilterUnitState *__restrict, __m128 in)
     {
         return in;
     }
 
+
+    static __m128 wsDupInToOut(sst::waveshapers::QuadWaveshaperState *__restrict, __m128 in, __m128 drive)
+    {
+        return in;
+    }
+
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        auto ftype = (sst::filters::FilterType)(int)(std::round(params[VCF_TYPE].getValue()));
-        auto fsubtype =
-            (sst::filters::FilterSubType)(int)(std::round(params[VCF_SUBTYPE].getValue()));
+        auto wstype = (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
 
         if (processPosition >= BLOCK_SIZE)
         {
             modulationAssistant.setupMatrix(this);
             modulationAssistant.updateValues(this);
 
-            if (ftype != lastType || fsubtype != lastSubType)
+            if (wstype != lastType)
             {
-                resetFilterRegisters();
+                resetWaveshaperRegisters();
             }
-            lastType = ftype;
-            lastSubType = fsubtype;
-            defaultSubtype[lastType] = lastSubType;
+            lastType = wstype;
+            wsPtr = sst::waveshapers::GetQuadWaveshaper(wstype);
+            if (!wsPtr)
+            {
+                wsPtr = wsDupInToOut;
+            }
+
+#if 0
             filterPtr = sst::filters::GetQFPtrFilterUnit(ftype, fsubtype);
             if (!filterPtr)
             {
                 filterPtr = dupInToOut;
             }
+#endif
 
             int thisPolyL{-1}, thisPolyR{-1};
             if (inputs[INPUT_L].isConnected())
@@ -319,6 +317,7 @@ struct VCF : public modules::XTModule
             outputs[OUTPUT_L].setChannels(std::max(1, thisPolyL));
             outputs[OUTPUT_R].setChannels(std::max(1, thisPolyR));
 
+#if 0
             bool calculated[MAX_POLY];
             std::fill(calculated, calculated + MAX_POLY, false);
 
@@ -344,6 +343,7 @@ struct VCF : public modules::XTModule
                 }
                 coefMaker[pv].updateState(qfus[qf], qp);
             }
+#endif
 
             processPosition = 0;
         }
@@ -371,31 +371,25 @@ struct VCF : public modules::XTModule
 
             for (int i = 0; i < nSIMDSlots; ++i)
             {
-                float modsRaw alignas(16)[n_vcf_params][4];
-                __m128 mods[n_vcf_params];
+                float modsRaw alignas(16)[n_wshp_params][4];
+                __m128 mods[n_wshp_params];
                 int vidx = i << 2;
                 for (int v = 0; v < 4; ++v)
                 {
                     auto vc = voiceIndexForPolyPos[v + vidx];
-                    for (int p=0; p<n_vcf_params; ++p)
+                    for (int p=0; p< n_wshp_params; ++p)
                     {
                         // std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc << "]" << std::endl;
                         modsRaw[p][v] = modulationAssistant.values[p][vc];
                     }
                 }
-                for (int p=0; p<n_vcf_params; ++p)
+                for (int p=0; p< n_wshp_params; ++p)
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
                 auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
-                auto pre = _mm_mul_ps(in, mods[IN_GAIN - FREQUENCY]);
-                auto filt = filterPtr(&qfus[i], pre);
-
-                auto post = _mm_mul_ps(filt, mods[OUT_GAIN - FREQUENCY]);
-                auto omm = _mm_sub_ps(_mm_set1_ps(1.f), mods[MIX - FREQUENCY]);
-
-                auto fin =
-                    _mm_add_ps(_mm_mul_ps(mods[MIX - FREQUENCY], post), _mm_mul_ps(omm, in));
-
+                in = _mm_add_ps(in, mods[BIAS - DRIVE]);
+                auto fin = wsPtr(&wss[i], in, mods[0 /* DRIVE - DRIVE */]);
+                fin = _mm_mul_ps(fin, mods[OUT_GAIN - DRIVE]);
                 fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(tmpValOut + (i << 2), fin);
             }
@@ -422,15 +416,9 @@ struct VCF : public modules::XTModule
             for (int i = 0; i < nSIMDSlots; ++i)
             {
                 auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
-
-                auto pre = _mm_mul_ps(in, mvsse[IN_GAIN - FREQUENCY][i]);
-                auto filt = filterPtr(&qfus[i], pre);
-
-                auto post = _mm_mul_ps(filt, mvsse[OUT_GAIN - FREQUENCY][i]);
-                auto omm = _mm_sub_ps(_mm_set1_ps(1.f), mvsse[MIX - FREQUENCY][i]);
-
-                auto fin =
-                    _mm_add_ps(_mm_mul_ps(mvsse[MIX - FREQUENCY][i], post), _mm_mul_ps(omm, in));
+                in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
+                auto fin = wsPtr(&wss[i], in, mvsse[0 /* DRIVE - DRIVE */][i]);
+                fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);
                 fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(ov + (i << 2), fin);
             }
@@ -441,105 +429,13 @@ struct VCF : public modules::XTModule
 
     float modulationDisplayValue(int paramId) override
     {
-        int idx = paramId - FREQUENCY;
-        if (idx < 0 || idx >= n_vcf_params)
+        int idx = paramId - DRIVE;
+        if (idx < 0 || idx >= n_wshp_params)
             return 0;
         return modulationAssistant.animValues[idx];
     }
-
-    static std::string subtypeLabel(int type, int subtype)
-    {
-        using sst::filters::FilterType;
-        int i = subtype;
-        const auto fType = (FilterType)type;
-        if (sst::filters::fut_subcount[type] == 0)
-        {
-            return "None";
-        }
-        else
-        {
-            switch (fType)
-            {
-            case FilterType::fut_lpmoog:
-            case FilterType::fut_diode:
-                return sst::filters::fut_ldr_subtypes[i];
-                break;
-            case FilterType::fut_notch12:
-            case FilterType::fut_notch24:
-            case FilterType::fut_apf:
-                return sst::filters::fut_notch_subtypes[i];
-                break;
-            case FilterType::fut_comb_pos:
-            case FilterType::fut_comb_neg:
-                return sst::filters::fut_comb_subtypes[i];
-                break;
-            case FilterType::fut_vintageladder:
-                return sst::filters::fut_vintageladder_subtypes[i];
-                break;
-            case FilterType::fut_obxd_2pole_lp:
-            case FilterType::fut_obxd_2pole_hp:
-            case FilterType::fut_obxd_2pole_n:
-            case FilterType::fut_obxd_2pole_bp:
-                return sst::filters::fut_obxd_2p_subtypes[i];
-                break;
-            case FilterType::fut_obxd_4pole:
-                return sst::filters::fut_obxd_4p_subtypes[i];
-                break;
-            case FilterType::fut_k35_lp:
-            case FilterType::fut_k35_hp:
-                return sst::filters::fut_k35_subtypes[i];
-                break;
-            case FilterType::fut_cutoffwarp_lp:
-            case FilterType::fut_cutoffwarp_hp:
-            case FilterType::fut_cutoffwarp_n:
-            case FilterType::fut_cutoffwarp_bp:
-            case FilterType::fut_cutoffwarp_ap:
-            case FilterType::fut_resonancewarp_lp:
-            case FilterType::fut_resonancewarp_hp:
-            case FilterType::fut_resonancewarp_n:
-            case FilterType::fut_resonancewarp_bp:
-            case FilterType::fut_resonancewarp_ap:
-                // "i & 3" selects the lower two bits that represent the stage count
-                // "(i >> 2) & 3" selects the next two bits that represent the
-                // saturator
-                return fmt::format("{} {}", sst::filters::fut_nlf_subtypes[i & 3],
-                                   sst::filters::fut_nlf_saturators[(i >> 2) & 3]);
-                break;
-            // don't default any more so compiler catches new ones we add
-            case FilterType::fut_none:
-            case FilterType::fut_lp12:
-            case FilterType::fut_lp24:
-            case FilterType::fut_bp12:
-            case FilterType::fut_bp24:
-            case FilterType::fut_hp12:
-            case FilterType::fut_hp24:
-            case FilterType::fut_SNH:
-                return sst::filters::fut_def_subtypes[i];
-                break;
-            case FilterType::fut_tripole:
-                // "i & 3" selects the lower two bits that represent the filter mode
-                // "(i >> 2) & 3" selects the next two bits that represent the
-                // output stage
-                return fmt::format("{} {}", sst::filters::fut_tripole_subtypes[i & 3],
-                                   sst::filters::fut_tripole_output_stage[(i >> 2) & 3]);
-                break;
-            case FilterType::num_filter_types:
-                return "ERROR";
-                break;
-            }
-        }
-    }
 };
 
-inline std::string VCFSubTypeParamQuanity::getDisplayValueString()
-{
-    if (!module)
-        return "None";
+} // namespace sst::surgext_rack::waveshaper
 
-    int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
-    int val = (int)std::round(getValue());
-    return VCF::subtypeLabel(type, val);
-}
-} // namespace sst::surgext_rack::vcf
-
-#endif // SURGE_RACK_SURGEVCF_HPP
+#endif // SURGE_RACK_SURGEWSHP_HPP

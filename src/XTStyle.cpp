@@ -19,6 +19,7 @@ void XTStyle::initialize()
     {
         setCurrentStyle(MID);
         setCurrentLightColor(ORANGE);
+        setCurrentModLightColor(BLUE);
     }
     else
     {
@@ -44,13 +45,29 @@ void XTStyle::initialize()
             if (defj)
                 lightColId = json_integer_value(defj);
 
-            if (lightColId >= ORANGE && lightColId <= GREEN)
+            if (lightColId >= ORANGE && lightColId <= RED)
             {
                 setCurrentLightColor((LightColor)lightColId);
             }
             else
             {
                 setCurrentLightColor(ORANGE);
+            }
+        }
+
+        {
+            json_t *defj = json_object_get(fd, "defaultModLightColor");
+            int lightColId{-1};
+            if (defj)
+                lightColId = json_integer_value(defj);
+
+            if (lightColId >= ORANGE && lightColId <= RED)
+            {
+                setCurrentModLightColor((LightColor)lightColId);
+            }
+            else
+            {
+                setCurrentModLightColor(BLUE);
             }
         }
         json_decref(fd);
@@ -75,6 +92,7 @@ struct InternalFontMgr
 
 static XTStyle::Style currentStyle{XTStyle::MID};
 static XTStyle::LightColor currentLightColor{XTStyle::ORANGE};
+static XTStyle::LightColor currentModLightColor{XTStyle::BLUE};
 static std::shared_ptr<XTStyle> currentStyleP;
 void XTStyle::setCurrentStyle(sst::surgext_rack::style::XTStyle::Style s)
 {
@@ -102,6 +120,19 @@ void XTStyle::setCurrentLightColor(sst::surgext_rack::style::XTStyle::LightColor
     }
 }
 
+void XTStyle::setCurrentModLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
+{
+    if (!currentStyleP)
+        currentStyleP = std::make_shared<XTStyle>();
+    if (c != currentLightColor)
+    {
+        currentModLightColor = c;
+        updateJSON();
+
+        notifyStyleListeners();
+    }
+}
+
 void XTStyle::updateJSON()
 {
     std::string defaultsDir = rack::asset::user("SurgeXTRack/");
@@ -112,8 +143,10 @@ void XTStyle::updateJSON()
     json_t *rootJ = json_object();
     json_t *stJ = json_integer(currentStyle);
     json_t *lcJ = json_integer(currentLightColor);
+    json_t *lcM = json_integer(currentModLightColor);
     json_object_set_new(rootJ, "defaultSkin", stJ);
     json_object_set_new(rootJ, "defaultLightColor", lcJ);
+    json_object_set_new(rootJ, "defaultModLightColor", lcM);
     FILE *f = std::fopen(defaultsFile.c_str(), "w");
     if (f)
     {
@@ -147,7 +180,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         }
     }
     case KNOB_MOD_PLUS:
-        return nvgRGB(58, 157, 255);
+        return lightColorColor(currentModLightColor);
     case KNOB_MOD_MINUS:
         return nvgRGB(180, 180, 220);
     case KNOB_MOD_MARK:
@@ -183,23 +216,35 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case PLOT_CONTROL_VALUE_BG:
     case MOD_BUTTON_LIGHT_ON:
     {
-        switch (currentLightColor)
-        {
-        case ORANGE:
-            return nvgRGB(0xFF, 0x90, 0x00);
-        case BLUE:
-            return nvgRGB(0x70, 0x70, 0xFF);
-        case RED:
-            return nvgRGB(0xFF, 0x30, 0x30);
-        case GREEN:
-            return nvgRGB(0x20, 0xFF, 0x20);
-        }
+        return lightColorColor(currentLightColor);
     }
     }
 
     return nvgRGB(255, 0, 0);
 }
 
+NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor c)
+{
+    switch (c)
+    {
+    case ORANGE:
+        return nvgRGB(0xFF, 0x90, 0x00);
+    case YELLOW:
+        return nvgRGB(255, 214, 0);
+    case GREEN:
+        return nvgRGB(82, 235, 71);
+    case AQUA:
+        return nvgRGB(19, 236, 196);
+    case BLUE:
+        return nvgRGB(26, 167, 255);
+    case PURPLE:
+        return nvgRGB(158, 130, 243);
+    case PINK:
+        return nvgRGB(255, 82, 163);
+    case RED:
+        return nvgRGB(255, 64, 61);
+    }
+}
 std::map<std::string, int> InternalFontMgr::fontMap;
 
 std::unordered_set<StyleParticipant *> XTStyle::listeners;
@@ -224,10 +269,18 @@ std::string XTStyle::lightColorName(sst::surgext_rack::style::XTStyle::LightColo
     {
     case ORANGE:
         return "Orange";
-    case BLUE:
-        return "Blue";
+    case YELLOW:
+        return "Yellow";
     case GREEN:
         return "Green";
+    case AQUA:
+        return "Aqua";
+    case BLUE:
+        return "Blue";
+    case PURPLE:
+        return "Purple";
+    case PINK:
+        return "Pink";
     case RED:
         return "Red";
     }

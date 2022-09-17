@@ -21,6 +21,15 @@
       ]
     },
     {
+      "slug": "SurgeXTWaveshaper",
+      "name": "SXT Waveshaper",
+      "description": "The Surge Waveshapers",
+      "tags": [
+        "Distortion",
+        "Polyphonic"
+      ]
+    },
+    {
       "slug": "SurgeXTOSCModern",
       "name": "SXT Modern VCO",
       "description": "The Surge Modern Oscillator",

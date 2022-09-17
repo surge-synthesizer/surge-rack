@@ -29,15 +29,31 @@ struct XTStyle
     static void setCurrentStyle(Style s);
     static void initialize();
 
+    /*
+     * Orange - 255, 137, 0
+Yellow - 255, 214, 0
+Green - 82, 235, 71
+Aqua - 19, 236, 196
+Blue - 26, 167, 255
+Purple - 158, 130, 243
+Pink - 255, 82, 163
+Red - 255, 64, 61
+     */
     enum LightColor
     {
         ORANGE = 900001, // must be first
+        YELLOW,
+        GREEN,
+        AQUA,
         BLUE,
-        RED,
-        GREEN // must be last or update the ranges in teh style code
+        PURPLE,
+        PINK,
+        RED // must be last
     };
     static std::string lightColorName(LightColor c);
     static void setCurrentLightColor(LightColor c);
+    static void setCurrentModLightColor(LightColor c);
+    static NVGcolor lightColorColor(LightColor c);
 
     enum Colors
     {
