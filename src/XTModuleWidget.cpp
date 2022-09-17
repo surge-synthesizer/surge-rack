@@ -47,7 +47,7 @@ struct LightsSubmenuItem : rack::ui::MenuItem
     {
         auto menu = new rack::ui::Menu;
 
-        for (int sk = style::XTStyle::LightColor::ORANGE; sk < style::XTStyle::LightColor::RED;
+        for (int sk = style::XTStyle::LightColor::ORANGE; sk <= style::XTStyle::LightColor::RED;
              ++sk)
         {
             auto it = new LightSelectItem;
@@ -75,7 +75,7 @@ struct ModLightsSubmenuItem : rack::ui::MenuItem
     {
         auto menu = new rack::ui::Menu;
 
-        for (int sk = style::XTStyle::LightColor::ORANGE; sk < style::XTStyle::LightColor::RED;
+        for (int sk = style::XTStyle::LightColor::ORANGE; sk <= style::XTStyle::LightColor::RED;
              ++sk)
         {
             auto it = new ModLightSelectItem;
