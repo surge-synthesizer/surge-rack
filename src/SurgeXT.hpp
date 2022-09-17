@@ -39,6 +39,7 @@ extern rack::Model *modelVCOString;
 extern rack::Model *modelVCOTwist;
 
 extern rack::Model *modelSurgeVCF;
+extern rack::Model *modelSurgeWaveshaper;
 
 // FX
 extern rack::Model *modelFXReverb2;

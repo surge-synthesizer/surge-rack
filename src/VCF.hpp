@@ -276,7 +276,6 @@ struct VCF : public modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        static int dumpEvery = 0;
         auto ftype = (sst::filters::FilterType)(int)(std::round(params[VCF_TYPE].getValue()));
         auto fsubtype =
             (sst::filters::FilterSubType)(int)(std::round(params[VCF_SUBTYPE].getValue()));
@@ -435,9 +434,6 @@ struct VCF : public modules::XTModule
             }
         }
 
-        dumpEvery++;
-        if (dumpEvery == 44000)
-            dumpEvery = 0;
         processPosition++;
     }
 
