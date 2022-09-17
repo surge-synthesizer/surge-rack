@@ -9,7 +9,7 @@
 namespace sst::surgext_rack::vco::ui
 {
 template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
-                        widgets::GriddedPanelConstants
+                        widgets::VCOVCFConstants
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
@@ -973,7 +973,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
     for (int i=0; i<M::n_mod_inputs; ++i)
     {
-        addChild(makeLabel(2, i, std::string("MOD ") + std::to_string(i + 1)));
+        addChild(makeModLabel(i));
     }
 
     col = 0;
@@ -1046,7 +1046,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     col =0;
     for(const std::string &s : { std::string("V/OCT"), VCOConfig<oscType>::retriggerLabel(), {"LEFT"}, {"RIGHT"}})
     {
-        addChild(makeLabel(3, col, s, ( col < 2 ? style::XTStyle::TEXT_LABEL : style::XTStyle::TEXT_LABEL_OUTPUT)));
+        addChild(makeIORowLabel(col, s, col < 2));
         col++;
     }
 }
