@@ -258,6 +258,11 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
         {
             return std::string(txt) + " (" + talt + ")";
         }
+
+        if (par->temposync)
+        {
+            return std::string(txt) + " @ " + fmt::format("{:.1f}bpm", xtm()->storage->temposyncratio * 120);
+        }
         return txt;
     }
 };
