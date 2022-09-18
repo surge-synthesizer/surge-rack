@@ -258,6 +258,11 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
         {
             return std::string(txt) + " (" + talt + ")";
         }
+
+        if (par->temposync)
+        {
+            return std::string(txt) + " @ " + fmt::format("{:.1f}bpm", xtm()->storage->temposyncratio * 120);
+        }
         return txt;
     }
 };
@@ -503,6 +508,59 @@ struct ModulationAssistant
                 valuesSSE[p][csse] = _mm_load_ps(&values[p][csse << 2]);
             }
         }
+    }
+};
+
+template<typename T>
+struct ClockProcessor
+{
+    rack::dsp::SchmittTrigger trig;
+
+    float sampleRate{1}, sampleRateInv{1};
+    int timeSinceLast{-1};
+    float lastBPM{-1};
+    void setSampleRate(float sr)
+    {
+        sampleRate = sr;
+        sampleRateInv = 1.f / sr;
+    }
+    inline void process(T *m, int inputId)
+    {
+        if (trig.process(m->inputs[inputId].getVoltage()))
+        {
+            if (timeSinceLast > 0)
+            {
+                auto bpm = 60 * sampleRate / timeSinceLast;
+
+                // OK we are going to make an assumption
+                // that BPM is *probably* integral at least
+                // if we are within a smidge of an integer
+                auto d = std::abs(bpm - std::round(bpm));
+                if (d < 0.015)
+                {
+                    bpm = std::round(bpm);
+                }
+                if (bpm != lastBPM)
+                {
+                    m->storage->temposyncratio = bpm / 120.f;
+                    m->storage->temposyncratio_inv = 120.f / bpm;
+                }
+                lastBPM = bpm;
+            }
+            else
+            {
+                m->activateTempoSync();
+            }
+            timeSinceLast = 0;
+        }
+        timeSinceLast += (timeSinceLast >= 0);
+    }
+    inline void disconnect(T *m)
+    {
+        if (timeSinceLast >= 0)
+            m->deactivateTempoSync();
+
+        timeSinceLast = -1;
     }
 };
 } // namespace sst::surgext_rack::modules

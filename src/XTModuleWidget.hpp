@@ -1,3 +1,6 @@
+#ifndef SURGE_RACK_XTMODULEWIDGET
+#define SURGE_RACK_XTMODULEWIDGET 1
+
 #include "rack.hpp"
 #include "XTStyle.hpp"
 #include <array>
@@ -29,6 +32,7 @@ struct StandardWidthWithModulationConstants
     static constexpr float columnWidth_MM = 14;
     static constexpr float modulationLabelBaseline_MM = 94.864;
     static constexpr float inputLabelBaseline_MM = 109.203;
+    static constexpr float verticalPortOffset_MM = 0.5;
 
     static constexpr int numberOfScrews = 12;
 
@@ -77,7 +81,6 @@ struct VCOVCFConstants : StandardWidthWithModulationConstants
         55, 71, modulationRowCenters_MM[0], modulationRowCenters_MM[1], inputRowCenter_MM};
     static constexpr std::array<float, 2> labelBaselines_MM{63.573, 79.573};
 
-    static constexpr float verticalPortOffset_MM = 0.5;
 
     float plotStartX = rack::mm2px(plotCX_MM - plotW_MM * 0.5);
     float plotStartY = rack::mm2px(plotCY_MM - plotH_MM * 0.5);
@@ -95,3 +98,5 @@ struct VCOVCFConstants : StandardWidthWithModulationConstants
     }
 };
 } // namespace sst::surgext_rack::widgets
+
+#endif

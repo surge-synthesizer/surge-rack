@@ -36,6 +36,7 @@ template <int fxType> struct FXConfig
 
     static constexpr int panelWidthInScrews() { return 12; }
     static constexpr int usesSideband() { return false; }
+    static constexpr int usesClock() { return false; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -111,6 +112,11 @@ template <int fxType> struct FX : modules::XTModule
         modAssist.initialize(this);
     }
 
+    void moduleSpecificSampleRateChange() override {
+        clockProc.setSampleRate(APP->engine->getSampleRate());
+    }
+    modules::ClockProcessor<FX<fxType>> clockProc;
+
     void setupSurge()
     {
         setupSurgeCommon(NUM_PARAMS, false);
@@ -155,6 +161,14 @@ template <int fxType> struct FX : modules::XTModule
         return modAssist.animValues[idx];
     }
 
+    bool isBipolar(int paramId) override {
+        if (paramId >= FX_PARAM_0 && paramId <= FX_PARAM_0 + n_fx_params)
+        {
+            return fxstorage->p[paramId-FX_PARAM_0].is_bipolar();
+        }
+        return false;
+    }
+
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
 
     int bufferPos{0};
@@ -164,6 +178,14 @@ template <int fxType> struct FX : modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        if constexpr (FXConfig<fxType>::usesClock())
+        {
+            if (inputs[INPUT_CLOCK].isConnected())
+                clockProc.process(this, INPUT_CLOCK);
+            else
+                clockProc.disconnect(this);
+        }
+
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
@@ -239,6 +261,30 @@ template <int fxType> struct FX : modules::XTModule
     {
         return 1; // these arent' polyphonic fx
     }
+
+    void activateTempoSync()
+    {
+        auto p = &fxstorage->p[0];
+        auto pe = &fxstorage->p[n_fx_params - 1];
+        while ( p <= pe)
+        {
+            if (p->can_temposync())
+                p->temposync = true;
+            ++p;
+        }
+    }
+    void deactivateTempoSync()
+    {
+        auto p = &fxstorage->p[0];
+        auto pe = &fxstorage->p[n_fx_params - 1];
+        while ( p <= pe)
+        {
+            if (p->can_temposync())
+                p->temposync = false;
+            ++p;
+        }
+    }
+
     std::unique_ptr<Effect> surge_effect;
     FxStorage *fxstorage{nullptr};
 };

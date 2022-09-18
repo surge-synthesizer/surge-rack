@@ -3,6 +3,10 @@
 
 #include "FX.hpp"
 #include "dsp/Effect.h"
+#include "XTModuleWidget.hpp"
+
+#include "dsp/effects/FrequencyShifterEffect.h"
+#include "dsp/effects/DelayEffect.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -43,22 +47,60 @@ template <> void FXConfig<fxt_spring_reverb>::processExtraInputs(FX<fxt_spring_r
     }
 }
 
-// Gross hack so I can test
 template <> FXConfig<fxt_delay>::layout_t FXConfig<fxt_delay>::getLayout()
 {
-    // clang-format off
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+
+    const auto thirdSmallRow = modRow - 16;
+    const auto secondSmallRow = thirdSmallRow - 16;
+    const auto firstSmallRow = secondSmallRow - 16;
+    const auto bigRow = firstSmallRow - 20;
+
     return {
-        {LayoutItem::KNOB16, "LEFT", 0, 12, 28},
-        {LayoutItem::KNOB16, "RIGHT", 1, 32, 28},
-        {LayoutItem::KNOB9, "FBACK", 2, 51.48, 20},
-        {LayoutItem::KNOB9, "XFEED", 3, 51.48, 36},
+        // clang-format off
+        {LayoutItem::KNOB12, "LEFT", DelayEffect::dly_time_left, (col[0] + col[1]) * 0.5, bigRow},
+        {LayoutItem::KNOB12, "RIGHT", DelayEffect::dly_time_right, (col[2] + col[3]) * 0.5, bigRow},
 
-        {LayoutItem::KNOB9, "WIDTH", 11, 37.48, 65},
-        {LayoutItem::KNOB9, "MIX", 10, 51.48, 65},
+        {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
+            col[0], firstSmallRow },
+        {LayoutItem::KNOB9, "INPUT", DelayEffect::dly_input_channel, col[1], firstSmallRow},
+        {LayoutItem::KNOB9, "RATE", DelayEffect::dly_mod_rate, col[2], firstSmallRow},
+        {LayoutItem::KNOB9, "DEPTH", DelayEffect::dly_mod_depth, col[3], firstSmallRow},
+
+        {LayoutItem::KNOB9, "F/B", DelayEffect::dly_feedback, col[0], secondSmallRow},
+        {LayoutItem::KNOB9, "XFEED", DelayEffect::dly_crossfeed, col[1], secondSmallRow},
+        {LayoutItem::KNOB9, "LOWCUT", DelayEffect::dly_lowcut, col[2], secondSmallRow},
+        {LayoutItem::KNOB9, "HICUT", DelayEffect::dly_highcut, col[3], secondSmallRow},
+
+        {LayoutItem::KNOB9, "WIDTH", DelayEffect::dly_width, col[2], thirdSmallRow},
+        {LayoutItem::KNOB9, "MIXT", DelayEffect::dly_mix, col[3], thirdSmallRow},
+        // clang-format on
     };
-
-    // clang-format on
 }
+template <> constexpr int FXConfig<fxt_delay>::usesClock() { return true; }
+
+template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout()
+{
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+
+    const auto smallRow = modRow - 16;
+    const auto bigRow = smallRow - 22;
+
+    return {
+        // clang-format off
+        {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
+            col[0], smallRow },
+        {LayoutItem::KNOB9, "DELAY", FrequencyShifterEffect::freq_delay, col[1], smallRow},
+        {LayoutItem::KNOB9, "F/B", FrequencyShifterEffect::freq_feedback, col[2], smallRow},
+        {LayoutItem::KNOB9, "MIX", FrequencyShifterEffect::freq_mix, col[3], smallRow},
+        {LayoutItem::KNOB16, "LEFT", FrequencyShifterEffect::freq_shift, (col[0] + col[1]) * 0.5, bigRow},
+        {LayoutItem::KNOB16, "RIGHT", FrequencyShifterEffect::freq_rmult, (col[2] + col[3]) * 0.5, bigRow},
+        // clang-format on
+    };
+}
+template <> constexpr int FXConfig<fxt_freqshift>::usesClock() { return true; }
 
 #if 0
 // Top Row is Grouped

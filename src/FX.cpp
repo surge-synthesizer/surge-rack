@@ -21,15 +21,14 @@ struct FXWidget : public widgets::XTModuleWidget, widgets::StandardWidthWithModu
 
 AS you know, on the VCO's there was a 16mm vertical offset between knob rows.
 
-On the FX, where there is no group title on a row, the offset will be the same. But if there is a group title on a row, then the offset to the next row of regular sized knobs will be 20mm instead
+On the FX, where there is no group title on a row, the offset will be the same. But if there is a
+group title on a row, then the offset to the next row of regular sized knobs will be 20mm instead
 
-We will work up from the bottom, so all the 2 lower rows of jacks/mods and the first row of knobs will be in exactly the same place as on the VCOs, and we work the spacing up from there.
-In other words, having group titles on a row adds 4mm to the vertical offset
-spiritlevel — Yesterday at 5:09 PM
-So:
-16mm up to the next reg. knob row if current knob row has no group titles
-20mm up to next reg. knob row if current knob row has group titles
-Add an extra 1.5mm if next row up is medium knobs
+We will work up from the bottom, so all the 2 lower rows of jacks/mods and the first row of knobs
+will be in exactly the same place as on the VCOs, and we work the spacing up from there. In other
+words, having group titles on a row adds 4mm to the vertical offset spiritlevel — Yesterday at 5:09
+PM So: 16mm up to the next reg. knob row if current knob row has no group titles 20mm up to next
+reg. knob row if current knob row has group titles Add an extra 1.5mm if next row up is medium knobs
 Add an extra 3mm if next row up is large knobs
 
 This should work for all FX - hope that makes sense!
@@ -81,7 +80,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
                 auto boxbl = rack::Vec(rack::mm2px(lay.xcmm - columnWidth_MM * 0.5),
                                        knob->box.pos.y + knob->box.size.y);
                 auto lab = widgets::Label::createWithBaselineBox(
-                    boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 3.5)), lay.label);
+                    boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 4)), lay.label);
                 addChild(lab);
 
                 underKnobs[lay.parId] = knob;
@@ -103,12 +102,14 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         case FXConfig<fxType>::LayoutItem::PORT:
         {
             auto port = rack::createInputCentered<widgets::Port>(
-                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm)), module, lay.parId);
+                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + verticalPortOffset_MM)), module,
+                lay.parId);
             addChild(port);
             auto boxbl = rack::Vec(rack::mm2px(lay.xcmm - columnWidth_MM * 0.5),
-                                   port->box.pos.y + port->box.size.y);
+                                   port->box.pos.y + port->box.size.y +
+                                       rack::mm2px(2 * verticalPortOffset_MM));
             auto lab = widgets::Label::createWithBaselineBox(
-                boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 3.5)), lay.label);
+                boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 4)), lay.label);
             addChild(lab);
         }
         break;
