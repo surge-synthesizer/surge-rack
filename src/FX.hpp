@@ -232,12 +232,25 @@ template <int fxType> struct FX : modules::XTModule
 
             for (int i = 0; i < n_fx_params; ++i)
             {
-                fxstorage->p[i].set_value_f01(modAssist.values[i][0]);
+                fxstorage->p[i].set_value_f01(modAssist.basevalues[i]);
             }
 
             FXConfig<fxType>::processExtraInputs(this);
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
+
+            auto *oap = &fxstorage->p[0];
+            auto *eap = &fxstorage->p[n_fx_params-1];
+            auto &pt = storage->getPatch().globaldata;
+            int idx = 0;
+            while (oap <= eap)
+            {
+                if (oap->valtype == vt_float)
+                    pt[oap->id].f += modAssist.modvalues[idx][0];
+                idx++;
+                oap++;
+            }
+
             surge_effect->process_ringout(processedL, processedR, true);
 
             bufferPos = 0;
