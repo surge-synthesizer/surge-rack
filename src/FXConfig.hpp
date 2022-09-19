@@ -7,6 +7,7 @@
 
 #include "dsp/effects/FrequencyShifterEffect.h"
 #include "dsp/effects/DelayEffect.h"
+#include "dsp/effects/Reverb2Effect.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -16,17 +17,28 @@ namespace sst::surgext_rack::fx
 template <> constexpr int FXConfig<fxt_spring_reverb>::extraInputs() { return 1; }
 template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::getLayout()
 {
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+
+    const auto thirdRow = modRow - 16;
+    const auto secondRow = thirdRow - 16;
+    const auto firstRow = secondRow - 16;
+    const auto bigRow = (secondRow + firstRow) * 0.5f;
+
+    const auto endOfPanel = firstRow - 7;
+
     // clang-format off
     return {
-        {LayoutItem::KNOB16, "SIZE", 0, 12, 28},
-        {LayoutItem::KNOB16, "DECAY", 1, 32, 28},
-        {LayoutItem::KNOB9, "REFL", 2, 51.48, 20},
-        {LayoutItem::KNOB9, "DAMP", 3, 51.48, 36},
+        {LayoutItem::KNOB16, "SIZE", 0, col[1] - 10, bigRow},
+        {LayoutItem::KNOB16, "DECAY", 1, col[1] + 10, bigRow},
+        {LayoutItem::KNOB9, "REFL", 2, col[3], firstRow},
+        {LayoutItem::KNOB9, "DAMP", 3, col[3], secondRow},
 
-        {LayoutItem::PORT, "KNOCK", FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, 9.48, 65},
-        {LayoutItem::KNOB9, "SPIN", 4, 23.48, 65},
-        {LayoutItem::KNOB9, "CHAOS", 5, 37.48, 65},
-        {LayoutItem::KNOB9, "MIX", 7, 51.48, 65},
+        {LayoutItem::PORT, "KNOCK", FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, col[0], thirdRow},
+        {LayoutItem::KNOB9, "SPIN", 4, col[1], thirdRow},
+        {LayoutItem::KNOB9, "CHAOS", 5, col[2], thirdRow},
+        {LayoutItem::KNOB9, "MIX", 7, col[3], thirdRow},
+        LayoutItem::createLCDArea(endOfPanel),
     };
 
     // clang-format on
@@ -104,6 +116,35 @@ template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout
 }
 template <> constexpr int FXConfig<fxt_freqshift>::usesClock() { return true; }
 
+template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
+{
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+
+    const auto thirdSmallRow = modRow - 16;
+    const auto secondSmallRow = thirdSmallRow - 16;
+    const auto bigRow = secondSmallRow - 20;
+    const auto endOfPanel = bigRow - 12;
+
+    return {
+        // clang-format off
+        {LayoutItem::KNOB16, "SIZE", Reverb2Effect::rev2_room_size, (col[0] + col[1]) * 0.5, bigRow},
+        {LayoutItem::KNOB16, "DECAY", Reverb2Effect::rev2_decay_time, (col[2] + col[3]) * 0.5, bigRow},
+
+        {LayoutItem::KNOB9, "PRE-D", Reverb2Effect::rev2_predelay, col[0], secondSmallRow},
+        {LayoutItem::KNOB9, "DIFFUS", Reverb2Effect::rev2_diffusion, col[1], secondSmallRow},
+        {LayoutItem::KNOB9, "MOD", Reverb2Effect::rev2_modulation, col[2], secondSmallRow},
+        {LayoutItem::KNOB9, "BUILDUP", Reverb2Effect::rev2_buildup, col[3], secondSmallRow},
+
+        {LayoutItem::KNOB9, "LO", Reverb2Effect::rev2_lf_damping, col[0], thirdSmallRow},
+        {LayoutItem::KNOB9, "HI", Reverb2Effect::rev2_hf_damping, col[1], thirdSmallRow},
+        {LayoutItem::KNOB9, "WIDTH", Reverb2Effect::rev2_width, col[2], thirdSmallRow},
+        {LayoutItem::KNOB9, "MIX", Reverb2Effect::rev2_mix, col[3], thirdSmallRow},
+
+        LayoutItem::createLCDArea(endOfPanel)
+        // clang-format on
+    };
+}
 #if 0
 // Top Row is Grouped
 group header span 4 "reverb"

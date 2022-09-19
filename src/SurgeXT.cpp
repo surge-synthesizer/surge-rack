@@ -41,6 +41,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeWaveshaper);
 
+    p->addModel(modelFXReverb);
     p->addModel(modelFXReverb2);
     p->addModel(modelFXFrequencyShifter);
     p->addModel(modelFXFlanger);

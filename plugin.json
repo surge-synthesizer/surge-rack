@@ -138,6 +138,15 @@
       ]
     },
     {
+      "slug": "SurgeXTFXReverb",
+      "name": "SXT Reverb",
+      "description": "The Surge XT Reverb2",
+      "tags": [
+        "FX",
+        "Reverb"
+      ]
+    },
+    {
       "slug": "SurgeXTFXReverb2",
       "name": "SXT Reverb2",
       "description": "The Surge XT Reverb2",
