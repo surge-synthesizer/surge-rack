@@ -3,21 +3,6 @@
 #include "XTStyle.hpp"
 
 namespace logger = rack::logger;
-
-rack::Model **fxModels = nullptr;
-int addFX(rack::Model *m, int type)
-{
-    if (fxModels == nullptr)
-    {
-        fxModels = new rack::Model *[n_fx_types];
-        for (auto i = 0; i < n_fx_types; ++i)
-            fxModels[i] = nullptr;
-    }
-    fxModels[type] = m;
-
-    return type;
-}
-
 rack::Plugin *pluginInstance;
 
 __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
@@ -41,22 +26,24 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeWaveshaper);
 
-    p->addModel(modelFXReverb);
-    p->addModel(modelFXReverb2);
-    p->addModel(modelFXFrequencyShifter);
-    p->addModel(modelFXFlanger);
     p->addModel(modelFXDelay);
+    p->addModel(modelFXReverb);
+    p->addModel(modelFXPhaser);
+    p->addModel(modelFXRotarySpeaker);
+    p->addModel(modelFXDistortion);
+    p->addModel(modelFXFrequencyShifter);
+    p->addModel(modelFXChorus);
+    p->addModel(modelFXVocoder);
+    p->addModel(modelFXReverb2);
+    p->addModel(modelFXFlanger);
+    p->addModel(modelFXRingMod);
+    p->addModel(modelFXNeuron);
+    p->addModel(modelFXResonator);
+    p->addModel(modelFXChow);
+    p->addModel(modelFXExciter);
+    p->addModel(modelFXEnsemble);
+    p->addModel(modelFXCombulator);
     p->addModel(modelFXSpringReverb);
 
-#if 0
-    if (fxModels != nullptr)
-        for (auto i = 0; i < n_fx_types; ++i)
-        {
-            if (fxModels[i] != nullptr)
-            {
-                p->addModel(fxModels[i]);
-            }
-        }
-#endif
     sst::surgext_rack::style::XTStyle::initialize();
 }
