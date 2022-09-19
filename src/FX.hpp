@@ -16,11 +16,19 @@ template <int fxType> struct FXConfig
     struct LayoutItem
     {
         // order matters a bit on this enum. knobs contiguous pls
-        enum Type { KNOB9, KNOB12, KNOB16, PORT, GROUP_LABEL, ERROR } type{ERROR};
+        enum Type { KNOB9, KNOB12, KNOB16, PORT, GROUP_LABEL, LCD_BG, ERROR } type{ERROR};
         std::string label{"ERR"};
         int parId{-1};
         float xcmm{-1}, ycmm{-1};
         float spanmm{0}; // for group label only
+
+        static LayoutItem createLCDArea(float ht)
+        {
+            auto res = LayoutItem();
+            res.type = LCD_BG;
+            res.ycmm = ht;
+            return res;
+        }
     };
     typedef std::vector<LayoutItem> layout_t;
     static layout_t getLayout() { return {}; }

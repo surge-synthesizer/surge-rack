@@ -113,6 +113,13 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             addChild(lab);
         }
         break;
+        case FXConfig<fxType>::LayoutItem::LCD_BG:
+        {
+            auto bg = widgets::LCDBackground::createWithHeight(lay.ycmm);
+            if (!module)
+                bg->noModuleText = panelLabel;
+            addChild(bg);
+        }
         default:
             break;
         }

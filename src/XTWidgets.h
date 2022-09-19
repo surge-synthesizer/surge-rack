@@ -102,6 +102,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
     std::string label{};
     float size{7.3};
     float tracking{0.0};
+    float baselinePad{0};
     style::XTStyle::Colors color;
     Label(const rack::Vec &pos, const rack::Vec &sz)
         : BufferedDrawFunctionWidget(pos, sz, [this](auto vg) { drawLabel(vg); })
@@ -115,7 +116,10 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
                           float szInPt = 7.3,
                           style::XTStyle::Colors col = style::XTStyle::Colors::TEXT_LABEL)
     {
-        auto res = new Label(pos, size); // FIXME on that obv
+        auto padSz = size;
+        padSz.y += 4;
+        auto res = new Label(pos, padSz); // FIXME on that obv
+        res->baselinePad = 4;
         res->label = lab;
         res->size = szInPt;
         res->color = col;
@@ -131,13 +135,13 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
         nvgStrokeColor(vg, style()->getColor(color));
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
         nvgTextLetterSpacing(vg, tracking);
-        nvgText(vg, box.size.x * 0.5, box.size.y, label.c_str(), nullptr);
+        nvgText(vg, box.size.x * 0.5, box.size.y - baselinePad, label.c_str(), nullptr);
 
 #define DEBUG_RECT 0
 #if DEBUG_RECT
         nvgBeginPath(vg);
         nvgStrokeColor(vg, nvgRGB(255, 0, 0));
-        nvgRect(vg, box.pos.x, box.pos.y, box.size.x, box.size.y);
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
         nvgStroke(vg);
 #endif
     }
@@ -977,6 +981,71 @@ inline void KnobN::onChange(const rack::widget::Widget::ChangeEvent &e)
     }
     SvgKnob::onChange(e);
 }
+
+struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdw{nullptr};
+    std::string noModuleText;
+    static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12)
+    {
+        auto posx = 12.08506f;
+        auto posy = 25.408199;
+        auto width = rack::app::RACK_GRID_WIDTH * widthInScrews - 2 * posx;
+        auto height = rack::mm2px(endPosInMM) - posy;
+
+        auto res = new LCDBackground();
+        res->setup(rack::Vec(posx, posy), rack::Vec(width, height));
+
+        return res;
+    }
+
+    void setup(const rack::Vec &pos, const rack::Vec &size)
+    {
+        box.pos = pos;
+        box.size = size;
+
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
+                                             [this](auto vg) { this->drawBackground(vg); });
+        addChild(bdw);
+    }
+
+    void drawBackground(NVGcontext *vg)
+    {
+        float cornerRadius = 2 * 0.66406;
+        float offset = 1;
+        float inset = offset / 2.f;
+
+        // OK so gray rectangle, light path, shifted gray rectangle, black path
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, inset, inset, box.size.x - 2 * inset, box.size.y - 2 * inset,
+                       cornerRadius);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::LED_HIGHLIGHT));
+        nvgFill(vg);
+        nvgStrokeWidth(vg, offset);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, inset, inset, box.size.x - 2 * inset, box.size.y - 2 * inset - offset,
+                       cornerRadius);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::LED_BORDER));
+        nvgFill(vg);
+        nvgStrokeWidth(vg, offset);
+        nvgStroke(vg);
+
+        if (!noModuleText.empty())
+        {
+            nvgBeginPath(vg);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, 17);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, noModuleText.c_str(), nullptr);
+        }
+    }
+    void onStyleChanged() override { bdw->dirty = true; }
+};
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H

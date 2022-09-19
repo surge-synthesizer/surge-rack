@@ -186,6 +186,23 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case KNOB_MOD_MARK:
         return nvgRGB(255, 255, 255);
 
+    case LED_PANEL:
+        return nvgRGB(0x11, 0x11, 0x11);
+    case LED_BORDER:
+        return nvgRGB(0x00, 0x00, 0x00);
+    case LED_HIGHLIGHT:
+    {
+        switch (currentStyle)
+        {
+        case DARK:
+            return nvgRGB(0x4d, 0x4d, 0x4d);
+        case MID:
+            return nvgRGB(0x72, 0x72, 0x72);
+        case LIGHT:
+            return nvgRGB(0xFA, 0xFA, 0xFA);
+        }
+    }
+
     case PLOT_MARKS:
         return nvgRGB(60, 60, 60);
 

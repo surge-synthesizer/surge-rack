@@ -75,6 +75,10 @@ Red - 255, 64, 61
         PLOT_CONTROL_TEXT,
         PLOT_CONTROL_VALUE_BG,
         PLOT_CONTROL_VALUE_FG,
+
+        LED_PANEL,
+        LED_BORDER,
+        LED_HIGHLIGHT
     };
     const NVGcolor getColor(Colors c);
 

@@ -87,6 +87,7 @@ template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout
 
     const auto smallRow = modRow - 16;
     const auto bigRow = smallRow - 22;
+    const auto endOfPanel = bigRow - 12;
 
     return {
         // clang-format off
@@ -97,6 +98,7 @@ template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout
         {LayoutItem::KNOB9, "MIX", FrequencyShifterEffect::freq_mix, col[3], smallRow},
         {LayoutItem::KNOB16, "LEFT", FrequencyShifterEffect::freq_shift, (col[0] + col[1]) * 0.5, bigRow},
         {LayoutItem::KNOB16, "RIGHT", FrequencyShifterEffect::freq_rmult, (col[2] + col[3]) * 0.5, bigRow},
+        LayoutItem::createLCDArea(endOfPanel),
         // clang-format on
     };
 }
