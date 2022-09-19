@@ -129,41 +129,6 @@
       ]
     },
     {
-      "slug": "SurgeXTFXFlanger",
-      "name": "SXT Flanger",
-      "description": "The Surge XT Flanger",
-      "tags": [
-        "FX",
-        "Flanger"
-      ]
-    },
-    {
-      "slug": "SurgeXTFXReverb",
-      "name": "SXT Reverb",
-      "description": "The Surge XT Reverb2",
-      "tags": [
-        "FX",
-        "Reverb"
-      ]
-    },
-    {
-      "slug": "SurgeXTFXReverb2",
-      "name": "SXT Reverb2",
-      "description": "The Surge XT Reverb2",
-      "tags": [
-        "FX",
-        "Reverb"
-      ]
-    },
-    {
-      "slug": "SurgeXTFXFrequencyShifter",
-      "name": "SXT Frequency Shifter",
-      "description": "The Surge XT FrequencyShifter",
-      "tags": [
-        "FX"
-      ]
-    },
-    {
       "slug": "SurgeXTFXDelay",
       "name": "SXT Delay",
       "description": "The Surge XT Delay",
@@ -173,12 +138,139 @@
       ]
     },
     {
-      "slug": "SurgeXTFXSpringReverb",
-      "name": "SXT Spring Reverb",
-      "description": "The Surge XT Spring Reverb",
+      "slug": "SurgeXTFXReverb",
+      "name": "SXT Reverb",
+      "description": "The Surge XT Reverb",
       "tags": [
-        "FX",
-        "Reverb"
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXPhaser",
+      "name": "SXT Phaser",
+      "description": "The Surge XT Phaser",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXRotarySpeaker",
+      "name": "SXT RotarySpeaker",
+      "description": "The Surge XT RotarySpeaker",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXDistortion",
+      "name": "SXT Distortion",
+      "description": "The Surge XT Distortion",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXFrequencyShifter",
+      "name": "SXT FrequencyShifter",
+      "description": "The Surge XT FrequencyShifter",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXChorus",
+      "name": "SXT Chorus",
+      "description": "The Surge XT Chorus",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXVocoder",
+      "name": "SXT Vocoder",
+      "description": "The Surge XT Vocoder",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXReverb2",
+      "name": "SXT Reverb2",
+      "description": "The Surge XT Reverb2",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXFlanger",
+      "name": "SXT Flanger",
+      "description": "The Surge XT Flanger",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXRingMod",
+      "name": "SXT RingMod",
+      "description": "The Surge XT RingMod",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXNeuron",
+      "name": "SXT Neuron",
+      "description": "The Surge XT Neuron",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXResonator",
+      "name": "SXT Resonator",
+      "description": "The Surge XT Resonator",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXChow",
+      "name": "SXT Chow",
+      "description": "The Surge XT Chow",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXExciter",
+      "name": "SXT Exciter",
+      "description": "The Surge XT Exciter",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXEnsemble",
+      "name": "SXT Ensemble",
+      "description": "The Surge XT Ensemble",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXCombulator",
+      "name": "SXT Combulator",
+      "description": "The Surge XT Combulator",
+      "tags": [
+        "FX"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXSpringReverb",
+      "name": "SXT SpringReverb",
+      "description": "The Surge XT SpringReverb",
+      "tags": [
+        "FX"
       ]
     }
   ]

@@ -42,9 +42,22 @@ extern rack::Model *modelSurgeVCF;
 extern rack::Model *modelSurgeWaveshaper;
 
 // FX
-extern rack::Model *modelFXReverb;
-extern rack::Model *modelFXReverb2;
-extern rack::Model *modelFXFrequencyShifter;
-extern rack::Model *modelFXFlanger;
+
 extern rack::Model *modelFXDelay;
+extern rack::Model *modelFXReverb;
+extern rack::Model *modelFXPhaser;
+extern rack::Model *modelFXRotarySpeaker;
+extern rack::Model *modelFXDistortion;
+extern rack::Model *modelFXFrequencyShifter;
+extern rack::Model *modelFXChorus;
+extern rack::Model *modelFXVocoder;
+extern rack::Model *modelFXReverb2;
+extern rack::Model *modelFXFlanger;
+extern rack::Model *modelFXRingMod;
+extern rack::Model *modelFXNeuron;
+extern rack::Model *modelFXResonator;
+extern rack::Model *modelFXChow;
+extern rack::Model *modelFXExciter;
+extern rack::Model *modelFXEnsemble;
+extern rack::Model *modelFXCombulator;
 extern rack::Model *modelFXSpringReverb;
