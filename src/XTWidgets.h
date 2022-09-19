@@ -1098,10 +1098,10 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::string noModuleText;
+    static constexpr float posx = 12.08506f;
+    static constexpr float posy = 25.408199;
     static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12)
     {
-        auto posx = 12.08506f;
-        auto posy = 25.408199;
         auto width = rack::app::RACK_GRID_WIDTH * widthInScrews - 2 * posx;
         auto height = rack::mm2px(endPosInMM) - posy;
 

@@ -113,6 +113,22 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             addChild(lab);
         }
         break;
+        case FXConfig<fxType>::LayoutItem::POWER_LIGHT:
+        case FXConfig<fxType>::LayoutItem::EXTEND_LIGHT:
+        {
+            auto x = rack::mm2px(lay.xcmm + (lay.spanmm + 2) * 0.5) + 2.5;
+            auto y = rack::mm2px(lay.ycmm - (lay.spanmm + 2) * 0.5) + 3.0;
+
+            auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(rack::Vec(x, y),
+                                                                                module, lay.parId);
+
+            if (lay.type == FXConfig<fxType>::LayoutItem::EXTEND_LIGHT)
+            {
+                light->type = widgets::ActivateKnobSwitch::EXTENDED;
+            }
+            addChild(light);
+        }
+        break;
         case FXConfig<fxType>::LayoutItem::LCD_BG:
         {
             auto bg = widgets::LCDBackground::createWithHeight(lay.ycmm);
@@ -120,6 +136,44 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
                 bg->noModuleText = panelLabel;
             addChild(bg);
         }
+        break;
+        case FXConfig<fxType>::LayoutItem::LCD_MENU_ITEM:
+        {
+            auto xpos = widgets::LCDBackground::posx;
+            auto width = box.size.x - 2 * xpos;
+            auto height = rack::mm2px(5);
+            auto ypos = rack::mm2px(lay.ycmm) - height;
+            auto wid = widgets::PlotAreaMenuItem::create(
+                rack::Vec(xpos, ypos), rack::Vec(width, height), module, lay.parId);
+            wid->onShowMenu = [this, wid, lay]() {
+                if (!this->module)
+                    return;
+
+                auto *fxm = static_cast<FX<fxType> *>(this->module);
+
+                auto pq = wid->getParamQuantity();
+                if (!pq)
+                    return;
+
+                auto &surgePar = fxm->fxstorage->p[lay.parId - FX<fxType>::FX_PARAM_0];
+                if (!(surgePar.valtype == vt_int))
+                    return;
+
+                auto men = rack::createMenu();
+                men->addChild(rack::createMenuLabel(pq->getLabel()));
+
+                for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i++)
+                {
+                    char txt[256];
+                    auto fv =
+                        Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
+                    surgePar.get_display(txt, true, fv);
+                    men->addChild(rack::createMenuItem(txt, "", [pq, fv]() { pq->setValue(fv); }));
+                }
+            };
+            addParam(wid);
+        }
+        break;
         default:
             break;
         }
