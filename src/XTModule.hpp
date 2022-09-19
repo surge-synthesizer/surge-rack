@@ -382,6 +382,8 @@ struct ModulationAssistant
     float mu[nPar][nInputs];
     __m128 muSSE[nPar][nInputs];
     float values alignas(16)[nPar][MAX_POLY];
+    float basevalues alignas(16)[nPar];
+    float modvalues alignas(16)[nPar][MAX_POLY];
     __m128 valuesSSE [nPar][MAX_POLY >> 2];
     float animValues[nPar];
     bool connected[nInputs];
@@ -446,7 +448,9 @@ struct ModulationAssistant
                 {
                     mv += connected[i] * mu[p][i] * inp[i];
                 }
-                values[p][0] = mv + m->params[p + par0].getValue();
+                modvalues[p][0] = mv;
+                basevalues[p] = m->params[p + par0].getValue();;
+                values[p][0] = mv + basevalues[p];
                 animValues[p] = fInv[p] * mv;
             }
         }
@@ -495,8 +499,11 @@ struct ModulationAssistant
                 }
                 auto v0 = m->params[p+par0].getValue();
                 for (int c=0; c<chans; ++c)
+                {
+                    modvalues[p][c] = mv[c];
                     values[p][c] = mv[c] + v0;
-
+                }
+                basevalues[p] = v0;
                 animValues[p] = fInv[p] * mv[0];
             }
         }
