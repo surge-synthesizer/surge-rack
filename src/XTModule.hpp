@@ -374,6 +374,68 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     }
 };
 
+
+template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs,
+          uint32_t input0>
+struct MonophonicModulationAssistant
+{
+    float f[nPar], fInv[nPar];
+    float mu[nPar][nInputs];
+    __m128 muSSE[nPar][nInputs];
+    float values alignas(16)[nPar];
+    float basevalues alignas(16)[nPar];
+    float modvalues alignas(16)[nPar];
+    bool connected[nInputs];
+    void initialize(M *m)
+    {
+        for (auto p = 0; p < nPar; ++p)
+        {
+            auto pq = m->paramQuantities[p + par0];
+            f[p] = (pq->maxValue - pq->minValue);
+            fInv[p] = 1.0 / f[p];
+        }
+        setupMatrix(m);
+    }
+
+    void setupMatrix(M *m)
+    {
+        for (auto p = 0; p < nPar; ++p)
+        {
+            for (auto i = 0; i < nInputs; ++i)
+            {
+                auto idx = m->modulatorIndexFor(p + par0, i);
+                mu[p][i] = m->params[idx].getValue() * f[p];
+            }
+        }
+    }
+
+    void updateValues(M *m)
+    {
+        for (int i = 0; i < nInputs; ++i)
+        {
+            connected[i] = m->inputs[i + input0].isConnected();
+        }
+
+        float inp[nInputs];
+        for (int i = 0; i < nInputs; ++i)
+        {
+            inp[i] = m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+        }
+        for (int p = 0; p < nPar; ++p)
+        {
+            // Set up the base values
+            auto mv = 0.f;
+            for (int i = 0; i < nInputs; ++i)
+            {
+                mv += connected[i] * mu[p][i] * inp[i];
+            }
+            modvalues[p] = mv;
+            basevalues[p] = m->params[p + par0].getValue();;
+            values[p] = mv + basevalues[p];
+        }
+    }
+};
+
 template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs,
           uint32_t input0>
 struct ModulationAssistant

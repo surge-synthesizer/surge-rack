@@ -272,6 +272,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     bool firstDirty{false};
     int dirtyCount{0};
     int sumDeact{-1};
+    int sumAbs{-1};
     uint32_t wtloadCompare{842932918};
 
     bool isDirty()
@@ -285,16 +286,18 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         bool dval{false};
         if (module)
         {
-            auto lSumDeact = 0;
+            auto lSumDeact = 0, lSumAbs = 0;
             for (int i = 0; i < n_osc_params; i++)
             {
                 dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
                 lSumDeact += oscdata->p[i].deactivated * ( 1 << i );
+                lSumAbs += oscdata->p[i].absolute * ( 1 << i);
             }
 
-            if (lSumDeact != sumDeact)
+            if (lSumDeact != sumDeact || lSumAbs != sumAbs)
             {
                 sumDeact = lSumDeact;
+                sumAbs = lSumAbs;
                 dval = true;
             }
         }
@@ -854,6 +857,14 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         underX += 32 + 2;
     }
 
+    if (VCOConfig<oscType>::getMenuLightID() >= 0)
+    {
+        auto oct = widgets::PlotAreaSwitch::create(
+            rack::Vec(underX, underPlotStartY), rack::Vec(18, underPlotH), VCOConfig<oscType>::getMenuLightString(), module, M::ARBITRARY_SWITCH_0 + VCOConfig<oscType>::getMenuLightID());
+        addChild(oct);
+        underX += 18 + 2;
+    }
+
     if (VCOConfig<oscType>::rightMenuParamId() >= 0)
     {
         auto restSz = plotW - underX + plotStartX;
@@ -886,8 +897,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                     pq->setValue(fv);
                 }));
             }
-
         };
+        plt->transformLabel = VCOConfig<oscType>::rightMenuTransformFunction();
         addChild(plt);
     }
 
@@ -922,15 +933,25 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                 addChild(k);
             }
 
-            // This is a little inefficient but
+            // This is a little inefficient but it's only at construct time so who cares
             for (const auto &[lidx, lid] : VCOConfig<oscType>::getLightsOnKnobsTo())
             {
                 if (lidx == idx)
                 {
-                    addParam(rack::createParamCentered<widgets::ActivateKnobSwitch>(
+                    auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(
                         rack::Vec(baseKnob->box.pos.x + baseKnob->box.size.x + 2.5,
                                   baseKnob->box.pos.y + 3),
-                        module, M::ARBITRARY_SWITCH_0 + lid));
+                        module, M::ARBITRARY_SWITCH_0 + lid);
+                    auto t = VCOConfig<oscType>::getLightTypeFor(lid);
+                    if (t == VCOConfig<oscType>::LightType::ABSOLUTE)
+                    {
+                        light->type = widgets::ActivateKnobSwitch::ABSOLUTE;
+                    }
+                    if (t == VCOConfig<oscType>::LightType::EXTENDED)
+                    {
+                        light->type = widgets::ActivateKnobSwitch::EXTENDED;
+                    }
+                    addParam(light);
                 }
             }
         }
