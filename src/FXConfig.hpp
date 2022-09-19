@@ -14,7 +14,7 @@ namespace sst::surgext_rack::fx
 // SPRING REVERB
 // An extra input for the 'knock' parameter which we send up with a
 // schmidt trigger
-template <> constexpr int FXConfig<fxt_spring_reverb>::extraInputs() { return 1; }
+template <> constexpr int FXConfig<fxt_reverb>::extraInputs() { return 1; }
 template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::getLayout()
 {
     const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
@@ -67,23 +67,27 @@ template <> FXConfig<fxt_delay>::layout_t FXConfig<fxt_delay>::getLayout()
     const auto thirdSmallRow = modRow - 16;
     const auto secondSmallRow = thirdSmallRow - 16;
     const auto firstSmallRow = secondSmallRow - 16;
-    const auto bigRow = firstSmallRow - 20;
+    const auto zeroSmallRow = firstSmallRow - 16;
+    const auto bigRow = (firstSmallRow + zeroSmallRow) * 0.5f;
+
+    const auto endOfPanel = zeroSmallRow - 8;
 
     return {
         // clang-format off
-        {LayoutItem::KNOB12, "LEFT", DelayEffect::dly_time_left, (col[0] + col[1]) * 0.5, bigRow},
-        {LayoutItem::KNOB12, "RIGHT", DelayEffect::dly_time_right, (col[2] + col[3]) * 0.5, bigRow},
+        {LayoutItem::KNOB16, "LEFT", DelayEffect::dly_time_left, col[1] - 10, bigRow},
+        {LayoutItem::KNOB16, "RIGHT", DelayEffect::dly_time_right, col[1] + 10, bigRow},
+
+        {LayoutItem::KNOB9, "LOWCUT", DelayEffect::dly_lowcut, col[3], zeroSmallRow},
+        {LayoutItem::KNOB9, "HICUT", DelayEffect::dly_highcut, col[3], firstSmallRow},
 
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
-            col[0], firstSmallRow },
-        {LayoutItem::KNOB9, "INPUT", DelayEffect::dly_input_channel, col[1], firstSmallRow},
-        {LayoutItem::KNOB9, "RATE", DelayEffect::dly_mod_rate, col[2], firstSmallRow},
-        {LayoutItem::KNOB9, "DEPTH", DelayEffect::dly_mod_depth, col[3], firstSmallRow},
+            col[0], secondSmallRow },
+        {LayoutItem::KNOB9, "INPUT", DelayEffect::dly_input_channel, col[1], secondSmallRow},
+        {LayoutItem::KNOB9, "RATE", DelayEffect::dly_mod_rate, col[2], secondSmallRow},
+        {LayoutItem::KNOB9, "DEPTH", DelayEffect::dly_mod_depth, col[3], secondSmallRow},
 
-        {LayoutItem::KNOB9, "F/B", DelayEffect::dly_feedback, col[0], secondSmallRow},
-        {LayoutItem::KNOB9, "XFEED", DelayEffect::dly_crossfeed, col[1], secondSmallRow},
-        {LayoutItem::KNOB9, "LOWCUT", DelayEffect::dly_lowcut, col[2], secondSmallRow},
-        {LayoutItem::KNOB9, "HICUT", DelayEffect::dly_highcut, col[3], secondSmallRow},
+        {LayoutItem::KNOB9, "F/B", DelayEffect::dly_feedback, col[0], thirdSmallRow},
+        {LayoutItem::KNOB9, "XFEED", DelayEffect::dly_crossfeed, col[1], thirdSmallRow},
 
         {LayoutItem::KNOB9, "WIDTH", DelayEffect::dly_width, col[2], thirdSmallRow},
         {LayoutItem::KNOB9, "MIXT", DelayEffect::dly_mix, col[3], thirdSmallRow},
