@@ -7,6 +7,8 @@
 #include "rack.hpp"
 #include <cstring>
 
+#include "DebugHelpers.h"
+
 namespace sst::surgext_rack::fx
 {
 template <int fxType> struct FX;
@@ -84,7 +86,7 @@ template <int fxType> struct FX : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::ModulationAssistant<FX<fxType>, n_fx_params, FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
+    modules::MonophonicModulationAssistant<FX<fxType>, n_fx_params, FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
         modAssist;
 
     FX() : XTModule()
@@ -125,6 +127,7 @@ template <int fxType> struct FX : modules::XTModule
     }
     modules::ClockProcessor<FX<fxType>> clockProc;
 
+    float modScales[n_fx_params];
     void setupSurge()
     {
         setupSurgeCommon(NUM_PARAMS, false);
@@ -141,6 +144,11 @@ template <int fxType> struct FX : modules::XTModule
         // This is a micro-hack to stop ranges blowing up
         fxstorage->return_level.id = -1;
         setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params - 1]));
+
+        for (int i=0; i<n_fx_params; ++i)
+        {
+            modScales[i] = fxstorage->p[i].val_max.f - fxstorage->p[i].val_min.f;
+        }
 
         std::fill(processedL, processedL + BLOCK_SIZE, 0);
         std::fill(processedR, processedR + BLOCK_SIZE, 0);
@@ -166,7 +174,7 @@ template <int fxType> struct FX : modules::XTModule
         int idx = paramId - FX_PARAM_0;
         if (idx < 0 || idx >= n_fx_params)
             return 0;
-        return modAssist.animValues[idx];
+        return modAssist.modvalues[idx];
     }
 
     bool isBipolar(int paramId) override {
@@ -254,7 +262,10 @@ template <int fxType> struct FX : modules::XTModule
             while (oap <= eap)
             {
                 if (oap->valtype == vt_float)
-                    pt[oap->id].f += modAssist.modvalues[idx][0];
+                {
+                    pt[oap->id].f += modAssist.modvalues[idx] * modScales[idx];
+
+                }
                 idx++;
                 oap++;
             }

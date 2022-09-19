@@ -38,8 +38,21 @@ template <int oscType> struct VCOConfig
 
     typedef std::vector<std::pair<int,int>> lightOnTo_t;
     static lightOnTo_t getLightsOnKnobsTo() { return {}; }
+    enum LightType {
+        POWER,
+        ABSOLUTE,
+        EXTENDED
+    };
+    static LightType getLightTypeFor(int idx) { return POWER; }
+
+    static int getMenuLightID() { return -1; }
+    static std::string getMenuLightString() { return ""; }
 
     static int rightMenuParamId() { return -1; }
+    static std::function<std::string(const std::string &)> rightMenuTransformFunction()
+    {
+        return [](auto &s) { return s; };
+    }
 
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processLightParameters(VCO<oscType> *) {}
@@ -240,7 +253,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     int processPosition = BLOCK_SIZE + 1;
 
-    void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
+    void moduleSpecificSampleRateChange() override { forceRespawnDueToExternality = true; }
 
     struct WavetableMessage
     {
@@ -263,7 +276,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     std::array<int, MAX_POLY> lastUnison{-1};
     int lastNChan{-1};
-    bool forceRespawnDueToSampleRate = false;
+    bool forceRespawnDueToExternality = false;
     static constexpr int checkWaveTableEvery{512};
     int checkedWaveTable{checkWaveTableEvery};
     static constexpr int calcModMatrixEvery{256};
@@ -315,7 +328,7 @@ template <int oscType> struct VCO : public modules::XTModule
             }
         }
 
-        if (nChan != lastNChan || forceRespawnDueToSampleRate)
+        if (nChan != lastNChan || forceRespawnDueToExternality)
         {
             lastNChan = nChan;
             // Set up unmodulated values
@@ -343,7 +356,7 @@ template <int oscType> struct VCO : public modules::XTModule
                     surge_osc[c]->init(pitch0);
                 }
             }
-            forceRespawnDueToSampleRate = false;
+            forceRespawnDueToExternality = false;
             processPosition = BLOCK_SIZE + 1;
         }
 

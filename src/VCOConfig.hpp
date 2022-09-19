@@ -48,8 +48,51 @@ template <> VCOConfig<ot_string>::knobs_t VCOConfig<ot_string>::getKnobs()
     };
 }
 template <> int VCOConfig<ot_string>::rightMenuParamId() { return 0; }
+template <>
+std::function<std::string(const std::string &)> VCOConfig<ot_string>::rightMenuTransformFunction()
+{
+    auto res = [](const std::string &s) {
+        auto rv = s;
+        auto pn = rv.find("PINK NOISE");
+        if (pn != std::string::npos)
+        {
+            rv = rv.substr(0, pn) + "PINK NS";
+        }
+        pn = rv.find("CONSTANT ");
+        if (pn != std::string::npos)
+        {
+            rv = std::string("CNS ") + rv.substr(pn + strlen("CONSTANT "));
+        }
+        return rv;
+    };
+    return res;
+}
 template <> constexpr bool VCOConfig<ot_string>::supportsAudioIn() { return true; }
 template <> std::string VCOConfig<ot_string>::retriggerLabel() { return "TRIG"; }
+template <> int VCOConfig<ot_string>::getMenuLightID() { return 0; }
+template <> std::string VCOConfig<ot_string>::getMenuLightString() { return "2X"; }
+template <> void VCOConfig<ot_string>::processLightParameters(VCO<ot_string> *m)
+{
+    auto l0 = (bool)(m->params[VCO<ot_string>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        auto p = &(s->p[StringOscillator::str_exciter_level]);
+        auto dt = p->deform_type & StringOscillator::os_all;
+        if (l0 && dt != StringOscillator::os_twox)
+        {
+            p->deform_type =
+                (p->deform_type & ~StringOscillator::os_all) | StringOscillator::os_twox;
+            m->forceRespawnDueToExternality = true;
+        }
+        else if (!l0 && dt != StringOscillator::os_onex)
+        {
+            p->deform_type =
+                (p->deform_type & ~StringOscillator::os_all) | StringOscillator::os_onex;
+            m->forceRespawnDueToExternality = true;
+        }
+    }
+}
 
 template <> void VCOConfig<ot_string>::oscillatorSpecificSetup(VCO<ot_string> *m)
 {
@@ -205,6 +248,29 @@ template <> VCOConfig<ot_FM3>::knobs_t VCOConfig<ot_FM3>::getKnobs()
             {M::OSC_CTRL_PARAM_0 + 3, "M2 RATIO"},
             {M::OSC_CTRL_PARAM_0 + 4, "M3 AMT"},
             {M::OSC_CTRL_PARAM_0 + 5, "M3 FREQ"}};
+}
+template <> VCOConfig<ot_FM3>::lightOnTo_t VCOConfig<ot_FM3>::getLightsOnKnobsTo()
+{
+    return {{3, 0}, {5, 1}};
+}
+
+template <> VCOConfig<ot_FM3>::LightType VCOConfig<ot_FM3>::getLightTypeFor(int idx)
+{
+    return ABSOLUTE;
+}
+
+template <> void VCOConfig<ot_FM3>::processLightParameters(VCO<ot_FM3> *m)
+{
+    auto l0 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+    auto l1 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        if (l0 != s->p[FM3Oscillator::fm3_m1ratio].absolute)
+            s->p[FM3Oscillator::fm3_m1ratio].absolute = l0;
+        if (l1 != s->p[FM3Oscillator::fm3_m2ratio].absolute)
+            s->p[FM3Oscillator::fm3_m2ratio].absolute = l1;
+    }
 }
 
 template <> constexpr bool VCOConfig<ot_alias>::supportsUnison() { return true; }
