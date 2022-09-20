@@ -42,6 +42,16 @@ template <int fxType> struct FXConfig
             res.ycmm = ht;
             return res;
         }
+        static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm, float span)
+        {
+            auto res = LayoutItem();
+            res.label = label;
+            res.type = GROUP_LABEL;
+            res.xcmm = xcmm;
+            res.ycmm = ycmm;
+            res.spanmm = span;
+            return res;
+        }
     };
     typedef std::vector<LayoutItem> layout_t;
     static layout_t getLayout() { return {}; }

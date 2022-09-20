@@ -215,6 +215,13 @@ template <int oscType> struct VCO : public modules::XTModule
                 surge_osc[i]->~Oscillator();
             surge_osc[i] = nullptr;
         }
+
+        if (VCOConfig<oscType>::requiresWavetables())
+        {
+            std::lock_guard<std::mutex> mg(loadWavetableSpawnMutex);
+            if (loadWavetableThread)
+                loadWavetableThread->join();
+        }
     }
 
     inline int polyChannelCount()
@@ -263,6 +270,7 @@ template <int oscType> struct VCO : public modules::XTModule
     rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()> wavetableQueue;
     std::atomic<int> wavetableIndex{-1};
     std::atomic<uint32_t> wavetableLoads{0};
+    uint32_t lastWavetableLoads{0};
     std::atomic<bool> draw3DWavetable{VCOConfig<oscType>::requiresWavetables()};
 
     std::string getWavetableName()
@@ -281,6 +289,34 @@ template <int oscType> struct VCO : public modules::XTModule
     int checkedWaveTable{checkWaveTableEvery};
     static constexpr int calcModMatrixEvery{256};
     int calcedModMatrix{calcModMatrixEvery};
+    std::atomic<bool> suspendForWT{false};
+    std::unique_ptr<std::thread> loadWavetableThread;
+    std::mutex loadWavetableSpawnMutex;
+
+    void loadWavetable(WavetableMessage msg)
+    {
+        if (msg.index >= 0)
+        {
+            // We really should do this off audio thread but for now
+            auto nid = std::clamp((int)msg.index, (int)0, (int)storage->wt_list.size());
+            oscstorage->wt.queue_id = nid;
+            oscstorage_display->wt.queue_id = nid;
+            storage->perform_queued_wtloads();
+
+            wavetableIndex = oscstorage->wt.current_id;
+        }
+        else
+        {
+            strncpy(oscstorage->wt.queue_filename, msg.filename, 256);
+            strncpy(oscstorage_display->wt.queue_filename, msg.filename, 256);
+            storage->perform_queued_wtloads();
+
+            wavetableIndex = -1;
+        }
+        wavetableLoads++;
+        suspendForWT = false;
+    }
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = polyChannelCount();
@@ -290,6 +326,9 @@ template <int oscType> struct VCO : public modules::XTModule
         bool reInitEveryOSC{false};
         if constexpr (VCOConfig<oscType>::requiresWavetables())
         {
+            if (suspendForWT)
+                return;
+
             if (checkedWaveTable >= checkWaveTableEvery)
             {
                 checkedWaveTable = 0;
@@ -304,27 +343,20 @@ template <int oscType> struct VCO : public modules::XTModule
 
                 if (read)
                 {
-                    if (msg.index >= 0)
-                    {
-                        // We really should do this off audio thread but for now
-                        auto nid = std::clamp((int)msg.index, (int)0, (int)storage->wt_list.size());
-                        oscstorage->wt.queue_id = nid;
-                        oscstorage_display->wt.queue_id = nid;
-                        storage->perform_queued_wtloads();
-
-                        wavetableIndex = oscstorage->wt.current_id;
-                    }
-                    else
-                    {
-                        strncpy(oscstorage->wt.queue_filename, msg.filename, 256);
-                        strncpy(oscstorage_display->wt.queue_filename, msg.filename, 256);
-                        storage->perform_queued_wtloads();
-
-                        wavetableIndex = -1;
-                    }
-                    wavetableLoads++;
-                    reInitEveryOSC = true;
+                    std::lock_guard<std::mutex> mg(loadWavetableSpawnMutex);
+                    if (loadWavetableThread)
+                        loadWavetableThread->join();
+                    loadWavetableThread = std::make_unique<std::thread>([msg, this](){this->loadWavetable(msg);});
+                    suspendForWT = true;
+                    // loadWavetable(msg);
+                    return;
                 }
+            }
+
+            if (wavetableLoads != lastWavetableLoads)
+            {
+                reInitEveryOSC = true;
+                lastWavetableLoads = wavetableLoads;
             }
         }
 
@@ -554,13 +586,26 @@ template <int oscType> struct VCO : public modules::XTModule
             auto nm = json_object_get(wtJ, "display_name");
             if (nm)
             {
-                oscstorage->wt.current_id = -1;
-                strncpy(oscstorage->wavetable_display_name, json_string_value(nm), 256);
+                int supposedIdx = -1;
+                std::string dname = json_string_value(nm);
+                int idx{0};
+                for (const auto &wt : storage->wt_list)
+                {
+                    if (dname == wt.name)
+                    {
+                        supposedIdx = idx;
+                        break;
+                    }
+                    idx++;
+                }
 
-                oscstorage_display->wt.current_id = -1;
-                strncpy(oscstorage_display->wavetable_display_name, json_string_value(nm), 256);
+                oscstorage->wt.current_id = supposedIdx;
+                strncpy(oscstorage->wavetable_display_name, dname.c_str(), 256);
 
-                wavetableIndex = -1;
+                oscstorage_display->wt.current_id = supposedIdx;
+                strncpy(oscstorage_display->wavetable_display_name, dname.c_str(), 256);
+
+                wavetableIndex = supposedIdx;
             }
         }
     }
