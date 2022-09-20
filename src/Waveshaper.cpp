@@ -50,10 +50,10 @@ struct WaveshaperSelector : widgets::ParamJogSelector
         int type = (int)std::round(getParamQuantity()->getValue());
         auto di = wsm.remapStreamedIndexToDisplayIndex(type);
         di += dir;
-        if (di >= wsmOrdering.size())
+        if (di >= (int)wsmOrdering.size())
             di = 0;
         if (di < 0)
-            di = wsmOrdering.size() - 1;
+            di = (int)wsmOrdering.size() - 1;
         setType(wsmOrdering[di]);
     }
 

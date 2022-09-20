@@ -11,6 +11,7 @@
 #include <cstring>
 #include "globals.h"
 #include <sst/waveshapers.h>
+#include "BiquadFilter.h"
 
 namespace sst::surgext_rack::waveshaper
 {
@@ -81,11 +82,11 @@ struct Waveshaper : public modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         // FIXME attach formatters here
-        configParam<modules::DecibelParamQuantity>(DRIVE, 0, 2, 1); // UNITS
-        configParam(BIAS, -1, 1, 0);
-        configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1);
-        configParam(LOCUT, 0, 1, 0);
-        configParam(HICUT, 0, 1, 1);
+        configParam(DRIVE, -24, 24, 0, "Drive", "dB"); // UNITS
+        configParam(BIAS, -1, 1, 0, "Bias");
+        configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
+        configParam(LOCUT, -60, 70, -60);
+        configParam(HICUT, -60, 70, 70);
         configParam(LOCUT_ENABLED, 0, 1, 0);
         configParam(HICUT_ENABLED, 0, 1, 0);
 
@@ -115,6 +116,8 @@ struct Waveshaper : public modules::XTModule
 
     std::string getName() override { return "WSHP"; }
 
+    std::array<std::array<std::unique_ptr<BiquadFilter>, 2>, MAX_POLY> lpPost, hpPost;
+
     bool isBipolar(int paramId) override
     {
         if (paramId == DRIVE || paramId == BIAS || paramId == OUT_GAIN)
@@ -128,26 +131,29 @@ struct Waveshaper : public modules::XTModule
     }
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
-    sst::filters::QuadFilterUnitState qfus[nQFUs];
-    sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker[MAX_POLY];
-    float delayBuffer[nQFUs][4][sst::filters::utilities::MAX_FB_COMB +
-                                sst::filters::utilities::SincTable::FIRipol_N];
+    bool locutOn{false}, hicutOn{false};
 
     void setupSurge()
     {
         processPosition = BLOCK_SIZE;
 
-        restackSIMD();
+        for (int c=0; c<2; ++c)
+        {
+            for (int i = 0; i < MAX_POLY; ++i)
+            {
+                lpPost[c][i] = std::make_unique<BiquadFilter>(storage.get());
+                lpPost[c][i]->suspend();
+                hpPost[c][i] = std::make_unique<BiquadFilter>(storage.get());
+                hpPost[c][i]->suspend();
+            }
+        }
 
-        for (auto i = 0; i < MAX_POLY; ++i)
-            coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
+        restackSIMD();
         resetWaveshaperRegisters();
     }
 
     void moduleSpecificSampleRateChange() override
     {
-        for (auto i = 0; i < MAX_POLY; ++i)
-            coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
         resetWaveshaperRegisters();
     }
 
@@ -173,7 +179,6 @@ struct Waveshaper : public modules::XTModule
     int processPosition;
     bool stereoStack{false};
     int nVoices{0}, nSIMDSlots{0};
-    int qfuIndexForVoice[MAX_POLY << 1][2];  // L-R Voice, {QFU, SIMD Slot}
     int voiceIndexForPolyPos[MAX_POLY << 1]; // only used in stereo mode
 
     int lastPolyL{-2}, lastPolyR{-2};
@@ -184,11 +189,6 @@ struct Waveshaper : public modules::XTModule
         stereoStack = false;
         nVoices = 0;
         nSIMDSlots = 0;
-        for (int c = 0; c < MAX_POLY << 1; ++c)
-        {
-            qfuIndexForVoice[c][0] = -1;
-            qfuIndexForVoice[c][0] = -1;
-        }
 
         memset(voiceIndexForPolyPos, 0, sizeof(voiceIndexForPolyPos));
 
@@ -207,10 +207,6 @@ struct Waveshaper : public modules::XTModule
 
             for (int c = 0; c < channels; ++c)
             {
-                auto qid = c >> 2;
-                auto qslt = c % 4;
-                qfuIndexForVoice[c][0] = qid;
-                qfuIndexForVoice[c][1] = qslt;
                 voiceIndexForPolyPos[c] = c;
             }
         }
@@ -226,20 +222,12 @@ struct Waveshaper : public modules::XTModule
             int idx = 0;
             for (int l = 0; l < lastPolyL; ++l)
             {
-                auto qid = idx >> 2;
-                auto qslt = idx % 4;
-                qfuIndexForVoice[idx][0] = qid;
-                qfuIndexForVoice[idx][1] = qslt;
                 voiceIndexForPolyPos[idx] = l;
 
                 idx++;
             }
             for (int r = 0; r < lastPolyR; ++r)
             {
-                auto qid = idx >> 2;
-                auto qslt = idx % 4;
-                qfuIndexForVoice[idx][0] = qid;
-                qfuIndexForVoice[idx][1] = qslt;
                 voiceIndexForPolyPos[idx] = r;
                 idx++;
             }
@@ -250,11 +238,8 @@ struct Waveshaper : public modules::XTModule
     }
 
     sst::waveshapers::WaveshaperType lastType = sst::waveshapers::WaveshaperType::wst_none;
-    sst::filters::FilterUnitQFPtr filterPtrLo{nullptr};
-    sst::filters::FilterUnitQFPtr filterPtrHi{nullptr};
     sst::waveshapers::QuadWaveshaperPtr wsPtr{nullptr};
     sst::waveshapers::QuadWaveshaperState wss[nQFUs];
-
 
     static __m128 filterDupInToOut(sst::filters::QuadFilterUnitState *__restrict, __m128 in)
     {
@@ -277,6 +262,17 @@ struct Waveshaper : public modules::XTModule
             modulationAssistant.setupMatrix(this);
             modulationAssistant.updateValues(this);
 
+            auto loOn = params[LOCUT_ENABLED].getValue() > 0.5;
+            auto hiOn = params[HICUT_ENABLED].getValue() > 0.5;
+
+            if (loOn)
+            {
+                if (!locutOn)
+                {
+                }
+            }
+
+
             if (wstype != lastType)
             {
                 resetWaveshaperRegisters();
@@ -287,14 +283,6 @@ struct Waveshaper : public modules::XTModule
             {
                 wsPtr = wsDupInToOut;
             }
-
-#if 0
-            filterPtr = sst::filters::GetQFPtrFilterUnit(ftype, fsubtype);
-            if (!filterPtr)
-            {
-                filterPtr = dupInToOut;
-            }
-#endif
 
             int thisPolyL{-1}, thisPolyR{-1};
             if (inputs[INPUT_L].isConnected())
@@ -317,36 +305,13 @@ struct Waveshaper : public modules::XTModule
             outputs[OUTPUT_L].setChannels(std::max(1, thisPolyL));
             outputs[OUTPUT_R].setChannels(std::max(1, thisPolyR));
 
-#if 0
-            bool calculated[MAX_POLY];
-            std::fill(calculated, calculated + MAX_POLY, false);
-
-            for (int v = 0; v < nVoices; ++v)
-            {
-                int qf = qfuIndexForVoice[v][0];
-                int qp = qfuIndexForVoice[v][1];
-                int pv = voiceIndexForPolyPos[v];
-
-                if (qf < 0 || qf >= nQFUs)
-                    continue; // shouldn't happen
-
-                if (!calculated[pv])
-                {
-                    for (int f = 0; f < sst::filters::n_cm_coeffs; ++f)
-                    {
-                        coefMaker[pv].C[f] = qfus[qf].C[f][qp];
-                    }
-                    coefMaker[pv].MakeCoeffs(modulationAssistant.values[FREQUENCY - FREQUENCY][pv],
-                                            modulationAssistant.values[RESONANCE - FREQUENCY][pv],
-                                            ftype, fsubtype, storage.get(), false);
-                    calculated[pv] = true;
-                }
-                coefMaker[pv].updateState(qfus[qf], qp);
-            }
-#endif
-
             processPosition = 0;
         }
+        else
+        {
+            modulationAssistant.updateValues(this);
+        }
+
 
         if (stereoStack)
         {
@@ -377,7 +342,8 @@ struct Waveshaper : public modules::XTModule
                 for (int v = 0; v < 4; ++v)
                 {
                     auto vc = voiceIndexForPolyPos[v + vidx];
-                    for (int p=0; p< n_wshp_params; ++p)
+                    modsRaw[0][v] = storage->db_to_linear(modulationAssistant.values[0][vc]);
+                    for (int p=1; p< n_wshp_params; ++p)
                     {
                         // std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc << "]" << std::endl;
                         modsRaw[p][v] = modulationAssistant.values[p][vc];
@@ -415,9 +381,15 @@ struct Waveshaper : public modules::XTModule
 
             for (int i = 0; i < nSIMDSlots; ++i)
             {
+                float dt alignas(16)[4];
+
+                _mm_store_ps(dt, mvsse[0][i]);
+                for (int v=0; v<4; ++v)
+                    dt[v] = storage->db_to_linear(dt[v]);
+                auto drive = _mm_load_ps(dt);
                 auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
-                auto fin = wsPtr(&wss[i], in, mvsse[0 /* DRIVE - DRIVE */][i]);
+                auto fin = wsPtr(&wss[i], in, drive);
                 fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);
                 fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(ov + (i << 2), fin);
