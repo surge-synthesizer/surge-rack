@@ -1137,6 +1137,12 @@ template <typename T> struct GenericPresetJogSelector : public T, style::StylePa
         }
     }
 
+    void onDoubleClick(const rack::widget::Widget::DoubleClickEvent &e) override
+    {
+        // Fast click is just go ahead not double click.
+        e.consume(this);
+    }
+
     void onStyleChanged() override {}
 };
 
