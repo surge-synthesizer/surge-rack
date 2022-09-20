@@ -272,6 +272,43 @@
       "tags": [
         "FX"
       ]
+    },
+    {
+      "slug": "SurgeXTLFO",
+      "name": "SXT LFO",
+      "description": "The Surge XT LFO",
+      "tags": [
+        "LFO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTMixer",
+      "name": "SXT Mixer",
+      "description": "The Surge XT Mixer",
+      "tags": [
+        "Mixer",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTModMatrix",
+      "name": "SXT ModMatrix",
+      "description": "The Surge XT ModMatrix",
+      "tags": [
+        "Utility",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTTreeMonster",
+      "name": "SXT TreeMonster",
+      "description": "You'll love it. Its a way of life",
+      "tags": [
+        "FX",
+        "Polyphonic",
+        "RingModulation"
+      ]
     }
   ]
 }

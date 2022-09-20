@@ -25,6 +25,10 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     // Add the ported ones
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeWaveshaper);
+    p->addModel(modelSurgeLFO);
+    p->addModel(modelSurgeMixer);
+    p->addModel(modelSurgeModMatrix);
+    p->addModel(modelSurgeTreeMonster);
 
     p->addModel(modelFXDelay);
     p->addModel(modelFXReverb);
