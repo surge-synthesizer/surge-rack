@@ -18,7 +18,18 @@ template <int fxType> struct FXConfig
     struct LayoutItem
     {
         // order matters a bit on this enum. knobs contiguous pls
-        enum Type { KNOB9, KNOB12, KNOB16, PORT, GROUP_LABEL, LCD_BG, ERROR } type{ERROR};
+        enum Type {
+            KNOB9,
+            KNOB12,
+            KNOB16,
+            PORT,
+            GROUP_LABEL,
+            LCD_BG,
+            LCD_MENU_ITEM,
+            POWER_LIGHT,
+            EXTEND_LIGHT,
+            ERROR
+        } type{ERROR};
         std::string label{"ERR"};
         int parId{-1};
         float xcmm{-1}, ycmm{-1};
@@ -45,8 +56,8 @@ template <int fxType> struct FXConfig
     static void processSpecificParams(FX<fxType> *M) {}
 
     static constexpr int panelWidthInScrews() { return 12; }
-    static constexpr int usesSideband() { return false; }
-    static constexpr int usesClock() { return false; }
+    static constexpr bool usesSideband() { return false; }
+    static constexpr bool usesClock() { return false; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -244,6 +255,11 @@ template <int fxType> struct FX : modules::XTModule
             {
                 std::memcpy(storage->audio_in_nonOS[0], modulatorL, BLOCK_SIZE * sizeof(float));
                 std::memcpy(storage->audio_in_nonOS[1], modulatorR, BLOCK_SIZE * sizeof(float));
+            }
+
+            if constexpr (FXConfig<fxType>::specificParamCount() > 0)
+            {
+                FXConfig<fxType>::processSpecificParams(this);
             }
 
             for (int i = 0; i < n_fx_params; ++i)
