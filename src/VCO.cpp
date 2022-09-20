@@ -430,6 +430,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         }
         else
         {
+            auto wtlockguard = std::lock_guard<std::mutex>(module->storage->waveTableDataMutex);
             auto xp = box.size.x;
             auto yp = box.size.y;
 

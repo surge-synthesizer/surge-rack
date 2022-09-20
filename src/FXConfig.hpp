@@ -105,13 +105,14 @@ template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout
     const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
 
     const auto smallRow = modRow - 16;
-    const auto bigRow = smallRow - 22;
+    const auto bigRow = smallRow - 26;
     const auto endOfPanel = bigRow - 12;
 
     typedef FX<fxt_freqshift> fx_t;
 
     return {
         // clang-format off
+        LayoutItem::createGrouplabel("DELAY", col[1], smallRow - 9, widgets::StandardWidthWithModulationConstants::columnWidth_MM * 1.5),
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
             col[0], smallRow },
         {LayoutItem::KNOB9, "DELAY", FrequencyShifterEffect::freq_delay, col[1], smallRow},
@@ -129,6 +130,11 @@ template <> void FXConfig<fxt_freqshift>::configSpecificParams(FX<fxt_freqshift>
 {
     typedef FX<fxt_freqshift> fx_t;
     m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0, "Extend Frequency");
+
+    // Limit max delay to 1second by setting the upper bound to '0' in 2^x land
+    auto &p = m->fxstorage->p[FrequencyShifterEffect::freq_delay];
+    m->paramQuantities[fx_t::FX_PARAM_0 + FrequencyShifterEffect::freq_delay]->maxValue =
+        -p.val_min.f / (p.val_max.f - p.val_min.f);
 }
 
 template <> void FXConfig<fxt_freqshift>::processSpecificParams(FX<fxt_freqshift> *m)

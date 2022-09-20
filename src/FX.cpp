@@ -129,6 +129,13 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             addChild(light);
         }
         break;
+        case FXConfig<fxType>::LayoutItem::GROUP_LABEL:
+        {
+            auto gl = widgets::GroupLabel::createWithCenterAndSpan(
+                lay.label, rack::Vec(lay.xcmm, lay.ycmm), lay.spanmm);
+            addChild(gl);
+        }
+        break;
         case FXConfig<fxType>::LayoutItem::LCD_BG:
         {
             auto bg = widgets::LCDBackground::createWithHeight(lay.ycmm);

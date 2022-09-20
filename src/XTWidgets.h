@@ -588,6 +588,66 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant
     }
 };
 
+struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdw{nullptr};
+    std::string label;
+
+    static GroupLabel *createWithCenterAndSpan(const std::string &label, const rack::Vec &ctrInMM,
+                                               float spanInMM)
+    {
+        float ht = rack::mm2px(5);
+        float yup = rack::mm2px(1);
+        auto res = new GroupLabel();
+
+        res->box.pos.x = rack::mm2px(ctrInMM.x - spanInMM);
+        res->box.pos.y = rack::mm2px(ctrInMM.y) - yup;
+        res->box.size.x = rack::mm2px(spanInMM * 2);
+        res->box.size.y = ht;
+        res->label = label;
+        res->setup();
+        return res;
+    }
+
+    void setup()
+    {
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                             [this](auto v) { this->drawGroup(v); });
+        addChild(bdw);
+    }
+
+    void drawGroup(NVGcontext *vg)
+    {
+        float textBox[4];
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+        nvgText(vg, box.size.x * 0.5, 0, label.c_str(), nullptr);
+        nvgTextBounds(vg, box.size.x * 0.5, 0, label.c_str(), nullptr, textBox);
+        nvgFill(vg);
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, 1, box.size.y);
+        nvgLineTo(vg, 1, (textBox[1] + textBox[3]) * 0.5);
+        nvgLineTo(vg, textBox[0] - 2, (textBox[1] + textBox[3]) * 0.5);
+        nvgStrokeWidth(vg, 1.2);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, box.size.x - 1, box.size.y);
+        nvgLineTo(vg, box.size.x - 1, (textBox[1] + textBox[3]) * 0.5);
+        nvgLineTo(vg, textBox[2] + 2, (textBox[1] + textBox[3]) * 0.5);
+        nvgStrokeWidth(vg, 1.2);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgStroke(vg);
+    }
+
+    void onStyleChanged() override { bdw->dirty = true; }
+};
+
 struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdw{nullptr}, *bdwLight{nullptr};
