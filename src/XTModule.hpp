@@ -267,6 +267,84 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
     }
 };
 
+
+template <int centerOffset>
+struct VOctParamQuantity : public rack::engine::ParamQuantity
+{
+    void setDisplayValueString(std::string s) override
+    {
+        auto f = std::atof(s.c_str());
+        if (f > 0)
+        {
+            auto midiNote = 12 * log2(f / 440) + 69;
+            setValue((midiNote-centerOffset) / 12.f);
+        }
+        else if ((s[0] >= 'A' && s[0] <= 'G') || (s[0] >= 'a' && s[0] <= 'g'))
+        {
+            int opos = 1;
+            int halfOff = 0;
+            if (s[1] == '#')
+            {
+                halfOff = 1;
+                opos++;
+            }
+            if (s[1] == 'b')
+            {
+                halfOff = -1;
+                opos++;
+            }
+            int octave = std::atoi(s.c_str() + opos);
+
+            int ws = 0;
+            switch (std::toupper(s[0]))
+            {
+            case 'C':
+                ws = 0;
+                break;
+            case 'D':
+                ws = 2;
+                break;
+            case 'E':
+                ws = 4;
+                break;
+            case 'F':
+                ws = 5;
+                break;
+            case 'G':
+                ws = 7;
+                break;
+            case 'A':
+                ws = 9;
+                break;
+            case 'B':
+                ws = 11;
+                break;
+            }
+            auto mnote = (octave + 1) * 12 + ws + halfOff;
+            setValue((mnote - centerOffset) / 12.f);
+        }
+        else
+        {
+            setValue(0);
+        }
+    }
+
+    virtual std::string getDisplayValueString() override
+    {
+        auto note = getValue() * 12 + centerOffset;
+        auto freq = 440.0 * pow(2.0, (note - 69) / 12);
+
+        auto noteR = std::round(note);
+        auto noteO = (int)(noteR) % 12;
+        int oct = (int)std::round((noteR - noteO) / 12 - 1);
+
+        static constexpr std::array<char[3], 12> names{"C",  "C#", "D",  "D#", "E",  "F",
+                                                       "F#", "G",  "G#", "A",  "A#", "B"};
+
+        return fmt::format("{:6.2f} Hz (~{}{})", freq, names[noteO], oct);
+    }
+};
+
 template <int centerOffset> struct MidiNoteParamQuantity : public rack::engine::ParamQuantity
 {
     void setDisplayValueString(std::string s) override
