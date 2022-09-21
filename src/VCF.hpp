@@ -156,7 +156,6 @@ struct VCF : public modules::XTModule
         processPosition = BLOCK_SIZE;
 
         restackSIMD();
-
         for (auto i = 0; i < MAX_POLY; ++i)
             coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
         resetFilterRegisters();
@@ -164,6 +163,7 @@ struct VCF : public modules::XTModule
 
     void moduleSpecificSampleRateChange() override
     {
+        restackSIMD();
         for (auto i = 0; i < MAX_POLY; ++i)
             coefMaker[i].setSampleRateAndBlockSize(APP->engine->getSampleRate(), BLOCK_SIZE);
         resetFilterRegisters();

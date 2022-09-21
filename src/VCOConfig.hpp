@@ -326,6 +326,168 @@ template <> void VCOConfig<ot_shnoise>::processLightParameters(VCO<ot_shnoise> *
     }
 }
 
+static std::string twistFirstParam(VCO<ot_twist> *m)
+{
+    auto model = m->oscstorage_display->p[0].val.i;
+    switch (model)
+    {
+    case 0: // waveforms
+        return "DETUNE";
+    case 1: // waveshaper
+        return "SHAPER";
+    case 2: // 2op
+    case 3: // formant
+        return "RATIO";
+    case 4: // harmonic
+        return "BUMP";
+    case 5: // wt
+        return "BANK";
+    case 6: // chords
+        return "TYPE";
+    case 7: // vowel
+        return "SPEAK";
+    case 8: // gran cloud
+        return "RANDOM";
+    case 9: // filtered noise
+        return "TYPE";
+    case 10: // part noise
+        return "FREQ";
+    case 11: // inharm string
+        return "INHARM";
+    case 12: // modal resonator
+        return "MATERIAL";
+    case 13: // analog kick
+        return "SHARP";
+    case 14: // analog snare
+    case 15: // analog hat
+        return "TONE/NS";
+    }
+    return std::to_string(model);
+}
+
+static std::string twistSecondParam(VCO<ot_twist> *m)
+{
+    auto model = m->oscstorage_display->p[0].val.i;
+    switch (model)
+    {
+    case 0: // waveforms
+        return "SQUARE";
+    case 1: // waveshaper
+        return "FOLD";
+    case 2: // 2op
+        return "AMOUNT";
+    case 3: // formant
+        return "FORMANT";
+    case 4: // harmonic
+        return "PEAK";
+    case 5: // wt
+        return "X MORPH";
+    case 6: // chords
+        return "INVER";
+    case 7: // vowel
+        return "SPECIES";
+    case 8: // gran cloud
+        return "DENISTY";
+    case 9: // filtered noise
+        return "FREQ";
+    case 10: // part noise
+        return "DENSITY";
+    case 11: // inharm string
+        return "BRIGHT";
+    case 12: // modal resonator
+        return "BRIGHT";
+    case 13: // analog kick
+        return "BRIGHT";
+    case 14: // analog snare
+        return "MODEL";
+    case 15: // analog hat
+        return "LOCUT";
+    }
+    return std::to_string(model);
+}
+
+static std::string twistThirdParam(VCO<ot_twist> *m)
+{
+    auto model = m->oscstorage_display->p[0].val.i;
+    switch (model)
+    {
+    case 0: // waveforms
+        return "SAW";
+    case 1: // waveshaper
+        return "ASYM";
+    case 2: // 2op
+        return "F/BACK";
+    case 3: // formant
+        return "SHAPE";
+    case 4: // harmonic
+        return "SHAPE";
+    case 5: // wt
+        return "Y MORPH";
+    case 6: // chords
+        return "SHAPE";
+    case 7: // vowel
+        return "SEGMENT";
+    case 8: // gran cloud
+        return "DURATION";
+    case 9: // filtered noise
+        return "RES";
+    case 10: // part noise
+        return "TYPE";
+    case 11: // inharm string
+        return "DECAY";
+    case 12: // modal resonator
+        return "DECAY";
+    case 13: // analog kick
+        return "DECAY";
+    case 14: // analog snare
+        return "DECAY";
+    case 15: // analog hat
+        return "DECAY";
+    }
+    return std::to_string(model);
+}
+
+static std::string twistFourthParam(VCO<ot_twist> *m)
+{
+    auto model = m->oscstorage_display->p[0].val.i;
+    switch (model)
+    {
+    case 0: // waveforms
+        return "SYNC";
+    case 1: // waveshaper
+        return "VAR";
+    case 2: // 2op
+        return "SUB";
+    case 3: // formant
+        return "PD";
+    case 4: // harmonic
+        return "ORGAN";
+    case 5: // wt
+        return "LOFI";
+    case 6: // chords
+        return "ROOT";
+    case 7: // vowel
+        return "RAW";
+    case 8: // gran cloud
+        return "SINE";
+    case 9: // filtered noise
+        return "DUAL";
+    case 10: // part noise
+        return "RAW";
+    case 11: // inharm string
+        return "EXCITER";
+    case 12: // modal resonator
+        return "EXCITER";
+    case 13: // analog kick
+        return "VAR";
+    case 14: // analog snare
+        return "VAR";
+    case 15: // analog hat
+        return "VAR";
+    }
+    return std::to_string(model);
+}
+
 template <> VCOConfig<ot_twist>::knobs_t VCOConfig<ot_twist>::getKnobs()
 {
     typedef VCO<ot_twist> M;
@@ -333,12 +495,16 @@ template <> VCOConfig<ot_twist>::knobs_t VCOConfig<ot_twist>::getKnobs()
     return {
         {M::PITCH_0, "PITCH"},
         {KnobDef::BLANK},
-        {M::OSC_CTRL_PARAM_0 + 1, "HARM"},
-        {M::OSC_CTRL_PARAM_0 + 2, "TIMBRE"},
+        KnobDef::withDynamicLabel(M::OSC_CTRL_PARAM_0 + 1,
+                                  [](VCO<ot_twist> *m) { return twistFirstParam(m); }),
+        KnobDef::withDynamicLabel(M::OSC_CTRL_PARAM_0 + 2,
+                                  [](VCO<ot_twist> *m) { return twistSecondParam(m); }),
         {M::OSC_CTRL_PARAM_0 + 5, "RESP"},
         {M::OSC_CTRL_PARAM_0 + 6, "DECAY"},
-        {M::OSC_CTRL_PARAM_0 + 3, "MORPH"},
-        {M::OSC_CTRL_PARAM_0 + 4, "MIX"},
+        KnobDef::withDynamicLabel(M::OSC_CTRL_PARAM_0 + 3,
+                                  [](VCO<ot_twist> *m) { return twistThirdParam(m); }),
+        KnobDef::withDynamicLabel(M::OSC_CTRL_PARAM_0 + 4,
+                                  [](VCO<ot_twist> *m) { return twistFourthParam(m); }),
     };
 }
 template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }

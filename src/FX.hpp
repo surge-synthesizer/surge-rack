@@ -175,7 +175,7 @@ template <int fxType> struct FX : modules::XTModule
         std::fill(processedR, processedR + BLOCK_SIZE, 0);
     }
 
-    Parameter *surgeParameterForParamId(int paramId) override
+    Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
         if (paramId < FX_PARAM_0 || paramId >= FX_PARAM_0 + n_fx_params)
             return nullptr;

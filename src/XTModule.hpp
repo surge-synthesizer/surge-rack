@@ -160,7 +160,7 @@ struct XTModule : public rack::Module
         storage_id_end = max_id + 1;
     }
 
-    virtual Parameter *surgeParameterForParamId(int paramId) { return nullptr; }
+    virtual Parameter *surgeDisplayParameterForParamId(int paramId) { return nullptr; }
 
     std::unique_ptr<SurgeStorage> storage;
     int storage_id_start, storage_id_end;
@@ -214,7 +214,7 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
         {
             return nullptr;
         }
-        auto par = mc->surgeParameterForParamId(paramId);
+        auto par = mc->surgeDisplayParameterForParamId(paramId);
         return par;
     }
 

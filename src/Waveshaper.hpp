@@ -343,9 +343,10 @@ struct Waveshaper : public modules::XTModule
                 {
                     auto vc = voiceIndexForPolyPos[v + vidx];
                     modsRaw[0][v] = storage->db_to_linear(modulationAssistant.values[0][vc]);
+                    //modsRaw[0][v] = sst::filters::db_to_linear(modulationAssistant.values[0][vc]);
                     for (int p=1; p< n_wshp_params; ++p)
                     {
-                        // std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc << "]" << std::endl;
+                        //std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc << "]" << std::endl;
                         modsRaw[p][v] = modulationAssistant.values[p][vc];
                     }
                 }
@@ -385,7 +386,10 @@ struct Waveshaper : public modules::XTModule
 
                 _mm_store_ps(dt, mvsse[0][i]);
                 for (int v=0; v<4; ++v)
+                {
                     dt[v] = storage->db_to_linear(dt[v]);
+                    //dt[v] = sst::filters::db_to_linear(dt[v]);
+                }
                 auto drive = _mm_load_ps(dt);
                 auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);

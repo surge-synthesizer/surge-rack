@@ -967,7 +967,22 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         {
             if (k.colspan == 1)
             {
-                addChild(makeLabel(row, col, k.name));
+                if (k.hasDynamicLabel && module)
+                {
+                    auto lab = makeLabel(row, col, k.name);
+                    lab->hasDynamicLabel = true;
+                    lab->module = module;
+                    lab->dynamicLabel = [k](modules::XTModule *m)
+                    {
+                        auto vcm = static_cast<VCO<oscType> *>(m);
+                        return k.dynLabelFunction(vcm);
+                    };
+                    addChild(lab);
+                }
+                else
+                {
+                    addChild(makeLabel(row, col, k.name));
+                }
             }
             else if (k.colspan == 2)
             {
