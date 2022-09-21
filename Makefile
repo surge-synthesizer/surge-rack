@@ -48,6 +48,7 @@ FLAGS += -Isurge/src/common \
 	-Isurge/src/common/dsp/modulators \
 	-Isurge/src/surge-testrunner \
 	-Isurge/libs/sst/sst-filters/include \
+	-Isurge/libs/sst/sst-cpputils/include \
 	-Isurge/libs/sst/sst-waveshapers/include \
 	-Isurge/libs/sst/sst-plugininfra/include \
 	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
@@ -103,8 +104,10 @@ dist:	build/surge-data res
 build/surge-data:
 	mkdir -p build/surge-data
 	cp surge/resources/surge-shared/windows.wt build/surge-data
+	cp surge/resources/surge-shared/configuration.xml build/surge-data
 	cp -R surge/resources/data/wavetables build/surge-data/wavetables
 	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty
+	cp -R surge/resources/data/fx_presets build/surge-data/fx_presets
 
 
 DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data

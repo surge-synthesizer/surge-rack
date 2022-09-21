@@ -17,7 +17,8 @@ struct FXWidget : public widgets::XTModuleWidget, widgets::StandardWidthWithModu
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
     /*
-     * @baconpaul some figures that might help you with FX layout (more to come later)
+remove this
+         * @baconpaul some figures that might help you with FX layout (more to come later)
 
 AS you know, on the VCO's there was a 16mm vertical offset between knob rows.
 
@@ -33,6 +34,91 @@ Add an extra 3mm if next row up is large knobs
 
 This should work for all FX - hope that makes sense!
      */
+};
+
+template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
+{
+    FX<fxType> *module{nullptr};
+    static FXPresetSelector *create(FX<fxType> *module)
+    {
+        auto res = new FXPresetSelector<fxType>();
+        res->box.pos.x = widgets::LCDBackground::posx;
+        res->box.pos.y = widgets::LCDBackground::posy;
+        res->box.size.x = rack::RACK_GRID_WIDTH * 12 - 2 * widgets::LCDBackground::posx;
+        res->box.size.y = rack::mm2px(5);
+        res->module = module;
+        res->setup();
+
+        return res;
+    }
+
+    int id{0};
+    void setValue(int i)
+    {
+        id = i;
+        if (!module)
+            return;
+        module->loadThisPreset = id;
+        forceDirty = true;
+    }
+    void onPresetJog(int dir /* +/- 1 */) override
+    {
+        if (!module)
+            return;
+
+        id += dir;
+        if (id < 0)
+            id = module->presets.size() - 1;
+        if (id >= module->presets.size())
+            id = 0;
+        forceDirty = true;
+        setValue(id);
+    };
+    void onShowMenu() override
+    {
+        if (!module)
+            return;
+        auto menu = rack::createMenu();
+        auto psn = std::string(fx_type_names[fxType]) + " Presets";
+        menu->addChild(rack::createMenuLabel(psn));
+
+        int idx{0};
+        for (const auto &p : module->presets)
+        {
+            menu->addChild(rack::createMenuItem(p.name, "", [this, idx]() { setValue(idx); }));
+            idx++;
+        }
+    }
+    std::string getPresetName() override
+    {
+        if (!module)
+            return "Preset";
+        if (module->maxPresets <= id || id < 0)
+            return "Software Error";
+
+        return module->presets[id].name;
+    }
+
+    bool forceDirty{true};
+    bool isDirty() override
+    {
+        if (forceDirty)
+        {
+            forceDirty = false;
+            return true;
+        }
+
+        if (module)
+        {
+            if (module->loadedPreset >= 0 && module->loadedPreset != id)
+            {
+                id = module->loadedPreset;
+                return true;
+            }
+        }
+
+        return false;
+    }
 };
 
 template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
@@ -186,6 +272,8 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         }
     }
 
+    auto wts = FXPresetSelector<fxType>::create(module);
+    addChild(wts);
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
         addChild(makeModLabel(i));
