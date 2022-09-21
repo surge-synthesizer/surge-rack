@@ -36,8 +36,8 @@ struct StandardWidthWithModulationConstants
 
     static constexpr int numberOfScrews = 12;
 
-    rack::Widget *makeLabelAt(float rowPos, int col, const std::string label,
-                              style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+    Label *makeLabelAt(float rowPos, int col, const std::string label,
+                       style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
     {
         auto cx = columnCenters_MM[col];
         auto bl = rowPos;
@@ -81,7 +81,6 @@ struct VCOVCFConstants : StandardWidthWithModulationConstants
         55, 71, modulationRowCenters_MM[0], modulationRowCenters_MM[1], inputRowCenter_MM};
     static constexpr std::array<float, 2> labelBaselines_MM{63.573, 79.573};
 
-
     float plotStartX = rack::mm2px(plotCX_MM - plotW_MM * 0.5);
     float plotStartY = rack::mm2px(plotCY_MM - plotH_MM * 0.5);
     float plotW = rack::mm2px(plotW_MM);
@@ -90,8 +89,8 @@ struct VCOVCFConstants : StandardWidthWithModulationConstants
     float underPlotStartY = plotStartY + plotH;
     float underPlotH = rack::mm2px(plotControlsH_MM);
 
-    rack::Widget *makeLabel(int row, int col, const std::string label,
-                            style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+    Label *makeLabel(int row, int col, const std::string label,
+                     style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
     {
         auto bl = labelBaselines_MM[row];
         return makeLabelAt(bl, col, label, clr);

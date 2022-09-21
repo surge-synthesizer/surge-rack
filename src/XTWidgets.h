@@ -111,6 +111,11 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
         box.size = sz;
     }
 
+    modules::XTModule *module{nullptr};
+    std::function<std::string(modules::XTModule *m)> dynamicLabel{};
+    bool hasDynamicLabel{false};
+    std::string priorDynamic{};
+
     static Label *
     createWithBaselineBox(const rack::Vec &pos, const rack::Vec &size, const std::string lab,
                           float szInPt = 7.3,
@@ -135,8 +140,14 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
         nvgStrokeColor(vg, style()->getColor(color));
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
         nvgTextLetterSpacing(vg, tracking);
-        nvgText(vg, box.size.x * 0.5, box.size.y - baselinePad, label.c_str(), nullptr);
-
+        if (hasDynamicLabel)
+        {
+            nvgText(vg, box.size.x * 0.5, box.size.y - baselinePad, priorDynamic.c_str(), nullptr);
+        }
+        else
+        {
+            nvgText(vg, box.size.x * 0.5, box.size.y - baselinePad, label.c_str(), nullptr);
+        }
 #define DEBUG_RECT 0
 #if DEBUG_RECT
         nvgBeginPath(vg);
@@ -146,6 +157,19 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 #endif
     }
 
+    void step() override
+    {
+        if (hasDynamicLabel)
+        {
+            auto dl = dynamicLabel(module);
+            if (dl != priorDynamic)
+            {
+                dirty = true;
+            }
+            priorDynamic = dl;
+        }
+        FramebufferWidget::step();
+    }
     void onStyleChanged() override { dirty = true; }
 };
 
@@ -167,7 +191,7 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
     void drawStubLayer(NVGcontext *vg)
     {
         nvgBeginPath(vg);
-        nvgFillColor(vg, nvgRGB(0x20, 0x20, 0x20));
+        nvgFillColor(vg, nvgRGB(0x50, 0x50, 0x60));
         nvgStrokeColor(vg, nvgRGB(0xFF, 0x00, 0x00));
         nvgRect(vg, 0, 0, box.size.x, box.size.y);
         nvgFill(vg);

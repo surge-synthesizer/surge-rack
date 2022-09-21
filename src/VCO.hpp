@@ -13,6 +13,7 @@ template <int oscType> struct VCO;
 template <int oscType> struct VCOConfig
 {
     static constexpr bool supportsUnison() { return false; }
+    static constexpr int maximumUnison() { return 9; }
     static constexpr bool requiresWavetables() { return false; }
     static constexpr bool supportsAudioIn() { return false; }
 
@@ -28,10 +29,22 @@ template <int oscType> struct VCOConfig
         int colspan{1};
         int id{-1};
 
+        bool hasDynamicLabel{false};
+        std::function<std::string(VCO<oscType> *m)> dynLabelFunction;
+
         KnobDef(int kid, const std::string &nm) : type(PARAM), id(kid), name(nm) {}
         KnobDef(Type t, int kid, const std::string &nm) : type(t), id(kid), name(nm) {}
         KnobDef(Type t, int kid, const std::string &nm, int colspan) : type(t), id(kid), name(nm), colspan(colspan) {}
         KnobDef(Type t) : type(t) {}
+
+        static KnobDef withDynamicLabel(int param, const std::function<std::string(VCO<oscType> *m)> &f)
+        {
+            auto k = KnobDef(PARAM);
+            k.id = param;
+            k.hasDynamicLabel = true;
+            k.dynLabelFunction = f;
+            return k;
+        }
     };
     typedef std::vector<KnobDef> knobs_t;
     static knobs_t getKnobs() { return {}; }
@@ -170,6 +183,13 @@ template <int oscType> struct VCO : public modules::XTModule
                 OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
         }
 
+        if (VCOConfig<oscType>::supportsUnison())
+        {
+            auto &p = oscstorage->p[n_osc_params - 1];
+            paramQuantities[OSC_CTRL_PARAM_0 + n_osc_params - 1]->maxValue =
+                1.f * (VCOConfig<oscType>::maximumUnison()-p.val_min.i) / (p.val_max.i - p.val_min.i);
+        }
+
         for (int i = OSC_MOD_PARAM_0; i < OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs; ++i)
         {
             configParam(i, -1, 1, 0);
@@ -250,11 +270,11 @@ template <int oscType> struct VCO : public modules::XTModule
         return modulationDisplayValues[idx];
     }
 
-    Parameter *surgeParameterForParamId(int paramId) override {
+    Parameter *surgeDisplayParameterForParamId(int paramId) override {
         if (paramId < OSC_CTRL_PARAM_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
             return nullptr;
 
-        return &oscstorage->p[paramId-OSC_CTRL_PARAM_0];
+        return &oscstorage_display->p[paramId-OSC_CTRL_PARAM_0];
     }
 
 
