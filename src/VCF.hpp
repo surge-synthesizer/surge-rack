@@ -87,7 +87,7 @@ struct VCF : public modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         // FIXME attach formatters here
-        configParam<modules::MidiNoteParamQuantity<69>>(FREQUENCY, -60, 70, 0);
+        configParam<modules::VOctParamQuantity<60>>(FREQUENCY, -5, 5, 0);
         configParam(RESONANCE, 0, 1, sqrt(2) * 0.5, "Resonance", "%", 0.f, 100.f);
         configParam<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1);
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
@@ -134,7 +134,7 @@ struct VCF : public modules::XTModule
 
     bool isBipolar(int paramId) override
     {
-        if (paramId == IN_GAIN || paramId == OUT_GAIN)
+        if (paramId == IN_GAIN || paramId == OUT_GAIN || paramId == FREQUENCY)
             return true;
         return false;
     }
@@ -337,7 +337,9 @@ struct VCF : public modules::XTModule
                     {
                         coefMaker[pv].C[f] = qfus[qf].C[f][qp];
                     }
-                    coefMaker[pv].MakeCoeffs(modulationAssistant.values[FREQUENCY - FREQUENCY][pv],
+                    auto fvoct = modulationAssistant.values[FREQUENCY - FREQUENCY][pv];
+                    auto fmidi = (fvoct + 5) * 12;
+                    coefMaker[pv].MakeCoeffs(fmidi - 69,
                                             modulationAssistant.values[RESONANCE - FREQUENCY][pv],
                                             ftype, fsubtype, storage.get(), false);
                     calculated[pv] = true;

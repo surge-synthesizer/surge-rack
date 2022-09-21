@@ -173,7 +173,7 @@ template <int oscType> struct VCO : public modules::XTModule
             paramNames[i] = oscstorage->p[i].get_name();
         }
 
-        configParam<modules::MidiNoteParamQuantity<0>>(PITCH_0, 1, 127, 60, "Pitch");
+        configParam<modules::VOctParamQuantity<60>>(PITCH_0, -5, 5, 0, "Pitch (v/oct)");
         auto os = configParam(OCTAVE_SHIFT, -3, 3, 0, "Octave Shift");
         os->snapEnabled = true;
 
@@ -258,6 +258,10 @@ template <int oscType> struct VCO : public modules::XTModule
         if (paramId >= OSC_CTRL_PARAM_0 && paramId <= OSC_CTRL_PARAM_0 + n_osc_params)
         {
             return oscstorage->p[paramId-OSC_CTRL_PARAM_0].is_bipolar();
+        }
+        if (paramId == PITCH_0)
+        {
+            return true;
         }
         return false;
     }
@@ -394,7 +398,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
             for (int c = 0; c < nChan; ++c)
             {
-                float pitch0 = params[PITCH_0].getValue() + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
+                float pitch0 = (params[PITCH_0].getValue()+5)*12 + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
                 if (!surge_osc[c])
                 {
                     surge_osc[c] = spawn_osc(oscType, storage.get(), oscstorage,
@@ -463,7 +467,7 @@ template <int oscType> struct VCO : public modules::XTModule
                         }
                     }
 
-                    float pitch0 = modAssist.values[0][c] + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
+                    float pitch0 = (modAssist.values[0][c]+5) * 12 + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
 
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     if (needsReInit)
