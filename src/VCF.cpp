@@ -403,7 +403,8 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
             lastSub = sty;
             lastTy = ty;
             lastGn = gn;
-            analyzer->request(ty, sty, fr, re, gn);
+            // Remeber our filters all focus on midi note 69
+            analyzer->request(ty, sty, fr * 12 - 9, re, gn);
         }
     }
     static constexpr float lowFreq = 10.f;
