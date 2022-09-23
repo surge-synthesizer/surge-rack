@@ -137,7 +137,7 @@ struct Waveshaper : public modules::XTModule
     {
         processPosition = BLOCK_SIZE;
 
-        for (int c=0; c<2; ++c)
+        for (int c = 0; c < 2; ++c)
         {
             for (int i = 0; i < MAX_POLY; ++i)
             {
@@ -152,20 +152,18 @@ struct Waveshaper : public modules::XTModule
         resetWaveshaperRegisters();
     }
 
-    void moduleSpecificSampleRateChange() override
-    {
-        resetWaveshaperRegisters();
-    }
+    void moduleSpecificSampleRateChange() override { resetWaveshaperRegisters(); }
 
     void resetWaveshaperRegisters()
     {
-        auto wstype = (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
+        auto wstype =
+            (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
 
         float R[4];
 
         initializeWaveshaperRegister(wstype, R);
 
-        for (int q=0; q<nQFUs; ++q)
+        for (int q = 0; q < nQFUs; ++q)
         {
             for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
             {
@@ -246,16 +244,16 @@ struct Waveshaper : public modules::XTModule
         return in;
     }
 
-
-    static __m128 wsDupInToOut(sst::waveshapers::QuadWaveshaperState *__restrict, __m128 in, __m128 drive)
+    static __m128 wsDupInToOut(sst::waveshapers::QuadWaveshaperState *__restrict, __m128 in,
+                               __m128 drive)
     {
         return in;
     }
 
-
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        auto wstype = (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
+        auto wstype =
+            (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
 
         if (processPosition >= BLOCK_SIZE)
         {
@@ -271,7 +269,6 @@ struct Waveshaper : public modules::XTModule
                 {
                 }
             }
-
 
             if (wstype != lastType)
             {
@@ -312,7 +309,6 @@ struct Waveshaper : public modules::XTModule
             modulationAssistant.updateValues(this);
         }
 
-
         if (stereoStack)
         {
             // We can make this more efficient with smarter SIMD loads later
@@ -323,12 +319,12 @@ struct Waveshaper : public modules::XTModule
             float *ovl = outputs[OUTPUT_L].getVoltages();
             float *ovr = outputs[OUTPUT_R].getVoltages();
             int idx = 0;
-            for (int l=0; l<lastPolyL; ++l)
+            for (int l = 0; l < lastPolyL; ++l)
             {
                 tmpVal[idx] = ivl[l];
                 idx++;
             }
-            for (int r=0; r<lastPolyR; ++r)
+            for (int r = 0; r < lastPolyR; ++r)
             {
                 tmpVal[idx] = ivr[r];
                 idx++;
@@ -343,17 +339,20 @@ struct Waveshaper : public modules::XTModule
                 {
                     auto vc = voiceIndexForPolyPos[v + vidx];
                     modsRaw[0][v] = storage->db_to_linear(modulationAssistant.values[0][vc]);
-                    //modsRaw[0][v] = sst::filters::db_to_linear(modulationAssistant.values[0][vc]);
-                    for (int p=1; p< n_wshp_params; ++p)
+                    // modsRaw[0][v] =
+                    // sst::filters::db_to_linear(modulationAssistant.values[0][vc]);
+                    for (int p = 1; p < n_wshp_params; ++p)
                     {
-                        //std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc << "]" << std::endl;
+                        // std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc
+                        // << "]" << std::endl;
                         modsRaw[p][v] = modulationAssistant.values[p][vc];
                     }
                 }
-                for (int p=0; p< n_wshp_params; ++p)
+                for (int p = 0; p < n_wshp_params; ++p)
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
-                auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+                auto in =
+                    _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
                 in = _mm_add_ps(in, mods[BIAS - DRIVE]);
                 auto fin = wsPtr(&wss[i], in, mods[0 /* DRIVE - DRIVE */]);
                 fin = _mm_mul_ps(fin, mods[OUT_GAIN - DRIVE]);
@@ -362,12 +361,12 @@ struct Waveshaper : public modules::XTModule
             }
 
             idx = 0;
-            for (int l=0; l<lastPolyL; ++l)
+            for (int l = 0; l < lastPolyL; ++l)
             {
                 ovl[l] = tmpValOut[idx];
                 idx++;
             }
-            for (int r=0; r<lastPolyR; ++r)
+            for (int r = 0; r < lastPolyR; ++r)
             {
                 ovr[r] = tmpValOut[idx];
                 idx++;
@@ -385,13 +384,14 @@ struct Waveshaper : public modules::XTModule
                 float dt alignas(16)[4];
 
                 _mm_store_ps(dt, mvsse[0][i]);
-                for (int v=0; v<4; ++v)
+                for (int v = 0; v < 4; ++v)
                 {
                     dt[v] = storage->db_to_linear(dt[v]);
-                    //dt[v] = sst::filters::db_to_linear(dt[v]);
+                    // dt[v] = sst::filters::db_to_linear(dt[v]);
                 }
                 auto drive = _mm_load_ps(dt);
-                auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+                auto in =
+                    _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
                 auto fin = wsPtr(&wss[i], in, drive);
                 fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);

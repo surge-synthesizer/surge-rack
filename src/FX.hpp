@@ -18,7 +18,8 @@ template <int fxType> struct FXConfig
     struct LayoutItem
     {
         // order matters a bit on this enum. knobs contiguous pls
-        enum Type {
+        enum Type
+        {
             KNOB9,
             KNOB12,
             KNOB16,
@@ -42,7 +43,8 @@ template <int fxType> struct FXConfig
             res.ycmm = ht;
             return res;
         }
-        static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm, float span)
+        static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,
+                                           float span)
         {
             auto res = LayoutItem();
             res.label = label;
@@ -55,7 +57,6 @@ template <int fxType> struct FXConfig
     };
     typedef std::vector<LayoutItem> layout_t;
     static layout_t getLayout() { return {}; }
-
 
     static constexpr int extraInputs() { return 0; }
     static void configExtraInputs(FX<fxType> *M) {}
@@ -107,7 +108,8 @@ template <int fxType> struct FX : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::MonophonicModulationAssistant<FX<fxType>, n_fx_params, FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
+    modules::MonophonicModulationAssistant<FX<fxType>, n_fx_params, FX_PARAM_0, n_mod_inputs,
+                                           MOD_INPUT_0>
         modAssist;
 
     FX() : XTModule()
@@ -143,7 +145,8 @@ template <int fxType> struct FX : modules::XTModule
         modAssist.initialize(this);
     }
 
-    void moduleSpecificSampleRateChange() override {
+    void moduleSpecificSampleRateChange() override
+    {
         clockProc.setSampleRate(APP->engine->getSampleRate());
     }
     modules::ClockProcessor<FX<fxType>> clockProc;
@@ -156,8 +159,8 @@ template <int fxType> struct FX : modules::XTModule
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
-        surge_effect.reset(spawn_effect(fxType, storage.get(), fxstorage,
-                                        storage->getPatch().globaldata));
+        surge_effect.reset(
+            spawn_effect(fxType, storage.get(), fxstorage, storage->getPatch().globaldata));
         surge_effect->init();
         surge_effect->init_ctrltypes();
         surge_effect->init_default_values();
@@ -166,7 +169,7 @@ template <int fxType> struct FX : modules::XTModule
         fxstorage->return_level.id = -1;
         setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params - 1]));
 
-        for (int i=0; i<n_fx_params; ++i)
+        for (int i = 0; i < n_fx_params; ++i)
         {
             modScales[i] = fxstorage->p[i].val_max.f - fxstorage->p[i].val_min.f;
         }
@@ -183,7 +186,6 @@ template <int fxType> struct FX : modules::XTModule
         return &fxstorage->p[paramId - FX_PARAM_0];
     }
 
-
     static int modulatorIndexFor(int baseParam, int modulator)
     {
         int offset = baseParam - FX_PARAM_0;
@@ -198,10 +200,11 @@ template <int fxType> struct FX : modules::XTModule
         return modAssist.modvalues[idx];
     }
 
-    bool isBipolar(int paramId) override {
+    bool isBipolar(int paramId) override
+    {
         if (paramId >= FX_PARAM_0 && paramId <= FX_PARAM_0 + n_fx_params)
         {
-            return fxstorage->p[paramId-FX_PARAM_0].is_bipolar();
+            return fxstorage->p[paramId - FX_PARAM_0].is_bipolar();
         }
         return false;
     }
@@ -282,7 +285,7 @@ template <int fxType> struct FX : modules::XTModule
             copyGlobaldataSubset(storage_id_start, storage_id_end);
 
             auto *oap = &fxstorage->p[0];
-            auto *eap = &fxstorage->p[n_fx_params-1];
+            auto *eap = &fxstorage->p[n_fx_params - 1];
             auto &pt = storage->getPatch().globaldata;
             int idx = 0;
             while (oap <= eap)
@@ -290,7 +293,6 @@ template <int fxType> struct FX : modules::XTModule
                 if (oap->valtype == vt_float)
                 {
                     pt[oap->id].f += modAssist.modvalues[idx] * modScales[idx];
-
                 }
                 idx++;
                 oap++;
@@ -324,7 +326,7 @@ template <int fxType> struct FX : modules::XTModule
     {
         auto p = &fxstorage->p[0];
         auto pe = &fxstorage->p[n_fx_params - 1];
-        while ( p <= pe)
+        while (p <= pe)
         {
             if (p->can_temposync())
                 p->temposync = true;
@@ -335,7 +337,7 @@ template <int fxType> struct FX : modules::XTModule
     {
         auto p = &fxstorage->p[0];
         auto pe = &fxstorage->p[n_fx_params - 1];
-        while ( p <= pe)
+        while (p <= pe)
         {
             if (p->can_temposync())
                 p->temposync = false;

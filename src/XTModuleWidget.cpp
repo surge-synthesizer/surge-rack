@@ -10,7 +10,7 @@ namespace sst::surgext_rack::widgets
 struct SkinSelectItem : rack::ui::MenuItem
 {
     style::XTStyle::Style s;
-    void onAction(const rack::event::Action &e) override { style::XTStyle::setCurrentStyle(s); }
+    void onAction(const rack::event::Action &e) override { style::XTStyle::setGlobalStyle(s); }
 };
 
 struct SkinsSubmenuItem : rack::ui::MenuItem
@@ -35,10 +35,7 @@ struct SkinsSubmenuItem : rack::ui::MenuItem
 struct LightSelectItem : rack::ui::MenuItem
 {
     style::XTStyle::LightColor s;
-    void onAction(const rack::event::Action &e) override
-    {
-        style::XTStyle::setCurrentLightColor(s);
-    }
+    void onAction(const rack::event::Action &e) override { style::XTStyle::setGlobalLightColor(s); }
 };
 
 struct LightsSubmenuItem : rack::ui::MenuItem
@@ -65,7 +62,7 @@ struct ModLightSelectItem : rack::ui::MenuItem
     style::XTStyle::LightColor s;
     void onAction(const rack::event::Action &e) override
     {
-        style::XTStyle::setCurrentModLightColor(s);
+        style::XTStyle::setGlobalModLightColor(s);
     }
 };
 
@@ -107,4 +104,6 @@ void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
     modlights->rightText = RIGHT_ARROW;
     menu->addChild(modlights);
 }
+
+void XTModuleWidget::coupleToGlobalStyle(bool couple, modules::XTModule *m) {}
 } // namespace sst::surgext_rack::widgets

@@ -13,6 +13,7 @@
 #include "SurgeXT.hpp"
 #include "SurgeStorage.h"
 #include "rack.hpp"
+#include "XTStyle.hpp"
 
 #include "filesystem/import.h"
 #include <fmt/core.h>
@@ -261,15 +262,18 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
 
         if (par->temposync)
         {
-            return std::string(txt) + " @ " + fmt::format("{:.1f}bpm", xtm()->storage->temposyncratio * 120);
+            return std::string(txt) + " @ " +
+                   fmt::format("{:.1f}bpm", xtm()->storage->temposyncratio * 120);
         }
         return txt;
     }
+
+    bool isCoupledToGlobalStyle{true};
+    style::XTStyle::Style localStyle;
+    style::XTStyle::LightColor localLightColor, localModLightColor;
 };
 
-
-template <int centerOffset>
-struct VOctParamQuantity : public rack::engine::ParamQuantity
+template <int centerOffset> struct VOctParamQuantity : public rack::engine::ParamQuantity
 {
     void setDisplayValueString(std::string s) override
     {
@@ -277,7 +281,7 @@ struct VOctParamQuantity : public rack::engine::ParamQuantity
         if (f > 0)
         {
             auto midiNote = 12 * log2(f / 440) + 69;
-            setValue((midiNote-centerOffset) / 12.f);
+            setValue((midiNote - centerOffset) / 12.f);
         }
         else if ((s[0] >= 'A' && s[0] <= 'G') || (s[0] >= 'a' && s[0] <= 'g'))
         {
@@ -452,9 +456,7 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     }
 };
 
-
-template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs,
-          uint32_t input0>
+template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs, uint32_t input0>
 struct MonophonicModulationAssistant
 {
     float f[nPar], fInv[nPar];
@@ -508,14 +510,14 @@ struct MonophonicModulationAssistant
                 mv += connected[i] * mu[p][i] * inp[i];
             }
             modvalues[p] = mv;
-            basevalues[p] = m->params[p + par0].getValue();;
+            basevalues[p] = m->params[p + par0].getValue();
+            ;
             values[p] = mv + basevalues[p];
         }
     }
 };
 
-template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs,
-          uint32_t input0>
+template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs, uint32_t input0>
 struct ModulationAssistant
 {
     float f[nPar], fInv[nPar];
@@ -524,7 +526,7 @@ struct ModulationAssistant
     float values alignas(16)[nPar][MAX_POLY];
     float basevalues alignas(16)[nPar];
     float modvalues alignas(16)[nPar][MAX_POLY];
-    __m128 valuesSSE [nPar][MAX_POLY >> 2];
+    __m128 valuesSSE[nPar][MAX_POLY >> 2];
     float animValues[nPar];
     bool connected[nInputs];
     void initialize(M *m)
@@ -589,7 +591,8 @@ struct ModulationAssistant
                     mv += connected[i] * mu[p][i] * inp[i];
                 }
                 modvalues[p][0] = mv;
-                basevalues[p] = m->params[p + par0].getValue();;
+                basevalues[p] = m->params[p + par0].getValue();
+                ;
                 values[p][0] = mv + basevalues[p];
                 animValues[p] = fInv[p] * mv;
             }
@@ -604,12 +607,13 @@ struct ModulationAssistant
             // This is structured so we can do SIMD later but lets
             // do regular way first
             float snapInputs[nInputs][MAX_POLY];
-            for (int i=0; i<nInputs; ++i)
+            for (int i = 0; i < nInputs; ++i)
             {
                 if (broadcast[i])
                 {
-                    auto iv = connected[i] * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
-                    for (int c=0; c<chans; ++c)
+                    auto iv =
+                        connected[i] * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+                    for (int c = 0; c < chans; ++c)
                     {
                         snapInputs[i][c] = iv;
                     }
@@ -617,28 +621,29 @@ struct ModulationAssistant
                 else
                 {
                     // This loop can SIMD-ize
-                    for (int c=0; c<chans; ++c)
+                    for (int c = 0; c < chans; ++c)
                     {
-                        auto iv = connected[i] * m->inputs[i + input0].getVoltage(c) * RACK_TO_SURGE_CV_MUL;
+                        auto iv = connected[i] * m->inputs[i + input0].getVoltage(c) *
+                                  RACK_TO_SURGE_CV_MUL;
                         snapInputs[i][c] = iv;
                     }
                 }
             }
-            for (int p=0; p<nPar; ++p)
+            for (int p = 0; p < nPar; ++p)
             {
                 float mv[MAX_POLY];
                 memset(mv, 0, chans * sizeof(float));
 
-                for (int i=0; i<nInputs; ++i)
+                for (int i = 0; i < nInputs; ++i)
                 {
                     // This is the loop we will simd-4 stride
-                    for (int c=0; c<chans; ++c)
+                    for (int c = 0; c < chans; ++c)
                     {
                         mv[c] += connected[i] * mu[p][i] * snapInputs[i][c];
                     }
                 }
-                auto v0 = m->params[p+par0].getValue();
-                for (int c=0; c<chans; ++c)
+                auto v0 = m->params[p + par0].getValue();
+                for (int c = 0; c < chans; ++c)
                 {
                     modvalues[p][c] = mv[c];
                     values[p][c] = mv[c] + v0;
@@ -648,9 +653,9 @@ struct ModulationAssistant
             }
         }
 
-        for (int p=0; p<nPar; ++p)
+        for (int p = 0; p < nPar; ++p)
         {
-            for (auto csse=0; csse < (MAX_POLY>>2); csse++)
+            for (auto csse = 0; csse < (MAX_POLY >> 2); csse++)
             {
                 valuesSSE[p][csse] = _mm_load_ps(&values[p][csse << 2]);
             }
@@ -658,8 +663,7 @@ struct ModulationAssistant
     }
 };
 
-template<typename T>
-struct ClockProcessor
+template <typename T> struct ClockProcessor
 {
     rack::dsp::SchmittTrigger trig;
 
@@ -675,7 +679,9 @@ struct ClockProcessor
     {
         if (trig.process(m->inputs[inputId].getVoltage()))
         {
-            if (timeSinceLast > 0)
+            // If we have 10bpm don't update BPM. It's probably someone stopping
+            // their clock for a while.
+            if (timeSinceLast > 0 && timeSinceLast < sampleRate * 6)
             {
                 auto bpm = 60 * sampleRate / timeSinceLast;
 

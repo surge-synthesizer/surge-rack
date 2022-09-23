@@ -34,10 +34,14 @@ template <int oscType> struct VCOConfig
 
         KnobDef(int kid, const std::string &nm) : type(PARAM), id(kid), name(nm) {}
         KnobDef(Type t, int kid, const std::string &nm) : type(t), id(kid), name(nm) {}
-        KnobDef(Type t, int kid, const std::string &nm, int colspan) : type(t), id(kid), name(nm), colspan(colspan) {}
+        KnobDef(Type t, int kid, const std::string &nm, int colspan)
+            : type(t), id(kid), name(nm), colspan(colspan)
+        {
+        }
         KnobDef(Type t) : type(t) {}
 
-        static KnobDef withDynamicLabel(int param, const std::function<std::string(VCO<oscType> *m)> &f)
+        static KnobDef withDynamicLabel(int param,
+                                        const std::function<std::string(VCO<oscType> *m)> &f)
         {
             auto k = KnobDef(PARAM);
             k.id = param;
@@ -49,9 +53,10 @@ template <int oscType> struct VCOConfig
     typedef std::vector<KnobDef> knobs_t;
     static knobs_t getKnobs() { return {}; }
 
-    typedef std::vector<std::pair<int,int>> lightOnTo_t;
+    typedef std::vector<std::pair<int, int>> lightOnTo_t;
     static lightOnTo_t getLightsOnKnobsTo() { return {}; }
-    enum LightType {
+    enum LightType
+    {
         POWER,
         ABSOLUTE,
         EXTENDED
@@ -70,7 +75,7 @@ template <int oscType> struct VCOConfig
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processLightParameters(VCO<oscType> *) {}
     static void configureArbitrarySwitches(VCO<oscType> *);
-    static std::string retriggerLabel() { return "RESET";}
+    static std::string retriggerLabel() { return "RESET"; }
 
     /*
      * Wavetable Updates from the UI to the Processing Thread.
@@ -78,7 +83,6 @@ template <int oscType> struct VCOConfig
      * load em really
      */
     static constexpr int wavetableQueueSize() { return requiresWavetables() ? 32 : 1; }
-
 };
 
 template <int oscType> struct VCO : public modules::XTModule
@@ -124,8 +128,9 @@ template <int oscType> struct VCO : public modules::XTModule
 
     static constexpr const char *name = osc_type_names[oscType];
     std::array<std::string, n_osc_params> paramNames;
-    modules::ModulationAssistant<VCO<oscType>, n_osc_params + 1,
-        PITCH_CV, n_mod_inputs, OSC_MOD_INPUT> modAssist;
+    modules::ModulationAssistant<VCO<oscType>, n_osc_params + 1, PITCH_CV, n_mod_inputs,
+                                 OSC_MOD_INPUT>
+        modAssist;
 
     VCO() : XTModule(), halfbandIN(6, true)
     {
@@ -161,7 +166,7 @@ template <int oscType> struct VCO : public modules::XTModule
         config_osc->init_default_values();
 
         auto display_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
-                                            storage->getPatch().scenedata[0], oscdisplaybuffer[1]);
+                                     storage->getPatch().scenedata[0], oscdisplaybuffer[1]);
         display_osc->init(72.0, true);
         display_osc->init_ctrltypes();
         display_osc->init_default_values();
@@ -179,15 +184,16 @@ template <int oscType> struct VCO : public modules::XTModule
 
         for (int i = 0; i < n_osc_params + 1; ++i)
         {
-            configParam<modules::SurgeParameterParamQuantity>(
-                OSC_CTRL_PARAM_0 + i, 0, 1, oscstorage->p[i].get_value_f01());
+            configParam<modules::SurgeParameterParamQuantity>(OSC_CTRL_PARAM_0 + i, 0, 1,
+                                                              oscstorage->p[i].get_value_f01());
         }
 
         if (VCOConfig<oscType>::supportsUnison())
         {
             auto &p = oscstorage->p[n_osc_params - 1];
             paramQuantities[OSC_CTRL_PARAM_0 + n_osc_params - 1]->maxValue =
-                1.f * (VCOConfig<oscType>::maximumUnison()-p.val_min.i) / (p.val_max.i - p.val_min.i);
+                1.f * (VCOConfig<oscType>::maximumUnison() - p.val_min.i) /
+                (p.val_max.i - p.val_min.i);
         }
 
         for (int i = OSC_MOD_PARAM_0; i < OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs; ++i)
@@ -209,9 +215,9 @@ template <int oscType> struct VCO : public modules::XTModule
 
         configInput(PITCH_CV, "V/Oct");
         configInput(RETRIGGER, "Reset/Retrigger");
-        for (int m=0; m < n_mod_inputs; ++m)
+        for (int m = 0; m < n_mod_inputs; ++m)
         {
-            auto s = std::string( "Modulation Signal " ) + std::to_string(m+1);
+            auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
             configInput(OSC_MOD_INPUT + m, s);
         }
         configOutput(OUTPUT_L, "Left (or Mono merged)");
@@ -249,15 +255,13 @@ template <int oscType> struct VCO : public modules::XTModule
         return std::max({1, inputs[PITCH_CV].getChannels(), inputs[RETRIGGER].getChannels()});
     }
 
-    std::string getName() override
-    {
-        return std::string("VCO<") + osc_type_names[oscType] + ">";
-    }
+    std::string getName() override { return std::string("VCO<") + osc_type_names[oscType] + ">"; }
 
-    bool isBipolar(int paramId) override {
+    bool isBipolar(int paramId) override
+    {
         if (paramId >= OSC_CTRL_PARAM_0 && paramId <= OSC_CTRL_PARAM_0 + n_osc_params)
         {
-            return oscstorage->p[paramId-OSC_CTRL_PARAM_0].is_bipolar();
+            return oscstorage->p[paramId - OSC_CTRL_PARAM_0].is_bipolar();
         }
         if (paramId == PITCH_0)
         {
@@ -274,13 +278,13 @@ template <int oscType> struct VCO : public modules::XTModule
         return modulationDisplayValues[idx];
     }
 
-    Parameter *surgeDisplayParameterForParamId(int paramId) override {
+    Parameter *surgeDisplayParameterForParamId(int paramId) override
+    {
         if (paramId < OSC_CTRL_PARAM_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
             return nullptr;
 
-        return &oscstorage_display->p[paramId-OSC_CTRL_PARAM_0];
+        return &oscstorage_display->p[paramId - OSC_CTRL_PARAM_0];
     }
-
 
     int processPosition = BLOCK_SIZE + 1;
 
@@ -291,7 +295,8 @@ template <int oscType> struct VCO : public modules::XTModule
         int index{-1};
         char filename[256];
     };
-    rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()> wavetableQueue;
+    rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()>
+        wavetableQueue;
     std::atomic<int> wavetableIndex{-1};
     std::atomic<uint32_t> wavetableLoads{0};
     uint32_t lastWavetableLoads{0};
@@ -370,7 +375,8 @@ template <int oscType> struct VCO : public modules::XTModule
                     std::lock_guard<std::mutex> mg(loadWavetableSpawnMutex);
                     if (loadWavetableThread)
                         loadWavetableThread->join();
-                    loadWavetableThread = std::make_unique<std::thread>([msg, this](){this->loadWavetable(msg);});
+                    loadWavetableThread =
+                        std::make_unique<std::thread>([msg, this]() { this->loadWavetable(msg); });
                     suspendForWT = true;
                     // loadWavetable(msg);
                     return;
@@ -398,7 +404,9 @@ template <int oscType> struct VCO : public modules::XTModule
 
             for (int c = 0; c < nChan; ++c)
             {
-                float pitch0 = (params[PITCH_0].getValue()+5)*12 + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
+                float pitch0 =
+                    (params[PITCH_0].getValue() + 5) * 12 +
+                    (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
                 if (!surge_osc[c])
                 {
                     surge_osc[c] = spawn_osc(oscType, storage.get(), oscstorage,
@@ -426,7 +434,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
             if constexpr (VCOConfig<oscType>::supportsAudioIn())
             {
-                halfbandIN.process_block_U2(audioInBuffer, audioInBuffer, storage->audio_in[0], storage->audio_in[1], BLOCK_SIZE_OS);
+                halfbandIN.process_block_U2(audioInBuffer, audioInBuffer, storage->audio_in[0],
+                                            storage->audio_in[1], BLOCK_SIZE_OS);
                 memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
             }
 
@@ -436,18 +445,29 @@ template <int oscType> struct VCO : public modules::XTModule
             {
                 // This is the non-modulated version
                 // oscstorage_display->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
-                oscstorage_display->p[i].set_value_f01(modAssist.values[i+1][0]);
+                oscstorage_display->p[i].set_value_f01(modAssist.values[i + 1][0]);
             }
 
             // This is super gross and inefficient. Think about all of this
             memcpy(modulationDisplayValues, modAssist.animValues, sizeof(modAssist.animValues));
 
+            int retrigChans = inputs[RETRIGGER].getChannels();
+            bool monoRetriggerOn{false};
+            if (inputs[RETRIGGER].isConnected() && retrigChans == 1)
+            {
+                monoRetriggerOn = reTrigger[0].process(inputs[RETRIGGER].getVoltage());
+            }
+
             for (int c = 0; c < nChan; ++c)
             {
                 bool needsReInit{reInitEveryOSC};
 
-                if (inputs[RETRIGGER].isConnected() &&
-                    reTrigger[c].process(inputs[RETRIGGER].getVoltage(c)))
+                if (monoRetriggerOn)
+                {
+                    needsReInit = true;
+                }
+                else if (inputs[RETRIGGER].isConnected() &&
+                         reTrigger[c].process(inputs[RETRIGGER].getVoltage(c)))
                 {
                     needsReInit = true;
                 }
@@ -456,7 +476,7 @@ template <int oscType> struct VCO : public modules::XTModule
                 {
                     for (int i = 0; i < n_osc_params; ++i)
                     {
-                        oscstorage->p[i].set_value_f01(modAssist.values[i+1][c]);
+                        oscstorage->p[i].set_value_f01(modAssist.values[i + 1][c]);
                     }
                     if constexpr (VCOConfig<oscType>::supportsUnison())
                     {
@@ -467,7 +487,9 @@ template <int oscType> struct VCO : public modules::XTModule
                         }
                     }
 
-                    float pitch0 = (modAssist.values[0][c]+5) * 12 + (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
+                    float pitch0 =
+                        (modAssist.values[0][c] + 5) * 12 +
+                        (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
 
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     if (needsReInit)
@@ -534,16 +556,15 @@ template <int oscType> struct VCO : public modules::XTModule
 
     rack::dsp::SchmittTrigger reTrigger[MAX_POLY];
 
-    json_t *makeModuleSpecificJson() override {
+    json_t *makeModuleSpecificJson() override
+    {
         auto vco = json_object();
         if (VCOConfig<oscType>::requiresWavetables())
         {
             auto *wtT = json_object();
-            json_object_set(wtT, "draw3D",
-                            json_boolean(draw3DWavetable));
+            json_object_set(wtT, "draw3D", json_boolean(draw3DWavetable));
 
-            json_object_set(wtT, "display_name",
-                            json_string(oscstorage->wavetable_display_name));
+            json_object_set(wtT, "display_name", json_string(oscstorage->wavetable_display_name));
 
             auto &wt = oscstorage->wt;
             json_object_set(wtT, "n_tables", json_integer(wt.n_tables));
@@ -556,15 +577,14 @@ template <int oscType> struct VCO : public modules::XTModule
             wth.n_tables = wt.n_tables;
             wth.flags = wt.flags | wtf_int16;
             unsigned int wtsize =
-                wth.n_samples * wt.n_tables * sizeof(uint16_t) +
-                sizeof(wt_header);
+                wth.n_samples * wt.n_tables * sizeof(uint16_t) + sizeof(wt_header);
 
             auto *data = new uint8_t[wtsize];
             auto *odata = data;
             memcpy(data, &wth, sizeof(wt_header));
             data += sizeof(wt_header);
 
-            for (int j=0; j<wth.n_tables; ++j)
+            for (int j = 0; j < wth.n_tables; ++j)
             {
                 std::memcpy(data, &wt.TableI16WeakPointers[0][j][FIRoffsetI16],
                             wth.n_samples * sizeof(uint16_t));
@@ -577,7 +597,8 @@ template <int oscType> struct VCO : public modules::XTModule
         }
         return vco;
     }
-    void readModuleSpecificJson(json_t *modJ) override {
+    void readModuleSpecificJson(json_t *modJ) override
+    {
         if (VCOConfig<oscType>::requiresWavetables())
         {
             auto wtJ = json_object_get(modJ, "wavetable");
@@ -635,12 +656,11 @@ template <int oscType> struct VCO : public modules::XTModule
     }
 };
 
-template<int oscType>
-inline void VCOConfig<oscType>::configureArbitrarySwitches(VCO<oscType> *m)
+template <int oscType> inline void VCOConfig<oscType>::configureArbitrarySwitches(VCO<oscType> *m)
 {
-    for (int i=0; i<VCO<oscType>::n_arbitrary_switches; ++i)
+    for (int i = 0; i < VCO<oscType>::n_arbitrary_switches; ++i)
     {
         m->configParam(VCO<oscType>::ARBITRARY_SWITCH_0 + i, 0, 1, 0);
     }
 }
-}
+} // namespace sst::surgext_rack::vco

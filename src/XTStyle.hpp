@@ -24,21 +24,12 @@ struct XTStyle
         DARK = 10001, // just so it's not a 0 in the JSON
         MID,
         LIGHT
-    };
+    } *
+        activeStyle{nullptr};
     static std::string styleName(Style s);
-    static void setCurrentStyle(Style s);
+    static void setGlobalStyle(Style s);
     static void initialize();
 
-    /*
-     * Orange - 255, 137, 0
-Yellow - 255, 214, 0
-Green - 82, 235, 71
-Aqua - 19, 236, 196
-Blue - 26, 167, 255
-Purple - 158, 130, 243
-Pink - 255, 82, 163
-Red - 255, 64, 61
-     */
     enum LightColor
     {
         ORANGE = 900001, // must be first
@@ -49,10 +40,13 @@ Red - 255, 64, 61
         PURPLE,
         PINK,
         RED // must be last
-    };
+    } *
+        activeModLight{nullptr},
+        *activeLight{nullptr};
+
     static std::string lightColorName(LightColor c);
-    static void setCurrentLightColor(LightColor c);
-    static void setCurrentModLightColor(LightColor c);
+    static void setGlobalLightColor(LightColor c);
+    static void setGlobalModLightColor(LightColor c);
     static NVGcolor lightColorColor(LightColor c);
 
     enum Colors
@@ -103,6 +97,8 @@ struct StyleParticipant
     virtual void onStyleChanged() = 0;
 
     const std::shared_ptr<XTStyle> &style();
+
+    std::shared_ptr<XTStyle> stylePtr{nullptr};
 };
 
 inline StyleParticipant::StyleParticipant() { XTStyle::addStyleListener(this); }

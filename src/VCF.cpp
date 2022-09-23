@@ -681,6 +681,8 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
         addChild(makeIORowLabel(col, s, col < 2));
         col++;
     }
+
+    coupleToGlobalStyle(true, module);
 }
 } // namespace sst::surgext_rack::vcf::ui
 

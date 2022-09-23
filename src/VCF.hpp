@@ -107,12 +107,11 @@ struct VCF : public modules::XTModule
             configParam(VCF_MOD_PARAM_0 + i, -1, 1, 0);
         }
 
-
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
-        for (int m=0; m < n_mod_inputs; ++m)
+        for (int m = 0; m < n_mod_inputs; ++m)
         {
-            auto s = std::string( "Modulation Signal " ) + std::to_string(m+1);
+            auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
             configInput(VCF_MOD_INPUT + m, s);
         }
         configOutput(OUTPUT_L, "Left");
@@ -138,7 +137,6 @@ struct VCF : public modules::XTModule
             return true;
         return false;
     }
-
 
     inline int polyChannelCount()
     {
@@ -189,7 +187,7 @@ struct VCF : public modules::XTModule
     int processPosition;
     bool stereoStack{false};
     int nVoices{0}, nSIMDSlots{0};
-    int qfuIndexForVoice[MAX_POLY << 1][2]; // L-R Voice, {QFU, SIMD Slot}
+    int qfuIndexForVoice[MAX_POLY << 1][2];  // L-R Voice, {QFU, SIMD Slot}
     int voiceIndexForPolyPos[MAX_POLY << 1]; // only used in stereo mode
 
     int lastPolyL{-2}, lastPolyR{-2};
@@ -240,7 +238,7 @@ struct VCF : public modules::XTModule
             nSIMDSlots = (nVoices - 1) / 4 + 1;
 
             int idx = 0;
-            for (int l=0; l<lastPolyL; ++l)
+            for (int l = 0; l < lastPolyL; ++l)
             {
                 auto qid = idx >> 2;
                 auto qslt = idx % 4;
@@ -248,16 +246,16 @@ struct VCF : public modules::XTModule
                 qfuIndexForVoice[idx][1] = qslt;
                 voiceIndexForPolyPos[idx] = l;
 
-                idx ++;
+                idx++;
             }
-            for (int r=0; r<lastPolyR; ++r)
+            for (int r = 0; r < lastPolyR; ++r)
             {
                 auto qid = idx >> 2;
                 auto qslt = idx % 4;
                 qfuIndexForVoice[idx][0] = qid;
                 qfuIndexForVoice[idx][1] = qslt;
                 voiceIndexForPolyPos[idx] = r;
-                idx ++;
+                idx++;
             }
         }
 
@@ -340,8 +338,8 @@ struct VCF : public modules::XTModule
                     auto fvoct = modulationAssistant.values[FREQUENCY - FREQUENCY][pv];
                     auto fmidi = (fvoct + 5) * 12;
                     coefMaker[pv].MakeCoeffs(fmidi - 69,
-                                            modulationAssistant.values[RESONANCE - FREQUENCY][pv],
-                                            ftype, fsubtype, storage.get(), false);
+                                             modulationAssistant.values[RESONANCE - FREQUENCY][pv],
+                                             ftype, fsubtype, storage.get(), false);
                     calculated[pv] = true;
                 }
                 coefMaker[pv].updateState(qfus[qf], qp);
@@ -360,12 +358,12 @@ struct VCF : public modules::XTModule
             float *ovl = outputs[OUTPUT_L].getVoltages();
             float *ovr = outputs[OUTPUT_R].getVoltages();
             int idx = 0;
-            for (int l=0; l<lastPolyL; ++l)
+            for (int l = 0; l < lastPolyL; ++l)
             {
                 tmpVal[idx] = ivl[l];
                 idx++;
             }
-            for (int r=0; r<lastPolyR; ++r)
+            for (int r = 0; r < lastPolyR; ++r)
             {
                 tmpVal[idx] = ivr[r];
                 idx++;
@@ -379,36 +377,37 @@ struct VCF : public modules::XTModule
                 for (int v = 0; v < 4; ++v)
                 {
                     auto vc = voiceIndexForPolyPos[v + vidx];
-                    for (int p=0; p<n_vcf_params; ++p)
+                    for (int p = 0; p < n_vcf_params; ++p)
                     {
-                        // std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc << "]" << std::endl;
+                        // std::cout << "modsRaw[" << p << "][" << v << "] = ma[" << p << "][" << vc
+                        // << "]" << std::endl;
                         modsRaw[p][v] = modulationAssistant.values[p][vc];
                     }
                 }
-                for (int p=0; p<n_vcf_params; ++p)
+                for (int p = 0; p < n_vcf_params; ++p)
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
-                auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+                auto in =
+                    _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
                 auto pre = _mm_mul_ps(in, mods[IN_GAIN - FREQUENCY]);
                 auto filt = filterPtr(&qfus[i], pre);
 
                 auto post = _mm_mul_ps(filt, mods[OUT_GAIN - FREQUENCY]);
                 auto omm = _mm_sub_ps(_mm_set1_ps(1.f), mods[MIX - FREQUENCY]);
 
-                auto fin =
-                    _mm_add_ps(_mm_mul_ps(mods[MIX - FREQUENCY], post), _mm_mul_ps(omm, in));
+                auto fin = _mm_add_ps(_mm_mul_ps(mods[MIX - FREQUENCY], post), _mm_mul_ps(omm, in));
 
                 fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(tmpValOut + (i << 2), fin);
             }
 
             idx = 0;
-            for (int l=0; l<lastPolyL; ++l)
+            for (int l = 0; l < lastPolyL; ++l)
             {
                 ovl[l] = tmpValOut[idx];
                 idx++;
             }
-            for (int r=0; r<lastPolyR; ++r)
+            for (int r = 0; r < lastPolyR; ++r)
             {
                 ovr[r] = tmpValOut[idx];
                 idx++;
@@ -423,7 +422,8 @@ struct VCF : public modules::XTModule
 
             for (int i = 0; i < nSIMDSlots; ++i)
             {
-                auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+                auto in =
+                    _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
 
                 auto pre = _mm_mul_ps(in, mvsse[IN_GAIN - FREQUENCY][i]);
                 auto filt = filterPtr(&qfus[i], pre);

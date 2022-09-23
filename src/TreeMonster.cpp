@@ -22,6 +22,8 @@ TreeMonsterWidget::TreeMonsterWidget(TreeMonsterWidget::M *module) : XTModuleWid
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "TreeMonster", "other", "TotalBlank");
     addChild(bg);
+
+    coupleToGlobalStyle(true, module);
 }
 } // namespace sst::surgext_rack::treemonster::ui
 
