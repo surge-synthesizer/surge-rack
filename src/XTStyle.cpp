@@ -17,9 +17,9 @@ void XTStyle::initialize()
     json_t *fd = json_load_file(defaultsFile.c_str(), 0, &error);
     if (!fd)
     {
-        setCurrentStyle(MID);
-        setCurrentLightColor(ORANGE);
-        setCurrentModLightColor(BLUE);
+        setGlobalStyle(MID);
+        setGlobalLightColor(ORANGE);
+        setGlobalModLightColor(BLUE);
     }
     else
     {
@@ -31,11 +31,11 @@ void XTStyle::initialize()
 
             if (skinId >= Style::DARK && skinId <= Style::LIGHT)
             {
-                setCurrentStyle((Style)skinId);
+                setGlobalStyle((Style)skinId);
             }
             else
             {
-                setCurrentStyle(MID);
+                setGlobalStyle(MID);
             }
         }
 
@@ -47,11 +47,11 @@ void XTStyle::initialize()
 
             if (lightColId >= ORANGE && lightColId <= RED)
             {
-                setCurrentLightColor((LightColor)lightColId);
+                setGlobalLightColor((LightColor)lightColId);
             }
             else
             {
-                setCurrentLightColor(ORANGE);
+                setGlobalLightColor(ORANGE);
             }
         }
 
@@ -63,11 +63,11 @@ void XTStyle::initialize()
 
             if (lightColId >= ORANGE && lightColId <= RED)
             {
-                setCurrentModLightColor((LightColor)lightColId);
+                setGlobalModLightColor((LightColor)lightColId);
             }
             else
             {
-                setCurrentModLightColor(BLUE);
+                setGlobalModLightColor(BLUE);
             }
         }
         json_decref(fd);
@@ -90,43 +90,52 @@ struct InternalFontMgr
     }
 };
 
-static XTStyle::Style currentStyle{XTStyle::MID};
-static XTStyle::LightColor currentLightColor{XTStyle::ORANGE};
-static XTStyle::LightColor currentModLightColor{XTStyle::BLUE};
-static std::shared_ptr<XTStyle> currentStyleP;
-void XTStyle::setCurrentStyle(sst::surgext_rack::style::XTStyle::Style s)
+static XTStyle::Style defaultGlobalStyle{XTStyle::MID};
+static XTStyle::LightColor defaultGlobalLightColor{XTStyle::ORANGE};
+static XTStyle::LightColor defaultGlobalModLightColor{XTStyle::BLUE};
+static std::shared_ptr<XTStyle> globalStylePtr;
+static std::shared_ptr<XTStyle> constructGlobalStyle()
 {
-    if (!currentStyleP)
-        currentStyleP = std::make_shared<XTStyle>();
-    if (s != currentStyle)
+    auto res = std::make_shared<XTStyle>();
+    res->activeStyle = &defaultGlobalStyle;
+    res->activeModLight = &defaultGlobalModLightColor;
+    res->activeLight = &defaultGlobalLightColor;
+    return res;
+}
+
+void XTStyle::setGlobalStyle(sst::surgext_rack::style::XTStyle::Style s)
+{
+    if (!globalStylePtr)
+        globalStylePtr = constructGlobalStyle();
+    if (s != defaultGlobalStyle)
     {
-        currentStyle = s;
+        defaultGlobalStyle = s;
         updateJSON();
 
         notifyStyleListeners();
     }
 }
 
-void XTStyle::setCurrentLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
+void XTStyle::setGlobalLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
 {
-    if (!currentStyleP)
-        currentStyleP = std::make_shared<XTStyle>();
-    if (c != currentLightColor)
+    if (!globalStylePtr)
+        globalStylePtr = constructGlobalStyle();
+    if (c != defaultGlobalLightColor)
     {
-        currentLightColor = c;
+        defaultGlobalLightColor = c;
         updateJSON();
 
         notifyStyleListeners();
     }
 }
 
-void XTStyle::setCurrentModLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
+void XTStyle::setGlobalModLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
 {
-    if (!currentStyleP)
-        currentStyleP = std::make_shared<XTStyle>();
-    if (c != currentLightColor)
+    if (!globalStylePtr)
+        globalStylePtr = constructGlobalStyle();
+    if (c != defaultGlobalModLightColor)
     {
-        currentModLightColor = c;
+        defaultGlobalLightColor = c;
         updateJSON();
 
         notifyStyleListeners();
@@ -141,9 +150,9 @@ void XTStyle::updateJSON()
     std::string defaultsFile = rack::asset::user("SurgeXTRack/default-skin.json");
 
     json_t *rootJ = json_object();
-    json_t *stJ = json_integer(currentStyle);
-    json_t *lcJ = json_integer(currentLightColor);
-    json_t *lcM = json_integer(currentModLightColor);
+    json_t *stJ = json_integer(defaultGlobalStyle);
+    json_t *lcJ = json_integer(defaultGlobalLightColor);
+    json_t *lcM = json_integer(defaultGlobalModLightColor);
     json_object_set_new(rootJ, "defaultSkin", stJ);
     json_object_set_new(rootJ, "defaultLightColor", lcJ);
     json_object_set_new(rootJ, "defaultModLightColor", lcM);
@@ -157,10 +166,13 @@ void XTStyle::updateJSON()
 }
 const std::shared_ptr<XTStyle> &StyleParticipant::style()
 {
-    if (!currentStyleP)
-        currentStyleP = std::make_shared<XTStyle>();
+    if (stylePtr)
+        return stylePtr;
 
-    return currentStyleP;
+    if (!globalStylePtr)
+        globalStylePtr = std::make_shared<XTStyle>();
+
+    return globalStylePtr;
 }
 
 const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
@@ -169,7 +181,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     {
     case KNOB_RING:
     {
-        switch (currentStyle)
+        switch (*activeStyle)
         {
         case DARK:
             return nvgRGB(82, 82, 82);
@@ -180,7 +192,8 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         }
     }
     case KNOB_MOD_PLUS:
-        return lightColorColor(currentModLightColor);
+    case MOD_BUTTON_LIGHT_ON:
+        return lightColorColor(*activeModLight);
     case KNOB_MOD_MINUS:
         return nvgRGB(180, 180, 220);
     case KNOB_MOD_MARK:
@@ -192,7 +205,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         return nvgRGB(0x00, 0x00, 0x00);
     case LED_HIGHLIGHT:
     {
-        switch (currentStyle)
+        switch (*activeStyle)
         {
         case DARK:
             return nvgRGB(0x4d, 0x4d, 0x4d);
@@ -211,7 +224,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
 
     case TEXT_LABEL:
     {
-        switch (currentStyle)
+        switch (*activeStyle)
         {
         case DARK:
         case MID:
@@ -231,9 +244,8 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case PLOT_CURVE:
     case PLOT_CONTROL_TEXT:
     case PLOT_CONTROL_VALUE_BG:
-    case MOD_BUTTON_LIGHT_ON:
     {
-        return lightColorColor(currentLightColor);
+        return lightColorColor(*activeLight);
     }
     }
 
@@ -307,7 +319,7 @@ std::string XTStyle::lightColorName(sst::surgext_rack::style::XTStyle::LightColo
 std::string XTStyle::skinAssetDir()
 
 {
-    switch (currentStyle)
+    switch (*activeStyle)
     {
     case DARK:
         return "res/xt/dark";

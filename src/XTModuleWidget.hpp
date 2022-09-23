@@ -22,6 +22,9 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
     }
 
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
+
+  protected:
+    void coupleToGlobalStyle(bool couple, modules::XTModule *m);
 };
 
 struct StandardWidthWithModulationConstants

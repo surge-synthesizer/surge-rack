@@ -8,8 +8,7 @@
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
-                        widgets::VCOVCFConstants
+template <int oscType> struct VCOWidget : public widgets::XTModuleWidget, widgets::VCOVCFConstants
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
@@ -19,14 +18,12 @@ template <int oscType> struct VCOWidget : public  widgets::XTModuleWidget,
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
-template<int oscType>
-struct WavetableSelector : widgets::PresetJogSelector
+template <int oscType> struct WavetableSelector : widgets::PresetJogSelector
 {
     VCO<oscType> *module{nullptr};
     uint32_t wtloadCompare{842932918};
 
-    static WavetableSelector *create(const rack::Vec &pos,
-                                     const rack::Vec &size,
+    static WavetableSelector *create(const rack::Vec &pos, const rack::Vec &size,
                                      VCO<oscType> *module)
     {
         auto res = new WavetableSelector();
@@ -38,8 +35,10 @@ struct WavetableSelector : widgets::PresetJogSelector
         return res;
     }
     int wtNo{100};
-    void onPresetJog(int dir) override {
-        if (!module) return;
+    void onPresetJog(int dir) override
+    {
+        if (!module)
+            return;
         // FIX ME - ordering aware jog pls
         bool wantNext = dir > 0;
         auto nt = module->storage->getAdjacentWaveTable(module->wavetableIndex, wantNext);
@@ -53,18 +52,19 @@ struct WavetableSelector : widgets::PresetJogSelector
         module->wavetableQueue.push(msg);
     }
 
-    void sendLoadForPath(const char* fn)
+    void sendLoadForPath(const char *fn)
     {
         auto msg = typename vco::VCO<oscType>::WavetableMessage();
         strncpy(msg.filename, fn, 256);
         msg.filename[255] = 0;
-        msg.index  = -1;
+        msg.index = -1;
         module->wavetableQueue.push(msg);
     }
 
     rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, int categoryId)
     {
-        if (!module) return nullptr;
+        if (!module)
+            return nullptr;
         auto storage = module->storage.get();
         auto &cat = storage->wt_category[categoryId];
 
@@ -72,13 +72,8 @@ struct WavetableSelector : widgets::PresetJogSelector
         {
             if (storage->wt_list[p].category == categoryId)
             {
-                menu->addChild(rack::createMenuItem(storage->wt_list[p].name,
-                                                    "",
-                                                    [this,p](){
-                                                        this->sendLoadFor(p);
-                                                    }
-                            ));
-
+                menu->addChild(rack::createMenuItem(storage->wt_list[p].name, "",
+                                                    [this, p]() { this->sendLoadFor(p); }));
             }
         }
         // menu->addChild(rack::createMenuItem(name));
@@ -107,19 +102,18 @@ struct WavetableSelector : widgets::PresetJogSelector
                     catName = catName.substr(sepPos + 1);
                 }
 
-                menu->addChild(rack::createSubmenuItem(catName, "",
-                                                       [cidx, menu, this](auto *x)
-                                                       {
-                                                           this->menuForCategory(x, cidx);
-                                                       }));
+                menu->addChild(rack::createSubmenuItem(
+                    catName, "", [cidx, menu, this](auto *x) { this->menuForCategory(x, cidx); }));
             }
         }
 
         return menu;
     }
 
-    void onShowMenu() override {
-        if (!module) return;
+    void onShowMenu() override
+    {
+        if (!module)
+            return;
         auto menu = rack::createMenu();
         menu->addChild(rack::createMenuLabel("WaveTables"));
         auto storage = module->storage.get();
@@ -133,7 +127,7 @@ struct WavetableSelector : widgets::PresetJogSelector
                 (idx == storage->firstUserWTCategory &&
                  storage->firstUserWTCategory != storage->wt_category.size()))
             {
-               addSepIfMaking = true;
+                addSepIfMaking = true;
             }
 
             idx++;
@@ -150,43 +144,39 @@ struct WavetableSelector : widgets::PresetJogSelector
                     menu->addChild(new rack::ui::MenuSeparator);
                     addSepIfMaking = false;
                 }
-                menu->addChild(rack::createSubmenuItem(cat.name, "",
-                                                            [c, this](auto *x) { return menuForCategory(x, c);}));
+                menu->addChild(rack::createSubmenuItem(
+                    cat.name, "", [c, this](auto *x) { return menuForCategory(x, c); }));
             }
         }
         menu->addChild(new rack::ui::MenuSeparator);
-        menu->addChild(rack::createMenuItem("Open User Wavetables", "",
-                                            [this]() {
-                                                rack::system::openDirectory(
-                                                    (module->storage->userDataPath / "Wavetables").u8string()
-                                                    );
-                                            }));
+        menu->addChild(rack::createMenuItem("Open User Wavetables", "", [this]() {
+            rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
+        }));
 
         menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
-                                            [this]() {
-                                                module->storage->refresh_wtlist();
-                                            }));
+                                            [this]() { module->storage->refresh_wtlist(); }));
 
-        menu->addChild(rack::createMenuItem("Load Wavetable File", "",
-                                            [this]() {
-                                                auto filters = osdialog_filters_parse("Wavetables:wav,.wt");
-                                                DEFER({osdialog_filters_free(filters);});
-                                                char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
-                                                if (openF)
-                                                {
-                                                    DEFER({std::free(openF);});
-                                                    sendLoadForPath(openF);
-                                                }
-                                            }));
+        menu->addChild(rack::createMenuItem("Load Wavetable File", "", [this]() {
+            auto filters = osdialog_filters_parse("Wavetables:wav,.wt");
+            DEFER({ osdialog_filters_free(filters); });
+            char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
+            if (openF)
+            {
+                DEFER({ std::free(openF); });
+                sendLoadForPath(openF);
+            }
+        }));
     }
 
-    std::string getPresetName() override {
+    std::string getPresetName() override
+    {
         if (module)
             return module->getWavetableName();
         return "WaveTable Name";
     }
 
-    bool isDirty() override {
+    bool isDirty() override
+    {
         if (!module)
             return false;
 
@@ -214,10 +204,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             storage = module->storage.get();
             oscdata = &(storage->getPatch().scene[0].osc[1]); // this is tne no-mod storage
         }
-        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlotBackground(vg);});
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto *vg) { drawPlotBackground(vg); });
         addChild(bdw);
 
-        bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(rack::Vec(0,0), box.size, [this](auto *vg) { drawPlot(vg);});
+        bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), box.size, [this](auto *vg) { drawPlot(vg); });
         addChild(bdwPlot);
     }
 
@@ -290,8 +282,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             for (int i = 0; i < n_osc_params; i++)
             {
                 dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
-                lSumDeact += oscdata->p[i].deactivated * ( 1 << i );
-                lSumAbs += oscdata->p[i].absolute * ( 1 << i);
+                lSumDeact += oscdata->p[i].deactivated * (1 << i);
+                lSumAbs += oscdata->p[i].absolute * (1 << i);
             }
 
             if (lSumDeact != sumDeact || lSumAbs != sumAbs)
@@ -390,7 +382,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             // pitch-69 = 12 * log2(sampleRate / totalSamples / 400)
             // but these run oversample so add an octave
             float disp_pitch_rs =
-                12.f * std::log2f(storage->samplerate / (totalSamples-4) / 440.f) + 69.f + 12 + 0.1;
+                12.f * std::log2f(storage->samplerate / (totalSamples - 4) / 440.f) + 69.f + 12 +
+                0.1;
 
             osc->init(disp_pitch_rs, true, true);
 
@@ -417,10 +410,11 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
                     /*
                      * auto tf =
-                        juce::AffineTransform().scaled(w * 0.61, h * -0.17).translated(x0, y0 + (0.5 * hw));
+                        juce::AffineTransform().scaled(w * 0.61, h * -0.17).translated(x0, y0 + (0.5
+                     * hw));
                      */
                     xc = xc * w * 0.61 + x0;
-                    yc = yc * h * (-0.17) + ( y0 + 0.5 * hw);
+                    yc = yc * h * (-0.17) + (y0 + 0.5 * hw);
 
                     oscPath.emplace_back(xc, yc);
                 }
@@ -460,11 +454,11 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         }
     }
 
-
     const float xs3d{rack::mm2px(5)};
     const float ys3d{rack::mm2px(3.5)};
 
-    void drawPlotBackground(NVGcontext *vg) {
+    void drawPlotBackground(NVGcontext *vg)
+    {
         if (module && VCOConfig<oscType>::requiresWavetables() && module->draw3DWavetable)
         {
             draw3DBackground(vg);
@@ -490,11 +484,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 7.3 * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgText(vg, xs3d * 0.5, ys3d*0.5, "3D", nullptr);
+            nvgText(vg, xs3d * 0.5, ys3d * 0.5, "3D", nullptr);
         }
     }
 
-    void onButton(const ButtonEvent &e) override {
+    void onButton(const ButtonEvent &e) override
+    {
         if (!module)
             return;
         if (e.pos.x < xs3d && e.pos.y < ys3d && e.action == GLFW_RELEASE)
@@ -556,7 +551,6 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         auto wxf = w;
         auto hxf = h;
 
-
         // draw the wavetable frames
         std::vector<int> ts;
 
@@ -585,8 +579,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             auto lw = wxf * (1.0 - skewPct);
             auto hw = hxf * depthPct * hCompress;
 
-            std::vector<std::pair<float,float>> p;
-            std::vector<std::pair<float,float>> ribbon;
+            std::vector<std::pair<float, float>> p;
+            std::vector<std::pair<float, float>> ribbon;
 
             p.emplace_back(x0, y0 + (-tb[0] + 1) * 0.5 * hw);
             p.emplace_back(x0, y0 + (-tb[0] + 1) * 0.5 * hw);
@@ -620,7 +614,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             {
                 nvgBeginPath(vg);
                 bool first = true;
-                for (const auto &[x,y] : ribbon)
+                for (const auto &[x, y] : ribbon)
                 {
                     if (first)
                         nvgMoveTo(vg, x, y);
@@ -636,7 +630,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
             nvgBeginPath(vg);
             bool first = true;
-            for (const auto &[x,y] : p)
+            for (const auto &[x, y] : p)
             {
                 if (first)
                     nvgMoveTo(vg, x, y);
@@ -657,7 +651,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         // This will go in layer 0
         int nSteps = 9;
         int mid = (nSteps - 1) / 2;
-        float dy = box.size.y * 1.f / (nSteps-1);
+        float dy = box.size.y * 1.f / (nSteps - 1);
 
         float nX = std::ceil(box.size.x / dy);
         float dx = box.size.x / nX;
@@ -693,7 +687,6 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         nvgStrokeWidth(vg, 1);
         nvgStroke(vg);
 
-
         nvgBeginPath(vg);
         nvgStrokeColor(vg, markCol);
         nvgMoveTo(vg, 0, 0);
@@ -712,14 +705,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 30);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgText(vg, box.size.x * 0.5,
-                    box.size.y * 0.5,
-                    osc_type_names[oscType], nullptr);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, osc_type_names[oscType], nullptr);
         }
         else if (!oscPath.empty())
         {
             nvgSave(vg);
-            nvgScissor(vg, 0, 0.5, box.size.x, box.size.y-1);
+            nvgScissor(vg, 0, 0.5, box.size.x, box.size.y - 1);
 
             auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
             auto gcp = col;
@@ -745,7 +736,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             }
             nvgLineTo(vg, box.size.x, box.size.y * 0.5);
             nvgLineTo(vg, 0, box.size.y * 0.5);
-            nvgFillPaint(vg, nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp, gcn));
+            nvgFillPaint(vg,
+                         nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp, gcn));
             nvgFill(vg);
 
             nvgBeginPath(vg);
@@ -765,7 +757,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             }
             nvgLineTo(vg, box.size.x, box.size.y * 0.5);
             nvgLineTo(vg, 0, box.size.y * 0.5);
-            nvgFillPaint(vg, nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn, gcp));
+            nvgFillPaint(vg,
+                         nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn, gcp));
             nvgFill(vg);
 
             nvgBeginPath(vg);
@@ -797,8 +790,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 };
 
 template <int oscType>
-VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
-    : XTModuleWidget()
+VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
 {
     setModule(module);
 
@@ -826,8 +818,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         auto fivemm = rack::mm2px(5);
         auto halfmm = rack::mm2px(0.5);
         auto wts = WavetableSelector<oscType>::create(rack::Vec(plotStartX, plotStartY),
-                                             rack::Vec(plotW, fivemm - halfmm),
-                                             module);
+                                                      rack::Vec(plotW, fivemm - halfmm), module);
         addChild(wts);
         plotStartY += fivemm;
         plotH -= fivemm;
@@ -837,11 +828,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
     float underX = plotStartX + 2;
     auto oct = widgets::LabeledPlotAreaControl::create(rack::Vec(underX, underPlotStartY),
-                                              rack::Vec(34, underPlotH), "OCT",
-                                              module,
-                                              M::OCTAVE_SHIFT);
-    oct->formatLabel = [](float f, const std::string &s)
-    {
+                                                       rack::Vec(34, underPlotH), "OCT", module,
+                                                       M::OCTAVE_SHIFT);
+    oct->formatLabel = [](float f, const std::string &s) {
         std::string r = s;
         if (f > 0)
             r = "+" + r;
@@ -852,8 +841,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
     if constexpr (VCOConfig<oscType>::supportsUnison())
     {
-        auto oct = widgets::LabeledPlotAreaControl::create(
-            rack::Vec(underX, underPlotStartY), rack::Vec(32, underPlotH), "UNI", module, M::OSC_CTRL_PARAM_0 + 6);
+        auto oct = widgets::LabeledPlotAreaControl::create(rack::Vec(underX, underPlotStartY),
+                                                           rack::Vec(32, underPlotH), "UNI", module,
+                                                           M::OSC_CTRL_PARAM_0 + 6);
         addChild(oct);
         underX += 32 + 2;
     }
@@ -861,7 +851,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     if (VCOConfig<oscType>::getMenuLightID() >= 0)
     {
         auto oct = widgets::PlotAreaSwitch::create(
-            rack::Vec(underX, underPlotStartY), rack::Vec(18, underPlotH), VCOConfig<oscType>::getMenuLightString(), module, M::ARBITRARY_SWITCH_0 + VCOConfig<oscType>::getMenuLightID());
+            rack::Vec(underX, underPlotStartY), rack::Vec(18, underPlotH),
+            VCOConfig<oscType>::getMenuLightString(), module,
+            M::ARBITRARY_SWITCH_0 + VCOConfig<oscType>::getMenuLightID());
         addChild(oct);
         underX += 18 + 2;
     }
@@ -870,9 +862,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
     {
         auto restSz = plotW - underX + plotStartX;
         auto plt = widgets::PlotAreaMenuItem::create(
-            rack::Vec(underX, underPlotStartY), rack::Vec(restSz, underPlotH), module, M::OSC_CTRL_PARAM_0 + VCOConfig<oscType>::rightMenuParamId());
-        plt->onShowMenu = [this, plt]()
-        {
+            rack::Vec(underX, underPlotStartY), rack::Vec(restSz, underPlotH), module,
+            M::OSC_CTRL_PARAM_0 + VCOConfig<oscType>::rightMenuParamId());
+        plt->onShowMenu = [this, plt]() {
             if (!this->module)
                 return;
 
@@ -889,25 +881,21 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             auto men = rack::createMenu();
             men->addChild(rack::createMenuLabel(pq->getLabel()));
 
-            for (int i=surgePar.val_min.i; i <= surgePar.val_max.i; i++)
+            for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i++)
             {
                 char txt[256];
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
                 surgePar.get_display(txt, true, fv);
-                men->addChild(rack::createMenuItem(txt, "", [plt, pq, fv]() {
-                    pq->setValue(fv);
-                }));
+                men->addChild(rack::createMenuItem(txt, "", [plt, pq, fv]() { pq->setValue(fv); }));
             }
         };
         plt->transformLabel = VCOConfig<oscType>::rightMenuTransformFunction();
         addChild(plt);
     }
 
-
-
     const auto &knobConfig = VCOConfig<oscType>::getKnobs();
     auto idx = 0;
-    int row = 0, col  = 0;
+    int row = 0, col = 0;
     for (const auto k : knobConfig)
     {
         auto pid = k.id;
@@ -917,8 +905,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         {
             auto uxp = columnCenters_MM[col];
             auto uyp = rowCenters_MM[row];
-            auto baseKnob =
-                rack::createParamCentered<widgets::Knob9>(rack::mm2px(rack::Vec(uxp, uyp)), module, pid);
+            auto baseKnob = rack::createParamCentered<widgets::Knob9>(
+                rack::mm2px(rack::Vec(uxp, uyp)), module, pid);
             addParam(baseKnob);
             underKnobs[idx] = baseKnob;
             for (int m = 0; m < M::n_mod_inputs; ++m)
@@ -926,7 +914,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                 auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
                 int id = M::modulatorIndexFor(pid, m);
                 auto *k = widgets::ModRingKnob::createCentered(rack::mm2px(rack::Vec(uxp, uyp)),
-                                                       radius, module, id);
+                                                               radius, module, id);
                 overlays[idx][m] = k;
                 k->setVisible(false);
                 k->underlyerParamWidget = baseKnob;
@@ -960,7 +948,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         {
             auto uxp = columnCenters_MM[col];
             auto uyp = rowCenters_MM[row] + verticalPortOffset_MM;
-            addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module, k.id));
+            addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)),
+                                                              module, k.id));
         }
 
         if (k.type != VCOConfig<oscType>::KnobDef::Type::BLANK)
@@ -972,8 +961,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
                     auto lab = makeLabel(row, col, k.name);
                     lab->hasDynamicLabel = true;
                     lab->module = module;
-                    lab->dynamicLabel = [k](modules::XTModule *m)
-                    {
+                    lab->dynamicLabel = [k](modules::XTModule *m) {
                         auto vcm = static_cast<VCO<oscType> *>(m);
                         return k.dynLabelFunction(vcm);
                     };
@@ -986,7 +974,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
             }
             else if (k.colspan == 2)
             {
-                auto cx = (columnCenters_MM[col] + columnCenters_MM[col+1]) * 0.5;
+                auto cx = (columnCenters_MM[col] + columnCenters_MM[col + 1]) * 0.5;
                 auto bl = labelBaselines_MM[row];
 
                 auto boxx0 = cx - columnWidth_MM;
@@ -1003,12 +991,12 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
         col++;
         if (idx == 4)
         {
-           col = 0;
-           row ++;
+            col = 0;
+            row++;
         }
     }
 
-    for (int i=0; i<M::n_mod_inputs; ++i)
+    for (int i = 0; i < M::n_mod_inputs; ++i)
     {
         addChild(makeModLabel(i));
     }
@@ -1057,35 +1045,38 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module)
 
         uyp = rowCenters_MM[3];
 
-        addInput(rack::createInputCentered<widgets::Port>(
-            rack::mm2px(rack::Vec(uxp, uyp)), module,
-            M::OSC_MOD_INPUT + i));
-
+        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module,
+                                                          M::OSC_MOD_INPUT + i));
     }
 
     col = 0;
-    for (auto p : { M::PITCH_CV, M::RETRIGGER} )
+    for (auto p : {M::PITCH_CV, M::RETRIGGER})
     {
         auto yp = rowCenters_MM[4];
         auto xp = columnCenters_MM[col];
-        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col ++;
+        addInput(
+            rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
+        col++;
     }
 
-    for (auto p : { M::OUTPUT_L, M::OUTPUT_R} )
+    for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
     {
         auto yp = rowCenters_MM[4];
         auto xp = columnCenters_MM[col];
-        addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col ++;
+        addOutput(
+            rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
+        col++;
     }
 
-    col =0;
-    for(const std::string &s : { std::string("V/OCT"), VCOConfig<oscType>::retriggerLabel(), {"LEFT"}, {"RIGHT"}})
+    col = 0;
+    for (const std::string &s :
+         {std::string("V/OCT"), VCOConfig<oscType>::retriggerLabel(), {"LEFT"}, {"RIGHT"}})
     {
         addChild(makeIORowLabel(col, s, col < 2));
         col++;
     }
+
+    coupleToGlobalStyle(true, module);
 }
 
 } // namespace sst::surgext_rack::vco::ui
@@ -1108,14 +1099,11 @@ rack::Model *modelVCOWindow =
         "SurgeXTOSCWindow");
 
 rack::Model *modelVCOSine =
-    rack::createModel<vcoui::VCOWidget<ot_sine>::M, vcoui::VCOWidget<ot_sine>>(
-        "SurgeXTOSCSine");
+    rack::createModel<vcoui::VCOWidget<ot_sine>::M, vcoui::VCOWidget<ot_sine>>("SurgeXTOSCSine");
 rack::Model *modelVCOFM2 =
-    rack::createModel<vcoui::VCOWidget<ot_FM2>::M, vcoui::VCOWidget<ot_FM2>>(
-        "SurgeXTOSCFM2");
+    rack::createModel<vcoui::VCOWidget<ot_FM2>::M, vcoui::VCOWidget<ot_FM2>>("SurgeXTOSCFM2");
 rack::Model *modelVCOFM3 =
-    rack::createModel<vcoui::VCOWidget<ot_FM3>::M, vcoui::VCOWidget<ot_FM3>>(
-        "SurgeXTOSCFM3");
+    rack::createModel<vcoui::VCOWidget<ot_FM3>::M, vcoui::VCOWidget<ot_FM3>>("SurgeXTOSCFM3");
 
 rack::Model *modelVCOSHNoise =
     rack::createModel<vcoui::VCOWidget<ot_shnoise>::M, vcoui::VCOWidget<ot_shnoise>>(
@@ -1125,8 +1113,6 @@ rack::Model *modelVCOString =
     rack::createModel<vcoui::VCOWidget<ot_string>::M, vcoui::VCOWidget<ot_string>>(
         "SurgeXTOSCString");
 rack::Model *modelVCOAlias =
-    rack::createModel<vcoui::VCOWidget<ot_alias>::M, vcoui::VCOWidget<ot_alias>>(
-        "SurgeXTOSCAlias");
+    rack::createModel<vcoui::VCOWidget<ot_alias>::M, vcoui::VCOWidget<ot_alias>>("SurgeXTOSCAlias");
 rack::Model *modelVCOTwist =
-    rack::createModel<vcoui::VCOWidget<ot_twist>::M, vcoui::VCOWidget<ot_twist>>(
-        "SurgeXTOSCTwist");
+    rack::createModel<vcoui::VCOWidget<ot_twist>::M, vcoui::VCOWidget<ot_twist>>("SurgeXTOSCTwist");

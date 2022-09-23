@@ -86,6 +86,8 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
                                                             M::OUTPUT_MIX + i));
     }
 #endif
+
+    coupleToGlobalStyle(true, module);
 }
 } // namespace sst::surgext_rack::lfo::ui
 

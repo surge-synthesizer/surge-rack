@@ -259,6 +259,8 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         addChild(makeIORowLabel(col, s, col < 2));
         col++;
     }
+
+    coupleToGlobalStyle(true, module);
 }
 } // namespace sst::surgext_rack::fx::ui
 
