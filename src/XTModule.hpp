@@ -162,6 +162,7 @@ struct XTModule : public rack::Module
     }
 
     virtual Parameter *surgeDisplayParameterForParamId(int paramId) { return nullptr; }
+    virtual Parameter *surgeDisplayParameterForModulatorParamId(int paramId) { return nullptr; }
 
     std::unique_ptr<SurgeStorage> storage;
     int storage_id_start, storage_id_end;
@@ -203,6 +204,10 @@ struct XTModule : public rack::Module
         if (specificJ)
             readModuleSpecificJson(specificJ);
     }
+
+    bool isCoupledToGlobalStyle{true};
+    style::XTStyle::Style localStyle;
+    style::XTStyle::LightColor localLightColor, localModLightColor;
 };
 
 struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
@@ -267,10 +272,63 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
         }
         return txt;
     }
+};
 
-    bool isCoupledToGlobalStyle{true};
-    style::XTStyle::Style localStyle;
-    style::XTStyle::LightColor localLightColor, localModLightColor;
+
+struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
+{
+    inline XTModule *xtm() { return static_cast<XTModule *>(module); }
+    inline Parameter *surgepar()
+    {
+        auto mc = xtm();
+        if (!mc)
+        {
+            return nullptr;
+        }
+        auto par = mc->surgeDisplayParameterForModulatorParamId(paramId);
+        return par;
+    }
+
+#if 0
+    virtual void setDisplayValueString(std::string s) override
+    {
+        auto par = surgepar();
+        if (!par)
+        {
+            ParamQuantity::setDisplayValueString(s);
+            return;
+        }
+
+        std::string emsg;
+        par->set_value_from_string(s, emsg);
+        setValue(par->get_value_f01());
+    }
+#endif
+
+    virtual std::string getLabel() override
+    {
+        auto par = surgepar();
+        if (!par)
+        {
+            return ParamQuantity::getLabel() + " SPLATTO";
+        }
+
+        return ParamQuantity::getLabel() + " to " + std::string(par->get_name());
+    }
+
+    virtual std::string getDisplayValueString() override
+    {
+        auto par = surgepar();
+        if (!par)
+        {
+            return ParamQuantity::getDisplayValueString();
+        }
+
+        char txt[256];
+        par->get_display_of_modulation_depth(txt, getValue(), true, Parameter::ModulationDisplayMode::Menu);
+
+        return txt;
+    }
 };
 
 template <int centerOffset> struct VOctParamQuantity : public rack::engine::ParamQuantity
@@ -670,11 +728,7 @@ template <typename T> struct ClockProcessor
     float sampleRate{1}, sampleRateInv{1};
     int timeSinceLast{-1};
     float lastBPM{-1};
-    void setSampleRate(float sr)
-    {
-        sampleRate = sr;
-        sampleRateInv = 1.f / sr;
-    }
+
     inline void process(T *m, int inputId)
     {
         if (trig.process(m->inputs[inputId].getVoltage()))
@@ -714,6 +768,12 @@ template <typename T> struct ClockProcessor
             m->deactivateTempoSync();
 
         timeSinceLast = -1;
+    }
+
+    void setSampleRate(float sr)
+    {
+        sampleRate = sr;
+        sampleRateInv = 1.f / sr;
     }
 };
 } // namespace sst::surgext_rack::modules

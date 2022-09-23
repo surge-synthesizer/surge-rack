@@ -198,7 +198,17 @@ template <int oscType> struct VCO : public modules::XTModule
 
         for (int i = OSC_MOD_PARAM_0; i < OSC_MOD_PARAM_0 + (n_osc_params + 1) * n_mod_inputs; ++i)
         {
-            configParam(i, -1, 1, 0);
+            auto pidx = paramModulatedBy(i);
+            std::string name{"Mod"};
+            name += std::to_string((i - OSC_MOD_PARAM_0) % 4 + 1);
+            if (pidx == PITCH_0)
+            {
+                configParam(i, -1, 1, 0, name + " to Pitch");
+            }
+            else
+            {
+                configParam<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name);
+            }
         }
 
         VCOConfig<oscType>::configureArbitrarySwitches(this);
@@ -231,6 +241,13 @@ template <int oscType> struct VCO : public modules::XTModule
     {
         int offset = baseParam - PITCH_0;
         return OSC_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
+    }
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - OSC_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_osc_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs;
     }
 
     ~VCO()
@@ -280,6 +297,16 @@ template <int oscType> struct VCO : public modules::XTModule
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
+        if (paramId < OSC_CTRL_PARAM_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
+            return nullptr;
+
+        return &oscstorage_display->p[paramId - OSC_CTRL_PARAM_0];
+    }
+
+
+    Parameter *surgeDisplayParameterForModulatorParamId(int modParamId) override
+    {
+        auto paramId = paramModulatedBy(modParamId);
         if (paramId < OSC_CTRL_PARAM_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
             return nullptr;
 
