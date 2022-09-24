@@ -281,7 +281,7 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
         col++;
     }
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::waveshaper::ui
 

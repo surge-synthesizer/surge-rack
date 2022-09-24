@@ -87,7 +87,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     }
 #endif
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::lfo::ui
 

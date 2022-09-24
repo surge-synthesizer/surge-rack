@@ -23,7 +23,7 @@ TreeMonsterWidget::TreeMonsterWidget(TreeMonsterWidget::M *module) : XTModuleWid
     auto bg = new widgets::Background(box.size, "TreeMonster", "other", "TotalBlank");
     addChild(bg);
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::treemonster::ui
 

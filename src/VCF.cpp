@@ -682,7 +682,7 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
         col++;
     }
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::vcf::ui
 

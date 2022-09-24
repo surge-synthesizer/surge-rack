@@ -260,7 +260,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         col++;
     }
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::fx::ui
 

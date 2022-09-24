@@ -23,7 +23,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     auto bg = new widgets::Background(box.size, "Mixer", "other", "TotalBlank");
     addChild(bg);
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::mixer::ui
 

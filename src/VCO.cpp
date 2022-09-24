@@ -1076,7 +1076,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
         col++;
     }
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 
 } // namespace sst::surgext_rack::vco::ui
