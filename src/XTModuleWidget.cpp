@@ -127,7 +127,7 @@ void XTModuleWidget::resetStyleCouplingToModule()
     if (xtm)
         couple = xtm->isCoupledToGlobalStyle;
 
-    if (couple)
+    if (xtm && couple)
     {
         xtm->localStyle = style::XTStyle::getGlobalStyle();
         xtm->localLightColor = style::XTStyle::getGlobalLightColor();
