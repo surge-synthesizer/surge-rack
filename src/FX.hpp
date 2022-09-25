@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include "DebugHelpers.h"
+#include "FxPresetAndClipboardManager.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -69,6 +70,7 @@ template <int fxType> struct FXConfig
     static constexpr int panelWidthInScrews() { return 12; }
     static constexpr bool usesSideband() { return false; }
     static constexpr bool usesClock() { return false; }
+    static constexpr bool usesPresets() { return true; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -152,10 +154,47 @@ template <int fxType> struct FX : modules::XTModule
     modules::ClockProcessor<FX<fxType>> clockProc;
 
     float modScales[n_fx_params];
+    std::atomic<int> loadThisPreset{-1}, loadedPreset{-1}, maxPresets{0};
+    std::vector<Surge::Storage::FxUserPreset::Preset> presets;
     void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
 
+        if (FXConfig<fxType>::usesPresets())
+        {
+            auto sect = storage->getSnapshotSection("fx");
+            if (sect)
+            {
+                auto type = sect->FirstChildElement();
+                while(type)
+                {
+                    int i;
+
+                    if (type->Value() && strcmp(type->Value(), "type") == 0
+                        && type->QueryIntAttribute("i", &i) == TIXML_SUCCESS &&
+                            i == fxType)
+                    {
+                        auto kid = type->FirstChildElement();
+                        while(kid)
+                        {
+                            if (strcmp(kid->Value(), "snapshot") == 0)
+                            {
+                                auto p = Surge::Storage::FxUserPreset::Preset();
+                                storage->fxUserPreset->readFromXMLSnapshot(p, kid);
+                                p.isFactory = true;
+                                presets.push_back(p);
+                            }
+                            kid = kid->NextSiblingElement();
+                        }
+                    }
+                    type = type->NextSiblingElement();
+                }
+            }
+            auto xtrapresets = storage->fxUserPreset->getPresetsForSingleType(fxType);
+            for (auto p : xtrapresets)
+                presets.push_back(p);
+            maxPresets = presets.size();
+        }
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
@@ -225,6 +264,20 @@ template <int fxType> struct FX : modules::XTModule
             else
                 clockProc.disconnect(this);
         }
+
+        if constexpr (FXConfig<fxType>::usesPresets())
+            if (loadThisPreset >= 0)
+            {
+                const auto &ps = presets[loadThisPreset];
+
+                for (int i=0; i<n_fx_params; ++i)
+                {
+                    paramQuantities[FX_PARAM_0+i]->setValue(ps.p[i]);
+                }
+
+                loadedPreset = (int)loadThisPreset;
+                loadThisPreset = -1;
+            }
 
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
