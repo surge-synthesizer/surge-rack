@@ -133,6 +133,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 
     void drawLabel(NVGcontext *vg)
     {
+        auto col = style()->getColor(color);
         nvgBeginPath(vg);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, size * 96.0 / 72.0);
@@ -180,6 +181,7 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
 
     static constexpr float mainLabelBaseline_MM = 6.298, mainLabelSize_PT = 11;
     Label *titleLabel{nullptr};
+    rack::app::SvgPanel *svgPanel{nullptr};
 
     Background(rack::Vec size, const std::string &t, const std::string &grp, const std::string &pn)
         : title(t), groupName(grp), panelName(pn)
@@ -207,22 +209,24 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
 
     void onStyleChanged() override
     {
-        auto childrenCopy = children;
-        for (auto k : childrenCopy)
-            removeChild(k);
-
         std::string asset =
             style()->skinAssetDir() + "/panels/" + groupName + "/" + panelName + ".svg";
 
         auto panelLogo = rack::Svg::load(rack::asset::plugin(pluginInstance, asset));
         if (panelLogo)
         {
-            auto svgp = new rack::app::SvgPanel();
-            svgp->box.pos = rack::Vec(0, 0);
-            svgp->box.size = box.size;
+            bool addMe{false};
+            if (!svgPanel)
+            {
+                addMe = true;
+                svgPanel = new rack::app::SvgPanel();
+            }
+            svgPanel->box.pos = rack::Vec(0, 0);
+            svgPanel->box.size = box.size;
 
-            svgp->setBackground(panelLogo);
-            addChild(svgp);
+            svgPanel->setBackground(panelLogo);
+            if (addMe)
+                addChild(svgPanel);
         }
         else
         {
@@ -231,11 +235,14 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
             addChild(bdw);
         }
 
-        auto label = Label::createWithBaselineBox(
-            rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(mainLabelBaseline_MM)), title,
-            mainLabelSize_PT);
-        label->tracking = 0.7;
-        addChild(label);
+        if (!titleLabel)
+        {
+            titleLabel = Label::createWithBaselineBox(
+                rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(mainLabelBaseline_MM)), title,
+                mainLabelSize_PT);
+            titleLabel->tracking = 0.7;
+            addChild(titleLabel);
+        }
     }
 };
 
@@ -696,13 +703,35 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         addChild(bdwLight);
     }
 
+    bool hovered{false};
+    void onHover(const HoverEvent &e) override { e.consume(this); }
+    void onEnter(const EnterEvent &e) override
+    {
+        hovered = true;
+        bdw->dirty = true;
+        e.consume(this);
+    }
+    void onLeave(const LeaveEvent &e) override
+    {
+        hovered = false;
+        bdw->dirty = true;
+        e.consume(this);
+    }
+
     void drawBackground(NVGcontext *vg)
     {
+        auto col = style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF);
+        if (hovered)
+        {
+            col.r *= 1.2;
+            col.g *= 1.2;
+            col.b *= 1.2;
+        }
         if (type == POWER)
         {
             nvgBeginPath(vg);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
-            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
+            nvgFillColor(vg, col);
             nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius, radius);
             nvgFill(vg);
             nvgStrokeWidth(vg, 0.75);
@@ -712,7 +741,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         {
             nvgBeginPath(vg);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
-            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
+            nvgFillColor(vg, col);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 7.3 * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
@@ -789,6 +818,19 @@ struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
         }
     }
 
+    bool hovered{false};
+    void onHover(const HoverEvent &e) override { e.consume(this); }
+    void onEnter(const EnterEvent &e) override
+    {
+        hovered = true;
+        e.consume(this);
+    }
+    void onLeave(const LeaveEvent &e) override
+    {
+        hovered = false;
+        e.consume(this);
+    }
+
     void drawLayer(const DrawArgs &args, int layer) override
     {
         if (layer == 1 && pressedState)
@@ -827,7 +869,14 @@ struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
         if (!pressedState)
         {
             nvgBeginPath(args.vg);
-            nvgFillColor(args.vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
+            auto col = style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF);
+            if (hovered)
+            {
+                col.r *= 1.2;
+                col.g *= 1.2;
+                col.b *= 1.2;
+            }
+            nvgFillColor(args.vg, col);
             nvgEllipse(args.vg, box.size.x / 2, box.size.y / 2, light_pixelRadius,
                        light_pixelRadius);
             nvgFill(args.vg);

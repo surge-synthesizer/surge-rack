@@ -24,10 +24,11 @@ struct XTStyle
         DARK = 10001, // just so it's not a 0 in the JSON
         MID,
         LIGHT
-    } *
-        activeStyle{nullptr};
+    };
+    Style *activeStyle{nullptr};
     static std::string styleName(Style s);
     static void setGlobalStyle(Style s);
+    static Style getGlobalStyle();
     static void initialize();
 
     enum LightColor
@@ -40,13 +41,14 @@ struct XTStyle
         PURPLE,
         PINK,
         RED // must be last
-    } *
-        activeModLight{nullptr},
-        *activeLight{nullptr};
+    };
+    LightColor *activeModLight{nullptr}, *activeLight{nullptr};
 
     static std::string lightColorName(LightColor c);
     static void setGlobalLightColor(LightColor c);
+    static LightColor getGlobalLightColor();
     static void setGlobalModLightColor(LightColor c);
+    static LightColor getGlobalModLightColor();
     static NVGcolor lightColorColor(LightColor c);
 
     enum Colors
@@ -81,22 +83,26 @@ struct XTStyle
     int fontIdBold(NVGcontext *vg);
 
     friend struct StyleParticipant;
+    static void notifyStyleListeners();
 
   private:
     static std::unordered_set<StyleParticipant *> listeners;
     static void addStyleListener(StyleParticipant *l) { listeners.insert(l); }
     static void removeStyleListener(StyleParticipant *l) { listeners.erase(l); }
-    static void notifyStyleListeners();
     static void updateJSON();
 };
 
 struct StyleParticipant
 {
     StyleParticipant();
-    ~StyleParticipant();
+    virtual ~StyleParticipant();
     virtual void onStyleChanged() = 0;
 
     const std::shared_ptr<XTStyle> &style();
+
+    void attachToGlobalStyle();
+    void attachTo(style::XTStyle::Style *, style::XTStyle::LightColor *,
+                  style::XTStyle::LightColor *);
 
     std::shared_ptr<XTStyle> stylePtr{nullptr};
 };

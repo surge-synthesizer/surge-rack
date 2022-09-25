@@ -23,7 +23,7 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
     auto bg = new widgets::Background(box.size, "ModMatrix", "other", "TotalBlank");
     addChild(bg);
 
-    coupleToGlobalStyle(true, module);
+    resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::modmatrix::ui
 

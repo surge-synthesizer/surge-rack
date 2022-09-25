@@ -171,10 +171,28 @@ struct XTModule : public rack::Module
     {
         json_t *rootJ = json_object();
         json_object_set_new(rootJ, "buildInfo", json_string(getBuildInfo().c_str()));
+        json_object_set_new(rootJ, "isCoupledToGlobalStyle", json_boolean(isCoupledToGlobalStyle));
+        json_object_set_new(rootJ, "localStyle", json_integer(localStyle));
+        json_object_set_new(rootJ, "localLightColor", json_integer(localLightColor));
+        json_object_set_new(rootJ, "localModLightColor", json_integer(localModLightColor));
         return rootJ;
     }
 
-    void readCommonDataJson(json_t *commonJ) {}
+    void readCommonDataJson(json_t *commonJ) {
+        auto icg = json_object_get(commonJ, "isCoupledToGlobalStyle");
+        if (icg)
+            isCoupledToGlobalStyle = json_boolean_value(icg);
+
+        auto ls = json_object_get(commonJ, "localStyle");
+        if (ls)
+            localStyle = (style::XTStyle::Style)json_integer_value(ls);
+        auto ll = json_object_get(commonJ, "localLightColor");
+        if (ll)
+            localLightColor = (style::XTStyle::LightColor)json_integer_value(ll);
+        auto lm = json_object_get(commonJ, "localModLightColor");
+        if (lm)
+            localModLightColor = (style::XTStyle::LightColor)json_integer_value(lm);
+    }
 
     virtual json_t *makeModuleSpecificJson() { return nullptr; }
     virtual void readModuleSpecificJson(json_t *modJ) {}
@@ -206,8 +224,9 @@ struct XTModule : public rack::Module
     }
 
     bool isCoupledToGlobalStyle{true};
-    style::XTStyle::Style localStyle;
-    style::XTStyle::LightColor localLightColor, localModLightColor;
+    style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
+    style::XTStyle::LightColor localLightColor{style::XTStyle::ORANGE},
+        localModLightColor{style::XTStyle::BLUE};
 };
 
 struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
