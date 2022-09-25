@@ -16,6 +16,12 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget, widget
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
     std::array<widgets::KnobN *, 8> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
 };
 
 template <int oscType> struct WavetableSelector : widgets::PresetJogSelector

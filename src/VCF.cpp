@@ -20,6 +20,12 @@ struct VCFWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 5> overlays;
     std::array<widgets::KnobN *, VCF::n_vcf_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
 };
 
 struct VCFSelector : widgets::ParamJogSelector

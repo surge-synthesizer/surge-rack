@@ -21,6 +21,23 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
             dirtyFB(c);
     }
 
+    void onHoverKey(const HoverKeyEvent &e) override
+    {
+        if (e.action == GLFW_PRESS && (e.mods & GLFW_MOD_ALT))
+        {
+            if (e.key >= '1' && e.key <= '4')
+            {
+                auto whichMod = e.key - '1';
+                selectModulator(whichMod);
+                e.consume(this);
+                return;
+            }
+        }
+        ModuleWidget::onHoverKey(e);
+    }
+
+    virtual void selectModulator(int whichMod) {}
+
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 
   protected:
