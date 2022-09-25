@@ -16,6 +16,12 @@ struct FXWidget : public widgets::XTModuleWidget, widgets::StandardWidthWithModu
     std::array<widgets::KnobN *, n_fx_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
+
     /*
      * @baconpaul some figures that might help you with FX layout (more to come later)
 
