@@ -623,17 +623,19 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::string label;
+    bool shortLeft{false}, shortRight{false};
 
-    static GroupLabel *createWithCenterAndSpan(const std::string &label, const rack::Vec &ctrInMM,
-                                               float spanInMM)
+    static GroupLabel *createAboveCenterWithColSpan(const std::string &label,
+                                                    const rack::Vec &ctrInMM, float spanInColumns)
     {
-        float ht = rack::mm2px(5);
-        float yup = rack::mm2px(1);
+        float ht = rack::mm2px(4.5);
+        float yup = rack::mm2px(1.75);
         auto res = new GroupLabel();
+        float colWidthMM = 14;
 
-        res->box.pos.x = rack::mm2px(ctrInMM.x - spanInMM);
-        res->box.pos.y = rack::mm2px(ctrInMM.y) - yup;
-        res->box.size.x = rack::mm2px(spanInMM * 2);
+        res->box.pos.x = rack::mm2px(ctrInMM.x - colWidthMM * 0.5);
+        res->box.pos.y = rack::mm2px(ctrInMM.y - 8) - yup;
+        res->box.size.x = rack::mm2px(spanInColumns * colWidthMM);
         res->box.size.y = ht;
         res->label = label;
         res->setup();
@@ -649,6 +651,14 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
 
     void drawGroup(NVGcontext *vg)
     {
+#define DEBUG_RECT_GL 0
+#if DEBUG_RECT_GL
+        nvgBeginPath(vg);
+        nvgFillColor(vg, nvgRGBA(255, 0, 0, 20));
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgFill(vg);
+#endif
+
         float textBox[4];
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
@@ -659,18 +669,24 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
         nvgTextBounds(vg, box.size.x * 0.5, 0, label.c_str(), nullptr, textBox);
         nvgFill(vg);
 
+        float yline = (textBox[1] + textBox[3]) * 0.5 - rack::mm2px(0.25);
+        float x0 = rack::mm2px(1.3);
+        float x1 = box.size.x - x0;
+
         nvgBeginPath(vg);
-        nvgMoveTo(vg, 1, box.size.y);
-        nvgLineTo(vg, 1, (textBox[1] + textBox[3]) * 0.5);
-        nvgLineTo(vg, textBox[0] - 2, (textBox[1] + textBox[3]) * 0.5);
+        nvgMoveTo(vg, x0, shortLeft ? box.size.y - rack::mm2px(2.5) : box.size.y);
+        nvgLineTo(vg, x0, yline + 3);
+        nvgArcTo(vg, x0, yline, x0 + 2, yline, 2);
+        nvgLineTo(vg, textBox[0] - 2, yline);
         nvgStrokeWidth(vg, 1.2);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
         nvgStroke(vg);
 
         nvgBeginPath(vg);
-        nvgMoveTo(vg, box.size.x - 1, box.size.y);
-        nvgLineTo(vg, box.size.x - 1, (textBox[1] + textBox[3]) * 0.5);
-        nvgLineTo(vg, textBox[2] + 2, (textBox[1] + textBox[3]) * 0.5);
+        nvgMoveTo(vg, x1, shortRight ? box.size.y - rack::mm2px(2.5) : box.size.y);
+        nvgLineTo(vg, x1, yline + 3);
+        nvgArcTo(vg, x1, yline, x1 - 2, yline, 2);
+        nvgLineTo(vg, textBox[2] + 2, yline);
         nvgStrokeWidth(vg, 1.2);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
         nvgStroke(vg);
