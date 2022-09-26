@@ -412,6 +412,42 @@ template <int fxType> struct FX : modules::XTModule
         }
     }
 
+    json_t *makeModuleSpecificJson() override
+    {
+        auto fx = json_object();
+        if (FXConfig<fxType>::usesPresets())
+        {
+            if (loadedPreset >= 0)
+            {
+                json_object_set(fx, "loadedPreset", json_integer(loadedPreset));
+                json_object_set(fx, "presetName", json_string(presets[loadedPreset].name.c_str()));
+                json_object_set(fx, "presetIsDirty", json_boolean(presetIsDirty));
+            }
+        }
+        return fx;
+    }
+
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        if (FXConfig<fxType>::usesPresets())
+        {
+            auto lp = json_object_get(modJ, "loadedPreset");
+            auto pn = json_object_get(modJ, "presetName");
+            auto pd = json_object_get(modJ, "presetIsDirty");
+            if (lp && pn && pd)
+            {
+                auto lpc = json_integer_value(lp);
+                auto pnc = std::string(json_string_value(pn));
+                auto pdc = json_boolean_value(pd);
+                if (lpc >= 0 && lpc < presets.size() && presets[lpc].name == pnc)
+                {
+                    loadedPreset = lpc;
+                    presetIsDirty = pdc;
+                }
+            }
+        }
+    }
+
     std::unique_ptr<Effect> surge_effect;
     FxStorage *fxstorage{nullptr};
 };
