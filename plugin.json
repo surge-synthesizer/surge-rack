@@ -129,15 +129,6 @@
       ]
     },
     {
-      "slug": "SurgeXTFXDelay",
-      "name": "SXT Delay",
-      "description": "The Surge XT Delay",
-      "tags": [
-        "FX",
-        "Delay"
-      ]
-    },
-    {
       "slug": "SurgeXTFXReverb",
       "name": "SXT Reverb",
       "description": "The Surge XT Reverb",

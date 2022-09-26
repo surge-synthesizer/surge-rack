@@ -588,7 +588,6 @@ struct MonophonicModulationAssistant
             }
             modvalues[p] = mv;
             basevalues[p] = m->params[p + par0].getValue();
-            ;
             values[p] = mv + basevalues[p];
         }
     }

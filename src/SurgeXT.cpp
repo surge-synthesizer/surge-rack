@@ -30,7 +30,6 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeModMatrix);
     p->addModel(modelSurgeTreeMonster);
 
-    p->addModel(modelFXDelay);
     p->addModel(modelFXReverb);
     p->addModel(modelFXPhaser);
     p->addModel(modelFXRotarySpeaker);
