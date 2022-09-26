@@ -87,7 +87,7 @@ void modLightMenuFor(rack::Menu *p, XTModuleWidget *w)
         return;
 
     auto glob = xtm->isCoupledToGlobalStyle;
-    auto clight = glob ? style::XTStyle::getGlobalLightColor() : xtm->localModLightColor;
+    auto clight = glob ? style::XTStyle::getGlobalModLightColor() : xtm->localModLightColor;
     for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::RED;
          ++ski)
     {

@@ -130,7 +130,7 @@ void XTStyle::setGlobalModLightColor(sst::surgext_rack::style::XTStyle::LightCol
 {
     if (c != defaultGlobalModLightColor)
     {
-        defaultGlobalLightColor = c;
+        defaultGlobalModLightColor = c;
         updateJSON();
 
         notifyStyleListeners();

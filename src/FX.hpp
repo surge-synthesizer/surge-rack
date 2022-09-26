@@ -145,6 +145,9 @@ template <int fxType> struct FX : modules::XTModule
         configOutput(OUTPUT_R, "Right");
 
         modAssist.initialize(this);
+
+        if (maxPresets > 0)
+            loadPreset(0);
     }
 
     void moduleSpecificSampleRateChange() override
@@ -154,7 +157,8 @@ template <int fxType> struct FX : modules::XTModule
     modules::ClockProcessor<FX<fxType>> clockProc;
 
     float modScales[n_fx_params];
-    std::atomic<int> loadThisPreset{-1}, loadedPreset{-1}, maxPresets{0};
+    std::atomic<int> loadedPreset{-1}, maxPresets{0};
+    std::atomic<bool> presetIsDirty{false};
     std::vector<Surge::Storage::FxUserPreset::Preset> presets;
     void setupSurge()
     {
@@ -248,6 +252,30 @@ template <int fxType> struct FX : modules::XTModule
         return false;
     }
 
+    float value01for(int i, float f)
+    {
+        const auto &p = fxstorage->p[i];
+        if (p.ctrltype != ct_none &&
+            p.valtype == vt_float)
+        {
+            return (f - p.val_min.f) / (p.val_max.f - p.val_min.f);
+        }
+        return 0;
+    }
+
+    void loadPreset(int which)
+    {
+        const auto &ps = presets[which];
+
+        for (int i=0; i<n_fx_params; ++i)
+        {
+            paramQuantities[FX_PARAM_0+i]->setValue(value01for(i, ps.p[i]));
+        }
+
+        loadedPreset = (int)which;
+        presetIsDirty = false;
+    }
+
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
 
     int bufferPos{0};
@@ -264,20 +292,6 @@ template <int fxType> struct FX : modules::XTModule
             else
                 clockProc.disconnect(this);
         }
-
-        if constexpr (FXConfig<fxType>::usesPresets())
-            if (loadThisPreset >= 0)
-            {
-                const auto &ps = presets[loadThisPreset];
-
-                for (int i=0; i<n_fx_params; ++i)
-                {
-                    paramQuantities[FX_PARAM_0+i]->setValue(ps.p[i]);
-                }
-
-                loadedPreset = (int)loadThisPreset;
-                loadThisPreset = -1;
-            }
 
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;

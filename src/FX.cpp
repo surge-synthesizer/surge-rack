@@ -45,6 +45,7 @@ This should work for all FX - hope that makes sense!
 template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
 {
     FX<fxType> *module{nullptr};
+    Surge::Storage::FxUserPreset::Preset *currentPreset{nullptr};
     static FXPresetSelector *create(FX<fxType> *module)
     {
         auto res = new FXPresetSelector<fxType>();
@@ -55,6 +56,12 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         res->module = module;
         res->setup();
 
+        if (module && res->module->loadedPreset >= 0)
+        {
+            res->currentPreset = &res->module->presets[res->module->loadedPreset];
+            res->id = res->module->loadedPreset;
+        }
+
         return res;
     }
 
@@ -64,7 +71,8 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         id = i;
         if (!module)
             return;
-        module->loadThisPreset = id;
+        module->loadPreset(id);
+        currentPreset = &module->presets[id];
         forceDirty = true;
     }
     void onPresetJog(int dir /* +/- 1 */) override
@@ -102,17 +110,34 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         if (module->maxPresets <= id || id < 0)
             return "Software Error";
 
-        return module->presets[id].name;
+        auto res = module->presets[id].name;
+        if (module->presetIsDirty)
+            res += "*";
+        return res;
     }
 
+    int checkPresetEvery{0};
     bool forceDirty{true};
     bool isDirty() override
     {
-        if (forceDirty)
+        if (module && currentPreset && checkPresetEvery == 0)
         {
-            forceDirty = false;
-            return true;
+            for (int i = 0; i < n_fx_params; ++i)
+            {
+                if (module->paramQuantities[FX<fxType>::FX_PARAM_0 + i]->getValue() !=
+                    module->value01for(i, currentPreset->p[i]))
+                {
+                    if (!module->presetIsDirty)
+                    {
+                        module->presetIsDirty = true;
+                        forceDirty = true;
+                    }
+                }
+            }
         }
+        checkPresetEvery++;
+        if (checkPresetEvery >= 8)
+            checkPresetEvery = 0;
 
         if (module)
         {
@@ -121,6 +146,12 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
                 id = module->loadedPreset;
                 return true;
             }
+        }
+
+        if (forceDirty)
+        {
+            forceDirty = false;
+            return true;
         }
 
         return false;
