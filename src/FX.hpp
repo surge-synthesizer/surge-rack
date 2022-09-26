@@ -9,6 +9,7 @@
 
 #include "DebugHelpers.h"
 #include "FxPresetAndClipboardManager.h"
+#include <unordered_map>
 
 namespace sst::surgext_rack::fx
 {
@@ -44,6 +45,11 @@ template <int fxType> struct FXConfig
             res.ycmm = ht;
             return res;
         }
+
+        static LayoutItem createPresetLCDArea()
+        {
+            return createLCDArea(14.2);
+        }
         static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,
                                            float span)
         {
@@ -54,6 +60,13 @@ template <int fxType> struct FXConfig
             res.ycmm = ycmm;
             res.spanmm = span;
             return res;
+        }
+
+        std::unordered_map<std::string, float> extras;
+        LayoutItem& withExtra(const std::string &s, float f)
+        {
+            extras[s] = f;
+            return *this;
         }
     };
     typedef std::vector<LayoutItem> layout_t;

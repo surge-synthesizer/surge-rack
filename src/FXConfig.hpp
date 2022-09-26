@@ -6,6 +6,7 @@
 #include "XTModuleWidget.hpp"
 
 #include "dsp/effects/FrequencyShifterEffect.h"
+#include "dsp/effects/ChorusEffect.h"
 #include "dsp/effects/DelayEffect.h"
 #include "dsp/effects/Reverb2Effect.h"
 #include "dsp/effects/RotarySpeakerEffect.h"
@@ -13,6 +14,98 @@
 
 namespace sst::surgext_rack::fx
 {
+
+struct FXLayoutHelper
+{
+    static constexpr float rowStart_MM = 71;
+    static constexpr float unlabeledGap_MM = 16;
+    static constexpr float labeledGap_MM = 20;
+
+    static constexpr float bigCol0 = 3 * 15 / (75 / 25.4);
+    static constexpr float bigCol1 = 9 * 15 / (75 / 25.4);
+
+    static constexpr float knobGap16_MM = unlabeledGap_MM - 9 + 18;
+};
+
+/*
+ * CHORUS:
+ * One extra input for a clock
+ * Two extra params for power on the lo and hi cut
+ */
+template <> constexpr bool FXConfig<fxt_chorus4>::usesClock() { return true; }
+template <> constexpr int FXConfig<fxt_chorus4>::specificParamCount() { return 2; }
+
+template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
+{
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+
+    const auto outputRow = FXLayoutHelper::rowStart_MM;
+    const auto delayRow = outputRow - FXLayoutHelper::labeledGap_MM;
+    const auto bigRow = delayRow - FXLayoutHelper::knobGap16_MM;
+
+    const auto endOfPanel = bigRow - 8;
+
+    typedef FX<fxt_chorus4> fx_t;
+    typedef ChorusEffect<4> sfx_t;
+
+    // fixme use the enums
+    // clang-format off
+    return {
+        {LayoutItem::KNOB16, "RATE", sfx_t::ch_rate, col[1] - 7, bigRow},
+        {LayoutItem::KNOB16, "DEPTH", sfx_t::ch_depth, col[2] + 7, bigRow},
+
+        {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
+                 col[0], delayRow },
+        {LayoutItem::KNOB9, "TIME", sfx_t::ch_time, col[2], delayRow},
+        {LayoutItem::KNOB9, "F/BACK", sfx_t::ch_feedback, col[3], delayRow},
+        LayoutItem::createGrouplabel("DELAY", col[2], delayRow, 2),
+
+        {LayoutItem::KNOB9, "LOCUT", sfx_t::ch_lowcut, col[0], outputRow},
+        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[0], outputRow, -1},
+
+        {LayoutItem::KNOB9, "HICUT", sfx_t::ch_highcut, col[1], outputRow},
+        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0+1, col[1], outputRow, +1},
+        LayoutItem::createGrouplabel("EQ", col[0], outputRow, 2).withExtra("SHORTLEFT",1).withExtra("SHORTRIGHT",1),
+
+        {LayoutItem::KNOB9, "WIDTH", sfx_t::ch_width, col[2], outputRow},
+        {LayoutItem::KNOB9, "MIX", sfx_t::ch_mix, col[3], outputRow},
+        LayoutItem::createGrouplabel("OUTPUT", col[2], outputRow, 2),
+
+        LayoutItem::createPresetLCDArea(),
+    };
+
+    // clang-format on
+}
+
+template <> void FXConfig<fxt_chorus4>::configSpecificParams(FX<fxt_chorus4> *m)
+{
+    typedef FX<fxt_chorus4> fx_t;
+    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1, "Enable LowCut");
+    m->configParam(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1, "Enable HiCut");
+}
+
+template <> void FXConfig<fxt_chorus4>::processSpecificParams(FX<fxt_chorus4> *m)
+{
+    typedef FX<fxt_chorus4> fx_t;
+    auto &lc = m->fxstorage->p[ChorusEffect<4>::ch_lowcut];
+    auto &hc = m->fxstorage->p[ChorusEffect<4>::ch_highcut];
+
+    auto lce = !lc.deactivated;
+    auto plce = m->params[fx_t::FX_SPECIFIC_PARAM_0].getValue() > 0.5;
+    if (lce != plce)
+    {
+        lc.deactivated = !plce;
+    }
+
+    auto hce = !hc.deactivated;
+    auto phce = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].getValue() > 0.5;
+    if (hce != phce)
+    {
+        hc.deactivated = !phce;
+    }
+}
+
+//// NEED RE_DOING NOW WE HAVE PROPER SIZES
 // SPRING REVERB
 // An extra input for the 'knock' parameter which we send up with a
 // schmidt trigger
@@ -22,7 +115,7 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
     const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
     const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
 
-    const auto thirdRow = modRow - 16;
+    const auto thirdRow = 71; // modRow - 16;
     const auto secondRow = thirdRow - 16;
     const auto firstRow = secondRow - 16;
     const auto bigRow = (secondRow + firstRow) * 0.5f;
@@ -112,11 +205,12 @@ template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout
 
     return {
         // clang-format off
-        LayoutItem::createGrouplabel("DELAY", col[1], smallRow - 9, widgets::StandardWidthWithModulationConstants::columnWidth_MM * 1.5),
+        //LayoutItem::createGrouplabel("DELAY", col[1], smallRow - 9, widgets::StandardWidthWithModulationConstants::columnWidth_MM * 1.5),
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
             col[0], smallRow },
-        {LayoutItem::KNOB9, "DELAY", FrequencyShifterEffect::freq_delay, col[1], smallRow},
+        {LayoutItem::KNOB9, "TIME", FrequencyShifterEffect::freq_delay, col[1], smallRow},
         {LayoutItem::KNOB9, "F/B", FrequencyShifterEffect::freq_feedback, col[2], smallRow},
+        //LayoutItem::createGrouplabel("DELAY", col[0], smallRow, 3),
         {LayoutItem::KNOB9, "MIX", FrequencyShifterEffect::freq_mix, col[3], smallRow},
         {LayoutItem::KNOB16, "LEFT", FrequencyShifterEffect::freq_shift, (col[0] + col[1]) * 0.5, bigRow},
         {LayoutItem::EXTEND_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, (col[0] + col[1]) * 0.5, bigRow, 16},
@@ -231,7 +325,7 @@ template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::g
         {LayoutItem::KNOB16, "HORN", RotarySpeakerEffect::rot_horn_rate, col[1] - 10, bigRow},
         {LayoutItem::KNOB16, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, col[1] + 10, bigRow},
         {LayoutItem::KNOB9, "DRIVE", RotarySpeakerEffect::rot_drive, col[3], firstRow},
-        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[3], firstRow, 9},
+        //{LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[3], firstRow, 9},
         {LayoutItem::PORT, "CLOCK", fx_t ::INPUT_CLOCK, col[3], secondRow},
 
         {LayoutItem::KNOB9, "DOPPLER", RotarySpeakerEffect::rot_doppler, col[0], thirdRow},

@@ -190,20 +190,33 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             widgets::KnobN *knob{nullptr};
             int diff = lay.type - FXConfig<fxType>::LayoutItem::KNOB9;
             auto pos = rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm));
+            float halfSize{0}; // diff in radius from 4.5
             auto par = M::FX_PARAM_0 + lay.parId;
             if (diff == 0)
+            {
                 knob = rack::createParamCentered<widgets::Knob9>(pos, module, par);
+                halfSize = 0;
+            }
             if (diff == 1)
+            {
                 knob = rack::createParamCentered<widgets::Knob12>(pos, module, par);
+                halfSize = 1.5;
+            }
             if (diff == 2)
+            {
                 knob = rack::createParamCentered<widgets::Knob16>(pos, module, par);
+                halfSize = 3.5;
+            }
             if (knob)
             {
                 addChild(knob);
-                auto boxbl = rack::Vec(rack::mm2px(lay.xcmm - columnWidth_MM * 0.5),
-                                       knob->box.pos.y + knob->box.size.y);
-                auto lab = widgets::Label::createWithBaselineBox(
-                    boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 4)), lay.label);
+
+                auto boxx0 = lay.xcmm - columnWidth_MM * 0.5;
+                auto boxy0 = lay.ycmm + 8.573 + halfSize - 5;
+
+                auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+                auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
+                auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
                 addChild(lab);
 
                 underKnobs[lay.parId] = knob;
@@ -228,19 +241,22 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
                 rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + verticalPortOffset_MM)), module,
                 lay.parId);
             addChild(port);
-            auto boxbl = rack::Vec(rack::mm2px(lay.xcmm - columnWidth_MM * 0.5),
-                                   port->box.pos.y + port->box.size.y +
-                                       rack::mm2px(2 * verticalPortOffset_MM));
-            auto lab = widgets::Label::createWithBaselineBox(
-                boxbl, rack::mm2px(rack::Vec(columnWidth_MM, 4)), lay.label);
+
+            auto boxx0 = lay.xcmm - columnWidth_MM * 0.5;
+            auto boxy0 = lay.ycmm + 8.573 - 5;
+
+            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+            auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
+            auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+
             addChild(lab);
         }
         break;
         case FXConfig<fxType>::LayoutItem::POWER_LIGHT:
         case FXConfig<fxType>::LayoutItem::EXTEND_LIGHT:
         {
-            auto x = rack::mm2px(lay.xcmm + (lay.spanmm + 2) * 0.5) + 2.5;
-            auto y = rack::mm2px(lay.ycmm - (lay.spanmm + 2) * 0.5) + 3.0;
+            auto x = rack::mm2px(lay.xcmm + lay.spanmm * 5.5);
+            auto y = rack::mm2px(lay.ycmm - 5.5);
 
             auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(rack::Vec(x, y),
                                                                                 module, lay.parId);
@@ -254,8 +270,12 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         break;
         case FXConfig<fxType>::LayoutItem::GROUP_LABEL:
         {
-            auto gl = widgets::GroupLabel::createWithCenterAndSpan(
+            auto gl = widgets::GroupLabel::createAboveCenterWithColSpan(
                 lay.label, rack::Vec(lay.xcmm, lay.ycmm), lay.spanmm);
+            if (lay.extras.find("SHORTLEFT") != lay.extras.end())
+                gl->shortLeft = true;
+            if (lay.extras.find("SHORTRIGHT") != lay.extras.end())
+                gl->shortRight = true;
             addChild(gl);
         }
         break;
