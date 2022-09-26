@@ -395,7 +395,6 @@ namespace fxui = sst::surgext_rack::fx::ui;
     rack::Model *modelFX##nm = rack::createModel<fxui::FXWidget<type>::M, fxui::FXWidget<type>>(   \
         std::string("SurgeXTFX") + #nm);
 
-FXMODEL(fxt_delay, Delay);
 FXMODEL(fxt_reverb, Reverb);
 FXMODEL(fxt_phaser, Phaser);
 FXMODEL(fxt_rotaryspeaker, RotarySpeaker);

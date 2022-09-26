@@ -47,7 +47,6 @@ extern rack::Model *modelSurgeTreeMonster;
 
 // FX
 
-extern rack::Model *modelFXDelay;
 extern rack::Model *modelFXReverb;
 extern rack::Model *modelFXPhaser;
 extern rack::Model *modelFXRotarySpeaker;
