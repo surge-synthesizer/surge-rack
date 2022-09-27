@@ -48,7 +48,7 @@ template <int fxType> struct FXConfig
 
         static LayoutItem createPresetLCDArea()
         {
-            return createLCDArea(14.2);
+            return createLCDArea(14.9);
         }
         static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,
                                            float span)
@@ -79,6 +79,8 @@ template <int fxType> struct FXConfig
     static constexpr int specificParamCount() { return 0; }
     static void configSpecificParams(FX<fxType> *M) {}
     static void processSpecificParams(FX<fxType> *M) {}
+    static void loadPresetOntoSpecificParams(FX<fxType> *M, const Surge::Storage::FxUserPreset::Preset &) {}
+    static bool isDirtyPresetVsSpecificParams(FX<fxType> *M, const Surge::Storage::FxUserPreset::Preset &) { return false; }
 
     static constexpr int panelWidthInScrews() { return 12; }
     static constexpr bool usesSideband() { return false; }
@@ -177,41 +179,6 @@ template <int fxType> struct FX : modules::XTModule
     {
         setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
 
-        if (FXConfig<fxType>::usesPresets())
-        {
-            auto sect = storage->getSnapshotSection("fx");
-            if (sect)
-            {
-                auto type = sect->FirstChildElement();
-                while(type)
-                {
-                    int i;
-
-                    if (type->Value() && strcmp(type->Value(), "type") == 0
-                        && type->QueryIntAttribute("i", &i) == TIXML_SUCCESS &&
-                            i == fxType)
-                    {
-                        auto kid = type->FirstChildElement();
-                        while(kid)
-                        {
-                            if (strcmp(kid->Value(), "snapshot") == 0)
-                            {
-                                auto p = Surge::Storage::FxUserPreset::Preset();
-                                storage->fxUserPreset->readFromXMLSnapshot(p, kid);
-                                p.isFactory = true;
-                                presets.push_back(p);
-                            }
-                            kid = kid->NextSiblingElement();
-                        }
-                    }
-                    type = type->NextSiblingElement();
-                }
-            }
-            auto xtrapresets = storage->fxUserPreset->getPresetsForSingleType(fxType);
-            for (auto p : xtrapresets)
-                presets.push_back(p);
-            maxPresets = presets.size();
-        }
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
@@ -232,6 +199,60 @@ template <int fxType> struct FX : modules::XTModule
 
         std::fill(processedL, processedL + BLOCK_SIZE, 0);
         std::fill(processedR, processedR + BLOCK_SIZE, 0);
+
+        if (FXConfig<fxType>::usesPresets())
+        {
+            auto sect = storage->getSnapshotSection("fx");
+            if (sect)
+            {
+                auto type = sect->FirstChildElement();
+                while(type)
+                {
+                    int i;
+
+                    if (type->Value() && strcmp(type->Value(), "type") == 0
+                        && type->QueryIntAttribute("i", &i) == TIXML_SUCCESS &&
+                        i == fxType)
+                    {
+                        auto kid = type->FirstChildElement();
+                        while(kid)
+                        {
+                            if (strcmp(kid->Value(), "snapshot") == 0)
+                            {
+                                auto p = Surge::Storage::FxUserPreset::Preset();
+                                p.type = fxType;
+                                for (int q=0; q<n_fx_params; ++q)
+                                {
+                                    // Set up with default values
+                                    if (fxstorage->p[i].valtype == vt_float)
+                                    {
+                                        p.p[i] = fxstorage->p[i].val.f;
+                                    }
+                                    if (fxstorage->p[i].valtype == vt_int)
+                                    {
+                                        p.p[i] = fxstorage->p[i].val.i;
+                                    }
+                                    if (fxstorage->p[i].valtype == vt_bool)
+                                    {
+                                        p.p[i] = fxstorage->p[i].val.b;
+                                    }
+
+                                }
+                                storage->fxUserPreset->readFromXMLSnapshot(p, kid);
+                                p.isFactory = true;
+                                presets.push_back(p);
+                            }
+                            kid = kid->NextSiblingElement();
+                        }
+                    }
+                    type = type->NextSiblingElement();
+                }
+            }
+            auto xtrapresets = storage->fxUserPreset->getPresetsForSingleType(fxType);
+            for (auto p : xtrapresets)
+                presets.push_back(p);
+            maxPresets = presets.size();
+        }
     }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
@@ -268,10 +289,19 @@ template <int fxType> struct FX : modules::XTModule
     float value01for(int i, float f)
     {
         const auto &p = fxstorage->p[i];
-        if (p.ctrltype != ct_none &&
-            p.valtype == vt_float)
+        if (p.ctrltype == ct_none) return 0;
+
+        if (p.valtype == vt_float)
         {
             return (f - p.val_min.f) / (p.val_max.f - p.val_min.f);
+        }
+        if (p.valtype == vt_int)
+        {
+            return Parameter::intScaledToFloat(f, p.val_max.i, p.val_min.i);
+        }
+        if (p.valtype == vt_bool)
+        {
+            return f > 0.5 ? 1 : 0;
         }
         return 0;
     }
@@ -284,6 +314,8 @@ template <int fxType> struct FX : modules::XTModule
         {
             paramQuantities[FX_PARAM_0+i]->setValue(value01for(i, ps.p[i]));
         }
+
+        FXConfig<fxType>::loadPresetOntoSpecificParams(this, ps);
 
         loadedPreset = (int)which;
         presetIsDirty = false;
