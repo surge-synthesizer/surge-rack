@@ -707,11 +707,13 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         {
             // Draw the module name here for preview goodness
             nvgBeginPath(vg);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 30);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, osc_type_names[oscType], nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 2, osc_type_names[oscType], nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 3, "VCO", nullptr);
         }
         else if (!oscPath.empty())
         {
