@@ -49,10 +49,12 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
     static FXPresetSelector *create(FX<fxType> *module)
     {
         auto res = new FXPresetSelector<fxType>();
-        res->box.pos.x = widgets::LCDBackground::posx;
-        res->box.pos.y = widgets::LCDBackground::posy;
-        res->box.size.x = rack::RACK_GRID_WIDTH * 12 - 2 * widgets::LCDBackground::posx;
-        res->box.size.y = rack::mm2px(5);
+        res->box.pos.x = rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+        res->box.pos.y = rack::mm2px(widgets::LCDBackground::contentPosY_MM);
+        res->box.size.x =
+            rack::RACK_GRID_WIDTH * 12 - 2 * rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+        res->box.size.y = rack::mm2px(4.5);
+
         res->module = module;
         res->setup();
 
@@ -106,7 +108,9 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
     std::string getPresetName() override
     {
         if (!module)
-            return "Preset";
+            return "";
+        if (module->maxPresets == 0)
+            return "";
         if (module->maxPresets <= id || id < 0)
             return "Software Error";
 
@@ -120,12 +124,17 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
     bool forceDirty{true};
     bool isDirty() override
     {
-        if (module && currentPreset && checkPresetEvery == 0)
+        if (module && currentPreset && checkPresetEvery == 0 && !module->presetIsDirty)
         {
             for (int i = 0; i < n_fx_params; ++i)
             {
-                if (module->paramQuantities[FX<fxType>::FX_PARAM_0 + i]->getValue() !=
-                    module->value01for(i, currentPreset->p[i]))
+                if (module->fxstorage->p[i].ctrltype == ct_none)
+                    continue;
+
+                auto rabs = fabs(module->paramQuantities[FX<fxType>::FX_PARAM_0 + i]->getValue() -
+                                 module->value01for(i, currentPreset->p[i]));
+
+                if (rabs > 1e-5)
                 {
                     if (!module->presetIsDirty)
                     {
@@ -133,6 +142,12 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
                         forceDirty = true;
                     }
                 }
+            }
+
+            if (FXConfig<fxType>::isDirtyPresetVsSpecificParams(module, *currentPreset))
+            {
+                module->presetIsDirty = true;
+                forceDirty = true;
             }
         }
         checkPresetEvery++;
@@ -289,12 +304,18 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         break;
         case FXConfig<fxType>::LayoutItem::LCD_MENU_ITEM:
         {
-            auto xpos = widgets::LCDBackground::posx;
-            auto width = box.size.x - 2 * xpos;
+            auto xpos = rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+            auto width = box.size.x - 2 * rack::mm2px(widgets::LCDBackground::contentPosX_MM);
             auto height = rack::mm2px(5);
-            auto ypos = rack::mm2px(lay.ycmm) - height;
+            auto ypos = rack::mm2px(lay.ycmm - widgets::LCDBackground::padY_MM) - height;
             auto wid = widgets::PlotAreaMenuItem::create(
                 rack::Vec(xpos, ypos), rack::Vec(width, height), module, lay.parId);
+            wid->upcaseDisplay = false;
+            wid->transformLabel = [n = lay.label](auto s) {
+                if (n.empty())
+                    return s;
+                return n + ": " + s;
+            };
             wid->onShowMenu = [this, wid, lay]() {
                 if (!this->module)
                     return;

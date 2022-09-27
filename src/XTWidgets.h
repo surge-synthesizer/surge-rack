@@ -663,13 +663,13 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
         nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgFontSize(vg, 6.0 * 96 / 72);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         nvgText(vg, box.size.x * 0.5, 0, label.c_str(), nullptr);
         nvgTextBounds(vg, box.size.x * 0.5, 0, label.c_str(), nullptr, textBox);
         nvgFill(vg);
 
-        float yline = (textBox[1] + textBox[3]) * 0.5 - rack::mm2px(0.25);
+        float yline = (textBox[1] + textBox[3]) * 0.5 - rack::mm2px(0.1);
         float x0 = rack::mm2px(1.3);
         float x1 = box.size.x - x0;
 
@@ -734,6 +734,20 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         e.consume(this);
     }
 
+    void setupExtendedPath(NVGcontext *vg)
+    {
+        const float crossWidth = rack::mm2px(0.6);
+        const float crossRadius = crossWidth / 2;
+        const float shrinkBy = rack::mm2px(0.1);
+        auto ctrx = box.size.x * 0.5;
+        auto ctry = box.size.y * 0.5;
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, ctrx - crossRadius, shrinkBy, crossWidth, box.size.y - 2 * shrinkBy,
+                       crossRadius);
+        nvgRoundedRect(vg, shrinkBy, ctry - crossRadius, box.size.x - 2 * shrinkBy, crossWidth,
+                       crossRadius);
+    }
+
     void drawBackground(NVGcontext *vg)
     {
         auto col = style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF);
@@ -753,7 +767,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgStrokeWidth(vg, 0.75);
             nvgStroke(vg);
         }
-        if (type == ABSOLUTE || type == EXTENDED)
+        if (type == ABSOLUTE)
         {
             nvgBeginPath(vg);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
@@ -765,6 +779,15 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgFill(vg);
             nvgStrokeWidth(vg, 0.75);
             nvgStroke(vg);
+        }
+        if (type == EXTENDED)
+        {
+            setupExtendedPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+            nvgFillColor(vg, col);
+            nvgStrokeWidth(vg, 1.2);
+            nvgStroke(vg);
+            nvgFill(vg);
         }
     }
 
@@ -779,12 +802,11 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (type == POWER)
         {
             nvgBeginPath(vg);
-            nvgStrokeColor(vg, nvgRGB(0, 0, 0));
             nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
             nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * 0.9, radius * 0.9);
             nvgFill(vg);
         }
-        if (type == ABSOLUTE || type == EXTENDED)
+        if (type == ABSOLUTE)
         {
             nvgBeginPath(vg);
             nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
@@ -792,6 +814,12 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgFontSize(vg, 7.3 * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, type == ABSOLUTE ? "A" : "X", nullptr);
+            nvgFill(vg);
+        }
+        if (type == EXTENDED)
+        {
+            setupExtendedPath(vg);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
             nvgFill(vg);
         }
     }
@@ -1062,6 +1090,7 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::function<std::string(const std::string &)> transformLabel;
     std::function<void()> onShowMenu = []() {};
+    bool upcaseDisplay{true};
 
     static PlotAreaMenuItem *create(rack::Vec pos, rack::Vec sz, rack::Module *module, int paramId)
     {
@@ -1091,8 +1120,9 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
             return;
 
         auto pv = pq->getDisplayValueString();
-        for (auto &q : pv)
-            q = std::toupper(q);
+        if (upcaseDisplay)
+            for (auto &q : pv)
+                q = std::toupper(q);
         pv = transformLabel(pv);
 
         nvgBeginPath(vg);
@@ -1254,7 +1284,16 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::string noModuleText;
     static constexpr float posx = 12.08506f;
+    static constexpr float posx_MM = posx * 25.4 / 75.0;
     static constexpr float posy = 25.408199;
+    static constexpr float posy_MM = posy * 25.4 / 75.0;
+
+    static constexpr float contentPosX_MM = 5.08; // turns out this is 15px
+    static constexpr float contentPosY_MM = 27.35 - 36 * 0.5;
+
+    static constexpr float padX_MM = contentPosX_MM - posx_MM;
+    static constexpr float padY_MM = contentPosY_MM - posy_MM;
+
     static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12)
     {
         auto width = rack::app::RACK_GRID_WIDTH * widthInScrews - 2 * posx;

@@ -11,6 +11,7 @@
 #include "dsp/effects/Reverb2Effect.h"
 #include "dsp/effects/RotarySpeakerEffect.h"
 #include "dsp/effects/chowdsp/ExciterEffect.h"
+#include "dsp/effects/ResonatorEffect.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -21,10 +22,35 @@ struct FXLayoutHelper
     static constexpr float unlabeledGap_MM = 16;
     static constexpr float labeledGap_MM = 20;
 
-    static constexpr float bigCol0 = 3 * 15 / (75 / 25.4);
-    static constexpr float bigCol1 = 9 * 15 / (75 / 25.4);
+    static constexpr float bigCol0 =
+        widgets::StandardWidthWithModulationConstants::columnCenters_MM[1] - 7;
+    static constexpr float bigCol1 =
+        widgets::StandardWidthWithModulationConstants::columnCenters_MM[2] + 7;
 
     static constexpr float knobGap16_MM = unlabeledGap_MM - 9 + 18;
+
+    template <typename T> inline static void processExtend(T *m, int surgePar, int rackPar)
+    {
+        auto &p = m->fxstorage->p[surgePar];
+
+        auto er = p.extend_range;
+        auto per = m->params[rackPar].getValue() > 0.5;
+        if (er != per)
+        {
+            p.set_extend_range(per);
+        }
+    }
+    template <typename T> inline static void processDeactivate(T *m, int surgePar, int rackPar)
+    {
+        auto &p = m->fxstorage->p[surgePar];
+
+        auto lce = !p.deactivated;
+        auto plce = m->params[rackPar].getValue() > 0.5;
+        if (lce != plce)
+        {
+            p.deactivated = !plce;
+        }
+    }
 };
 
 /*
@@ -51,8 +77,8 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
     // fixme use the enums
     // clang-format off
     return {
-        {LayoutItem::KNOB16, "RATE", sfx_t::ch_rate, col[1] - 7, bigRow},
-        {LayoutItem::KNOB16, "DEPTH", sfx_t::ch_depth, col[2] + 7, bigRow},
+        {LayoutItem::KNOB16, "RATE", sfx_t::ch_rate, FXLayoutHelper::bigCol0, bigRow},
+        {LayoutItem::KNOB16, "DEPTH", sfx_t::ch_depth, FXLayoutHelper::bigCol1, bigRow},
 
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
                  col[0], delayRow },
@@ -60,10 +86,10 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
         {LayoutItem::KNOB9, "F/BACK", sfx_t::ch_feedback, col[3], delayRow},
         LayoutItem::createGrouplabel("DELAY", col[2], delayRow, 2),
 
-        {LayoutItem::KNOB9, "LOCUT", sfx_t::ch_lowcut, col[0], outputRow},
+        {LayoutItem::KNOB9, "LO", sfx_t::ch_lowcut, col[0], outputRow},
         {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[0], outputRow, -1},
 
-        {LayoutItem::KNOB9, "HICUT", sfx_t::ch_highcut, col[1], outputRow},
+        {LayoutItem::KNOB9, "HI", sfx_t::ch_highcut, col[1], outputRow},
         {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0+1, col[1], outputRow, +1},
         LayoutItem::createGrouplabel("EQ", col[0], outputRow, 2).withExtra("SHORTLEFT",1).withExtra("SHORTRIGHT",1),
 
@@ -87,23 +113,165 @@ template <> void FXConfig<fxt_chorus4>::configSpecificParams(FX<fxt_chorus4> *m)
 template <> void FXConfig<fxt_chorus4>::processSpecificParams(FX<fxt_chorus4> *m)
 {
     typedef FX<fxt_chorus4> fx_t;
-    auto &lc = m->fxstorage->p[ChorusEffect<4>::ch_lowcut];
-    auto &hc = m->fxstorage->p[ChorusEffect<4>::ch_highcut];
-
-    auto lce = !lc.deactivated;
-    auto plce = m->params[fx_t::FX_SPECIFIC_PARAM_0].getValue() > 0.5;
-    if (lce != plce)
-    {
-        lc.deactivated = !plce;
-    }
-
-    auto hce = !hc.deactivated;
-    auto phce = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].getValue() > 0.5;
-    if (hce != phce)
-    {
-        hc.deactivated = !phce;
-    }
+    FXLayoutHelper::processDeactivate(m, ChorusEffect<4>::ch_lowcut, fx_t::FX_SPECIFIC_PARAM_0);
+    FXLayoutHelper::processDeactivate(m, ChorusEffect<4>::ch_highcut,
+                                      fx_t::FX_SPECIFIC_PARAM_0 + 1);
 }
+
+template <>
+void FXConfig<fxt_chorus4>::loadPresetOntoSpecificParams(
+    FX<fxt_chorus4> *m, const Surge::Storage::FxUserPreset::Preset &ps)
+{
+    typedef FX<fxt_chorus4> fx_t;
+    typedef ChorusEffect<4> sx_t;
+    m->params[fx_t::FX_SPECIFIC_PARAM_0].setValue(ps.da[sx_t::ch_lowcut] ? 0 : 1);
+    m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].setValue(ps.da[sx_t::ch_highcut] ? 0 : 1);
+}
+
+template <>
+bool FXConfig<fxt_chorus4>::isDirtyPresetVsSpecificParams(
+    FX<fxt_chorus4> *m, const Surge::Storage::FxUserPreset::Preset &ps)
+{
+    typedef FX<fxt_chorus4> fx_t;
+    typedef ChorusEffect<4> sx_t;
+    auto p0 = m->params[fx_t::FX_SPECIFIC_PARAM_0].getValue() > 0.5;
+    auto p1 = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].getValue() > 0.5;
+    return !(p0 == !ps.da[sx_t::ch_lowcut] && p1 == !ps.da[sx_t::ch_highcut]);
+}
+
+/*
+ * END OF CHORUS
+ */
+
+/*
+ * RESONATOR - Each of the bands is extendible
+ * - TODO : 2 include extend and activate in preset dirty scan and load
+ */
+
+template <> constexpr int FXConfig<fxt_resonator>::specificParamCount() { return 3; }
+template <> FXConfig<fxt_resonator>::layout_t FXConfig<fxt_resonator>::getLayout()
+{
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+
+    const auto row3 = FXLayoutHelper::rowStart_MM;
+    const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
+    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM;
+
+    const auto endOfPanel = row1 - FXLayoutHelper::labeledGap_MM * 0.5f - 2;
+
+    typedef FX<fxt_resonator> fx_t;
+    typedef ResonatorEffect sfx_t;
+
+    // fixme use the enums
+    // clang-format off
+    return {
+        {LayoutItem::KNOB9, "FREQ", sfx_t::resonator_freq1, col[0], row1},
+        {LayoutItem::EXTEND_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[0], row1, +1},
+        {LayoutItem::KNOB9, "RES", sfx_t::resonator_res1, col[1], row1},
+        {LayoutItem::KNOB9, "GAIN", sfx_t::resonator_gain1, col[2], row1},
+        LayoutItem::createGrouplabel("BAND 1", col[0], row1, 3),
+
+       {LayoutItem::KNOB9, "FREQ", sfx_t::resonator_freq2, col[0], row2},
+       {LayoutItem::EXTEND_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0+1, col[0], row2, +1},
+       {LayoutItem::KNOB9, "RES", sfx_t::resonator_res2, col[1], row2},
+       {LayoutItem::KNOB9, "GAIN", sfx_t::resonator_gain2, col[2], row2},
+       LayoutItem::createGrouplabel("BAND 2", col[0], row2, 3),
+
+       {LayoutItem::KNOB9, "FREQ", sfx_t::resonator_freq3, col[0], row3},
+       {LayoutItem::EXTEND_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0+2, col[0], row3, +1},
+       {LayoutItem::KNOB9, "RES", sfx_t::resonator_res3, col[1], row3},
+       {LayoutItem::KNOB9, "GAIN", sfx_t::resonator_gain3, col[2], row3},
+       LayoutItem::createGrouplabel("BAND 3", col[0], row3, 3),
+
+        {LayoutItem::KNOB9, "OUTPUT", sfx_t::resonator_gain, col[3], row2},
+        {LayoutItem::KNOB9, "MIX", sfx_t::resonator_mix, col[3], row3},
+
+        LayoutItem::createLCDArea(endOfPanel),
+
+        {LayoutItem::LCD_MENU_ITEM, "MODE", sfx_t::resonator_mode, 0, endOfPanel},
+    };
+
+    // clang-format on
+}
+template <> void FXConfig<fxt_resonator>::processSpecificParams(FX<fxt_resonator> *m)
+{
+    typedef FX<fxt_resonator> fx_t;
+    FXLayoutHelper::processExtend(m, ResonatorEffect::resonator_freq1, fx_t::FX_SPECIFIC_PARAM_0);
+    FXLayoutHelper::processExtend(m, ResonatorEffect::resonator_freq2,
+                                  fx_t::FX_SPECIFIC_PARAM_0 + 1);
+    FXLayoutHelper::processExtend(m, ResonatorEffect::resonator_freq3,
+                                  fx_t::FX_SPECIFIC_PARAM_0 + 2);
+}
+
+template <>
+void FXConfig<fxt_resonator>::loadPresetOntoSpecificParams(
+    FX<fxt_resonator> *m, const Surge::Storage::FxUserPreset::Preset &ps)
+{
+    typedef FX<fxt_chorus4> fx_t;
+    typedef ResonatorEffect sx_t;
+    m->params[fx_t::FX_SPECIFIC_PARAM_0].setValue(ps.er[sx_t::resonator_freq1]);
+    m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].setValue(ps.er[sx_t::resonator_freq2]);
+    m->params[fx_t::FX_SPECIFIC_PARAM_0 + 2].setValue(ps.er[sx_t::resonator_freq3]);
+}
+
+template <>
+bool FXConfig<fxt_resonator>::isDirtyPresetVsSpecificParams(
+    FX<fxt_resonator> *m, const Surge::Storage::FxUserPreset::Preset &ps)
+{
+    typedef FX<fxt_chorus4> fx_t;
+    typedef ResonatorEffect sx_t;
+    auto p0 = m->params[fx_t::FX_SPECIFIC_PARAM_0].getValue() > 0.5;
+    auto p1 = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].getValue() > 0.5;
+    auto p2 = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 2].getValue() > 0.5;
+    return !(p0 == ps.er[sx_t::resonator_freq1] && p1 == ps.er[sx_t::resonator_freq2] &&
+             p2 == ps.er[sx_t::resonator_freq3]);
+}
+
+/*
+ * END OF RESONATOR
+ */
+
+/*
+ * REVERB2
+ */
+template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
+{
+    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+
+    const auto row3 = FXLayoutHelper::rowStart_MM;
+    const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
+    const auto row1 = row2 - FXLayoutHelper::knobGap16_MM;
+
+    return {
+        // clang-format off
+        {LayoutItem::KNOB16, "SIZE", Reverb2Effect::rev2_room_size, FXLayoutHelper::bigCol0, row1},
+        {LayoutItem::KNOB16, "DECAY", Reverb2Effect::rev2_decay_time, FXLayoutHelper::bigCol1, row1},
+
+        {LayoutItem::KNOB9, "PRE-D", Reverb2Effect::rev2_predelay, col[0], row2},
+        {LayoutItem::KNOB9, "DIFFUSE", Reverb2Effect::rev2_diffusion, col[1], row2},
+        {LayoutItem::KNOB9, "MOD", Reverb2Effect::rev2_modulation, col[2], row2},
+        {LayoutItem::KNOB9, "BUILDUP", Reverb2Effect::rev2_buildup, col[3], row2},
+        LayoutItem::createGrouplabel("REVERB", col[1], row2, 3),
+
+        {LayoutItem::KNOB9, "LO", Reverb2Effect::rev2_lf_damping, col[0], row3},
+        {LayoutItem::KNOB9, "HI", Reverb2Effect::rev2_hf_damping, col[1], row3},
+        LayoutItem::createGrouplabel("EQ", col[0], row3, 2),
+        {LayoutItem::KNOB9, "WIDTH", Reverb2Effect::rev2_width, col[2], row3},
+        {LayoutItem::KNOB9, "MIX", Reverb2Effect::rev2_mix, col[3], row3},
+        LayoutItem::createGrouplabel("OUTPUT", col[2], row3, 2),
+
+
+        LayoutItem::createPresetLCDArea(),
+        // clang-format on
+    };
+}
+/*
+ * END OF REVERB2
+ */
+// next up:
+// do: reverb 1
+// spring reverb (started below)
+// ensemble (like resonator)
 
 //// NEED RE_DOING NOW WE HAVE PROPER SIZES
 // SPRING REVERB
@@ -115,9 +283,9 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
     const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
     const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
 
-    const auto thirdRow = 71; // modRow - 16;
-    const auto secondRow = thirdRow - 16;
-    const auto firstRow = secondRow - 16;
+    const auto thirdRow = 71;
+    const auto secondRow = thirdRow - FXLayoutHelper::labeledGap_MM;
+    const auto firstRow = secondRow - FXLayoutHelper::unlabeledGap_MM;
     const auto bigRow = (secondRow + firstRow) * 0.5f;
 
     const auto endOfPanel = firstRow - 7;
@@ -133,6 +301,7 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
         {LayoutItem::PORT, "KNOCK", FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, col[0], thirdRow},
         {LayoutItem::KNOB9, "SPIN", 4, col[1], thirdRow},
         {LayoutItem::KNOB9, "CHAOS", 5, col[2], thirdRow},
+        LayoutItem::createGrouplabel("MODULATION", col[0], thirdRow, 3),
         {LayoutItem::KNOB9, "MIX", 7, col[3], thirdRow},
         LayoutItem::createLCDArea(endOfPanel),
     };
@@ -241,36 +410,6 @@ template <> void FXConfig<fxt_freqshift>::processSpecificParams(FX<fxt_freqshift
     {
         m->fxstorage->p[FrequencyShifterEffect::freq_shift].set_extend_range(parVa);
     }
-}
-
-template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
-{
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
-    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
-
-    const auto thirdSmallRow = modRow - 16;
-    const auto secondSmallRow = thirdSmallRow - 16;
-    const auto bigRow = secondSmallRow - 20;
-    const auto endOfPanel = bigRow - 12;
-
-    return {
-        // clang-format off
-        {LayoutItem::KNOB16, "SIZE", Reverb2Effect::rev2_room_size, (col[0] + col[1]) * 0.5, bigRow},
-        {LayoutItem::KNOB16, "DECAY", Reverb2Effect::rev2_decay_time, (col[2] + col[3]) * 0.5, bigRow},
-
-        {LayoutItem::KNOB9, "PRE-D", Reverb2Effect::rev2_predelay, col[0], secondSmallRow},
-        {LayoutItem::KNOB9, "DIFFUS", Reverb2Effect::rev2_diffusion, col[1], secondSmallRow},
-        {LayoutItem::KNOB9, "MOD", Reverb2Effect::rev2_modulation, col[2], secondSmallRow},
-        {LayoutItem::KNOB9, "BUILDUP", Reverb2Effect::rev2_buildup, col[3], secondSmallRow},
-
-        {LayoutItem::KNOB9, "LO", Reverb2Effect::rev2_lf_damping, col[0], thirdSmallRow},
-        {LayoutItem::KNOB9, "HI", Reverb2Effect::rev2_hf_damping, col[1], thirdSmallRow},
-        {LayoutItem::KNOB9, "WIDTH", Reverb2Effect::rev2_width, col[2], thirdSmallRow},
-        {LayoutItem::KNOB9, "MIX", Reverb2Effect::rev2_mix, col[3], thirdSmallRow},
-
-        LayoutItem::createLCDArea(endOfPanel)
-        // clang-format on
-    };
 }
 
 template <> FXConfig<fxt_exciter>::layout_t FXConfig<fxt_exciter>::getLayout()
