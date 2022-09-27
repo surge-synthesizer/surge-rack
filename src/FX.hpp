@@ -70,7 +70,11 @@ template <int fxType> struct FXConfig
         }
     };
     typedef std::vector<LayoutItem> layout_t;
-    static layout_t getLayout() { return {}; }
+    static layout_t getLayout() {
+        return {
+            LayoutItem::createPresetLCDArea()
+        };
+    }
 
     static constexpr int extraInputs() { return 0; }
     static void configExtraInputs(FX<fxType> *M) {}
