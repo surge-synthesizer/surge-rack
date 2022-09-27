@@ -24,22 +24,26 @@ template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::g
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
-    const auto row1 = row2 - FXLayoutHelper::unlabeledGap_MM;
+    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - 3;
 
     const auto bigRow = (row2 + row1) * 0.5f;
+    const auto ccol = (col[2] + col[1]) * 0.5f;
 
-    const auto endOfPanel = row1 - 9;
+    // This matches the rotary speaker
+    const auto endOfPanel = row3 - 2.5f * FXLayoutHelper::labeledGap_MM - 2;
 
     // ToDo: On Off for drive and Rrive as a selected type
     typedef FX<fxt_rotaryspeaker> fx_t;
 
     // clang-format off
     return {
-        {LayoutItem::KNOB16, "HORN", RotarySpeakerEffect::rot_horn_rate, col[1] - 10, bigRow},
-        {LayoutItem::KNOB16, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, col[1] + 10, bigRow},
-        {LayoutItem::KNOB9, "DRIVE", RotarySpeakerEffect::rot_drive, col[3], row1},
-        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[3], row1, 1},
-        {LayoutItem::PORT, "CLOCK", fx_t ::INPUT_CLOCK, col[3], row2},
+        {LayoutItem::KNOB12, "HORN", RotarySpeakerEffect::rot_horn_rate, FXLayoutHelper::bigCol0, bigRow},
+        {LayoutItem::KNOB12, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, FXLayoutHelper::bigCol1, bigRow},
+
+        {LayoutItem::PORT, "CLOCK", fx_t ::INPUT_CLOCK, ccol, row2},
+
+        {LayoutItem::KNOB9, "DRIVE", RotarySpeakerEffect::rot_drive, ccol, row1},
+        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, ccol, row1, 1},
 
         {LayoutItem::KNOB9, "DOPPLER", RotarySpeakerEffect::rot_doppler, col[0], row3},
         {LayoutItem::KNOB9, "TREMOLO", RotarySpeakerEffect::rot_tremolo, col[1], row3},
@@ -48,8 +52,8 @@ template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::g
         {LayoutItem::KNOB9, "MIX", RotarySpeakerEffect::rot_mix, col[3], row3},
         LayoutItem::createGrouplabel("OUTPUT", col[2], row3, 2),
 
-        LayoutItem::createLCDArea(endOfPanel),
-        {LayoutItem::LCD_MENU_ITEM, "MODEL", RotarySpeakerEffect::rot_waveshape, 0, endOfPanel}
+        LayoutItem::createPresetPlusOneArea(),
+        {LayoutItem::LCD_MENU_ITEM, "DRIVE", RotarySpeakerEffect::rot_waveshape, 0, endOfPanel}
     };
     // clang-format on
 }

@@ -33,8 +33,8 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
     // fixme use the enums
     // clang-format off
     return {
-        {LayoutItem::KNOB16, "RATE", sfx_t::ch_rate, FXLayoutHelper::bigCol0, bigRow},
-        {LayoutItem::KNOB16, "DEPTH", sfx_t::ch_depth, FXLayoutHelper::bigCol1, bigRow},
+        {LayoutItem::KNOB12, "RATE", sfx_t::ch_rate, FXLayoutHelper::bigCol0, bigRow},
+        {LayoutItem::KNOB12, "DEPTH", sfx_t::ch_depth, FXLayoutHelper::bigCol1, bigRow},
 
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
                  col[0], delayRow },

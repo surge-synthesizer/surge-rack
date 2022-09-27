@@ -50,6 +50,12 @@ template <int fxType> struct FXConfig
         {
             return createLCDArea(14.9);
         }
+
+        static LayoutItem createPresetPlusOneArea()
+        {
+            return createLCDArea(19);
+        }
+
         static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,
                                            float span)
         {

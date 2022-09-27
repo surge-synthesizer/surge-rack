@@ -53,7 +53,7 @@ template <> FXConfig<fxt_resonator>::layout_t FXConfig<fxt_resonator>::getLayout
         {LayoutItem::KNOB9, "OUTPUT", sfx_t::resonator_gain, col[3], row2},
         {LayoutItem::KNOB9, "MIX", sfx_t::resonator_mix, col[3], row3},
 
-        LayoutItem::createLCDArea(endOfPanel),
+        LayoutItem::createPresetPlusOneArea(),
 
         {LayoutItem::LCD_MENU_ITEM, "MODE", sfx_t::resonator_mode, 0, endOfPanel},
     };
