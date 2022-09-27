@@ -86,10 +86,10 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
         {LayoutItem::KNOB9, "F/BACK", sfx_t::ch_feedback, col[3], delayRow},
         LayoutItem::createGrouplabel("DELAY", col[2], delayRow, 2),
 
-        {LayoutItem::KNOB9, "LOCUT", sfx_t::ch_lowcut, col[0], outputRow},
+        {LayoutItem::KNOB9, "LO", sfx_t::ch_lowcut, col[0], outputRow},
         {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[0], outputRow, -1},
 
-        {LayoutItem::KNOB9, "HICUT", sfx_t::ch_highcut, col[1], outputRow},
+        {LayoutItem::KNOB9, "HI", sfx_t::ch_highcut, col[1], outputRow},
         {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0+1, col[1], outputRow, +1},
         LayoutItem::createGrouplabel("EQ", col[0], outputRow, 2).withExtra("SHORTLEFT",1).withExtra("SHORTRIGHT",1),
 
@@ -248,7 +248,7 @@ template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
         {LayoutItem::KNOB16, "DECAY", Reverb2Effect::rev2_decay_time, FXLayoutHelper::bigCol1, row1},
 
         {LayoutItem::KNOB9, "PRE-D", Reverb2Effect::rev2_predelay, col[0], row2},
-        {LayoutItem::KNOB9, "DIFFUS", Reverb2Effect::rev2_diffusion, col[1], row2},
+        {LayoutItem::KNOB9, "DIFFUSE", Reverb2Effect::rev2_diffusion, col[1], row2},
         {LayoutItem::KNOB9, "MOD", Reverb2Effect::rev2_modulation, col[2], row2},
         {LayoutItem::KNOB9, "BUILDUP", Reverb2Effect::rev2_buildup, col[3], row2},
         LayoutItem::createGrouplabel("REVERB", col[1], row2, 3),
