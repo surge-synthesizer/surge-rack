@@ -18,26 +18,23 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
     const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
 
     const auto thirdRow = FXLayoutHelper::rowStart_MM;
-    const auto secondRow = thirdRow - FXLayoutHelper::labeledGap_MM;
-    const auto firstRow = secondRow - FXLayoutHelper::unlabeledGap_MM;
-    const auto bigRow = (secondRow + firstRow) * 0.5f;
-
-    const auto endOfPanel = firstRow - 7;
+    const auto bigRow = thirdRow - 24;
+    const auto topRow = bigRow - 20;
 
     // fixme use the enums
     // clang-format off
     return {
-        {LayoutItem::KNOB16, "SIZE", 0, col[1] - 10, bigRow},
-        {LayoutItem::KNOB16, "DECAY", 1, col[1] + 10, bigRow},
-        {LayoutItem::KNOB9, "REFL", 2, col[3], firstRow},
-        {LayoutItem::KNOB9, "DAMP", 3, col[3], secondRow},
+        {LayoutItem::KNOB12, "SIZE", 0, FXLayoutHelper::bigCol0, topRow},
+        {LayoutItem::KNOB12, "DECAY", 1, FXLayoutHelper::bigCol1, topRow},
+         {LayoutItem::KNOB12, "REFL", 2, FXLayoutHelper::bigCol0, bigRow},
+        {LayoutItem::KNOB12, "DAMP", 3, FXLayoutHelper::bigCol1, bigRow},
 
         {LayoutItem::PORT, "KNOCK", FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, col[0], thirdRow},
         {LayoutItem::KNOB9, "SPIN", 4, col[1], thirdRow},
         {LayoutItem::KNOB9, "CHAOS", 5, col[2], thirdRow},
         LayoutItem::createGrouplabel("MODULATION", col[0], thirdRow, 3),
         {LayoutItem::KNOB9, "MIX", 7, col[3], thirdRow},
-        LayoutItem::createLCDArea(endOfPanel),
+        LayoutItem::createPresetLCDArea()
     };
 
     // clang-format on

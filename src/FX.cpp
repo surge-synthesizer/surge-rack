@@ -311,6 +311,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             auto wid = widgets::PlotAreaMenuItem::create(
                 rack::Vec(xpos, ypos), rack::Vec(width, height), module, lay.parId);
             wid->upcaseDisplay = false;
+            wid->centerDisplay = true;
             wid->transformLabel = [n = lay.label](auto s) {
                 if (n.empty())
                     return s;
