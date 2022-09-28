@@ -28,6 +28,273 @@ struct WaveshaperWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
     }
 };
 
+struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
+{
+    typename WaveshaperWidget::M *module{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
+
+    std::vector<std::pair<float, float>> inputSignal;
+    std::vector<std::pair<float, float>> outputSignal;
+    void setup(typename WaveshaperWidget::M *m)
+    {
+        module = m;
+        if (module)
+        {
+            // storage = module->storage.get();
+        }
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto *vg) { drawPlotBackground(vg); });
+        addChild(bdw);
+
+        bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), box.size, [this](auto *vg) { drawPlot(vg); });
+        addChild(bdwPlot);
+
+        auto fac = 2.0;
+        auto inputRes = (int)box.size.x * fac;
+        auto dx = 1.0 / inputRes;
+        for (int i = 0; i < inputRes; ++i)
+        {
+            auto x = dx * i;
+            auto y = std::sin(x * 4.0 * M_PI);
+            inputSignal.emplace_back(x * box.size.x, y);
+        }
+    }
+
+    void step() override
+    {
+        if (!module)
+            return;
+
+        /*
+         * if wavetable changed and draw wavetable bdw->dirty = true
+         */
+
+        if (isDirty())
+        {
+            recalcPath();
+            bdwPlot->dirty = true;
+        }
+
+        rack::widget::Widget::step();
+    }
+
+    virtual void onStyleChanged() override
+    {
+        bdw->dirty = true;
+        bdwPlot->dirty = true;
+    }
+
+    static WaveshaperPlotWidget *create(rack::Vec pos, rack::Vec size,
+                                        typename WaveshaperWidget::M *module)
+    {
+        auto *res = rack::createWidget<WaveshaperPlotWidget>(pos);
+
+        res->box.pos = pos;
+        res->box.size = size;
+
+        res->setup(module);
+
+        return res;
+    }
+
+    bool firstDirty{false};
+    int dirtyCount{0};
+    int sumDeact{-1};
+    int sumAbs{-1};
+    uint32_t wtloadCompare{842932918};
+
+    bool isDirty()
+    {
+        if (!firstDirty)
+        {
+            firstDirty = true;
+            return true;
+        }
+
+        bool dval{false};
+        if (module)
+        {
+            auto wstype = (sst::waveshapers::WaveshaperType)
+                std::round(module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
+            auto ddb = module->paramQuantities[Waveshaper::DRIVE]->getValue();
+            auto bias = module->paramQuantities[Waveshaper::BIAS]->getValue();
+
+            dval = wstype != lastType ||
+                ddb != lastDrive ||
+                bias != lastBias;
+        }
+        return dval;
+    }
+
+    sst::waveshapers::WaveshaperType lastType{waveshapers::WaveshaperType::wst_none};
+    float lastDrive{-100}, lastBias{-100};
+
+    void recalcPath() {
+        if (!module)
+            return;
+
+        outputSignal.clear();
+        auto wstype = (sst::waveshapers::WaveshaperType)
+            std::round(module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
+        sst::waveshapers::QuadWaveshaperState wss;
+        float R[4];
+
+        initializeWaveshaperRegister(wstype, R);
+
+        for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
+        {
+            wss.R[i] = _mm_set1_ps(R[i]);
+        }
+
+        wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
+
+        auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
+        auto ddb = module->paramQuantities[Waveshaper::DRIVE]->getValue();
+        auto damp = pow(10, 0.05 * ddb);
+        auto d1 = _mm_set1_ps(damp);
+
+        auto bias = module->paramQuantities[Waveshaper::BIAS]->getValue();
+
+        lastType = wstype;
+        lastBias = bias;
+        lastDrive = ddb;
+
+        for (const auto &[x,y] : inputSignal)
+        {
+            auto ivs = _mm_set1_ps(y + bias);
+            auto ov1 = ivs;
+
+            if (wsop)
+            {
+                ov1 = wsop(&wss, ivs, d1);
+            }
+
+            float r alignas(16)[8];
+            _mm_store_ps(r, ov1);
+
+            outputSignal.emplace_back(x, r[0]);
+        }
+    }
+
+    const float xs3d{rack::mm2px(5)};
+    const float ys3d{rack::mm2px(3.5)};
+
+    float y1toypx(float y1)
+    {
+        auto y2 = (1 - y1) * 0.5;
+        auto ypx = y2 * box.size.y;
+        return ypx;
+    }
+
+    void drawPlotBackground(NVGcontext *vg)
+    {
+        // This will go in layer 0
+        int nSteps = 9;
+        int mid = (nSteps - 1) / 2;
+        float dy = box.size.y * 1.f / (nSteps - 1);
+
+        float nX = std::ceil(box.size.x / dy);
+        float dx = box.size.x / nX;
+
+        auto markCol = style()->getColor(style::XTStyle::PLOT_MARKS);
+        for (int yd = 0; yd < nSteps; yd++)
+        {
+            if (yd == mid)
+                continue;
+            float y = yd * dy;
+            float x = 0;
+
+            while (x <= box.size.x)
+            {
+                nvgBeginPath(vg);
+                nvgFillColor(vg, markCol);
+                nvgEllipse(vg, x, y, 0.5, 0.5);
+                nvgFill(vg);
+                x += dx;
+            }
+        }
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, markCol);
+        nvgMoveTo(vg, 0, box.size.y * 0.5);
+        nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, markCol);
+        nvgMoveTo(vg, 0, box.size.y);
+        nvgLineTo(vg, box.size.x, box.size.y);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, markCol);
+        nvgMoveTo(vg, 0, 0);
+        nvgLineTo(vg, box.size.x, 0);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        auto nc = markCol;
+        nc.r *= 1.2;
+        nc.g *= 1.2;
+        nc.b *= 1.2;
+        nvgStrokeColor(vg, nc);
+        bool first{true};
+        for (const auto &[x, yv] : inputSignal)
+        {
+            auto y = y1toypx(yv);
+            if (first)
+            {
+                nvgMoveTo(vg, x, y);
+            }
+            else
+            {
+                nvgLineTo(vg, x, y);
+            }
+            first = false;
+        }
+        nvgStrokeWidth(vg, 1.0);
+        nvgStroke(vg);
+    }
+
+    void drawPlot(NVGcontext *vg)
+    {
+        if (!module)
+        {
+            // Draw the module name here for preview goodness
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, 30);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "WaveShaper", nullptr);
+            return;
+        }
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        bool first{true};
+        for (const auto &[x, yv] : outputSignal)
+        {
+            auto y = y1toypx(yv);
+            if (first)
+            {
+                nvgMoveTo(vg, x, y);
+            }
+            else
+            {
+                nvgLineTo(vg, x, y);
+            }
+            first = false;
+        }
+        nvgStrokeWidth(vg, 1.5);
+        nvgStroke(vg);
+    }
+};
+
 struct WaveshaperSelector : widgets::ParamJogSelector
 {
     WaveShaperSelectorMapper wsm;
@@ -145,18 +412,13 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
                                           rack::Vec(plotW, fivemm - halfmm), module,
                                           Waveshaper::WSHP_TYPE);
     addChild(wts);
-#if 0
+
     plotStartY += fivemm;
     plotH -= fivemm;
 
-    auto fpw = FilterPlotWidget::create(rack::Vec(plotStartX, plotStartY), rack::Vec(plotW, plotH),
-                                        module);
+    auto fpw = WaveshaperPlotWidget::create(rack::Vec(plotStartX, plotStartY),
+                                            rack::Vec(plotW, plotH + underPlotH), module);
     addChild(fpw);
-
-    auto subType = VCFSubtypeSelector::create(rack::Vec(plotStartX, underPlotStartY),
-                                              rack::Vec(plotW, underPlotH), module, M::VCF_SUBTYPE);
-    addChild(subType);
-#endif
 
     for (const auto &[row, col, pid, label] :
          {std::make_tuple(0, 0, M::DRIVE, "DRIVE"), std::make_tuple(0, 2, M::BIAS, "BIAS"),
