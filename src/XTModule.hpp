@@ -668,7 +668,6 @@ struct ModulationAssistant
                 }
                 modvalues[p][0] = mv;
                 basevalues[p] = m->params[p + par0].getValue();
-                ;
                 values[p][0] = mv + basevalues[p];
                 animValues[p] = fInv[p] * mv;
             }
