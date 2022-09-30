@@ -479,6 +479,10 @@ template <int fxType> struct FX : modules::XTModule
                 json_object_set(fx, "presetIsDirty", json_boolean(presetIsDirty));
             }
         }
+        if (FXConfig<fxType>::usesClock())
+        {
+            json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+        }
         return fx;
     }
 
@@ -499,6 +503,15 @@ template <int fxType> struct FX : modules::XTModule
                     loadedPreset = lpc;
                     presetIsDirty = pdc;
                 }
+            }
+        }
+        if (FXConfig<fxType>::usesClock())
+        {
+            auto cs = json_object_get(modJ, "clockStyle");
+            if (cs)
+            {
+                auto csv = json_integer_value(cs);
+                clockProc.clockStyle = static_cast<typename modules::ClockProcessor<FX<fxType>>::ClockStyle>(csv);
             }
         }
     }
