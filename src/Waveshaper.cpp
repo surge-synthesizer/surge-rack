@@ -118,8 +118,9 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         {
             auto wstype = (sst::waveshapers::WaveshaperType)
                 std::round(module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
-            auto ddb = module->paramQuantities[Waveshaper::DRIVE]->getValue();
-            auto bias = module->paramQuantities[Waveshaper::BIAS]->getValue();
+
+            auto ddb = module->modulationAssistant.animValues[Waveshaper::DRIVE] * module->modulationAssistant.f[Waveshaper::DRIVE];
+            auto bias = module->modulationAssistant.animValues[Waveshaper::BIAS] * module->modulationAssistant.f[Waveshaper::BIAS];
 
             dval = wstype != lastType ||
                 ddb != lastDrive ||
@@ -150,12 +151,12 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
 
         wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
 
+        auto ddb = module->modulationAssistant.animValues[Waveshaper::DRIVE] * module->modulationAssistant.f[Waveshaper::DRIVE];
+        auto bias = module->modulationAssistant.animValues[Waveshaper::BIAS] * module->modulationAssistant.f[Waveshaper::BIAS];
+
         auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
-        auto ddb = module->paramQuantities[Waveshaper::DRIVE]->getValue();
         auto damp = pow(10, 0.05 * ddb);
         auto d1 = _mm_set1_ps(damp);
-
-        auto bias = module->paramQuantities[Waveshaper::BIAS]->getValue();
 
         lastType = wstype;
         lastBias = bias;
