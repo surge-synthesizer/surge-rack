@@ -740,44 +740,67 @@ struct ModulationAssistant
 
 template <typename T> struct ClockProcessor
 {
+    enum ClockStyle {
+        QUARTER_NOTE,
+        BPM_VOCT
+    } clockStyle{QUARTER_NOTE};
+
     rack::dsp::SchmittTrigger trig;
 
     float sampleRate{1}, sampleRateInv{1};
     int timeSinceLast{-1};
-    float lastBPM{-1};
+    float lastBPM{-1}, lastBPMVolts{-11};
+    bool bpmConnected{false};
 
     inline void process(T *m, int inputId)
     {
-        if (trig.process(m->inputs[inputId].getVoltage()))
+        if (clockStyle == BPM_VOCT)
         {
-            // If we have 10bpm don't update BPM. It's probably someone stopping
-            // their clock for a while.
-            if (timeSinceLast > 0 && timeSinceLast < sampleRate * 6)
-            {
-                auto bpm = 60 * sampleRate / timeSinceLast;
-
-                // OK we are going to make an assumption
-                // that BPM is *probably* integral at least
-                // if we are within a smidge of an integer
-                auto d = std::abs(bpm - std::round(bpm));
-                if (d < 0.015)
-                {
-                    bpm = std::round(bpm);
-                }
-                if (bpm != lastBPM)
-                {
-                    m->storage->temposyncratio = bpm / 120.f;
-                    m->storage->temposyncratio_inv = 120.f / bpm;
-                }
-                lastBPM = bpm;
-            }
-            else
-            {
+            if (!bpmConnected)
                 m->activateTempoSync();
+            bpmConnected = true;
+            auto iv = m->inputs[inputId].getVoltage();
+            if (iv != lastBPMVolts)
+            {
+                auto bpmRatio = pow(2.0, iv);
+                m->storage->temposyncratio = bpmRatio;
+                m->storage->temposyncratio_inv = 1.f / bpmRatio;
             }
-            timeSinceLast = 0;
+            lastBPMVolts = iv;
         }
-        timeSinceLast += (timeSinceLast >= 0);
+        else
+        {
+            if (trig.process(m->inputs[inputId].getVoltage()))
+            {
+                // If we have 10bpm don't update BPM. It's probably someone stopping
+                // their clock for a while.
+                if (timeSinceLast > 0 && timeSinceLast < sampleRate * 6)
+                {
+                    auto bpm = 60 * sampleRate / timeSinceLast;
+
+                    // OK we are going to make an assumption
+                    // that BPM is *probably* integral at least
+                    // if we are within a smidge of an integer
+                    auto d = std::abs(bpm - std::round(bpm));
+                    if (d < 0.015)
+                    {
+                        bpm = std::round(bpm);
+                    }
+                    if (bpm != lastBPM)
+                    {
+                        m->storage->temposyncratio = bpm / 120.f;
+                        m->storage->temposyncratio_inv = 120.f / bpm;
+                    }
+                    lastBPM = bpm;
+                }
+                else
+                {
+                    m->activateTempoSync();
+                }
+                timeSinceLast = 0;
+            }
+            timeSinceLast += (timeSinceLast >= 0);
+        }
     }
     inline void disconnect(T *m)
     {
@@ -785,6 +808,7 @@ template <typename T> struct ClockProcessor
             m->deactivateTempoSync();
 
         timeSinceLast = -1;
+        bpmConnected = false;
     }
 
     void setSampleRate(float sr)

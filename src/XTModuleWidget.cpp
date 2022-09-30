@@ -107,6 +107,7 @@ void modLightMenuFor(rack::Menu *p, XTModuleWidget *w)
 void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
 {
     auto xtm = static_cast<modules::XTModule *>(module);
+    appendModuleSpecificMenu(menu);
     menu->addChild(new rack::ui::MenuSeparator);
     auto globalItem =
         rack::createMenuItem("Use Global Style", CHECKMARK(module && xtm->isCoupledToGlobalStyle),

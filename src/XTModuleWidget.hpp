@@ -38,6 +38,7 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
 
     virtual void selectModulator(int whichMod) {}
 
+    virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) {}
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 
   protected:

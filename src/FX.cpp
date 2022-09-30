@@ -22,24 +22,25 @@ struct FXWidget : public widgets::XTModuleWidget, widgets::StandardWidthWithModu
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
-    /*
-remove this
-         * @baconpaul some figures that might help you with FX layout (more to come later)
+    void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (!module)
+            return;
+        auto xtm = static_cast<FX<fxType> *>(module);
+        if (FXConfig<fxType>::usesClock())
+        {
+            typedef modules::ClockProcessor<FX<fxType>> cp_t;
+            menu->addChild(new rack::ui::MenuSeparator);
+            auto t = xtm->clockProc.clockStyle;
+            menu->addChild(
+                rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
+                                     [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
 
-AS you know, on the VCO's there was a 16mm vertical offset between knob rows.
-
-On the FX, where there is no group title on a row, the offset will be the same. But if there is a
-group title on a row, then the offset to the next row of regular sized knobs will be 20mm instead
-
-We will work up from the bottom, so all the 2 lower rows of jacks/mods and the first row of knobs
-will be in exactly the same place as on the VCOs, and we work the spacing up from there. In other
-words, having group titles on a row adds 4mm to the vertical offset spiritlevel — Yesterday at 5:09
-PM So: 16mm up to the next reg. knob row if current knob row has no group titles 20mm up to next
-reg. knob row if current knob row has group titles Add an extra 1.5mm if next row up is medium knobs
-Add an extra 3mm if next row up is large knobs
-
-This should work for all FX - hope that makes sense!
-     */
+            menu->addChild(rack::createMenuItem(
+                "Clock in BPM CV", CHECKMARK(t == modules::ClockProcessor<FX<fxType>>::BPM_VOCT),
+                [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+        }
+    }
 };
 
 template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
@@ -263,6 +264,27 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
             auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+
+            if (module && lay.parId == FX<fxType>::INPUT_CLOCK)
+            {
+                lab->hasDynamicLabel = true;
+                lab->module = module;
+                lab->dynamicLabel = [](modules::XTModule *m) -> std::string {
+                    if (!m)
+                        return "CLOCK";
+                    auto fxm = static_cast<FX<fxType> *>(m);
+                    typedef modules::ClockProcessor<FX<fxType>> cp_t;
+
+                    if (fxm->clockProc.clockStyle == cp_t::QUARTER_NOTE)
+                    {
+                        return "CLOCK";
+                    }
+                    else
+                    {
+                        return "BPM";
+                    }
+                };
+            }
 
             addChild(lab);
         }
