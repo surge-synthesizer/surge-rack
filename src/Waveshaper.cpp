@@ -119,8 +119,8 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             auto wstype = (sst::waveshapers::WaveshaperType)
                 std::round(module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
 
-            auto ddb = module->modulationAssistant.animValues[Waveshaper::DRIVE] * module->modulationAssistant.f[Waveshaper::DRIVE];
-            auto bias = module->modulationAssistant.animValues[Waveshaper::BIAS] * module->modulationAssistant.f[Waveshaper::BIAS];
+            auto ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
+            auto bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
 
             dval = wstype != lastType ||
                 ddb != lastDrive ||
@@ -151,8 +151,8 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
 
         wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
 
-        auto ddb = module->modulationAssistant.animValues[Waveshaper::DRIVE] * module->modulationAssistant.f[Waveshaper::DRIVE];
-        auto bias = module->modulationAssistant.animValues[Waveshaper::BIAS] * module->modulationAssistant.f[Waveshaper::BIAS];
+        auto ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
+        auto bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
 
         auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
         auto damp = pow(10, 0.05 * ddb);
@@ -465,6 +465,19 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
             k->underlyerParamWidget = baseKnob;
             baseKnob->modRings.insert(k);
             addChild(k);
+        }
+
+        if (row == 1)
+        {
+            auto ulx = uxp + (col == 2 ? -1 : 1) * 5.5;
+            auto uly = uyp - 5.5;
+
+            auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(rack::mm2px(rack::Vec(ulx, uly)),
+                                                                                module,
+                                                                                col == 2 ?
+                                    Waveshaper::LOCUT_ENABLED : Waveshaper::HICUT_ENABLED);
+            addChild(light);
+
         }
 
         idx++;

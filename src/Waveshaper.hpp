@@ -116,7 +116,7 @@ struct Waveshaper : public modules::XTModule
 
     std::string getName() override { return "WSHP"; }
 
-    std::array<std::array<std::unique_ptr<BiquadFilter>, 2>, MAX_POLY> lpPost, hpPost;
+    std::array<std::unique_ptr<BiquadFilter>, MAX_POLY> lpPost, hpPost;
 
     bool isBipolar(int paramId) override
     {
@@ -137,15 +137,12 @@ struct Waveshaper : public modules::XTModule
     {
         processPosition = BLOCK_SIZE;
 
-        for (int c = 0; c < 2; ++c)
+        for (int i = 0; i < MAX_POLY; ++i)
         {
-            for (int i = 0; i < MAX_POLY; ++i)
-            {
-                lpPost[c][i] = std::make_unique<BiquadFilter>(storage.get());
-                lpPost[c][i]->suspend();
-                hpPost[c][i] = std::make_unique<BiquadFilter>(storage.get());
-                hpPost[c][i]->suspend();
-            }
+            lpPost[i] = std::make_unique<BiquadFilter>(storage.get());
+            lpPost[i]->suspend();
+            hpPost[i] = std::make_unique<BiquadFilter>(storage.get());
+            hpPost[i]->suspend();
         }
 
         restackSIMD();
@@ -254,6 +251,8 @@ struct Waveshaper : public modules::XTModule
     {
         auto wstype =
             (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
+        auto lc = inputs[INPUT_L].isConnected() ? inputs[INPUT_L].getChannels() : 0;
+        auto rc = inputs[INPUT_R].isConnected() ? inputs[INPUT_R].getChannels() : 0;
 
         if (processPosition >= BLOCK_SIZE)
         {
@@ -267,7 +266,46 @@ struct Waveshaper : public modules::XTModule
             {
                 if (!locutOn)
                 {
+                    for (int p=0; p<MAX_POLY; ++p)
+                        hpPost[p]->suspend();
                 }
+                for (int p=0; p<lc; ++p)
+                {
+                    hpPost[p]->coeff_HP(
+                        hpPost[p]->calc_omega(modulationAssistant.values[LOCUT][p] / 12.0),
+                        0.707);
+                    if (!locutOn)
+                        hpPost[p]->coeff_instantize();
+                }
+
+                locutOn = true;
+            }
+            else
+            {
+                locutOn = false;
+            }
+
+            if (hiOn)
+            {
+                if (!hicutOn)
+                {
+                    for (int p=0; p<MAX_POLY; ++p)
+                        lpPost[p]->suspend();
+                }
+                for (int p=0; p<lc; ++p)
+                {
+                    lpPost[p]->coeff_LP2B(
+                        lpPost[p]->calc_omega(modulationAssistant.values[HICUT][p] / 12.0),
+                        0.707);
+                    if (!hicutOn)
+                        lpPost[p]->coeff_instantize();
+                }
+
+                hicutOn = true;
+            }
+            else
+            {
+                hicutOn = false;
             }
 
             if (wstype != lastType)
@@ -397,6 +435,25 @@ struct Waveshaper : public modules::XTModule
                 fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);
                 fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
                 _mm_storeu_ps(ov + (i << 2), fin);
+            }
+        }
+
+        if (hicutOn)
+        {
+            auto L = outputs[OUTPUT_L].getVoltages();
+            auto R = outputs[OUTPUT_R].getVoltages();
+            for (int i=0; i<std::max(lc, rc); ++i)
+            {
+                lpPost[i]->process_sample(L[i], R[i], L[i], R[i]);
+            }
+        }
+        if (locutOn)
+        {
+            auto L = outputs[OUTPUT_L].getVoltages();
+            auto R = outputs[OUTPUT_R].getVoltages();
+            for (int i=0; i<std::max(lc, rc); ++i)
+            {
+                hpPost[i]->process_sample(L[i], R[i], L[i], R[i]);
             }
         }
 
