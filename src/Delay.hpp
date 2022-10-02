@@ -11,6 +11,7 @@
 #include <cstring>
 #include "DebugHelpers.h"
 #include "globals.h"
+#include "BiquadFilter.h"
 
 #include "dsp/utilities/SSESincDelayLine.h"
 
@@ -18,22 +19,27 @@ namespace sst::surgext_rack::delay
 {
 struct Delay : modules::XTModule
 {
-    static constexpr int n_delay_params{5};
+    static constexpr int n_delay_params{10};
     static constexpr int n_mod_inputs{4};
-    static constexpr int n_arbitrary_switches{4};
 
     enum ParamIds
     {
         TIME_L,
         TIME_R,
+        TIME_S,
         FEEDBACK,
+        CROSSFEED,
+
+        LOCUT,
+        HICUT,
+
+        MODRATE,
+        MODDEPTH,
         MIX,
 
         DELAY_MOD_PARAM_0,
 
-        DUMMY = DELAY_MOD_PARAM_0 + n_delay_params * n_mod_inputs,
-        VCF_SUBTYPE,
-        NUM_PARAMS
+        NUM_PARAMS = DELAY_MOD_PARAM_0 + n_delay_params * n_mod_inputs,
     };
     enum InputIds
     {
@@ -71,30 +77,101 @@ struct Delay : modules::XTModule
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
+        configParam(TIME_L, -3, 5, 0, "Left Delay");
+        configParam(TIME_R, -3, 5, 0, "Left Delay");
+        configParam(TIME_S, -2, 2, 0, "Time Tweak");
+        configParam(FEEDBACK, 0, 1, .5, "Feedback");
+        configParam(CROSSFEED, 0, 1, 0, "CrossFeed");
+        configParam(LOCUT, -60, 70, -60, "LoCut");
+        configParam(HICUT, -60, 70, 70, "HiCut");
+
+        configParam(MODRATE, -7, 9, 0, "ModRate");
+        configParam(MODDEPTH, 0, 1, 0, "ModDepth");
+        configParam(MIX, 0, 1, 1, "Mix");
+
+        for (int i = 0; i < n_delay_params * n_mod_inputs; ++i)
+        {
+            configParam(DELAY_MOD_PARAM_0 + i, -1, 1, 0);
+        }
+
         lineL = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
         lineR = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
+
+        lpPost = std::make_unique<BiquadFilter>(storage.get());
+        lpPost->suspend();
+        hpPost = std::make_unique<BiquadFilter>(storage.get());
+        hpPost->suspend();
+
+        modulationAssistant.initialize(this);
     }
     std::string getName() override { return "Delay"; }
 
+    float modulationDisplayValue(int paramId) override
+    {
+        int idx = paramId - TIME_L;
+        if (idx < 0 || idx >= n_delay_params)
+            return 0;
+        return modulationAssistant.modvalues[idx] * modulationAssistant.fInv[idx];
+    }
+
     static constexpr size_t delayLineLength = 1 << 19;
     std::unique_ptr<SSESincDelayLine<delayLineLength>> lineL, lineR;
+    std::unique_ptr<BiquadFilter> lpPost, hpPost;
 
+    static constexpr int slowUpdate{8};
+    int blockPos{0};
     void process(const ProcessArgs &args) override
     {
-        auto il = inputs[INPUT_L].getVoltage();
-        auto ir = inputs[INPUT_R].getVoltage();
+        if (blockPos == slowUpdate)
+        {
+            modulationAssistant.setupMatrix(this);
+            blockPos = 0;
 
-        auto dl = lineL->read(12000);
-        auto dr = lineR->read(12000);
+            lpPost->coeff_LP2B(lpPost->calc_omega(modulationAssistant.values[HICUT] / 12.0), 0.707);
 
-        auto fb = 0.4;
-        auto wl = il + fb * dl;
-        auto wr = ir + fb * dr;
+            hpPost->coeff_HP(lpPost->calc_omega(modulationAssistant.values[LOCUT] / 12.0), 0.707);
+        }
+        modulationAssistant.updateValues(this);
+        // TODO
+        /*
+
+    TIME_S
+    MODRATE,
+    MODDEPTH,
+
+    MIX,
+         */
+        auto il = inputs[INPUT_L].getVoltage() * RACK_TO_SURGE_OSC_MUL;
+        auto ir = inputs[INPUT_R].getVoltage() * RACK_TO_SURGE_OSC_MUL;
+
+        auto wobble = 1.0 + 0.01 * modulationAssistant.values[TIME_S];
+        // FIXME - temposync
+        auto tl = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
+                                            12 * wobble * modulationAssistant.values[TIME_L]);
+        auto tr = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
+                                            12 * wobble * modulationAssistant.values[TIME_R]);
+
+        auto dl = std::clamp(lineL->read(tl), -1.5f, 1.5f);
+        auto dr = std::clamp(lineR->read(tr), -1.5f, 1.5f);
+
+        // softclip
+        dl = dl - 4.0 / 27.0 * dl * dl * dl;
+        dr = dr - 4.0 / 27.0 * dr * dr * dr;
+
+        float fb = modulationAssistant.values[FEEDBACK];
+        float cf = modulationAssistant.values[CROSSFEED];
+        float wl = il + fb * dl + cf * dr;
+        float wr = ir + fb * dr + cf * dl;
+
+        lpPost->process_sample(wl, wr, wl, wr);
+        hpPost->process_sample(wl, wr, wl, wr);
         lineL->write(wl);
         lineR->write(wr);
 
-        outputs[INPUT_L].setVoltage(dl);
-        outputs[INPUT_R].setVoltage(dr);
+        auto mx = modulationAssistant.values[MIX];
+        outputs[OUTPUT_L].setVoltage((mx * dl + (1 - mx) * il) * SURGE_TO_RACK_OSC_MUL);
+        outputs[OUTPUT_R].setVoltage((mx * dr + (1 - mx) * ir) * SURGE_TO_RACK_OSC_MUL);
+        blockPos++;
     }
 };
 } // namespace sst::surgext_rack::delay
