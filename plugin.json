@@ -134,7 +134,8 @@
       "name": "SXT Reverb",
       "description": "The Surge XT Reverb",
       "tags": [
-        "Effect", "Reverb"
+        "Effect",
+        "Reverb"
       ]
     },
     {
@@ -142,7 +143,8 @@
       "name": "SXT Phaser",
       "description": "The Surge XT Phaser",
       "tags": [
-        "Effect", "Phaser"
+        "Effect",
+        "Phaser"
       ]
     },
     {
@@ -158,7 +160,8 @@
       "name": "SXT Distortion",
       "description": "The Surge XT Distortion",
       "tags": [
-        "Effect", "Distortion"
+        "Effect",
+        "Distortion"
       ]
     },
     {
@@ -174,7 +177,8 @@
       "name": "SXT Chorus",
       "description": "The Surge XT Chorus",
       "tags": [
-        "Effect", "Chorus"
+        "Effect",
+        "Chorus"
       ]
     },
     {
@@ -182,7 +186,8 @@
       "name": "SXT Vocoder",
       "description": "The Surge XT Vocoder",
       "tags": [
-        "Effect", "Vocoder"
+        "Effect",
+        "Vocoder"
       ]
     },
     {
@@ -190,7 +195,8 @@
       "name": "SXT Reverb2",
       "description": "The Surge XT Reverb2",
       "tags": [
-        "Effect", "Reverb"
+        "Effect",
+        "Reverb"
       ]
     },
     {
@@ -198,7 +204,8 @@
       "name": "SXT Flanger",
       "description": "The Surge XT Flanger",
       "tags": [
-        "Effect", "Flanger"
+        "Effect",
+        "Flanger"
       ]
     },
     {
@@ -206,7 +213,8 @@
       "name": "SXT RingMod",
       "description": "The Surge XT RingMod",
       "tags": [
-        "Effect", "Ring modulator"
+        "Effect",
+        "Ring modulator"
       ]
     },
     {
@@ -214,7 +222,8 @@
       "name": "SXT Neuron",
       "description": "The Surge XT Neuron",
       "tags": [
-        "Effect", "Distortion"
+        "Effect",
+        "Distortion"
       ]
     },
     {
@@ -222,7 +231,8 @@
       "name": "SXT Resonator",
       "description": "The Surge XT Resonator",
       "tags": [
-        "Effect", "Filter"
+        "Effect",
+        "Filter"
       ]
     },
     {
@@ -230,7 +240,8 @@
       "name": "SXT Chow",
       "description": "The Surge XT Chow",
       "tags": [
-        "Effect", "Distortion"
+        "Effect",
+        "Distortion"
       ]
     },
     {
@@ -246,7 +257,8 @@
       "name": "SXT Ensemble",
       "description": "The Surge XT Ensemble",
       "tags": [
-        "Effect", "Chorus"
+        "Effect",
+        "Chorus"
       ]
     },
     {
@@ -254,7 +266,8 @@
       "name": "SXT Combulator",
       "description": "The Surge XT Combulator",
       "tags": [
-        "Effect", "Filter"
+        "Effect",
+        "Filter"
       ]
     },
     {
@@ -262,7 +275,8 @@
       "name": "SXT SpringReverb",
       "description": "The Surge XT SpringReverb",
       "tags": [
-        "Effect", "Reverb"
+        "Effect",
+        "Reverb"
       ]
     },
     {
@@ -271,6 +285,25 @@
       "description": "The Surge XT LFO",
       "tags": [
         "LFO",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTDelay",
+      "name": "SXT Delay",
+      "description": "The Surge XT Delay",
+      "tags": [
+        "Effect",
+        "Delay"
+      ]
+    },
+    {
+      "slug": "SurgeXTDelayLineByFreq",
+      "name": "SXT Delay Line by Frequency",
+      "description": "The Surge XT Delay Line, tuned by v/oct with sample offset for KS and so on",
+      "tags": [
+        "Effect",
+        "Delay",
         "Polyphonic"
       ]
     },
