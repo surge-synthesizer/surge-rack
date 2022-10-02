@@ -40,6 +40,7 @@ extern rack::Model *modelVCOTwist;
 
 extern rack::Model *modelSurgeVCF;
 extern rack::Model *modelSurgeDelay;
+extern rack::Model *modelSurgeDelayLineByFreq;
 extern rack::Model *modelSurgeWaveshaper;
 extern rack::Model *modelSurgeLFO;
 extern rack::Model *modelSurgeMixer;

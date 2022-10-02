@@ -298,6 +298,16 @@
       ]
     },
     {
+      "slug": "SurgeXTDelayLineByFreq",
+      "name": "SXT Delay Line by Frequency",
+      "description": "The Surge XT Delay Line, tuned by v/oct with sample offset for KS and so on",
+      "tags": [
+        "Effect",
+        "Delay",
+        "Polyphonic"
+      ]
+    },
+    {
       "slug": "SurgeXTMixer",
       "name": "SXT Mixer",
       "description": "The Surge XT Mixer",

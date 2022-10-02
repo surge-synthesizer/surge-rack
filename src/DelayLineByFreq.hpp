@@ -16,23 +16,12 @@
 
 namespace sst::surgext_rack::delay
 {
-struct Delay : modules::XTModule
+struct DelayLineByFreq : modules::XTModule
 {
-    static constexpr int n_delay_params{5};
-    static constexpr int n_mod_inputs{4};
-    static constexpr int n_arbitrary_switches{4};
-
     enum ParamIds
     {
-        TIME_L,
-        TIME_R,
-        FEEDBACK,
-        MIX,
-
-        DELAY_MOD_PARAM_0,
-
-        DUMMY = DELAY_MOD_PARAM_0 + n_delay_params * n_mod_inputs,
-        VCF_SUBTYPE,
+        FREQUENCY,
+        CORRECTION,
         NUM_PARAMS
     };
     enum InputIds
@@ -40,10 +29,8 @@ struct Delay : modules::XTModule
         INPUT_L,
         INPUT_R,
         INPUT_CLOCK,
-
-        DELAY_MOD_INPUT,
-        NUM_INPUTS = DELAY_MOD_INPUT + n_mod_inputs,
-
+        INPUT_VOCT,
+        NUM_INPUTS
     };
     enum OutputIds
     {
@@ -56,17 +43,7 @@ struct Delay : modules::XTModule
         NUM_LIGHTS
     };
 
-    static int modulatorIndexFor(int baseParam, int modulator)
-    {
-        int offset = baseParam - TIME_L;
-        return DELAY_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
-    }
-
-    modules::MonophonicModulationAssistant<Delay, n_delay_params, TIME_L, n_mod_inputs,
-                                           DELAY_MOD_INPUT>
-        modulationAssistant;
-
-    Delay() : XTModule()
+    DelayLineByFreq() : XTModule()
     {
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -74,24 +51,22 @@ struct Delay : modules::XTModule
         lineL = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
         lineR = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
     }
-    std::string getName() override { return "Delay"; }
+    std::string getName() override { return "DelayLineByFreq"; }
 
-    static constexpr size_t delayLineLength = 1 << 19;
+    static constexpr size_t delayLineLength = 1 << 14;
     std::unique_ptr<SSESincDelayLine<delayLineLength>> lineL, lineR;
 
     void process(const ProcessArgs &args) override
     {
+        // FIXME make polyphonic
         auto il = inputs[INPUT_L].getVoltage();
         auto ir = inputs[INPUT_R].getVoltage();
 
-        auto dl = lineL->read(12000);
-        auto dr = lineR->read(12000);
+        auto dl = lineL->read(100);
+        auto dr = lineR->read(100);
 
-        auto fb = 0.4;
-        auto wl = il + fb * dl;
-        auto wr = ir + fb * dr;
-        lineL->write(wl);
-        lineR->write(wr);
+        lineL->write(il);
+        lineR->write(ir);
 
         outputs[INPUT_L].setVoltage(dl);
         outputs[INPUT_R].setVoltage(dr);
