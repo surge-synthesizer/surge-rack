@@ -27,6 +27,8 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     auto bg = new widgets::Background(box.size, "Mixer", "other", "TotalBlank");
     addChild(bg);
 
+    std::vector<std::string> labels{"OSC1", "OSC2", "OSC3",  "NOISE",
+                                    "R1X2", "R2X3", "COLOR", "GAIN"};
     int kr{0}, kc{0};
     for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
     {
@@ -42,8 +44,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 
         auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
         auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
-        auto lab =
-            widgets::Label::createWithBaselineBox(p0, s0, std::string("P") + std::to_string(i));
+        auto lab = widgets::Label::createWithBaselineBox(p0, s0, labels[i]);
         addChild(lab);
 
         for (int m = 0; m < M::n_mod_inputs; ++m)
