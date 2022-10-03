@@ -80,13 +80,13 @@ struct Delay : modules::XTModule
 
         configParam(TIME_L, -3, 5, 0, "Left Delay");
         configParam(TIME_R, -3, 5, 0, "Right Delay");
-        configParam(TIME_S, -2, 2, 0, "Time Tweak");
+        configParam(TIME_S, -1, 1, 0, "Time Tweak");
         configParam(FEEDBACK, 0, 1, .5, "Feedback");
         configParam(CROSSFEED, 0, 1, 0, "CrossFeed");
         configParam(LOCUT, -60, 70, -60, "LoCut");
         configParam(HICUT, -60, 70, 70, "HiCut");
 
-        configParam(MODRATE, -7, 9, 0, "ModRate");
+        configParam(MODRATE, 0, 4, 2, "ModRate");
         configParam(MODDEPTH, 0, 1, 0, "ModDepth");
         configParam(MIX, 0, 1, 1, "Mix");
 
@@ -126,6 +126,7 @@ struct Delay : modules::XTModule
     static constexpr int slowUpdate{8};
     int blockPos{0};
     float tsL{0}, tsR{0};
+    float modVal{0}, dMod{0}, modPhase{0};
     void process(const ProcessArgs &args) override
     {
         if (inputs[INPUT_CLOCK].isConnected())
@@ -139,8 +140,17 @@ struct Delay : modules::XTModule
             blockPos = 0;
 
             lpPost->coeff_LP2B(lpPost->calc_omega(modulationAssistant.values[HICUT] / 12.0), 0.707);
-
             hpPost->coeff_HP(lpPost->calc_omega(modulationAssistant.values[LOCUT] / 12.0), 0.707);
+
+            auto modFreq = std::clamp(modulationAssistant.values[MODRATE], 0.f, 4.f);
+            modFreq = modFreq * modFreq;
+            // 0 -> 16 hz
+            auto dPhase = slowUpdate * storage->samplerate_inv * modFreq;
+            modPhase += dPhase;
+            if (modPhase > 1)
+                modPhase -= 1;
+            float modTarget = std::sin(modPhase * 2.0 * M_PI);
+            dMod = (modTarget - modVal) / slowUpdate;
 
             if (tempoSync)
             {
@@ -175,15 +185,13 @@ struct Delay : modules::XTModule
             }
         }
         modulationAssistant.updateValues(this);
-        // TODO
-        /*
-          MODRATE,
-          MODDEPTH,
-         */
         auto il = inputs[INPUT_L].getVoltage() * RACK_TO_SURGE_OSC_MUL;
         auto ir = inputs[INPUT_R].getVoltage() * RACK_TO_SURGE_OSC_MUL;
 
-        auto wobble = 1.0 + 0.01 * modulationAssistant.values[TIME_S];
+        modVal += dMod;
+
+        auto wobble = 1.0 + 0.02 * modulationAssistant.values[TIME_S] +
+                      0.005 * modulationAssistant.values[MODDEPTH] * modVal;
         // FIXME - temposync
         float tl{0.f}, tr{0.f};
         if (tempoSync)
