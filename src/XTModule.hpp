@@ -804,7 +804,7 @@ template <typename T> struct ClockProcessor
     }
     inline void disconnect(T *m)
     {
-        if (timeSinceLast >= 0)
+        if (timeSinceLast >= 0 || bpmConnected)
             m->deactivateTempoSync();
 
         timeSinceLast = -1;
