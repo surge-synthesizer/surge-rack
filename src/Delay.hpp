@@ -71,6 +71,7 @@ struct Delay : modules::XTModule
     modules::MonophonicModulationAssistant<Delay, n_delay_params, TIME_L, n_mod_inputs,
                                            DELAY_MOD_INPUT>
         modulationAssistant;
+    modules::ClockProcessor<Delay> clockProc;
 
     Delay() : XTModule()
     {
@@ -78,7 +79,7 @@ struct Delay : modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         configParam(TIME_L, -3, 5, 0, "Left Delay");
-        configParam(TIME_R, -3, 5, 0, "Left Delay");
+        configParam(TIME_R, -3, 5, 0, "Right Delay");
         configParam(TIME_S, -2, 2, 0, "Time Tweak");
         configParam(FEEDBACK, 0, 1, .5, "Feedback");
         configParam(CROSSFEED, 0, 1, 0, "CrossFeed");
@@ -118,10 +119,20 @@ struct Delay : modules::XTModule
     std::unique_ptr<SSESincDelayLine<delayLineLength>> lineL, lineR;
     std::unique_ptr<BiquadFilter> lpPost, hpPost;
 
+    bool tempoSync{false};
+    void activateTempoSync() { tempoSync = true; }
+    void deactivateTempoSync() { tempoSync = false; }
+
     static constexpr int slowUpdate{8};
     int blockPos{0};
+    float tsL{0}, tsR{0};
     void process(const ProcessArgs &args) override
     {
+        if (inputs[INPUT_CLOCK].isConnected())
+            clockProc.process(this, INPUT_CLOCK);
+        else
+            clockProc.disconnect(this);
+
         if (blockPos == slowUpdate)
         {
             modulationAssistant.setupMatrix(this);
@@ -130,27 +141,67 @@ struct Delay : modules::XTModule
             lpPost->coeff_LP2B(lpPost->calc_omega(modulationAssistant.values[HICUT] / 12.0), 0.707);
 
             hpPost->coeff_HP(lpPost->calc_omega(modulationAssistant.values[LOCUT] / 12.0), 0.707);
+
+            if (tempoSync)
+            {
+                auto tsV = [](float f) {
+                    float a, b = modff(f, &a);
+                    if (b < 0)
+                    {
+                        b += 1.f;
+                        a -= 1.f;
+                    }
+                    b = powf(2.0f, b);
+
+                    if (b > 1.41f)
+                    {
+                        b = log2(1.5f);
+                    }
+                    else if (b > 1.167f)
+                    {
+                        b = log2(1.3333333333f);
+                    }
+                    else
+                    {
+                        b = 0.f;
+                    }
+                    return a + b;
+                };
+                tsL = tsV(params[TIME_L].getValue());
+                /*Parameter p;
+                std::cout << tsL << " " << p.tempoSyncNotationValue(tsL) << std::endl;
+                */
+                tsR = tsV(params[TIME_R].getValue());
+            }
         }
         modulationAssistant.updateValues(this);
         // TODO
         /*
-
-    TIME_S
-    MODRATE,
-    MODDEPTH,
-
-    MIX,
+          MODRATE,
+          MODDEPTH,
          */
         auto il = inputs[INPUT_L].getVoltage() * RACK_TO_SURGE_OSC_MUL;
         auto ir = inputs[INPUT_R].getVoltage() * RACK_TO_SURGE_OSC_MUL;
 
         auto wobble = 1.0 + 0.01 * modulationAssistant.values[TIME_S];
         // FIXME - temposync
-        auto tl = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
-                                            12 * wobble * modulationAssistant.values[TIME_L]);
-        auto tr = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
-                                            12 * wobble * modulationAssistant.values[TIME_R]);
-
+        float tl{0.f}, tr{0.f};
+        if (tempoSync)
+        {
+            auto tvl = 12 * wobble * (tsL + modulationAssistant.modvalues[TIME_L]);
+            tl = storage->samplerate * storage->temposyncratio_inv *
+                 storage->note_to_pitch_ignoring_tuning(tvl);
+            auto tvr = 12 * wobble * (tsR + modulationAssistant.modvalues[TIME_R]);
+            tr = storage->samplerate * storage->temposyncratio_inv *
+                 storage->note_to_pitch_ignoring_tuning(tvr);
+        }
+        else
+        {
+            tl = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
+                                           12 * wobble * modulationAssistant.values[TIME_L]);
+            tr = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
+                                           12 * wobble * modulationAssistant.values[TIME_R]);
+        }
         auto dl = std::clamp(lineL->read(tl), -1.5f, 1.5f);
         auto dr = std::clamp(lineR->read(tr), -1.5f, 1.5f);
 
@@ -172,6 +223,24 @@ struct Delay : modules::XTModule
         outputs[OUTPUT_L].setVoltage((mx * dl + (1 - mx) * il) * SURGE_TO_RACK_OSC_MUL);
         outputs[OUTPUT_R].setVoltage((mx * dr + (1 - mx) * ir) * SURGE_TO_RACK_OSC_MUL);
         blockPos++;
+    }
+
+    json_t *makeModuleSpecificJson() override
+    {
+        auto fx = json_object();
+        json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+        return fx;
+    }
+
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        auto cs = json_object_get(modJ, "clockStyle");
+        if (cs)
+        {
+            auto csv = json_integer_value(cs);
+            clockProc.clockStyle =
+                static_cast<typename modules::ClockProcessor<Delay>::ClockStyle>(csv);
+        }
     }
 };
 } // namespace sst::surgext_rack::delay

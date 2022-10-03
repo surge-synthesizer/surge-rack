@@ -17,6 +17,23 @@ struct DelayWidget : widgets::XTModuleWidget, widgets::StandardWidthWithModulati
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, M::n_delay_params> overlays;
     std::array<widgets::KnobN *, M::n_delay_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (!module)
+            return;
+        auto xtm = static_cast<Delay *>(module);
+        typedef modules::ClockProcessor<Delay> cp_t;
+        menu->addChild(new rack::ui::MenuSeparator);
+        auto t = xtm->clockProc.clockStyle;
+        menu->addChild(
+            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
+
+        menu->addChild(
+            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+    }
 };
 
 DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
@@ -112,14 +129,13 @@ DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
         auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
         auto lab = widgets::Label::createWithBaselineBox(p0, s0, "CLOCK");
 
-#if SORTED_OUT_BPM
         lab->hasDynamicLabel = true;
         lab->module = module;
         lab->dynamicLabel = [](modules::XTModule *m) -> std::string {
             if (!m)
                 return "CLOCK";
-            auto fxm = static_cast<FX<fxType> *>(m);
-            typedef modules::ClockProcessor<FX<fxType>> cp_t;
+            auto fxm = static_cast<Delay *>(m);
+            typedef modules::ClockProcessor<Delay> cp_t;
 
             if (fxm->clockProc.clockStyle == cp_t::QUARTER_NOTE)
             {
@@ -130,7 +146,7 @@ DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
                 return "BPM";
             }
         };
-#endif
+
         addChild(lab);
     }
 
