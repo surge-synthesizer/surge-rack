@@ -24,9 +24,11 @@ template <int fxType> struct FXConfig
         {
             KNOB9,
             KNOB12,
+            KNOB14,
             KNOB16,
             PORT,
             GROUP_LABEL,
+            KNOB_SPAN_LABEL,
             LCD_BG,
             LCD_MENU_ITEM,
             POWER_LIGHT,
@@ -67,6 +69,19 @@ template <int fxType> struct FXConfig
             res.spanmm = span;
             return res;
         }
+
+        static LayoutItem createKnobSpanLabel(const std::string &label, float xcmm, float ycmm,
+                                           float span)
+        {
+            auto res = LayoutItem();
+            res.label = label;
+            res.type = KNOB_SPAN_LABEL;
+            res.xcmm = xcmm;
+            res.ycmm = ycmm;
+            res.spanmm = span;
+            return res;
+        }
+
 
         std::unordered_map<std::string, float> extras;
         LayoutItem& withExtra(const std::string &s, float f)

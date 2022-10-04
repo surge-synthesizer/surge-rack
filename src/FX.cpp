@@ -201,6 +201,7 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         {
         case FXConfig<fxType>::LayoutItem::KNOB9:
         case FXConfig<fxType>::LayoutItem::KNOB12:
+        case FXConfig<fxType>::LayoutItem::KNOB14:
         case FXConfig<fxType>::LayoutItem::KNOB16:
         {
             widgets::KnobN *knob{nullptr};
@@ -216,12 +217,17 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             if (diff == 1)
             {
                 knob = rack::createParamCentered<widgets::Knob12>(pos, module, par);
-                halfSize = 1.5;
+                halfSize = (12 - 9) * 0.5;
             }
             if (diff == 2)
             {
+                knob = rack::createParamCentered<widgets::Knob14>(pos, module, par);
+                halfSize = (14 - 9) * 0.5;
+            }
+            if (diff == 3)
+            {
                 knob = rack::createParamCentered<widgets::Knob16>(pos, module, par);
-                halfSize = 3.5;
+                halfSize = (16 - 9) * 0.5;
             }
             if (knob)
             {
@@ -251,6 +257,18 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             }
         }
         break;
+        case FXConfig<fxType>::LayoutItem::KNOB_SPAN_LABEL:
+        {
+            auto boxx0 = lay.xcmm - columnWidth_MM * 0.5;
+            auto boxy0 = lay.ycmm + 8.573 - 5;
+
+            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+            auto s0 = rack::mm2px(rack::Vec(columnWidth_MM * lay.spanmm, 5));
+            auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+            addChild(lab);
+        }
+        break;
+
         case FXConfig<fxType>::LayoutItem::PORT:
         {
             auto port = rack::createInputCentered<widgets::Port>(
