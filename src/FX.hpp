@@ -55,7 +55,14 @@ template <int fxType> struct FXConfig
 
         static LayoutItem createPresetPlusOneArea()
         {
+            // This 19 should match the 19 below
             return createLCDArea(19);
+        }
+
+        static LayoutItem createSingleMenuItem(const std::string &lab, int param)
+        {
+            // This 19 should match the 19 above
+            return {LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
         }
 
         static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,

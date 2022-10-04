@@ -112,4 +112,5 @@ template <> void FXConfig<fxt_freqshift>::processSpecificParams(FX<fxt_freqshift
 #include "fxconfig/RotarySpeaker.h"
 #include "fxconfig/Exciter.h"
 #include "fxconfig/SpringReverb.h"
+#include "fxconfig/Distortion.h"
 #endif
