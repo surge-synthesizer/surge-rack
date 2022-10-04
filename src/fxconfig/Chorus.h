@@ -33,21 +33,22 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
     // fixme use the enums
     // clang-format off
     return {
-        {LayoutItem::KNOB12, "RATE", sfx_t::ch_rate, FXLayoutHelper::bigCol0, bigRow},
-        {LayoutItem::KNOB12, "DEPTH", sfx_t::ch_depth, FXLayoutHelper::bigCol1, bigRow},
+        {LayoutItem::KNOB14, "RATE", sfx_t::ch_rate, FXLayoutHelper::bigCol0, bigRow},
+        {LayoutItem::KNOB14, "DEPTH", sfx_t::ch_depth, FXLayoutHelper::bigCol1, bigRow},
 
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
-                 col[0], delayRow },
+                 (col[0]+col[1]) * 0.5, delayRow },
         {LayoutItem::KNOB9, "TIME", sfx_t::ch_time, col[2], delayRow},
         {LayoutItem::KNOB9, "F/BACK", sfx_t::ch_feedback, col[3], delayRow},
         LayoutItem::createGrouplabel("DELAY", col[2], delayRow, 2),
 
-        {LayoutItem::KNOB9, "LO", sfx_t::ch_lowcut, col[0], outputRow},
+        {LayoutItem::KNOB9, "", sfx_t::ch_lowcut, col[0], outputRow},
         {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col[0], outputRow, -1},
 
-        {LayoutItem::KNOB9, "HI", sfx_t::ch_highcut, col[1], outputRow},
+        {LayoutItem::KNOB9, "", sfx_t::ch_highcut, col[1], outputRow},
         {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0+1, col[1], outputRow, +1},
         LayoutItem::createGrouplabel("EQ", col[0], outputRow, 2).withExtra("SHORTLEFT",1).withExtra("SHORTRIGHT",1),
+        LayoutItem::createKnobSpanLabel("LO - CUT - HI", col[0], outputRow, 2),
 
         {LayoutItem::KNOB9, "WIDTH", sfx_t::ch_width, col[2], outputRow},
         {LayoutItem::KNOB9, "MIX", sfx_t::ch_mix, col[3], outputRow},

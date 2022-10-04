@@ -446,6 +446,18 @@ struct Knob12 : KnobN
     }
 };
 
+struct Knob14 : KnobN
+{
+    Knob14() : KnobN()
+    {
+        knobSize_MM = 14;
+        pointerSize_MM = knobSize_MM - 2.1;
+        knobPointerAsset = "knob-pointer-14.svg";
+        knobBackgroundAsset = "knob-14.svg";
+        completeConstructor();
+    }
+};
+
 struct Knob16 : KnobN
 {
     Knob16() : KnobN()
