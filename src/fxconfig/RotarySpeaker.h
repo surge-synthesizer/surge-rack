@@ -24,36 +24,33 @@ template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::g
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
-    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - 3;
+    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM;
 
-    const auto bigRow = (row2 + row1) * 0.5f;
-    const auto ccol = (col[2] + col[1]) * 0.5f;
-
-    // This matches the rotary speaker
-    const auto endOfPanel = row3 - 2.5f * FXLayoutHelper::labeledGap_MM - 2;
+    const auto col15 = (col[0] + col[1]) * 0.5f;
+    const auto col25 = (col[2] + col[3]) * 0.5f;
 
     // ToDo: On Off for drive and Rrive as a selected type
     typedef FX<fxt_rotaryspeaker> fx_t;
 
     // clang-format off
     return {
-        {LayoutItem::KNOB12, "HORN", RotarySpeakerEffect::rot_horn_rate, FXLayoutHelper::bigCol0, bigRow},
-        {LayoutItem::KNOB12, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, FXLayoutHelper::bigCol1, bigRow},
+        {LayoutItem::KNOB14, "HORN", RotarySpeakerEffect::rot_horn_rate, col15, row1},
+        {LayoutItem::KNOB14, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, col25, row1},
 
-        {LayoutItem::PORT, "CLOCK", fx_t ::INPUT_CLOCK, ccol, row2},
+        {LayoutItem::PORT, "CLOCK", fx_t ::INPUT_CLOCK, col15, row2},
 
-        {LayoutItem::KNOB9, "DRIVE", RotarySpeakerEffect::rot_drive, ccol, row1},
-        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, ccol, row1, 1},
+        {LayoutItem::KNOB9, "DRIVE", RotarySpeakerEffect::rot_drive, col25, row2},
+        {LayoutItem::POWER_LIGHT, "", fx_t::FX_SPECIFIC_PARAM_0, col25, row2, 1},
 
         {LayoutItem::KNOB9, "DOPPLER", RotarySpeakerEffect::rot_doppler, col[0], row3},
-        {LayoutItem::KNOB9, "TREMOLO", RotarySpeakerEffect::rot_tremolo, col[1], row3},
-        LayoutItem::createGrouplabel("HORN", col[0], row3, 2),
+        {LayoutItem::KNOB9, "TREM", RotarySpeakerEffect::rot_tremolo, col[1], row3},
+        LayoutItem::createGrouplabel("MOD", col[0], row3, 2),
         {LayoutItem::KNOB9, "WIDTH", RotarySpeakerEffect::rot_width, col[2], row3},
         {LayoutItem::KNOB9, "MIX", RotarySpeakerEffect::rot_mix, col[3], row3},
         LayoutItem::createGrouplabel("OUTPUT", col[2], row3, 2),
 
         LayoutItem::createPresetPlusOneArea(),
-        {LayoutItem::LCD_MENU_ITEM, "DRIVE", RotarySpeakerEffect::rot_waveshape, 0, endOfPanel}
+        LayoutItem::createSingleMenuItem("MODEL", RotarySpeakerEffect::rot_waveshape)
     };
     // clang-format on
 }

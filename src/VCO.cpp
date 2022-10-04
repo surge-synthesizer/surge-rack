@@ -904,7 +904,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
     const auto &knobConfig = VCOConfig<oscType>::getKnobs();
     auto idx = 0;
     int row = 0, col = 0;
-    for (const auto k : knobConfig)
+    for (const auto &k : knobConfig)
     {
         auto pid = k.id;
         auto label = k.name;
