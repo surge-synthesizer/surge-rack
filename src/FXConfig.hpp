@@ -113,4 +113,5 @@ template <> void FXConfig<fxt_freqshift>::processSpecificParams(FX<fxt_freqshift
 #include "fxconfig/Exciter.h"
 #include "fxconfig/SpringReverb.h"
 #include "fxconfig/Distortion.h"
+#include "fxconfig/Chow.h"
 #endif

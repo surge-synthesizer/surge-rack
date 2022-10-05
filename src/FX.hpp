@@ -27,6 +27,8 @@ template <int fxType> struct FXConfig
             KNOB14,
             KNOB16,
             PORT,
+            MOMENTARY_PARAM,
+            TOGGLE_PARAM,
             GROUP_LABEL,
             KNOB_SPAN_LABEL,
             LCD_BG,
@@ -56,7 +58,7 @@ template <int fxType> struct FXConfig
         static LayoutItem createPresetPlusOneArea()
         {
             // This 19 should match the 19 below
-            return createLCDArea(19);
+            return createLCDArea(19).withExtra("CENTER_RULE", true);
         }
 
         static LayoutItem createSingleMenuItem(const std::string &lab, int param)
@@ -105,6 +107,7 @@ template <int fxType> struct FXConfig
     }
 
     static constexpr int extraInputs() { return 0; }
+    static constexpr int extraSchmidtTriggers() { return 1; }
     static void configExtraInputs(FX<fxType> *M) {}
     static void processExtraInputs(FX<fxType> *M) {}
 
@@ -203,10 +206,16 @@ template <int fxType> struct FX : modules::XTModule
     }
     modules::ClockProcessor<FX<fxType>> clockProc;
 
+    // If you need em you have a scnmidt trigger for extra inputs
+    // add one since 0 length arrays are gross and its just memory smidges
+    // this could obviously be better with complicated specializations and enable ifs
+    rack::dsp::SchmittTrigger extraInputTriggers[FXConfig<fxType>::extraSchmidtTriggers()];
+
     float modScales[n_fx_params];
     std::atomic<int> loadedPreset{-1}, maxPresets{0};
     std::atomic<bool> presetIsDirty{false};
     std::vector<Surge::Storage::FxUserPreset::Preset> presets;
+
     void setupSurge()
     {
         setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
