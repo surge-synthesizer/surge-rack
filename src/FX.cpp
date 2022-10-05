@@ -233,11 +233,11 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             {
                 addChild(knob);
 
-                auto boxx0 = lay.xcmm - columnWidth_MM * 0.5;
+                auto boxx0 = lay.xcmm - columnWidth_MM * 0.5 - halfSize;
                 auto boxy0 = lay.ycmm + 8.573 + halfSize - 5;
 
                 auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-                auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
+                auto s0 = rack::mm2px(rack::Vec(columnWidth_MM + halfSize * 2, 5));
                 auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
                 addChild(lab);
 
@@ -269,6 +269,38 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         }
         break;
 
+        case FXConfig<fxType>::LayoutItem::MOMENTARY_PARAM:
+        {
+            auto butt = rack::createParamCentered<widgets::MomentaryParamButton>(
+                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + verticalPortOffset_MM)), module,
+                lay.parId);
+            addChild(butt);
+
+            auto boxx0 = lay.xcmm - columnWidth_MM * 0.5;
+            auto boxy0 = lay.ycmm + 8.573 - 5;
+
+            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+            auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
+            auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+            addChild(lab);
+        }
+        break;
+        case FXConfig<fxType>::LayoutItem::TOGGLE_PARAM:
+        {
+            auto butt = rack::createParamCentered<widgets::ToggleParamButton>(
+                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + verticalPortOffset_MM)), module,
+                lay.parId);
+            addChild(butt);
+
+            auto boxx0 = lay.xcmm - columnWidth_MM * 0.5;
+            auto boxy0 = lay.ycmm + 8.573 - 5;
+
+            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+            auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
+            auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+            addChild(lab);
+        }
+        break;
         case FXConfig<fxType>::LayoutItem::PORT:
         {
             auto port = rack::createInputCentered<widgets::Port>(
@@ -337,6 +369,9 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         case FXConfig<fxType>::LayoutItem::LCD_BG:
         {
             auto bg = widgets::LCDBackground::createWithHeight(lay.ycmm);
+            if (lay.extras.find("CENTER_RULE") != lay.extras.end())
+                bg->centerRule = true;
+
             if (!module)
                 bg->noModuleText = panelLabel;
             addChild(bg);

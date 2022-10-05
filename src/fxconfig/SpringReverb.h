@@ -12,46 +12,64 @@
 namespace sst::surgext_rack::fx
 {
 template <> constexpr int FXConfig<fxt_spring_reverb>::extraInputs() { return 1; }
+template <> constexpr int FXConfig<fxt_spring_reverb>::extraSchmidtTriggers() { return 2; }
+template <> constexpr int FXConfig<fxt_spring_reverb>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::getLayout()
 {
     const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
     const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
 
-    const auto thirdRow = FXLayoutHelper::rowStart_MM;
-    const auto bigRow = thirdRow - 24;
-    const auto topRow = bigRow - 20;
+    const auto row3 = FXLayoutHelper::rowStart_MM;
+    const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
+    const auto row1 = row2 - FXLayoutHelper::knobGap16_MM;
 
     // fixme use the enums
     // clang-format off
     return {
-        {LayoutItem::KNOB12, "SIZE", 0, FXLayoutHelper::bigCol0, topRow},
-        {LayoutItem::KNOB12, "DECAY", 1, FXLayoutHelper::bigCol1, topRow},
-         {LayoutItem::KNOB12, "REFL", 2, FXLayoutHelper::bigCol0, bigRow},
-        {LayoutItem::KNOB12, "DAMP", 3, FXLayoutHelper::bigCol1, bigRow},
+        {LayoutItem::KNOB14, "SIZE", 0, FXLayoutHelper::bigCol0, row1},
+        {LayoutItem::KNOB14, "DECAY", 1, FXLayoutHelper::bigCol1, row1},
 
-        {LayoutItem::PORT, "KNOCK", FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, col[0], thirdRow},
-        {LayoutItem::KNOB9, "SPIN", 4, col[1], thirdRow},
-        {LayoutItem::KNOB9, "CHAOS", 5, col[2], thirdRow},
-        LayoutItem::createGrouplabel("MODULATION", col[0], thirdRow, 3),
-        {LayoutItem::KNOB9, "MIX", 7, col[3], thirdRow},
+        {LayoutItem::PORT, "TRIG", FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, col[0], row2},
+        {LayoutItem::MOMENTARY_PARAM, "KNOCK", FX<fxt_spring_reverb>::FX_SPECIFIC_PARAM_0, col[1], row2},
+        LayoutItem::createGrouplabel("KNOCK", col[0], row2, 2),
+
+        {LayoutItem::KNOB12, "REFL", 2, FXLayoutHelper::bigCol1, row2 - 1.0f},
+
+        {LayoutItem::KNOB9, "SPIN", 4, col[0], row3},
+        {LayoutItem::KNOB9, "CHAOS", 5, col[1], row3},
+        LayoutItem::createGrouplabel("MODULATION", col[0], row3, 2),
+        {LayoutItem::KNOB9, "HFDAMP", 3, col[2], row3},
+        {LayoutItem::KNOB9, "MIX", 7, col[3], row3},
         LayoutItem::createPresetLCDArea()
     };
 
     // clang-format on
 }
 
+template <> void FXConfig<fxt_spring_reverb>::configSpecificParams(FX<fxt_spring_reverb> *m)
+{
+    typedef FX<fxt_spring_reverb> fx_t;
+    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0, "Interrupting Cow");
+}
+
+/*
+ * We don't actually process the param separately since the extra inputs check looks at both
+ * template <> void FXConfig<fxt_spring_reverb>::processSpecificParams(FX<fxt_spring_reverb> *m)
+ */
+
 template <> void FXConfig<fxt_spring_reverb>::processExtraInputs(FX<fxt_spring_reverb> *that)
 {
-    if (that->inputs[FX<fxt_spring_reverb>::INPUT_SPECIFIC_0].isConnected())
+    auto t = that->extraInputTriggers[0].process(
+        that->inputs[FX<fxt_spring_reverb>::INPUT_SPECIFIC_0].getVoltage());
+    auto d = that->extraInputTriggers[1].process(
+        that->params[FX<fxt_spring_reverb>::FX_SPECIFIC_PARAM_0].getValue(), 0.5);
+    if (t || d)
     {
-        if (that->inputs[FX<fxt_spring_reverb>::INPUT_SPECIFIC_0].getVoltage() > 3)
-        {
-            that->fxstorage->p[6].set_value_f01(1);
-        }
-        else
-        {
-            that->fxstorage->p[6].set_value_f01(0);
-        }
+        that->fxstorage->p[6].set_value_f01(1);
+    }
+    else
+    {
+        that->fxstorage->p[6].set_value_f01(0);
     }
 }
 } // namespace sst::surgext_rack::fx

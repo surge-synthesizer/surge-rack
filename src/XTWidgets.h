@@ -845,86 +845,85 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
     void onStyleChanged() override {}
 };
 
-struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
+template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
 {
+    BufferedDrawFunctionWidget *bw{nullptr}, *bwGlow{nullptr};
+
     bool pressedState{false};
-    std::function<void(bool)> onToggle = [](bool isOn) {};
     rack::SvgWidget *svg{nullptr};
 
     float button_MM = 6.5, light_MM = 2.75;
     float light_pixelRadius = rack::mm2px(light_MM) * 0.5;
 
-    ModToggleButton()
+    GlowOverlayHoverButton()
     {
         svg = new rack::widget::SvgWidget();
         svg->box.pos.x = 0;
         svg->box.pos.y = 0;
+        // this is a hack to load the SVG and get the size
         onStyleChanged();
-        box.size = svg->box.size;
-        addChild(svg);
-    }
+        this->box.size = svg->box.size;
 
-    void onButton(const ButtonEvent &e) override
-    {
-        if (e.action == GLFW_RELEASE)
-        {
-            pressedState = !pressedState;
-            onToggle(pressedState);
-            e.consume(this);
-        }
+        bw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), this->box.size,
+                                            [this](auto vg) { this->drawButtonBG(vg); });
+
+        bwGlow = new BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), this->box.size, [this](auto vg) { this->drawButtonGlow(vg); });
+
+        T::addChild(svg);
+        T::addChild(bw);
+        T::addChild(bwGlow);
     }
 
     bool hovered{false};
-    void onHover(const HoverEvent &e) override { e.consume(this); }
-    void onEnter(const EnterEvent &e) override
+    void onHover(const typename T::HoverEvent &e) override { e.consume(this); }
+    void onEnter(const typename T::EnterEvent &e) override
     {
         hovered = true;
+        bw->dirty = true;
         e.consume(this);
     }
-    void onLeave(const LeaveEvent &e) override
+    void onLeave(const typename T::LeaveEvent &e) override
     {
         hovered = false;
+        bw->dirty = true;
         e.consume(this);
     }
 
-    void drawLayer(const DrawArgs &args, int layer) override
+    void drawButtonGlow(NVGcontext *vg)
     {
-        if (layer == 1 && pressedState)
+        if (!pressedState)
+            return;
+
+        const float halo = rack::settings::haloBrightness;
+        auto c = this->box.size.div(2);
+
+        if (halo > 0.f)
         {
-            const float halo = rack::settings::haloBrightness;
-            auto c = box.size.div(2);
+            float radius = light_pixelRadius;
+            float oradius = rack::mm2px(button_MM) * 0.5;
 
-            if (halo > 0.f)
-            {
-                float radius = light_pixelRadius;
-                float oradius = rack::mm2px(button_MM) * 0.5;
+            nvgBeginPath(vg);
+            nvgRect(vg, c.x - oradius, c.y - oradius, 2 * oradius, 2 * oradius);
 
-                nvgBeginPath(args.vg);
-                nvgRect(args.vg, c.x - oradius, c.y - oradius, 2 * oradius, 2 * oradius);
-
-                NVGcolor icol =
-                    rack::color::mult(style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON), halo);
-                NVGcolor ocol = nvgRGBA(0, 0, 0, 0);
-                NVGpaint paint = nvgRadialGradient(args.vg, c.x, c.y, radius, oradius, icol, ocol);
-                nvgFillPaint(args.vg, paint);
-                nvgFill(args.vg);
-            }
-            nvgBeginPath(args.vg);
-            nvgFillColor(args.vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
-            nvgEllipse(args.vg, c.x, c.y, light_pixelRadius, light_pixelRadius);
-            nvgFill(args.vg);
+            NVGcolor icol =
+                rack::color::mult(style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON), halo);
+            NVGcolor ocol = nvgRGBA(0, 0, 0, 0);
+            NVGpaint paint = nvgRadialGradient(vg, c.x, c.y, radius, oradius, icol, ocol);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
         }
-
-        Widget::drawLayer(args, layer);
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
+        nvgEllipse(vg, c.x, c.y, light_pixelRadius, light_pixelRadius);
+        nvgFill(vg);
     }
 
-    void draw(const DrawArgs &args) override
+    void drawButtonBG(NVGcontext *vg)
     {
-        Widget::draw(args);
-
         if (!pressedState)
         {
-            nvgBeginPath(args.vg);
+            nvgBeginPath(vg);
             auto col = style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF);
             if (hovered)
             {
@@ -932,19 +931,87 @@ struct ModToggleButton : rack::widget::Widget, style::StyleParticipant
                 col.g *= 1.2;
                 col.b *= 1.2;
             }
-            nvgFillColor(args.vg, col);
-            nvgEllipse(args.vg, box.size.x / 2, box.size.y / 2, light_pixelRadius,
+            nvgFillColor(vg, col);
+            nvgEllipse(vg, this->box.size.x / 2, this->box.size.y / 2, light_pixelRadius,
                        light_pixelRadius);
-            nvgFill(args.vg);
+            nvgFill(vg);
         }
     }
 
-    void setState(bool b) { pressedState = b; }
+    void setState(bool b)
+    {
+        pressedState = b;
+        bw->dirty = true;
+        bwGlow->dirty = true;
+    }
 
     void onStyleChanged() override
     {
         svg->setSvg(rack::Svg::load(rack::asset::plugin(
             pluginInstance, style()->skinAssetDir() + "/components/mod-button.svg")));
+        if (bw)
+            bw->dirty = true;
+        if (bwGlow)
+            bwGlow->dirty = true;
+    }
+};
+
+struct ModToggleButton : GlowOverlayHoverButton<rack::widget::Widget>
+{
+    std::function<void(bool)> onToggle = [](bool isOn) {};
+
+    void onButton(const ButtonEvent &e) override
+    {
+        if (e.action == GLFW_RELEASE)
+        {
+            setState(!pressedState);
+            onToggle(pressedState);
+            e.consume(this);
+        }
+    }
+};
+
+struct MomentaryParamButton : GlowOverlayHoverButton<rack::app::ParamWidget>
+{
+    void onButton(const ButtonEvent &e) override
+    {
+        if (e.action == GLFW_PRESS)
+        {
+            setState(true);
+            getParamQuantity()->setValue(1.0);
+            e.consume(this);
+        }
+        if (e.action == GLFW_RELEASE)
+        {
+            setState(false);
+            getParamQuantity()->setValue(0.0);
+            e.consume(this);
+        }
+    }
+};
+
+struct ToggleParamButton : GlowOverlayHoverButton<rack::app::ParamWidget>
+{
+    void onButton(const ButtonEvent &e) override
+    {
+        if (e.action == GLFW_PRESS)
+        {
+            auto ns = !pressedState;
+            setState(ns);
+            getParamQuantity()->setValue(ns ? 1 : 0);
+            e.consume(this);
+        }
+    }
+
+    void step() override
+    {
+        if (getParamQuantity())
+        {
+            bool o = getParamQuantity()->getValue() > 0.5;
+            if (o != pressedState)
+                setState(o);
+        }
+        ParamWidget::step();
     }
 };
 
@@ -1315,6 +1382,8 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
     static constexpr float padX_MM = contentPosX_MM - posx_MM;
     static constexpr float padY_MM = contentPosY_MM - posy_MM;
 
+    bool centerRule{false};
+
     static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12)
     {
         auto width = rack::app::RACK_GRID_WIDTH * widthInScrews - 2 * posx;
@@ -1369,6 +1438,17 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
             nvgFontSize(vg, 17);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, noModuleText.c_str(), nullptr);
+        }
+
+        if (centerRule)
+        {
+            auto yc = box.size.y * 0.5;
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgMoveTo(vg, rack::mm2px(2 * padX_MM), yc);
+            nvgLineTo(vg, box.size.x - rack::mm2px(2 * padX_MM), yc);
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
         }
     }
     void onStyleChanged() override { bdw->dirty = true; }
