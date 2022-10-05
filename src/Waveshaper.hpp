@@ -112,6 +112,9 @@ struct Waveshaper : public modules::XTModule
         setupSurge();
 
         modulationAssistant.initialize(this);
+
+        configBypass(INPUT_L, OUTPUT_L);
+        configBypass(INPUT_R, OUTPUT_R);
     }
 
     std::string getName() override { return "WSHP"; }

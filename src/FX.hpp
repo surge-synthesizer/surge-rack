@@ -61,10 +61,31 @@ template <int fxType> struct FXConfig
             return createLCDArea(19).withExtra("CENTER_RULE", true);
         }
 
+        static LayoutItem createPresetPlusTwoArea()
+        {
+            // This 19 should match the 19 below
+            return createLCDArea(19).withExtra("CENTER_RULE", true)
+                .withExtra("SPLIT_LOWER", true);
+        }
+
         static LayoutItem createSingleMenuItem(const std::string &lab, int param)
         {
             // This 19 should match the 19 above
             return {LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
+        }
+
+        static LayoutItem createLeftMenuItem(const std::string &lab, int param)
+        {
+            // This 19 should match the 19 above
+            LayoutItem res{LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
+            return res.withExtra("SIDE", 1);
+        }
+
+        static LayoutItem createRightMenuItem(const std::string &lab, int param)
+        {
+            // This 19 should match the 19 above
+            LayoutItem res{LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
+            return res.withExtra("SIDE", -1);
         }
 
         static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,
@@ -198,6 +219,9 @@ template <int fxType> struct FX : modules::XTModule
 
         if (maxPresets > 0)
             loadPreset(0);
+
+        configBypass(INPUT_L, OUTPUT_L);
+        configBypass(INPUT_R, OUTPUT_R);
     }
 
     void moduleSpecificSampleRateChange() override
