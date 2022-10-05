@@ -101,7 +101,7 @@ struct VCOVCFConstants : StandardWidthWithModulationConstants
 
     static constexpr std::array<float, 5> rowCenters_MM{
         55, 71, modulationRowCenters_MM[0], modulationRowCenters_MM[1], inputRowCenter_MM};
-    static constexpr std::array<float, 2> labelBaselines_MM{63.573, 79.573};
+    static constexpr std::array<float, 2> labelBaselines_MM{63.35, 79.35};
 
     float plotStartX = rack::mm2px(plotCX_MM - plotW_MM * 0.5);
     float plotStartY = rack::mm2px(plotCY_MM - plotH_MM * 0.5);
