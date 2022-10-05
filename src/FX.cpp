@@ -342,8 +342,10 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         case FXConfig<fxType>::LayoutItem::POWER_LIGHT:
         case FXConfig<fxType>::LayoutItem::EXTEND_LIGHT:
         {
-            auto x = rack::mm2px(lay.xcmm + lay.spanmm * 5.5);
-            auto y = rack::mm2px(lay.ycmm - 5.5);
+            auto dir = lay.spanmm < 0 ? -1 : 1;
+            auto as = abs(lay.spanmm);
+            auto x = rack::mm2px(lay.xcmm + dir * (4.5 + as));
+            auto y = rack::mm2px(lay.ycmm - (4.5 + as));
 
             auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(rack::Vec(x, y),
                                                                                 module, lay.parId);

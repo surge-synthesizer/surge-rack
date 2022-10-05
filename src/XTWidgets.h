@@ -1431,16 +1431,6 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
         nvgStrokeWidth(vg, offset);
         nvgStroke(vg);
 
-        if (!noModuleText.empty())
-        {
-            nvgBeginPath(vg);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 17);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, noModuleText.c_str(), nullptr);
-        }
-
         if (centerRule)
         {
             auto yc = box.size.y * 0.5;
@@ -1462,6 +1452,16 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
             nvgLineTo(vg, xc, box.size.y - rack::mm2px(padY_MM));
             nvgStrokeWidth(vg, 1);
             nvgStroke(vg);
+        }
+
+        if (!noModuleText.empty())
+        {
+            nvgBeginPath(vg);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, 17);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, noModuleText.c_str(), nullptr);
         }
     }
     void onStyleChanged() override { bdw->dirty = true; }

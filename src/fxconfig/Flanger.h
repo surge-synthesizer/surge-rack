@@ -32,8 +32,8 @@ template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
 
     // clang-format off
     return {
-        {LayoutItem::KNOB14, "RATE", FlangerEffect::fl_rate, col15, row1},
-        {LayoutItem::KNOB14, "DEPTH", FlangerEffect::fl_depth, col25, row1},
+        {LayoutItem::KNOB12, "RATE", FlangerEffect::fl_rate, col15, row1},
+        {LayoutItem::KNOB12, "DEPTH", FlangerEffect::fl_depth, col25, row1},
 
         {LayoutItem::PORT, "CLOCK", fx_t::INPUT_CLOCK, col[0], row2},
         {LayoutItem::KNOB9, "COUNT", FlangerEffect::fl_voices, col[1], row2},
