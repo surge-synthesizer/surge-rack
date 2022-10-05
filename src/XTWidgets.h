@@ -1383,6 +1383,7 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
     static constexpr float padY_MM = contentPosY_MM - posy_MM;
 
     bool centerRule{false};
+    bool splitLower{false};
 
     static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12)
     {
@@ -1447,6 +1448,18 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
             nvgMoveTo(vg, rack::mm2px(2 * padX_MM), yc);
             nvgLineTo(vg, box.size.x - rack::mm2px(2 * padX_MM), yc);
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
+        }
+
+        if (splitLower)
+        {
+            auto yc = box.size.y * 0.5;
+            auto xc = box.size.x * 0.5;
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgMoveTo(vg, xc, yc + rack::mm2px(padY_MM));
+            nvgLineTo(vg, xc, box.size.y - rack::mm2px(padY_MM));
             nvgStrokeWidth(vg, 1);
             nvgStroke(vg);
         }

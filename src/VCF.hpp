@@ -127,6 +127,9 @@ struct VCF : public modules::XTModule
         defaultSubtype[sst::filters::fut_comb_neg] = 1;
 
         modulationAssistant.initialize(this);
+
+        configBypass(INPUT_L, OUTPUT_L);
+        configBypass(INPUT_R, OUTPUT_R);
     }
 
     std::string getName() override { return "VCF"; }

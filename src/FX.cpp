@@ -371,6 +371,8 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
             auto bg = widgets::LCDBackground::createWithHeight(lay.ycmm);
             if (lay.extras.find("CENTER_RULE") != lay.extras.end())
                 bg->centerRule = true;
+            if (lay.extras.find("SPLIT_LOWER") != lay.extras.end())
+                bg->splitLower = true;
 
             if (!module)
                 bg->noModuleText = panelLabel;
@@ -380,18 +382,43 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
         case FXConfig<fxType>::LayoutItem::LCD_MENU_ITEM:
         {
             auto xpos = rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+
+            int sd = 0;
+            if (lay.extras.find("SIDE") != lay.extras.end())
+            {
+                sd = lay.extras.find("SIDE")->second;
+            }
+
             auto width = box.size.x - 2 * rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+            if (sd == 1)
+            {
+                width = width * 0.5;
+            }
+            if (sd == -1)
+            {
+                width = width * 0.5;
+                xpos += width;
+            }
             auto height = rack::mm2px(5);
             auto ypos = rack::mm2px(lay.ycmm - widgets::LCDBackground::padY_MM) - height;
             auto wid = widgets::PlotAreaMenuItem::create(
                 rack::Vec(xpos, ypos), rack::Vec(width, height), module, lay.parId);
             wid->upcaseDisplay = false;
             wid->centerDisplay = true;
-            wid->transformLabel = [n = lay.label](auto s) {
-                if (n.empty())
-                    return s;
-                return n + ": " + s;
-            };
+
+            if (sd == 0)
+            {
+                wid->transformLabel = [n = lay.label](auto s) {
+                    if (n.empty())
+                        return s;
+                    return n + ": " + s;
+                };
+            }
+            else
+            {
+                wid->transformLabel = [](auto s) { return s; };
+            }
+
             wid->onShowMenu = [this, wid, lay]() {
                 if (!this->module)
                     return;
