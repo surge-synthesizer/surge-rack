@@ -113,7 +113,7 @@ template <int fxType> struct FXConfig
         }
 
 
-        std::unordered_map<std::string, float> extras;
+        std::unordered_map<std::string, float> extras{};
         LayoutItem& withExtra(const std::string &s, float f)
         {
             extras[s] = f;

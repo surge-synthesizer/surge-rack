@@ -34,8 +34,8 @@ template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::g
 
     // clang-format off
     return {
-        {LayoutItem::KNOB14, "HORN", RotarySpeakerEffect::rot_horn_rate, col15, row1},
-        {LayoutItem::KNOB14, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, col25, row1},
+        {LayoutItem::KNOB12, "HORN", RotarySpeakerEffect::rot_horn_rate, col15, row1},
+        {LayoutItem::KNOB12, "ROTOR", RotarySpeakerEffect::rot_rotor_rate, col25, row1},
 
         {LayoutItem::PORT, "CLOCK", fx_t ::INPUT_CLOCK, col15, row2},
 

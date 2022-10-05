@@ -32,8 +32,8 @@ template <> FXConfig<fxt_distortion>::layout_t FXConfig<fxt_distortion>::getLayo
 
     // clang-format off
     return {
-        {LayoutItem::KNOB14, "DRIVE", DistortionEffect::dist_drive, col15, row1},
-        {LayoutItem::KNOB14, "FEEDBACK", DistortionEffect::dist_feedback, col25, row1},
+        {LayoutItem::KNOB12, "DRIVE", DistortionEffect::dist_drive, col15, row1},
+        {LayoutItem::KNOB12, "FEEDBACK", DistortionEffect::dist_feedback, col25, row1},
 
         {LayoutItem::KNOB9, "GAIN", DistortionEffect::dist_preeq_gain, col[0], row2},
         {LayoutItem::KNOB9, "FREQ", DistortionEffect::dist_preeq_freq, col[1], row2},

@@ -109,7 +109,7 @@ template <int oscType> struct WavetableSelector : widgets::PresetJogSelector
                 }
 
                 menu->addChild(rack::createSubmenuItem(
-                    catName, "", [cidx, menu, this](auto *x) { this->menuForCategory(x, cidx); }));
+                    catName, "", [cidx, this](auto *x) { this->menuForCategory(x, cidx); }));
             }
         }
 
@@ -850,7 +850,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
     if constexpr (VCOConfig<oscType>::supportsUnison())
     {
         auto oct = widgets::LabeledPlotAreaControl::create(rack::Vec(underX, underPlotStartY),
-                                                           rack::Vec(29, underPlotH), "UNI", module,
+                                                           rack::Vec(31, underPlotH), "UNI", module,
                                                            M::OSC_CTRL_PARAM_0 + 6);
         addChild(oct);
         underX += 32 + 2;
@@ -894,7 +894,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
                 char txt[256];
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
                 surgePar.get_display(txt, true, fv);
-                men->addChild(rack::createMenuItem(txt, "", [plt, pq, fv]() { pq->setValue(fv); }));
+                men->addChild(rack::createMenuItem(txt, "", [pq, fv]() { pq->setValue(fv); }));
             }
         };
         plt->transformLabel = VCOConfig<oscType>::rightMenuTransformFunction();

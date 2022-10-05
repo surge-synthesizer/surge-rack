@@ -483,14 +483,13 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
         idx++;
     }
 
-    int row{0}, col{0};
+    int col{0};
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
         addChild(makeModLabel(i));
     }
 
     col = 0;
-    row = 3;
 
     for (int i = 0; i < M::n_mod_inputs; ++i)
     {
