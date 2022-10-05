@@ -845,12 +845,12 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
         return r;
     };
     addChild(oct);
-    underX += 34 + 2;
+    underX += 34 + 5;
 
     if constexpr (VCOConfig<oscType>::supportsUnison())
     {
         auto oct = widgets::LabeledPlotAreaControl::create(rack::Vec(underX, underPlotStartY),
-                                                           rack::Vec(32, underPlotH), "UNI", module,
+                                                           rack::Vec(29, underPlotH), "UNI", module,
                                                            M::OSC_CTRL_PARAM_0 + 6);
         addChild(oct);
         underX += 32 + 2;

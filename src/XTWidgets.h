@@ -100,7 +100,7 @@ struct DebugPoint : rack::TransparentWidget
 struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 {
     std::string label{};
-    float size{7.3};
+    float size{7.2};
     float tracking{0.0};
     float baselinePad{0};
     style::XTStyle::Colors color;
@@ -118,7 +118,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 
     static Label *
     createWithBaselineBox(const rack::Vec &pos, const rack::Vec &size, const std::string lab,
-                          float szInPt = 7.3,
+                          float szInPt = 7.2,
                           style::XTStyle::Colors col = style::XTStyle::Colors::TEXT_LABEL)
     {
         auto padSz = size;
@@ -179,7 +179,7 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
     std::string panelName, groupName, title;
     std::function<void(NVGcontext *)> moduleSpecificDraw;
 
-    static constexpr float mainLabelBaseline_MM = 6.298, mainLabelSize_PT = 11;
+    static constexpr float mainLabelBaseline_MM = 6.295, mainLabelSize_PT = 10.5;
     Label *titleLabel{nullptr};
     rack::app::SvgPanel *svgPanel{nullptr};
 
@@ -785,7 +785,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
             nvgFillColor(vg, col);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 7.3 * 96 / 72);
+            nvgFontSize(vg, 7.2 * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, type == ABSOLUTE ? "A" : "X", nullptr);
             nvgFill(vg);
@@ -823,7 +823,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgBeginPath(vg);
             nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
             nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 7.3 * 96 / 72);
+            nvgFontSize(vg, 7.2 * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, type == ABSOLUTE ? "A" : "X", nullptr);
             nvgFill(vg);
@@ -1062,7 +1062,7 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgFontSize(vg, 7.2 * 96 / 72);
         nvgText(vg, 0, box.size.y * 0.5, label.c_str(), nullptr);
 
         nvgBeginPath(vg);
@@ -1074,7 +1074,7 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_FG));
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgFontSize(vg, 7.2 * 96 / 72);
         nvgText(vg, box.size.x - box_px * 0.5, box.size.y * 0.5, pv.c_str(), nullptr);
     }
 
@@ -1135,7 +1135,7 @@ struct PlotAreaSwitch : public rack::app::Switch, style::StyleParticipant
             nvgBeginPath(vg);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 7.3 * 96 / 72);
+            nvgFontSize(vg, 7.2 * 96 / 72);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, label.c_str(), nullptr);
         }
         else
@@ -1149,7 +1149,7 @@ struct PlotAreaSwitch : public rack::app::Switch, style::StyleParticipant
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_FG));
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 7.3 * 96 / 72);
+            nvgFontSize(vg, 7.2 * 96 / 72);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, label.c_str(), nullptr);
         }
     }
@@ -1208,7 +1208,7 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgFontSize(vg, 7.2 * 96 / 72);
         if (centerDisplay)
         {
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
@@ -1276,14 +1276,14 @@ template <typename T> struct GenericPresetJogSelector : public T, style::StylePa
         nvgFillColor(vg, txtColor);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgFontSize(vg, 7.2 * 96 / 72);
         nvgText(vg, this->box.size.x * 0.5, this->box.size.y * 0.5, getPresetName().c_str(),
                 nullptr);
 
         if (hasPresets())
         {
             // left arrow
-            float onemm = rack::mm2px(1.0);
+            float onemm = rack::mm2px(1.2);
             nvgBeginPath(vg);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
             nvgMoveTo(vg, leftJogPos.x + onemm, leftJogPos.y + leftJogSize.y * 0.5);

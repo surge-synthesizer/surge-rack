@@ -268,7 +268,7 @@ NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor 
     case YELLOW:
         return nvgRGB(255, 214, 0);
     case GREEN:
-        return nvgRGB(82, 235, 71);
+        return nvgRGB(114, 234, 101);
     case AQUA:
         return nvgRGB(19, 236, 196);
     case BLUE:
@@ -278,7 +278,7 @@ NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor 
     case PINK:
         return nvgRGB(255, 82, 163);
     case RED:
-        return nvgRGB(255, 64, 61);
+        return nvgRGB(240, 67, 67);
     }
 }
 std::map<std::string, int> InternalFontMgr::fontMap;
