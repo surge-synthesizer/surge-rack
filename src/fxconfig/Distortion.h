@@ -88,8 +88,9 @@ void FXConfig<fxt_distortion>::loadPresetOntoSpecificParams(
     FX<fxt_distortion> *m, const Surge::Storage::FxUserPreset::Preset &ps)
 {
     typedef FX<fxt_distortion> fx_t;
-    typedef RotarySpeakerEffect sx_t;
-    m->params[fx_t::FX_SPECIFIC_PARAM_0].setValue(ps.da[sx_t::rot_drive] ? 0 : 1);
+    typedef DistortionEffect sx_t;
+    m->params[fx_t::FX_SPECIFIC_PARAM_0].setValue(ps.da[sx_t::dist_preeq_highcut] ? 0 : 1);
+    m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].setValue(ps.da[sx_t::dist_posteq_highcut] ? 0 : 1);
 }
 
 template <>
@@ -97,9 +98,10 @@ bool FXConfig<fxt_distortion>::isDirtyPresetVsSpecificParams(
     FX<fxt_distortion> *m, const Surge::Storage::FxUserPreset::Preset &ps)
 {
     typedef FX<fxt_distortion> fx_t;
-    typedef RotarySpeakerEffect sx_t;
+    typedef DistortionEffect sx_t;
     auto p0 = m->params[fx_t::FX_SPECIFIC_PARAM_0].getValue() > 0.5;
-    return !(p0 == !ps.da[sx_t::rot_drive]);
+    auto p1 = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].getValue() > 0.5;
+    return !((p0 == !ps.da[sx_t::dist_preeq_highcut]) && (p1 == !ps.da[sx_t::dist_posteq_highcut]));
 }
 } // namespace sst::surgext_rack::fx
 #endif // RACK_HACK_ROTARYSPEAKER_H
