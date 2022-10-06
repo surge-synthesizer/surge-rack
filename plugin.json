@@ -1,6 +1,6 @@
 {
   "slug": "SurgeXTRack",
-  "name": "Surge XT for Rack",
+  "name": "Surge XT",
   "version": "2.xt-1.1.1",
   "license": "GPL-3.0-or-later",
   "author": "Surge Synth Team",
@@ -13,7 +13,7 @@
   "modules": [
     {
       "slug": "SurgeXTVCF",
-      "name": "SXT VCF",
+      "name": "VCF",
       "description": "The Surge Filter VCFs",
       "tags": [
         "VCF",
@@ -22,7 +22,7 @@
     },
     {
       "slug": "SurgeXTWaveshaper",
-      "name": "SXT Waveshaper",
+      "name": "Waveshaper",
       "description": "The Surge Waveshapers",
       "tags": [
         "Distortion",
@@ -32,7 +32,7 @@
     },
     {
       "slug": "SurgeXTOSCModern",
-      "name": "SXT Modern VCO",
+      "name": "Modern VCO",
       "description": "The Surge Modern Oscillator",
       "tags": [
         "VCO",
@@ -41,7 +41,7 @@
     },
     {
       "slug": "SurgeXTOSCClassic",
-      "name": "SXT Classic VCO",
+      "name": "Classic VCO",
       "description": "The Surge Classic Oscillator",
       "tags": [
         "VCO",
@@ -50,7 +50,7 @@
     },
     {
       "slug": "SurgeXTOSCWavetable",
-      "name": "SXT Wavetable VCO",
+      "name": "Wavetable VCO",
       "description": "The Surge Wavetable Oscillator",
       "tags": [
         "VCO",
@@ -59,7 +59,7 @@
     },
     {
       "slug": "SurgeXTOSCWindow",
-      "name": "SXT Window VCO",
+      "name": "Window VCO",
       "description": "The Surge Window Oscillator",
       "tags": [
         "VCO",
@@ -68,7 +68,7 @@
     },
     {
       "slug": "SurgeXTOSCSine",
-      "name": "SXT Sine VCO",
+      "name": "Sine VCO",
       "description": "The Surge Sine Oscillator",
       "tags": [
         "VCO",
@@ -77,7 +77,7 @@
     },
     {
       "slug": "SurgeXTOSCFM2",
-      "name": "SXT FM2 VCO",
+      "name": "FM2 VCO",
       "description": "The Surge FM2 Oscillator",
       "tags": [
         "VCO",
@@ -86,7 +86,7 @@
     },
     {
       "slug": "SurgeXTOSCFM3",
-      "name": "SXT FM3 VCO",
+      "name": "FM3 VCO",
       "description": "The Surge FM3 Oscillator",
       "tags": [
         "VCO",
@@ -95,7 +95,7 @@
     },
     {
       "slug": "SurgeXTOSCSHNoise",
-      "name": "SXT S&H Noise VCO",
+      "name": "S&H Noise VCO",
       "description": "The Surge S&H Noise Oscillator",
       "tags": [
         "VCO",
@@ -104,7 +104,7 @@
     },
     {
       "slug": "SurgeXTOSCAlias",
-      "name": "SXT Alias VCO",
+      "name": "Alias VCO",
       "description": "The Surge Alias Oscillator",
       "tags": [
         "VCO",
@@ -113,7 +113,7 @@
     },
     {
       "slug": "SurgeXTOSCString",
-      "name": "SXT String VCO",
+      "name": "String VCO",
       "description": "The Surge String Oscillator",
       "tags": [
         "VCO",
@@ -122,7 +122,7 @@
     },
     {
       "slug": "SurgeXTOSCTwist",
-      "name": "SXT Twist VCO",
+      "name": "Twist VCO",
       "description": "The Surge Twist Oscillator, based on a famous EuroRack module",
       "tags": [
         "VCO",
@@ -131,7 +131,7 @@
     },
     {
       "slug": "SurgeXTFXReverb",
-      "name": "SXT Reverb",
+      "name": "Reverb",
       "description": "The Surge XT Reverb",
       "tags": [
         "Effect",
@@ -140,7 +140,7 @@
     },
     {
       "slug": "SurgeXTFXPhaser",
-      "name": "SXT Phaser",
+      "name": "Phaser",
       "description": "The Surge XT Phaser",
       "tags": [
         "Effect",
@@ -149,7 +149,7 @@
     },
     {
       "slug": "SurgeXTFXRotarySpeaker",
-      "name": "SXT RotarySpeaker",
+      "name": "RotarySpeaker",
       "description": "The Surge XT RotarySpeaker",
       "tags": [
         "Effect"
@@ -157,7 +157,7 @@
     },
     {
       "slug": "SurgeXTFXDistortion",
-      "name": "SXT Distortion",
+      "name": "Distortion",
       "description": "The Surge XT Distortion",
       "tags": [
         "Effect",
@@ -166,7 +166,7 @@
     },
     {
       "slug": "SurgeXTFXFrequencyShifter",
-      "name": "SXT FrequencyShifter",
+      "name": "FrequencyShifter",
       "description": "The Surge XT FrequencyShifter",
       "tags": [
         "Effect"
@@ -174,7 +174,7 @@
     },
     {
       "slug": "SurgeXTFXChorus",
-      "name": "SXT Chorus",
+      "name": "Chorus",
       "description": "The Surge XT Chorus",
       "tags": [
         "Effect",
@@ -183,7 +183,7 @@
     },
     {
       "slug": "SurgeXTFXVocoder",
-      "name": "SXT Vocoder",
+      "name": "Vocoder",
       "description": "The Surge XT Vocoder",
       "tags": [
         "Effect",
@@ -192,7 +192,7 @@
     },
     {
       "slug": "SurgeXTFXReverb2",
-      "name": "SXT Reverb2",
+      "name": "Reverb2",
       "description": "The Surge XT Reverb2",
       "tags": [
         "Effect",
@@ -201,7 +201,7 @@
     },
     {
       "slug": "SurgeXTFXFlanger",
-      "name": "SXT Flanger",
+      "name": "Flanger",
       "description": "The Surge XT Flanger",
       "tags": [
         "Effect",
@@ -210,7 +210,7 @@
     },
     {
       "slug": "SurgeXTFXRingMod",
-      "name": "SXT RingMod",
+      "name": "RingMod",
       "description": "The Surge XT RingMod",
       "tags": [
         "Effect",
@@ -219,7 +219,7 @@
     },
     {
       "slug": "SurgeXTFXNeuron",
-      "name": "SXT Neuron",
+      "name": "Neuron",
       "description": "The Surge XT Neuron",
       "tags": [
         "Effect",
@@ -228,7 +228,7 @@
     },
     {
       "slug": "SurgeXTFXResonator",
-      "name": "SXT Resonator",
+      "name": "Resonator",
       "description": "The Surge XT Resonator",
       "tags": [
         "Effect",
@@ -237,7 +237,7 @@
     },
     {
       "slug": "SurgeXTFXChow",
-      "name": "SXT Chow",
+      "name": "Chow",
       "description": "The Surge XT Chow",
       "tags": [
         "Effect",
@@ -246,7 +246,7 @@
     },
     {
       "slug": "SurgeXTFXExciter",
-      "name": "SXT Exciter",
+      "name": "Exciter",
       "description": "The Surge XT Exciter",
       "tags": [
         "Effect"
@@ -254,7 +254,7 @@
     },
     {
       "slug": "SurgeXTFXEnsemble",
-      "name": "SXT Ensemble",
+      "name": "Ensemble",
       "description": "The Surge XT Ensemble",
       "tags": [
         "Effect",
@@ -263,7 +263,7 @@
     },
     {
       "slug": "SurgeXTFXCombulator",
-      "name": "SXT Combulator",
+      "name": "Combulator",
       "description": "The Surge XT Combulator",
       "tags": [
         "Effect",
@@ -272,7 +272,7 @@
     },
     {
       "slug": "SurgeXTFXSpringReverb",
-      "name": "SXT SpringReverb",
+      "name": "SpringReverb",
       "description": "The Surge XT SpringReverb",
       "tags": [
         "Effect",
@@ -281,7 +281,7 @@
     },
     {
       "slug": "SurgeXTLFO",
-      "name": "SXT LFO",
+      "name": "LFO",
       "description": "The Surge XT LFO",
       "tags": [
         "LFO",
@@ -290,7 +290,7 @@
     },
     {
       "slug": "SurgeXTDelay",
-      "name": "SXT Delay",
+      "name": "Delay",
       "description": "The Surge XT Delay",
       "tags": [
         "Effect",
@@ -299,7 +299,7 @@
     },
     {
       "slug": "SurgeXTDelayLineByFreq",
-      "name": "SXT Delay Line by Frequency",
+      "name": "Delay Line by Frequency",
       "description": "The Surge XT Delay Line, tuned by v/oct with sample offset for KS and so on",
       "tags": [
         "Effect",
@@ -309,7 +309,7 @@
     },
     {
       "slug": "SurgeXTMixer",
-      "name": "SXT Mixer",
+      "name": "Mixer",
       "description": "The Surge XT Mixer",
       "tags": [
         "Mixer",
@@ -318,7 +318,7 @@
     },
     {
       "slug": "SurgeXTModMatrix",
-      "name": "SXT ModMatrix",
+      "name": "ModMatrix",
       "description": "The Surge XT ModMatrix",
       "tags": [
         "Utility",
@@ -327,7 +327,7 @@
     },
     {
       "slug": "SurgeXTTreeMonster",
-      "name": "SXT TreeMonster",
+      "name": "TreeMonster",
       "description": "You'll love it. Its a way of life",
       "tags": [
         "Effect",

@@ -59,4 +59,7 @@ struct FXLayoutHelper
 #include "fxconfig/Chow.h"
 #include "fxconfig/Flanger.h"
 #include "fxconfig/FrequencyShifter.h"
+#include "fxconfig/Ensemble.h"
+#include "fxconfig/Neuron.h"
+#include "fxconfig/Combulator.h"
 #endif
