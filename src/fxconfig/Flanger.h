@@ -41,12 +41,12 @@ template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
         {LayoutItem::KNOB9, "SPACING", FlangerEffect::fl_voice_spacing, col[3], row2},
         LayoutItem::createGrouplabel("COMB", col[1], row2, 3),
 
-        {LayoutItem::KNOB9, "FDBACK", FlangerEffect::fl_feedback, col[0], row3},
-        {LayoutItem::KNOB9, "HF DAMP", FlangerEffect::fl_damping, col[1], row3},
+        {LayoutItem::KNOB9, "DEPTH", FlangerEffect::fl_feedback, col[0], row3},
+        {LayoutItem::KNOB9, "HI CUT", FlangerEffect::fl_damping, col[1], row3},
+        LayoutItem::createGrouplabel("FEEDBACK", col[0], row3, 2),
+
         {LayoutItem::KNOB9, "WIDTH", FlangerEffect::fl_width, col[2], row3},
         {LayoutItem::KNOB9, "MIX", FlangerEffect::fl_mix, col[3], row3},
-
-        LayoutItem::createGrouplabel("FEEDBACK", col[0], row3, 2),
         LayoutItem::createGrouplabel("MIX", col[2], row3, 2),
 
         LayoutItem::createPresetPlusTwoArea(),

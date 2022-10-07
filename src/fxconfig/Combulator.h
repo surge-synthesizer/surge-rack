@@ -32,7 +32,7 @@ template <> FXConfig<fxt_combulator>::layout_t FXConfig<fxt_combulator>::getLayo
         LayoutItem::createKnobSpanLabel("1 - OFFSET - 2", col[2], row1, 2),
         LayoutItem::createGrouplabel("FREQUENCY", col[1], row1, 3),
 
-        {LayoutItem::KNOB9, "FBACK", c_t::combulator_feedback, col[0], row2},
+        {LayoutItem::KNOB9, "FEEDBACK", c_t::combulator_feedback, col[0], row2},
         {LayoutItem::KNOB9, "COMB1", c_t::combulator_gain1, col[1], row2},
         {LayoutItem::KNOB9, "COMB2", c_t::combulator_gain2, col[2], row2},
         {LayoutItem::KNOB9, "COMB3", c_t::combulator_gain3, col[3], row2},

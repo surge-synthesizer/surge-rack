@@ -21,7 +21,6 @@ template <> FXConfig<fxt_ensemble>::layout_t FXConfig<fxt_ensemble>::getLayout()
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - (14 - 9) * 0.5f;
 
-    // ToDo: On Off for drive and Rrive as a selected type
     typedef FX<fxt_ensemble> fx_t;
 
     // clang-format off
@@ -37,7 +36,7 @@ template <> FXConfig<fxt_ensemble>::layout_t FXConfig<fxt_ensemble>::getLayout()
         {LayoutItem::KNOB9, "LFO2", BBDEnsembleEffect::ens_lfo_depth2, col[3], row2},
         LayoutItem::createGrouplabel("DEPTH", col[2], row2, 2),
 
-        {LayoutItem::KNOB9, "FDBACK", BBDEnsembleEffect::ens_delay_feedback, col[2], row3},
+        {LayoutItem::KNOB9, "FEEDBACK", BBDEnsembleEffect::ens_delay_feedback, col[0], row3},
         {LayoutItem::KNOB9, "SAT", BBDEnsembleEffect::ens_delay_sat, col[1], row3},
         LayoutItem::createGrouplabel("DELAY", col[0], row3, 2),
 

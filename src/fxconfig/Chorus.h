@@ -39,7 +39,7 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
                  (col[0]+col[1]) * 0.5, delayRow },
         {LayoutItem::KNOB9, "TIME", sfx_t::ch_time, col[2], delayRow},
-        {LayoutItem::KNOB9, "F/BACK", sfx_t::ch_feedback, col[3], delayRow},
+        {LayoutItem::KNOB9, "FEEDBACK", sfx_t::ch_feedback, col[3], delayRow},
         LayoutItem::createGrouplabel("DELAY", col[2], delayRow, 2),
 
         {LayoutItem::KNOB9, "", sfx_t::ch_lowcut, col[0], outputRow},
