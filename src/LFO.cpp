@@ -9,7 +9,7 @@
 
 namespace sst::surgext_rack::lfo::ui
 {
-struct LFOWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
+struct LFOWidget : widgets::XTModuleWidget
 {
     typedef lfo::LFO M;
     LFOWidget(M *module);

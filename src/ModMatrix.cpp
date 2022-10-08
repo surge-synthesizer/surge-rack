@@ -6,10 +6,11 @@
 #include "SurgeXT.hpp"
 #include "XTModuleWidget.hpp"
 #include "XTWidgets.h"
+#include "LayoutEngine.h"
 
 namespace sst::surgext_rack::modmatrix::ui
 {
-struct ModMatrixWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
+struct ModMatrixWidget : widgets::XTModuleWidget
 {
     typedef modmatrix::ModMatrix M;
     ModMatrixWidget(M *module);
@@ -19,7 +20,8 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
 
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
+                         rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "ModMatrix", "other", "TotalBlank");
     addChild(bg);
 

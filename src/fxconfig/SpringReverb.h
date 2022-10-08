@@ -16,8 +16,8 @@ template <> constexpr int FXConfig<fxt_spring_reverb>::extraSchmidtTriggers() { 
 template <> constexpr int FXConfig<fxt_spring_reverb>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
-    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
@@ -38,7 +38,7 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
         {LayoutItem::KNOB9, "SPIN", 4, col[0], row3},
         {LayoutItem::KNOB9, "CHAOS", 5, col[1], row3},
         LayoutItem::createGrouplabel("MODULATION", col[0], row3, 2),
-        {LayoutItem::KNOB9, "HFDAMP", 3, col[2], row3},
+        {LayoutItem::KNOB9, "DAMPING", 3, col[2], row3},
         {LayoutItem::KNOB9, "MIX", 7, col[3], row3},
         LayoutItem::createPresetLCDArea()
     };

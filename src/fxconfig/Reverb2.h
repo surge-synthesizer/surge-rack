@@ -15,7 +15,7 @@ namespace sst::surgext_rack::fx
  */
 template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
@@ -26,7 +26,7 @@ template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
         {LayoutItem::KNOB14, "SIZE", Reverb2Effect::rev2_room_size, FXLayoutHelper::bigCol0, row1},
         {LayoutItem::KNOB14, "DECAY", Reverb2Effect::rev2_decay_time, FXLayoutHelper::bigCol1, row1},
 
-        {LayoutItem::KNOB9, "DIFF", Reverb2Effect::rev2_diffusion, col[0], row2},
+        {LayoutItem::KNOB9, "DIFFUSE", Reverb2Effect::rev2_diffusion, col[0], row2},
         {LayoutItem::KNOB9, "MOD", Reverb2Effect::rev2_modulation, col[1], row2},
         {LayoutItem::KNOB9, "PRE DLY", Reverb2Effect::rev2_predelay, col[0], row3},
         {LayoutItem::KNOB9, "BUILDUP", Reverb2Effect::rev2_buildup, col[1], row3},

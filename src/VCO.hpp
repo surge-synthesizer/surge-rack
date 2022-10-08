@@ -6,62 +6,25 @@
 #include <cstring>
 #include <sst/filters/HalfRateFilter.h>
 
+#include "LayoutEngine.h"
+
 namespace sst::surgext_rack::vco
 {
 template <int oscType> struct VCO;
 
 template <int oscType> struct VCOConfig
 {
+    typedef sst::surgext_rack::layout::LayoutItem LayoutItem;
+    typedef std::vector<LayoutItem> layout_t;
+    static layout_t getLayout() {
+        return {
+        };
+    }
+
     static constexpr bool supportsUnison() { return false; }
     static constexpr int maximumUnison() { return 9; }
     static constexpr bool requiresWavetables() { return false; }
     static constexpr bool supportsAudioIn() { return false; }
-
-    struct KnobDef
-    {
-        enum Type
-        {
-            PARAM,
-            INPUT,
-            BLANK
-        } type{PARAM};
-        std::string name;
-        int colspan{1};
-        int id{-1};
-
-        bool hasDynamicLabel{false};
-        std::function<std::string(VCO<oscType> *m)> dynLabelFunction;
-
-        KnobDef(int kid, const std::string &nm) : type(PARAM), id(kid), name(nm) {}
-        KnobDef(Type t, int kid, const std::string &nm) : type(t), id(kid), name(nm) {}
-        KnobDef(Type t, int kid, const std::string &nm, int colspan)
-            : type(t), id(kid), name(nm), colspan(colspan)
-        {
-        }
-        KnobDef(Type t) : type(t) {}
-
-        static KnobDef withDynamicLabel(int param,
-                                        const std::function<std::string(VCO<oscType> *m)> &f)
-        {
-            auto k = KnobDef(PARAM);
-            k.id = param;
-            k.hasDynamicLabel = true;
-            k.dynLabelFunction = f;
-            return k;
-        }
-    };
-    typedef std::vector<KnobDef> knobs_t;
-    static knobs_t getKnobs() { return {}; }
-
-    typedef std::vector<std::pair<int, int>> lightOnTo_t;
-    static lightOnTo_t getLightsOnKnobsTo() { return {}; }
-    enum LightType
-    {
-        POWER,
-        ABSOLUTE,
-        EXTENDED
-    };
-    static LightType getLightTypeFor(int idx) { return POWER; }
 
     static int getMenuLightID() { return -1; }
     static std::string getMenuLightString() { return ""; }
@@ -461,8 +424,15 @@ template <int oscType> struct VCO : public modules::XTModule
 
             if constexpr (VCOConfig<oscType>::supportsAudioIn())
             {
-                halfbandIN.process_block_U2(audioInBuffer, audioInBuffer, storage->audio_in[0],
-                                            storage->audio_in[1], BLOCK_SIZE_OS);
+                if (inputs[AUDIO_INPUT].isConnected())
+                {
+                    halfbandIN.process_block_U2(audioInBuffer, audioInBuffer, storage->audio_in[0],
+                                                storage->audio_in[1], BLOCK_SIZE_OS);
+                }
+                else
+                {
+                    memset(storage->audio_in, 0, 2 * BLOCK_SIZE_OS * sizeof(float));
+                }
                 memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
             }
 

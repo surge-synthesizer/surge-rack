@@ -8,7 +8,7 @@
 
 namespace sst::surgext_rack::vco::ui
 {
-template <int oscType> struct VCOWidget : public widgets::XTModuleWidget, widgets::VCOVCFConstants
+template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
 {
     typedef VCO<oscType> M;
     VCOWidget(M *module);
@@ -488,7 +488,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             }
 
             nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 7.3 * 96 / 72);
+            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgText(vg, xs3d * 0.5, ys3d * 0.5, "3D", nullptr);
         }
@@ -801,15 +801,10 @@ template <int oscType>
 VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
 {
     setModule(module);
+    typedef layout::LayoutEngine<VCOWidget<oscType>, M::PITCH_0> engine_t;
+    engine_t::initializeModulationToBlank(this);
 
-    for (auto &uk : underKnobs)
-        uk = nullptr;
-
-    for (auto &ob : overlays)
-        for (auto &o : ob)
-            o = nullptr;
-
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews, rack::app::RACK_GRID_HEIGHT);
 
     std::string panelLabel = std::string(M::name) + " VCO";
     for (auto &q : panelLabel)
@@ -817,6 +812,16 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
 
     auto bg = new widgets::Background(box.size, panelLabel, "vco", "BlankVCO");
     addChild(bg);
+
+    float plotStartX = rack::mm2px(layout::LayoutConstants::VCOplotCX_MM -
+                                   layout::LayoutConstants::VCOplotW_MM * 0.5);
+    float plotStartY = rack::mm2px(layout::LayoutConstants::VCOplotCY_MM -
+                                   layout::LayoutConstants::VCOplotH_MM * 0.5);
+    float plotW = rack::mm2px(layout::LayoutConstants::VCOplotW_MM);
+    float plotH = rack::mm2px(layout::LayoutConstants::VCOplotH_MM -
+                              layout::LayoutConstants::VCOplotControlsH_MM);
+    float underPlotStartY = plotStartY + plotH;
+    float underPlotH = rack::mm2px(layout::LayoutConstants::VCOplotControlsH_MM);
 
     auto t = plotStartY;
     auto h = plotH;
@@ -901,188 +906,17 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
         addChild(plt);
     }
 
-    const auto &knobConfig = VCOConfig<oscType>::getKnobs();
-    auto idx = 0;
-    int row = 0, col = 0;
-    for (const auto &k : knobConfig)
+    const auto &layout = VCOConfig<oscType>::getLayout();
+    for (const auto &lay : layout)
     {
-        auto pid = k.id;
-        auto label = k.name;
-
-        if (k.type == VCOConfig<oscType>::KnobDef::Type::PARAM)
-        {
-            auto uxp = columnCenters_MM[col];
-            auto uyp = rowCenters_MM[row];
-            auto baseKnob = rack::createParamCentered<widgets::Knob9>(
-                rack::mm2px(rack::Vec(uxp, uyp)), module, pid);
-            addParam(baseKnob);
-            underKnobs[idx] = baseKnob;
-            for (int m = 0; m < M::n_mod_inputs; ++m)
-            {
-                auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
-                int id = M::modulatorIndexFor(pid, m);
-                auto *k = widgets::ModRingKnob::createCentered(rack::mm2px(rack::Vec(uxp, uyp)),
-                                                               radius, module, id);
-                overlays[idx][m] = k;
-                k->setVisible(false);
-                k->underlyerParamWidget = baseKnob;
-                baseKnob->modRings.insert(k);
-                addChild(k);
-            }
-
-            // This is a little inefficient but it's only at construct time so who cares
-            for (const auto &[lidx, lid] : VCOConfig<oscType>::getLightsOnKnobsTo())
-            {
-                if (lidx == idx)
-                {
-                    auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(
-                        rack::Vec(baseKnob->box.pos.x + baseKnob->box.size.x + 2.5,
-                                  baseKnob->box.pos.y + 3),
-                        module, M::ARBITRARY_SWITCH_0 + lid);
-                    auto t = VCOConfig<oscType>::getLightTypeFor(lid);
-                    if (t == VCOConfig<oscType>::LightType::ABSOLUTE)
-                    {
-                        light->type = widgets::ActivateKnobSwitch::ABSOLUTE;
-                    }
-                    if (t == VCOConfig<oscType>::LightType::EXTENDED)
-                    {
-                        light->type = widgets::ActivateKnobSwitch::EXTENDED;
-                    }
-                    addParam(light);
-                }
-            }
-        }
-        else if (k.type == VCOConfig<oscType>::KnobDef::Type::INPUT)
-        {
-            auto uxp = columnCenters_MM[col];
-            auto uyp = rowCenters_MM[row] + verticalPortOffset_MM;
-            addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)),
-                                                              module, k.id));
-        }
-
-        if (k.type != VCOConfig<oscType>::KnobDef::Type::BLANK)
-        {
-            if (k.colspan == 1)
-            {
-                if (k.hasDynamicLabel && module)
-                {
-                    auto lab = makeLabel(row, col, k.name);
-                    lab->hasDynamicLabel = true;
-                    lab->module = module;
-                    lab->dynamicLabel = [k](modules::XTModule *m) {
-                        auto vcm = static_cast<VCO<oscType> *>(m);
-                        return k.dynLabelFunction(vcm);
-                    };
-                    addChild(lab);
-                }
-                else
-                {
-                    addChild(makeLabel(row, col, k.name));
-                }
-            }
-            else if (k.colspan == 2)
-            {
-                auto cx = (columnCenters_MM[col] + columnCenters_MM[col + 1]) * 0.5;
-                auto bl = labelBaselines_MM[row];
-
-                auto boxx0 = cx - columnWidth_MM;
-                auto boxy0 = bl - 5;
-
-                auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-                auto s0 = rack::mm2px(rack::Vec(columnWidth_MM * 2, 5));
-
-                auto lab = widgets::Label::createWithBaselineBox(p0, s0, label);
-                addChild(lab);
-            }
-        }
-        idx++;
-        col++;
-        if (idx == 4)
-        {
-            col = 0;
-            row++;
-        }
+        engine_t::layoutItem(this, lay, panelLabel);
     }
 
-    for (int i = 0; i < M::n_mod_inputs; ++i)
-    {
-        addChild(makeModLabel(i));
-    }
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::OSC_MOD_INPUT);
 
-    col = 0;
-    row = 3;
+    engine_t::createInputOutputPorts(this, M::PITCH_CV, M::RETRIGGER, M::OUTPUT_L, M::OUTPUT_R);
 
-    for (int i = 0; i < M::n_mod_inputs; ++i)
-    {
-        auto uxp = columnCenters_MM[i];
-        auto uyp = rowCenters_MM[2];
-
-        auto *k =
-            rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
-        toggles[i] = k;
-        k->onToggle = [this, toggleIdx = i](bool isOn) {
-            for (const auto &t : toggles)
-                if (t)
-                    t->setState(false);
-            for (const auto &ob : overlays)
-                for (const auto &o : ob)
-                    if (o)
-                        o->setVisible(false);
-            if (isOn)
-            {
-                toggles[toggleIdx]->setState(true);
-                for (const auto &ob : overlays)
-                    if (ob[toggleIdx])
-                    {
-                        ob[toggleIdx]->setVisible(true);
-                        ob[toggleIdx]->bdw->dirty = true;
-                    }
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(true);
-            }
-            else
-            {
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(false);
-            }
-        };
-
-        addChild(k);
-
-        uyp = rowCenters_MM[3];
-
-        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module,
-                                                          M::OSC_MOD_INPUT + i));
-    }
-
-    col = 0;
-    for (auto p : {M::PITCH_CV, M::RETRIGGER})
-    {
-        auto yp = rowCenters_MM[4];
-        auto xp = columnCenters_MM[col];
-        addInput(
-            rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col++;
-    }
-
-    for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
-    {
-        auto yp = rowCenters_MM[4];
-        auto xp = columnCenters_MM[col];
-        addOutput(
-            rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col++;
-    }
-
-    col = 0;
-    for (const std::string &s :
-         {std::string("V/OCT"), VCOConfig<oscType>::retriggerLabel(), {"LEFT"}, {"RIGHT"}})
-    {
-        addChild(makeIORowLabel(col, s, col < 2));
-        col++;
-    }
+    engine_t ::createLeftRightInputLabels(this, "V/OCT", VCOConfig<oscType>::retriggerLabel());
 
     resetStyleCouplingToModule();
 }

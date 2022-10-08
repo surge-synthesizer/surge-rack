@@ -9,7 +9,8 @@
 
 #include "DebugHelpers.h"
 #include "FxPresetAndClipboardManager.h"
-#include <unordered_map>
+
+#include "LayoutEngine.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -17,109 +18,7 @@ template <int fxType> struct FX;
 
 template <int fxType> struct FXConfig
 {
-    struct LayoutItem
-    {
-        // order matters a bit on this enum. knobs contiguous pls
-        enum Type
-        {
-            KNOB9,
-            KNOB12,
-            KNOB14,
-            KNOB16,
-            PORT,
-            MOMENTARY_PARAM,
-            TOGGLE_PARAM,
-            GROUP_LABEL,
-            KNOB_SPAN_LABEL,
-            LCD_BG,
-            LCD_MENU_ITEM,
-            POWER_LIGHT,
-            EXTEND_LIGHT,
-            ERROR
-        } type{ERROR};
-        std::string label{"ERR"};
-        int parId{-1};
-        float xcmm{-1}, ycmm{-1};
-        float spanmm{0}; // for group label only
-
-        static LayoutItem createLCDArea(float ht)
-        {
-            auto res = LayoutItem();
-            res.type = LCD_BG;
-            res.ycmm = ht;
-            return res;
-        }
-
-        static LayoutItem createPresetLCDArea()
-        {
-            return createLCDArea(14.9);
-        }
-
-        static LayoutItem createPresetPlusOneArea()
-        {
-            // This 19 should match the 19 below
-            return createLCDArea(19).withExtra("CENTER_RULE", true);
-        }
-
-        static LayoutItem createPresetPlusTwoArea()
-        {
-            // This 19 should match the 19 below
-            return createLCDArea(19).withExtra("CENTER_RULE", true)
-                .withExtra("SPLIT_LOWER", true);
-        }
-
-        static LayoutItem createSingleMenuItem(const std::string &lab, int param)
-        {
-            // This 19 should match the 19 above
-            return {LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
-        }
-
-        static LayoutItem createLeftMenuItem(const std::string &lab, int param)
-        {
-            // This 19 should match the 19 above
-            LayoutItem res{LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
-            return res.withExtra("SIDE", 1);
-        }
-
-        static LayoutItem createRightMenuItem(const std::string &lab, int param)
-        {
-            // This 19 should match the 19 above
-            LayoutItem res{LayoutItem::LCD_MENU_ITEM, lab, param, 0, 19};
-            return res.withExtra("SIDE", -1);
-        }
-
-        static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm,
-                                           float span)
-        {
-            auto res = LayoutItem();
-            res.label = label;
-            res.type = GROUP_LABEL;
-            res.xcmm = xcmm;
-            res.ycmm = ycmm;
-            res.spanmm = span;
-            return res;
-        }
-
-        static LayoutItem createKnobSpanLabel(const std::string &label, float xcmm, float ycmm,
-                                           float span)
-        {
-            auto res = LayoutItem();
-            res.label = label;
-            res.type = KNOB_SPAN_LABEL;
-            res.xcmm = xcmm;
-            res.ycmm = ycmm;
-            res.spanmm = span;
-            return res;
-        }
-
-
-        std::unordered_map<std::string, float> extras{};
-        LayoutItem& withExtra(const std::string &s, float f)
-        {
-            extras[s] = f;
-            return *this;
-        }
-    };
+    typedef sst::surgext_rack::layout::LayoutItem LayoutItem;
     typedef std::vector<LayoutItem> layout_t;
     static layout_t getLayout() {
         return {

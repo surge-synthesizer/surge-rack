@@ -19,7 +19,7 @@ template <> constexpr int FXConfig<fxt_chorus4>::specificParamCount() { return 2
 
 template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
 
     const auto outputRow = FXLayoutHelper::rowStart_MM;
     const auto delayRow = outputRow - FXLayoutHelper::labeledGap_MM;
