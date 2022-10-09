@@ -271,8 +271,10 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 30);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "WaveShaper", nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 2, "Wave", nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 3, "Shaper", nullptr);
             return;
         }
 

@@ -171,6 +171,10 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
 
         return false;
     }
+
+    bool hasPresets() override {
+        return module != nullptr;
+    }
 };
 
 template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)

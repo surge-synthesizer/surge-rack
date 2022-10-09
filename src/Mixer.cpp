@@ -28,7 +28,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
                          rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "Mixer", "other", "TotalBlank");
+    auto bg = new widgets::Background(box.size, "Mixer", "other", "Mixer");
     addChild(bg);
 
     std::vector<std::string> labels{"OSC1", "OSC2", "OSC3",  "NOISE",
@@ -36,7 +36,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     int kr{0}, kc{0};
     for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
     {
-        auto yc = layout::LayoutConstants::inputRowCenter_MM - 70 - (1 - kr) * 16;
+        auto yc = layout::LayoutConstants::inputRowCenter_MM - 58 - (1 - kr) * 18;
         auto xc = layout::LayoutConstants::columnCenters_MM[kc];
 
         auto lay = layout::LayoutItem();
@@ -57,7 +57,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     }
 
     auto solcd = widgets::LCDBackground::posy_MM;
-    auto eolcd = layout::LayoutConstants::inputRowCenter_MM - 70 - 16 - 7;
+    auto eolcd = layout::LayoutConstants::inputRowCenter_MM - 58 - 18 - 8;
     auto padlcd = 1;
     auto lcd = widgets::LCDBackground::createWithHeight(eolcd);
     if (!module)
@@ -76,31 +76,37 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
         auto pm = M::OSC1_MUTE + i;
         auto ps = M::OSC1_SOLO + i;
         auto sxm = widgets::LCDBackground::posx_MM + padlcd;
-        auto wm = rack::app::RACK_GRID_WIDTH * 12 * 25.4 / 75 - 2 * sxm - 2 * padlcd;
+        auto wm = rack::app::RACK_GRID_WIDTH * 12 * 25.4 / 75 - 2 * sxm;
 
         auto dx = wm / 6.0;
 
         auto hm = eolcd - solcd - 2 * padlcd;
-        auto dy = hm / 3.0;
+        auto dy = hm / 5.0;
         auto y0 = solcd + padlcd;
 
-        auto sz = rack::mm2px(rack::Vec(dx, dy + 2));
-        auto pmute = rack::mm2px(rack::Vec(sxm + i * dx, y0 + dy - 1));
+        auto sz = rack::mm2px(rack::Vec(dx - 0.5, dy + 1));
+        auto pLab = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 - 2));
+        addChild(widgets::Label::createWithBaselineBox(pLab, sz, lab,
+                                                       layout::LayoutConstants::labelSize_pt,
+                                                       style::XTStyle::PLOT_CONTROL_TEXT));
+
+        auto pmute = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + dy - 1));
         addParam(widgets::PlotAreaSwitch::create(pmute, sz, "M", module, pm));
 
-        auto psolo = rack::mm2px(rack::Vec(sxm + i * dx, y0 + 2 * dy - 1));
+        auto psolo = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 2 * dy - 1));
         addParam(widgets::PlotAreaSwitch::create(psolo, sz, "S", module, ps));
     }
 
-    auto ydiff = layout::LayoutConstants::modulationRowCenters_MM[1] -
-                 layout::LayoutConstants::inputRowCenter_MM + 40;
-    engine_t::addModulationSection(this, M::n_mod_inputs, M::MIXER_MOD_INPUT, -ydiff);
+    auto portSpacing = layout::LayoutConstants::inputRowCenter_MM -
+                       layout::LayoutConstants::modulationRowCenters_MM[1];
+
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::MIXER_MOD_INPUT, -portSpacing);
 
     kr = 0;
     kc = 0;
     for (int i = M::INPUT_OSC1_L; i <= M::INPUT_OSC3_R; ++i)
     {
-        auto yc = layout::LayoutConstants::inputRowCenter_MM - (1 - kr) * 20;
+        auto yc = layout::LayoutConstants::inputRowCenter_MM - (1 - kr) * portSpacing;
         auto xc = layout::LayoutConstants::columnCenters_MM[kc];
 
         auto lay = layout::LayoutItem();
@@ -113,10 +119,11 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 
         if (kc % 2 == 0)
         {
+            auto bl = layout::LayoutConstants::inputLabelBaseline_MM - (1 - kr) * portSpacing;
             auto ll =
                 std::string("L - OSC") + std::to_string((i - M::INPUT_OSC1_L) / 2 + 1) + " - R";
-            auto laylab = layout::LayoutItem::createKnobSpanLabel(ll, xc, yc - 16, 2);
-            engine_t::layoutItem(this, laylab, "Mixer");
+            auto laylab = engine_t::makeSpanLabelAt(bl, kc, ll, 2);
+            this->addChild(laylab);
         }
 
         kc++;
@@ -135,6 +142,11 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     xp = layout::LayoutConstants::columnCenters_MM[3];
     addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
                                                         M::OUTPUT_R));
+
+    auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
+    auto laylab =
+        engine_t::makeSpanLabelAt(bl, 2, "L - OUT - R", 2, style::XTStyle::TEXT_LABEL_OUTPUT);
+    this->addChild(laylab);
 
     resetStyleCouplingToModule();
 }
