@@ -172,9 +172,7 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         return false;
     }
 
-    bool hasPresets() override {
-        return module != nullptr;
-    }
+    bool hasPresets() override { return module != nullptr; }
 };
 
 template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
@@ -196,6 +194,26 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
     for (const auto &lay : FXConfig<fxType>::getLayout())
     {
         engine_t::layoutItem(this, lay, panelLabel);
+    }
+
+    // Sometimes you just don't need to generalize
+    if constexpr (fxType == fxt_reverb)
+    {
+        auto xc = box.size.x / 2;
+        auto yc = rack::mm2px(fx::FXLayoutHelper::rowStart_MM - fx::FXLayoutHelper::labeledGap_MM -
+                              fx::FXLayoutHelper::knobGap16_MM);
+        auto fl =
+            widgets::ThereAreFourLights<>::createCentered({xc, yc}, module, M::FX_PARAM_0 + 1);
+        addParam(fl);
+
+        auto halfSize = (14 - 9) * 0.5f;
+        auto boxx0 = xc - rack::mm2px(layout::LayoutConstants::columnWidth_MM * 0.5 + halfSize);
+        auto boxy0 = yc + rack::mm2px(8.573 + halfSize - 5);
+
+        auto p0 = rack::Vec(boxx0, boxy0);
+        auto s0 = rack::mm2px(rack::Vec(layout::LayoutConstants::columnWidth_MM + halfSize * 2, 5));
+        auto lab = widgets::Label::createWithBaselineBox(p0, s0, "SHAPE");
+        addChild(lab);
     }
 
     auto wts = FXPresetSelector<fxType>::create(module);

@@ -13,6 +13,7 @@ namespace sst::surgext_rack::fx
 /*
  * REVERB2
  */
+template <> constexpr int FXConfig<fxt_reverb2>::numParams() { return 10; }
 template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
 {
     const auto &col = layout::LayoutConstants::columnCenters_MM;

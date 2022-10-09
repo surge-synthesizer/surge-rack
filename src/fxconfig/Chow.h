@@ -9,6 +9,8 @@
 
 namespace sst::surgext_rack::fx
 {
+
+template <> constexpr int FXConfig<fxt_chow>::numParams() { return 4; }
 template <> constexpr int FXConfig<fxt_chow>::extraInputs() { return 1; }
 template <> constexpr int FXConfig<fxt_chow>::specificParamCount() { return 1; }
 

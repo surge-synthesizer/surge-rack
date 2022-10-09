@@ -9,6 +9,8 @@
 
 namespace sst::surgext_rack::fx
 {
+
+template <> constexpr int FXConfig<fxt_exciter>::numParams() { return 5; }
 template <> FXConfig<fxt_exciter>::layout_t FXConfig<fxt_exciter>::getLayout()
 {
     const auto &col = layout::LayoutConstants::columnCenters_MM;

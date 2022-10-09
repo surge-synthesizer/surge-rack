@@ -1467,6 +1467,108 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
     }
     void onStyleChanged() override { bdw->dirty = true; }
 };
+
+template <int nLights = 4> struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdwRings{nullptr}, *bdwLight{nullptr};
+
+    static constexpr float ring_MM{2.6}, pad_MM{1.3};
+
+    static ThereAreFourLights<nLights> *createCentered(rack::Vec pos, rack::Module *module,
+                                                       int paramId)
+    {
+        auto *res = rack::createWidget<ThereAreFourLights<nLights>>(pos);
+
+        res->box.size.x = rack::mm2px(ring_MM);
+        res->box.size.y = rack::mm2px(ring_MM) * nLights + rack::mm2px(pad_MM) * (nLights - 1);
+        res->box.pos.x = pos.x - res->box.size.x / 2.f;
+        res->box.pos.y = pos.y - res->box.size.y / 2.f;
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+
+        res->bdwLight = new BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawLight(vg); });
+        res->addChild(res->bdwLight);
+
+        res->bdwRings = new BufferedDrawFunctionWidget(
+            rack::Vec(0, 0), res->box.size, [res](NVGcontext *vg) { res->drawRings(vg); });
+        res->addChild(res->bdwRings);
+        return res;
+    }
+
+    void drawRings(NVGcontext *vg)
+    {
+        auto ringpx = rack::mm2px(ring_MM);
+        auto padpx = rack::mm2px(pad_MM);
+        for (int i = 0; i < nLights; ++i)
+        {
+            auto y0 = i * (ringpx + padpx);
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
+            nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5);
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
+        }
+    }
+    void drawLight(NVGcontext *vg)
+    {
+        if (!getParamQuantity()) return;
+        auto ringpx = rack::mm2px(ring_MM);
+        auto padpx = rack::mm2px(pad_MM);
+
+        auto pq = nLights - 1 - Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights-1);
+        nvgBeginPath(vg);
+        auto y0 = pq * (ringpx + padpx);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
+        nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5);
+        nvgFill(vg);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+    }
+
+    void onChange(const ChangeEvent &e) override {
+        bdwLight->dirty = true;
+        bdwRings->dirty = true;
+        rack::app::Knob::onChange(e);
+    }
+
+
+    void onStyleChanged() override {
+        bdwLight->dirty = true;
+        bdwRings->dirty = true;
+    }
+
+    float buttonY{-1};
+    void onButton(const ButtonEvent &e) override {
+        buttonY = e.pos.y;
+        if (e.action == GLFW_RELEASE)
+            buttonY = -1;
+        SliderKnob::onButton(e);
+    }
+    void onAction(const ActionEvent &e) override
+    {
+        auto ringpx = rack::mm2px(ring_MM);
+        auto padpx = rack::mm2px(pad_MM);
+        for (int i = 0; i < nLights; ++i)
+        {
+            auto y0 = i * (ringpx + padpx);
+
+            if (buttonY >= y0 && buttonY <= y0 + ringpx)
+            {
+                if (getParamQuantity())
+                {
+                    getParamQuantity()->setValue(Parameter::intScaledToFloat(nLights - 1 - i, nLights - 1));
+                }
+            }
+        }
+        Knob::onAction(e);
+    }
+};
+
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H

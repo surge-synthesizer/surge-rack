@@ -15,6 +15,7 @@ namespace sst::surgext_rack::fx
  * - uses a clock but otherwise pretty basic
  */
 
+template <> constexpr int FXConfig<fxt_flanger>::numParams() { return 11; }
 template <> constexpr bool FXConfig<fxt_flanger>::usesClock() { return true; }
 template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
 {

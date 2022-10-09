@@ -14,6 +14,8 @@ namespace sst::surgext_rack::fx
  * One extra input for a clock
  * Two extra params for power on the lo and hi cut
  */
+
+template <> constexpr int FXConfig<fxt_chorus4>::numParams() { return 8; }
 template <> constexpr bool FXConfig<fxt_chorus4>::usesClock() { return true; }
 template <> constexpr int FXConfig<fxt_chorus4>::specificParamCount() { return 2; }
 
