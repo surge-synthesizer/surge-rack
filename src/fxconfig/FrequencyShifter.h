@@ -12,8 +12,8 @@ namespace sst::surgext_rack::fx
 template <> constexpr int FXConfig<fxt_freqshift>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
-    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto bottomRow = FXLayoutHelper::rowStart_MM;
     const auto driveRow = bottomRow - 34;
@@ -29,7 +29,7 @@ template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout
         {LayoutItem::PORT, "CLOCK", FX<fxt_delay>::INPUT_CLOCK,
             col[0], bottomRow },
         {LayoutItem::KNOB9, "TIME", FrequencyShifterEffect::freq_delay, col[1], bottomRow},
-        {LayoutItem::KNOB9, "F/B", FrequencyShifterEffect::freq_feedback, col[2], bottomRow},
+        {LayoutItem::KNOB9, "FEEDBACK", FrequencyShifterEffect::freq_feedback, col[2], bottomRow},
         LayoutItem::createGrouplabel("DELAY", col[0], bottomRow, 3),
         {LayoutItem::KNOB9, "MIX", FrequencyShifterEffect::freq_mix, col[3], bottomRow},
 

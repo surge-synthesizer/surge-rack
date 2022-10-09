@@ -18,7 +18,7 @@ namespace sst::surgext_rack::fx
 template <> constexpr int FXConfig<fxt_resonator>::specificParamCount() { return 3; }
 template <> FXConfig<fxt_resonator>::layout_t FXConfig<fxt_resonator>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
@@ -55,7 +55,7 @@ template <> FXConfig<fxt_resonator>::layout_t FXConfig<fxt_resonator>::getLayout
 
         LayoutItem::createPresetPlusOneArea(),
 
-        {LayoutItem::LCD_MENU_ITEM, "MODE", sfx_t::resonator_mode, 0, endOfPanel},
+        {LayoutItem::LCD_MENU_ITEM_SURGE_PARAM, "MODE", sfx_t::resonator_mode, 0, endOfPanel},
     };
 
     // clang-format on

@@ -87,7 +87,7 @@ struct VCF : public modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         // FIXME attach formatters here
-        configParam<modules::VOctParamQuantity<60>>(FREQUENCY, -5, 5, 0, "Frequency");
+        configParam<modules::VOctParamQuantity<60>>(FREQUENCY, -4, 6, 0, "Frequency");
         configParam(RESONANCE, 0, 1, sqrt(2) * 0.5, "Resonance", "%", 0.f, 100.f);
         configParam<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1);
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);

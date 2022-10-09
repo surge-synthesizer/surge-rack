@@ -17,8 +17,8 @@ namespace sst::surgext_rack::fx
 template <> constexpr int FXConfig<fxt_distortion>::specificParamCount() { return 2; }
 template <> FXConfig<fxt_distortion>::layout_t FXConfig<fxt_distortion>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
-    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;

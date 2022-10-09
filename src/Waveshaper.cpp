@@ -7,10 +7,11 @@
 #include "XTModuleWidget.hpp"
 #include "XTWidgets.h"
 #include "dsp/DSPExternalAdapterUtils.h"
+#include "LayoutEngine.h"
 
 namespace sst::surgext_rack::waveshaper::ui
 {
-struct WaveshaperWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
+struct WaveshaperWidget : widgets::XTModuleWidget
 {
     typedef waveshaper::Waveshaper M;
     WaveshaperWidget(M *module);
@@ -401,11 +402,26 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
 {
     setModule(module);
 
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    typedef layout::LayoutEngine<WaveshaperWidget, M::DRIVE> engine_t;
+    engine_t::initializeModulationToBlank(this);
+
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews, rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "WAVESHAPER", "vco", "BlankVCO");
     addChild(bg);
 
     int idx = 0;
+
+
+    float plotStartX = rack::mm2px(layout::LayoutConstants::VCOplotCX_MM -
+                                   layout::LayoutConstants::VCOplotW_MM * 0.5);
+    float plotStartY = rack::mm2px(layout::LayoutConstants::VCOplotCY_MM -
+                                   layout::LayoutConstants::VCOplotH_MM * 0.5);
+    float plotW = rack::mm2px(layout::LayoutConstants::VCOplotW_MM);
+    float plotH = rack::mm2px(layout::LayoutConstants::VCOplotH_MM -
+                              layout::LayoutConstants::VCOplotControlsH_MM);
+    float underPlotStartY = plotStartY + plotH;
+    float underPlotH = rack::mm2px(layout::LayoutConstants::VCOplotControlsH_MM);
+
 
     auto fivemm = rack::mm2px(5);
     auto halfmm = rack::mm2px(0.5);
@@ -421,146 +437,26 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
                                             rack::Vec(plotW, plotH + underPlotH), module);
     addChild(fpw);
 
-    for (const auto &[row, col, pid, label] :
-         {std::make_tuple(0, 0, M::DRIVE, "DRIVE"), std::make_tuple(0, 2, M::BIAS, "BIAS"),
-          std::make_tuple(0, 3, M::OUT_GAIN, "GAIN"), std::make_tuple(1, 2, M::LOCUT, "LOCUT"),
-          std::make_tuple(1, 3, M::HICUT, "HICUT")})
+
+    typedef layout::LayoutItem lay_t;
+    for (const auto &lay : {lay_t::createVCFWSBigKnob(M::DRIVE, "DRIVE"),
+                            lay_t::createVCOKnob(M::BIAS, "BIAS", 0, 2),
+                            lay_t::createVCOKnob(M::OUT_GAIN, "GAIN", 0, 3),
+                            lay_t::createVCOKnob(M::LOCUT, "", 1, 2),
+                            lay_t::createVCOKnob(M::HICUT, "", 1, 3),
+                            lay_t::createVCOSpanLabel("LO - CUT - HI", 1, 2, 2),
+                            lay_t::createVCOLight(layout::LayoutItem::POWER_LIGHT, M::LOCUT_ENABLED, 1, 2),
+                            lay_t::createVCOLight(layout::LayoutItem::POWER_LIGHT, M::HICUT_ENABLED, 1, 3),
+         })
     {
-        auto uxp = columnCenters_MM[col];
-        auto uyp = rowCenters_MM[row];
-
-        widgets::KnobN *baseKnob{nullptr};
-        if (row == 0 && col == 0)
-        {
-            uxp = (columnCenters_MM[0] + columnCenters_MM[1]) * 0.5f;
-            uyp = (rowCenters_MM[0] + rowCenters_MM[1]) * 0.5f;
-
-            auto boxx0 = uxp - columnWidth_MM;
-            auto boxy0 = uyp + 8;
-
-            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-            auto s0 = rack::mm2px(rack::Vec(columnWidth_MM * 2, 5));
-
-            auto lab = widgets::Label::createWithBaselineBox(p0, s0, label);
-            addChild(lab);
-            baseKnob = rack::createParamCentered<widgets::Knob16>(rack::mm2px(rack::Vec(uxp, uyp)),
-                                                                  module, pid);
-        }
-        else
-        {
-            addChild(makeLabel(row, col, label));
-            baseKnob = rack::createParamCentered<widgets::Knob9>(rack::mm2px(rack::Vec(uxp, uyp)),
-                                                                 module, pid);
-        }
-        addParam(baseKnob);
-        underKnobs[idx] = baseKnob;
-        for (int m = 0; m < M::n_mod_inputs; ++m)
-        {
-            auto radius = rack::mm2px(baseKnob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
-            int id = M::modulatorIndexFor(pid, m);
-            auto *k = widgets::ModRingKnob::createCentered(rack::mm2px(rack::Vec(uxp, uyp)), radius,
-                                                           module, id);
-            overlays[idx][m] = k;
-            k->setVisible(false);
-            k->underlyerParamWidget = baseKnob;
-            baseKnob->modRings.insert(k);
-            addChild(k);
-        }
-
-        if (row == 1)
-        {
-            auto ulx = uxp + (col == 2 ? -1 : 1) * 5.5;
-            auto uly = uyp - 5.5;
-
-            auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(rack::mm2px(rack::Vec(ulx, uly)),
-                                                                                module,
-                                                                                col == 2 ?
-                                    Waveshaper::LOCUT_ENABLED : Waveshaper::HICUT_ENABLED);
-            addChild(light);
-
-        }
-
-        idx++;
+        engine_t::layoutItem(this, lay, "VCF");
     }
 
-    int col{0};
-    for (int i = 0; i < M::n_mod_inputs; ++i)
-    {
-        addChild(makeModLabel(i));
-    }
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::WSHP_MOD_INPUT);
 
-    col = 0;
+    engine_t::createInputOutputPorts(this, M::INPUT_L, M::INPUT_R, M::OUTPUT_L, M::OUTPUT_R);
 
-    for (int i = 0; i < M::n_mod_inputs; ++i)
-    {
-        auto uxp = columnCenters_MM[i];
-        auto uyp = rowCenters_MM[2];
-
-        auto *k =
-            rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
-        toggles[i] = k;
-        k->onToggle = [this, toggleIdx = i](bool isOn) {
-            for (const auto &t : toggles)
-                if (t)
-                    t->setState(false);
-            for (const auto &ob : overlays)
-                for (const auto &o : ob)
-                    if (o)
-                        o->setVisible(false);
-            if (isOn)
-            {
-                toggles[toggleIdx]->setState(true);
-                for (const auto &ob : overlays)
-                    if (ob[toggleIdx])
-                    {
-                        ob[toggleIdx]->setVisible(true);
-                        ob[toggleIdx]->bdw->dirty = true;
-                    }
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(true);
-            }
-            else
-            {
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(false);
-            }
-        };
-
-        addChild(k);
-
-        uyp = rowCenters_MM[3];
-
-        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module,
-                                                          M::WSHP_MOD_INPUT + i));
-    }
-
-    col = 0;
-    for (auto p : {M::INPUT_L, M::INPUT_R})
-    {
-        auto yp = rowCenters_MM[4];
-        auto xp = columnCenters_MM[col];
-        addInput(
-            rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col++;
-    }
-
-    for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
-    {
-        auto yp = rowCenters_MM[4];
-        auto xp = columnCenters_MM[col];
-        addOutput(
-            rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col++;
-    }
-
-    col = 0;
-    for (const std::string &s : {"LEFT", "RIGHT", "LEFT", "RIGHT"})
-    {
-        addChild(makeIORowLabel(col, s, col < 2));
-        col++;
-    }
+    engine_t::createLeftRightInputLabels(this);
 
     resetStyleCouplingToModule();
 }

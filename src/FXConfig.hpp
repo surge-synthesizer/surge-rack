@@ -16,10 +16,8 @@ struct FXLayoutHelper
     static constexpr float unlabeledGap_MM = 16;
     static constexpr float labeledGap_MM = 20;
 
-    static constexpr float bigCol0 =
-        widgets::StandardWidthWithModulationConstants::columnCenters_MM[1] - 7;
-    static constexpr float bigCol1 =
-        widgets::StandardWidthWithModulationConstants::columnCenters_MM[2] + 7;
+    static constexpr float bigCol0 = layout::LayoutConstants::columnCenters_MM[1] - 7;
+    static constexpr float bigCol1 = layout::LayoutConstants::columnCenters_MM[2] + 7;
 
     static constexpr float knobGap16_MM = unlabeledGap_MM - 9 + 18;
 

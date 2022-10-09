@@ -6,10 +6,11 @@
 #include "SurgeXT.hpp"
 #include "XTModuleWidget.hpp"
 #include "XTWidgets.h"
+#include "LayoutEngine.h"
 
 namespace sst::surgext_rack::delay::ui
 {
-struct DelayWidget : widgets::XTModuleWidget, widgets::StandardWidthWithModulationConstants
+struct DelayWidget : widgets::XTModuleWidget
 {
     typedef delay::Delay M;
     DelayWidget(M *module);
@@ -39,185 +40,58 @@ struct DelayWidget : widgets::XTModuleWidget, widgets::StandardWidthWithModulati
 DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
+    typedef layout::LayoutEngine<DelayWidget, M::TIME_L, M::INPUT_CLOCK> engine_t;
+    engine_t::initializeModulationToBlank(this);
 
-    for (auto &uk : underKnobs)
-        uk = nullptr;
-
-    for (auto &ob : overlays)
-        for (auto &o : ob)
-            o = nullptr;
-
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
+                         rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "Delay", "fx", "BlankNoDisplay");
     addChild(bg);
 
-    int row{0}, col{0};
-    std::map<int, std::string> nm;
-    nm[M::TIME_L] = "LEFT";
-    nm[M::TIME_R] = "RIGHT";
-    nm[M::TIME_S] = "SENS";
-    nm[M::FEEDBACK] = "FBACK";
-    nm[M::CROSSFEED] = "CROSSFD";
-    nm[M::LOCUT] = "LOCUT";
-    nm[M::HICUT] = "HICUT";
-    nm[M::MODRATE] = "MRATE";
-    nm[M::MODDEPTH] = "MDEPT";
-    nm[M::MIX] = "MIX";
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
 
-    for (int p = M::TIME_L; p <= M::MIX; ++p)
+    const auto row1 = layout::LayoutConstants::rowStart_MM;
+    const auto row2 = row1 - layout::LayoutConstants::unlabeledGap_MM;
+    const auto row2S = row2 - layout::LayoutConstants::unlabeledGap_MM;
+    const auto bigRow = row2 - layout::LayoutConstants::knobGap16_MM - 3;
+
+    const auto endOfPanel = bigRow - 8;
+
+    typedef layout::LayoutItem li_t;
+    // fixme use the enums
+    // clang-format off
+    std::vector<li_t> layout = {
+        {li_t::KNOB14, "LEFT", M::TIME_L, layout::LayoutConstants::bigCol0-2, bigRow},
+        {li_t::KNOB14, "RIGHT", M::TIME_R, layout::LayoutConstants::bigCol1+2, bigRow},
+        {li_t::KNOB9, "FINE", M::TIME_S, (col[2]+col[1]) * 0.5f, row2S},
+
+        {li_t::KNOB9, "FEEDBACK", M::FEEDBACK, col[0], row2},
+        {li_t::KNOB9, "XFEED", M::CROSSFEED, col[1], row2},
+
+        {li_t::KNOB9, "", M::LOCUT, col[2], row2},
+        {li_t::KNOB9, "", M::HICUT, col[3], row2},
+        li_t::createKnobSpanLabel("LO - CUT - HI", col[2], row2, 2),
+
+        {li_t::PORT, "CLOCK", M::INPUT_CLOCK, col[0], row1},
+
+        {li_t::KNOB9, "", M::MODRATE, col[1], row1},
+        {li_t::KNOB9, "", M::MODDEPTH, col[2], row1},
+        li_t::createKnobSpanLabel("RATE - MOD - DEPTH", col[1], row1, 2),
+
+        {li_t::KNOB9, "MIX", M::MIX, col[3], row1},
+
+        li_t::createPresetLCDArea(),
+    };
+    // clang-format on
+
+    for (const auto &lay : layout)
     {
-        if (p == M::FEEDBACK)
-        {
-            row = 1;
-            col = 0;
-        }
-        if (p == M::MODRATE)
-        {
-            row = 2;
-            col = 1;
-        }
-        auto xcmm = columnCenters_MM[col];
-        auto ycmm = 71 - (2 - row) * 16;
-        auto pos = rack::mm2px(rack::Vec(xcmm, ycmm));
-        auto knob = rack::createParamCentered<widgets::Knob9>(pos, module, p);
-        if (knob)
-        {
-            addChild(knob);
-            auto boxx0 = xcmm - columnWidth_MM * 0.5;
-            auto boxy0 = ycmm + 4.073;
-
-            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-            auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
-            auto lab = widgets::Label::createWithBaselineBox(p0, s0, nm[p]);
-            addChild(lab);
-
-            underKnobs[p] = knob;
-
-            for (int m = 0; m < M::n_mod_inputs; ++m)
-            {
-                auto radius = rack::mm2px(knob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
-                int id = M::modulatorIndexFor(p, m);
-                auto *k = widgets::ModRingKnob::createCentered(pos, radius, module, id);
-                overlays[p][m] = k;
-                k->setVisible(false);
-                k->underlyerParamWidget = knob;
-                knob->modRings.insert(k);
-                addChild(k);
-            }
-        }
-        col++;
-        if (col == 4)
-        {
-            col = 0;
-            row++;
-        }
+        engine_t::layoutItem(this, lay, "Delay");
     }
 
-    {
-        auto xcmm = columnCenters_MM[0];
-        auto ycmm = 71 - (2 - 2) * 16;
-        auto pos = rack::mm2px(rack::Vec(xcmm, ycmm));
-
-        auto port = rack::createInputCentered<widgets::Port>(
-            rack::mm2px(rack::Vec(xcmm, ycmm + verticalPortOffset_MM)), module, M::INPUT_CLOCK);
-        addChild(port);
-
-        auto boxx0 = xcmm - columnWidth_MM * 0.5;
-        auto boxy0 = ycmm + 8.573 - 5;
-
-        auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-        auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
-        auto lab = widgets::Label::createWithBaselineBox(p0, s0, "CLOCK");
-
-        lab->hasDynamicLabel = true;
-        lab->module = module;
-        lab->dynamicLabel = [](modules::XTModule *m) -> std::string {
-            if (!m)
-                return "CLOCK";
-            auto fxm = static_cast<Delay *>(m);
-            typedef modules::ClockProcessor<Delay> cp_t;
-
-            if (fxm->clockProc.clockStyle == cp_t::QUARTER_NOTE)
-            {
-                return "CLOCK";
-            }
-            else
-            {
-                return "BPM";
-            }
-        };
-
-        addChild(lab);
-    }
-
-    for (int i = 0; i < M::n_mod_inputs; ++i)
-    {
-        auto uxp = columnCenters_MM[i];
-        auto uyp = modulationRowCenters_MM[0];
-
-        auto *k =
-            rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
-        toggles[i] = k;
-        k->onToggle = [this, toggleIdx = i](bool isOn) {
-            for (const auto &t : toggles)
-                if (t)
-                    t->setState(false);
-            for (const auto &ob : overlays)
-                for (const auto &o : ob)
-                    if (o)
-                        o->setVisible(false);
-            if (isOn)
-            {
-                toggles[toggleIdx]->setState(true);
-                for (const auto &ob : overlays)
-                    if (ob[toggleIdx])
-                    {
-                        ob[toggleIdx]->setVisible(true);
-                        ob[toggleIdx]->bdw->dirty = true;
-                    }
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(true);
-            }
-            else
-            {
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(false);
-            }
-        };
-
-        addChild(k);
-        uyp = modulationRowCenters_MM[1];
-        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module,
-                                                          M::DELAY_MOD_INPUT + i));
-    }
-
-    col = 0;
-    for (auto p : {M::INPUT_L, M::INPUT_R})
-    {
-        auto yp = inputRowCenter_MM;
-        auto xp = columnCenters_MM[col];
-        addInput(
-            rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col++;
-    }
-
-    for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
-    {
-        auto yp = inputRowCenter_MM;
-        auto xp = columnCenters_MM[col];
-        addOutput(
-            rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        col++;
-    }
-
-    col = 0;
-    for (const std::string &s : {"LEFT", "RIGHT", "LEFT", "RIGHT"})
-    {
-        addChild(makeIORowLabel(col, s, col < 2));
-        col++;
-    }
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::DELAY_MOD_INPUT);
+    engine_t::createInputOutputPorts(this, M::INPUT_L, M::INPUT_R, M::OUTPUT_L, M::OUTPUT_R);
+    engine_t::createLeftRightInputLabels(this);
 
     resetStyleCouplingToModule();
 }

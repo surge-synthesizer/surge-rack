@@ -18,8 +18,8 @@ namespace sst::surgext_rack::fx
 template <> constexpr bool FXConfig<fxt_flanger>::usesClock() { return true; }
 template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
 {
-    const auto &col = widgets::StandardWidthWithModulationConstants::columnCenters_MM;
-    const auto modRow = widgets::StandardWidthWithModulationConstants::modulationRowCenters_MM[0];
+    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;

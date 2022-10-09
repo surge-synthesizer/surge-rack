@@ -6,10 +6,11 @@
 #include "SurgeXT.hpp"
 #include "XTModuleWidget.hpp"
 #include "XTWidgets.h"
+#include "LayoutEngine.h"
 
 namespace sst::surgext_rack::mixer::ui
 {
-struct MixerWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
+struct MixerWidget : widgets::XTModuleWidget
 {
     typedef mixer::Mixer M;
     MixerWidget(M *module);
@@ -22,8 +23,11 @@ struct MixerWidget : widgets::XTModuleWidget, widgets::VCOVCFConstants
 MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
+    typedef layout::LayoutEngine<MixerWidget, M::OSC1_LEV> engine_t;
+    engine_t::initializeModulationToBlank(this);
 
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
+                         rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "Mixer", "other", "TotalBlank");
     addChild(bg);
 
@@ -32,43 +36,28 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     int kr{0}, kc{0};
     for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
     {
-        auto yc = inputRowCenter_MM - 70 - (1 - kr) * 16;
-        auto xc = columnCenters_MM[kc];
+        auto yc = layout::LayoutConstants::inputRowCenter_MM - 70 - (1 - kr) * 16;
+        auto xc = layout::LayoutConstants::columnCenters_MM[kc];
 
-        auto pos = rack::mm2px(rack::Vec(xc, yc));
-        auto knob = rack::createParamCentered<widgets::Knob9>(pos, module, i);
-        addChild(knob);
-
-        auto boxx0 = xc - columnWidth_MM * 0.5;
-        auto boxy0 = yc + 4.073;
-
-        auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-        auto s0 = rack::mm2px(rack::Vec(columnWidth_MM, 5));
-        auto lab = widgets::Label::createWithBaselineBox(p0, s0, labels[i]);
-        addChild(lab);
-
-        for (int m = 0; m < M::n_mod_inputs; ++m)
-        {
-            auto radius = rack::mm2px(knob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
-            int id = M::modulatorIndexFor(i, m);
-            auto *k = widgets::ModRingKnob::createCentered(pos, radius, module, id);
-            overlays[i][m] = k;
-            k->setVisible(false);
-            k->underlyerParamWidget = knob;
-            knob->modRings.insert(k);
-            addChild(k);
-        }
+        auto lay = layout::LayoutItem();
+        lay.type = layout::LayoutItem::KNOB9;
+        lay.parId = i;
+        lay.label = labels[i];
+        lay.xcmm = xc;
+        lay.ycmm = yc;
 
         kc++;
         if (kc == 4)
         {
-            kc = 0;
             kr++;
+            kc = 0;
         }
+
+        engine_t::layoutItem(this, lay, "Mixer");
     }
 
     auto solcd = widgets::LCDBackground::posy_MM;
-    auto eolcd = inputRowCenter_MM - 70 - 16 - 7;
+    auto eolcd = layout::LayoutConstants::inputRowCenter_MM - 70 - 16 - 7;
     auto padlcd = 1;
     auto lcd = widgets::LCDBackground::createWithHeight(eolcd);
     if (!module)
@@ -103,112 +92,49 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
         addParam(widgets::PlotAreaSwitch::create(psolo, sz, "S", module, ps));
     }
 
-    for (int i = 0; i < M::n_mod_inputs; ++i)
+    auto ydiff = layout::LayoutConstants::modulationRowCenters_MM[1] -
+                 layout::LayoutConstants::inputRowCenter_MM + 40;
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::MIXER_MOD_INPUT, -ydiff);
+
+    kr = 0;
+    kc = 0;
+    for (int i = M::INPUT_OSC1_L; i <= M::INPUT_OSC3_R; ++i)
     {
-        auto ydiff = modulationRowCenters_MM[1] - inputRowCenter_MM + 40;
-        auto uxp = columnCenters_MM[i];
-        auto uyp = modulationRowCenters_MM[0] - ydiff;
+        auto yc = layout::LayoutConstants::inputRowCenter_MM - (1 - kr) * 20;
+        auto xc = layout::LayoutConstants::columnCenters_MM[kc];
 
-        auto *k =
-            rack::createWidgetCentered<widgets::ModToggleButton>(rack::mm2px(rack::Vec(uxp, uyp)));
-        toggles[i] = k;
-        k->onToggle = [this, toggleIdx = i](bool isOn) {
-            for (const auto &t : toggles)
-                if (t)
-                    t->setState(false);
-            for (const auto &ob : overlays)
-                for (const auto &o : ob)
-                    if (o)
-                        o->setVisible(false);
-            if (isOn)
-            {
-                toggles[toggleIdx]->setState(true);
-                for (const auto &ob : overlays)
-                    if (ob[toggleIdx])
-                    {
-                        ob[toggleIdx]->setVisible(true);
-                        ob[toggleIdx]->bdw->dirty = true;
-                    }
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(true);
-            }
-            else
-            {
-                for (const auto &uk : underKnobs)
-                    if (uk)
-                        uk->setIsModEditing(false);
-            }
-        };
+        auto lay = layout::LayoutItem();
+        lay.type = layout::LayoutItem::PORT;
+        lay.parId = i;
+        lay.label = "";
+        lay.xcmm = xc;
+        lay.ycmm = yc;
+        engine_t::layoutItem(this, lay, "Mixer");
 
-        addChild(k);
-        uyp = modulationRowCenters_MM[1] - ydiff;
-        addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(uxp, uyp)), module,
-                                                          M::MIXER_MOD_INPUT + i));
-
-        auto label = "MOD " + std::to_string(i + 1);
-        auto bl = modulationLabelBaseline_MM - ydiff;
-
-        addChild(makeLabelAt(bl, i, label));
-    }
-
-    int col = 0;
-    float gls = 2.5;
-    for (auto p : {M::INPUT_OSC1_L, M::INPUT_OSC1_R, M::INPUT_OSC2_L, M::INPUT_OSC2_R})
-    {
-        auto yp = inputRowCenter_MM - 20;
-        auto xp = columnCenters_MM[col];
-        addInput(
-            rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-
-        addChild(makeLabelAt(yp - 5.3, col, col % 2 ? "RIGHT" : "LEFT"));
-
-        if (col % 2 == 0)
+        if (kc % 2 == 0)
         {
-            auto gl = widgets::GroupLabel::createAboveCenterWithColSpan(col == 0 ? "OSC1" : "OSC2",
-                                                                        rack::Vec(xp, yp - gls), 2);
-            addChild(gl);
+            auto ll =
+                std::string("L - OSC") + std::to_string((i - M::INPUT_OSC1_L) / 2 + 1) + " - R";
+            auto laylab = layout::LayoutItem::createKnobSpanLabel(ll, xc, yc - 16, 2);
+            engine_t::layoutItem(this, laylab, "Mixer");
         }
-        col++;
-    }
 
-    col = 0;
-    for (auto p : {M::INPUT_OSC3_L, M::INPUT_OSC3_R})
-    {
-        auto yp = inputRowCenter_MM;
-        auto xp = columnCenters_MM[col];
-        addInput(
-            rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        if (col == 0)
+        kc++;
+        if (kc == 4)
         {
-            auto gl = widgets::GroupLabel::createAboveCenterWithColSpan("OSC3",
-                                                                        rack::Vec(xp, yp - gls), 2);
-            addChild(gl);
+            kr++;
+            kc = 0;
         }
-        col++;
     }
 
-    for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
-    {
-        auto yp = inputRowCenter_MM;
-        auto xp = columnCenters_MM[col];
-        addOutput(
-            rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module, p));
-        if (col == 2)
-        {
-            auto gl = widgets::GroupLabel::createAboveCenterWithColSpan("OUTPUT",
-                                                                        rack::Vec(xp, yp - gls), 2);
-            addChild(gl);
-        }
-        col++;
-    }
+    auto yp = layout::LayoutConstants::inputRowCenter_MM;
+    auto xp = layout::LayoutConstants::columnCenters_MM[2];
+    addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
+                                                        M::OUTPUT_L));
 
-    col = 0;
-    for (const std::string &s : {"LEFT", "RIGHT", "LEFT", "RIGHT"})
-    {
-        addChild(makeIORowLabel(col, s, col < 2));
-        col++;
-    }
+    xp = layout::LayoutConstants::columnCenters_MM[3];
+    addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
+                                                        M::OUTPUT_R));
 
     resetStyleCouplingToModule();
 }
