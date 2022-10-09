@@ -41,6 +41,7 @@ template <int fxType> struct FXConfig
     static constexpr bool usesSideband() { return false; }
     static constexpr bool usesClock() { return false; }
     static constexpr bool usesPresets() { return true; }
+    static constexpr int numParams() { return n_fx_params; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -80,8 +81,8 @@ template <int fxType> struct FX : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::MonophonicModulationAssistant<FX<fxType>, n_fx_params, FX_PARAM_0, n_mod_inputs,
-                                           MOD_INPUT_0>
+    modules::MonophonicModulationAssistant<FX<fxType>, FXConfig<fxType>::numParams(),
+                                           FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
         modAssist;
 
     FX() : XTModule()
@@ -89,10 +90,19 @@ template <int fxType> struct FX : modules::XTModule
         setupSurge();
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
+        int lastParam{0};
         for (int i = 0; i < n_fx_params; ++i)
         {
+            if (fxstorage->p[i].ctrltype != ct_none)
+                lastParam = i;
             configParam<modules::SurgeParameterParamQuantity>(FX_PARAM_0 + i, 0, 1,
                                                               fxstorage->p[i].get_value_f01());
+        }
+
+        if (lastParam != FXConfig<fxType>::numParams() - 1)
+        {
+            std::cout << "WARNING: " << fx_type_names[fxType] << " last non-param is "
+                      << lastParam + 1 << " not " << FXConfig<fxType>::numParams()  << std::endl;
         }
 
         for (int i = 0; i < n_fx_params * n_mod_inputs; ++i)

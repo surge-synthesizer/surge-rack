@@ -9,6 +9,7 @@
 
 namespace sst::surgext_rack::fx
 {
+template <> constexpr int FXConfig<fxt_freqshift>::numParams() { return 5; }
 template <> constexpr int FXConfig<fxt_freqshift>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout()
 {

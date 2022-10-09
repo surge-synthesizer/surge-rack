@@ -11,6 +11,8 @@
 
 namespace sst::surgext_rack::fx
 {
+
+template <> constexpr int FXConfig<fxt_spring_reverb>::numParams() { return 8; }
 template <> constexpr int FXConfig<fxt_spring_reverb>::extraInputs() { return 1; }
 template <> constexpr int FXConfig<fxt_spring_reverb>::extraSchmidtTriggers() { return 2; }
 template <> constexpr int FXConfig<fxt_spring_reverb>::specificParamCount() { return 1; }

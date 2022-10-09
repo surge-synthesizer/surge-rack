@@ -15,6 +15,7 @@ namespace sst::surgext_rack::fx
  * - uses clock
  * - one specific param which is 'enables drive'
  */
+template <> constexpr int FXConfig<fxt_rotaryspeaker>::numParams() { return 8; }
 template <> constexpr bool FXConfig<fxt_rotaryspeaker>::usesClock() { return true; }
 template <> constexpr int FXConfig<fxt_rotaryspeaker>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::getLayout()

@@ -49,6 +49,7 @@ struct FXLayoutHelper
 
 #include "fxconfig/Chorus.h"
 #include "fxconfig/Resonator.h"
+#include "fxconfig/Reverb1.h"
 #include "fxconfig/Reverb2.h"
 #include "fxconfig/RotarySpeaker.h"
 #include "fxconfig/Exciter.h"

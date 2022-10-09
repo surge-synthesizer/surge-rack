@@ -538,11 +538,9 @@ struct MonophonicModulationAssistant
 {
     float f[nPar], fInv[nPar];
     float mu[nPar][nInputs];
-    __m128 muSSE[nPar][nInputs];
     float values alignas(16)[nPar];
     float basevalues alignas(16)[nPar];
     float modvalues alignas(16)[nPar];
-    bool connected[nInputs];
     void initialize(M *m)
     {
         for (auto p = 0; p < nPar; ++p)
@@ -568,23 +566,18 @@ struct MonophonicModulationAssistant
 
     void updateValues(M *m)
     {
+        float inp[4];
         for (int i = 0; i < nInputs; ++i)
         {
-            connected[i] = m->inputs[i + input0].isConnected();
-        }
-
-        float inp[nInputs];
-        for (int i = 0; i < nInputs; ++i)
-        {
-            inp[i] = m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+            inp[i] = m->inputs[i+input0].isConnected() * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
         }
         for (int p = 0; p < nPar; ++p)
         {
             // Set up the base values
             auto mv = 0.f;
-            for (int i = 0; i < nInputs; ++i)
+            for (int i=0; i<nInputs; ++i)
             {
-                mv += connected[i] * mu[p][i] * inp[i];
+                mv += (mu[p][i] * inp[i]);
             }
             modvalues[p] = mv;
             basevalues[p] = m->params[p + par0].getValue();
