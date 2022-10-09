@@ -169,8 +169,8 @@ struct LayoutItem
 
 template <typename W, int param0, int clockId = -1> struct LayoutEngine
 {
-    static widgets::Label *makeLabelAt(float rowPos, int col, const std::string label,
-                                       style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+    static widgets::Label *makeSpanLabelAt(float rowPos, int col, const std::string label, int span,
+                                           style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
     {
         auto cx = LayoutConstants::columnCenters_MM[col];
         auto bl = rowPos;
@@ -179,11 +179,17 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         auto boxy0 = bl - 5;
 
         auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-        auto s0 = rack::mm2px(rack::Vec(LayoutConstants::columnWidth_MM, 5));
+        auto s0 = rack::mm2px(rack::Vec(LayoutConstants::columnWidth_MM * span, 5));
 
         auto lab = widgets::Label::createWithBaselineBox(p0, s0, label,
                                                          LayoutConstants::labelSize_pt, clr);
         return lab;
+    }
+
+    static widgets::Label *makeLabelAt(float rowPos, int col, const std::string label,
+                                       style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+    {
+        return makeSpanLabelAt(rowPos, col, label, 1, clr);
     }
 
     static void layoutItem(W *w, const LayoutItem &lay, const std::string &panelName)
