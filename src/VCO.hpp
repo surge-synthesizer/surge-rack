@@ -97,6 +97,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     VCO() : XTModule(), halfbandIN(6, true)
     {
+        std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
         surge_osc.fill(nullptr);
         lastUnison.fill(-1);
 

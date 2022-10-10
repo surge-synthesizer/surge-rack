@@ -35,7 +35,7 @@ struct LayoutItem
     float spanmm{0}; // for group label only
 
     bool dynamicLabel{false};
-    std::function<std::string(modules::XTModule *m)> dynLabelFn;
+    std::function<std::string(modules::XTModule *m)> dynLabelFn{nullptr};
 
     static LayoutItem createLCDArea(float ht)
     {
@@ -454,7 +454,12 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 auto men = rack::createMenu();
                 men->addChild(rack::createMenuLabel(pq->getLabel()));
 
-                for (int i = surgePar->val_min.i; i <= surgePar->val_max.i; i++)
+                // yeah a bit gross
+                int step{1};
+                if (surgePar->ctrltype == ct_vocoder_bandcount)
+                    step = 4;
+
+                for (int i = surgePar->val_min.i; i <= surgePar->val_max.i; i += step)
                 {
                     char txt[256];
                     auto fv =

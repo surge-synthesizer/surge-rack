@@ -42,7 +42,7 @@ template <> FXConfig<fxt_reverb>::layout_t FXConfig<fxt_reverb>::getLayout()
         LayoutItem::createGrouplabel("EQ", col[0], row2, 4).withExtra("SHORTLEFT",1).withExtra("SHORTRIGHT",1),
 
         {LayoutItem::KNOB9, "PRE DLY", Reverb1Effect::rev1_predelay, col[0], row3},
-        {LayoutItem::KNOB9, "DAMING", Reverb1Effect::rev1_damping, col[1], row3},
+        {LayoutItem::KNOB9, "DAMPING", Reverb1Effect::rev1_damping, col[1], row3},
         {LayoutItem::KNOB9, "WIDTH", Reverb1Effect::rev1_width, col[2], row3},
         {LayoutItem::KNOB9, "MIX", Reverb1Effect::rev1_mix, col[3], row3},
 
