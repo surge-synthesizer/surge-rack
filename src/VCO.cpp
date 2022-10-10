@@ -894,7 +894,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
             auto men = rack::createMenu();
             men->addChild(rack::createMenuLabel(pq->getLabel()));
 
-            for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i++)
+            int step{1};
+            for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i+= step)
             {
                 char txt[256];
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);

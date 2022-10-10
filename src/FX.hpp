@@ -87,6 +87,7 @@ template <int fxType> struct FX : modules::XTModule
 
     FX() : XTModule()
     {
+        std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
         setupSurge();
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -325,11 +326,10 @@ template <int fxType> struct FX : modules::XTModule
             bufferL[bufferPos] = inl;
             bufferR[bufferPos] = inr;
         }
-        bufferPos++;
 
         if constexpr (FXConfig<fxType>::usesSideband())
         {
-            if (inputConnected(SIDEBAND_L) && !inputConnected(SIDEBAND_R))
+            if (inputs[SIDEBAND_L].isConnected() && !inputs[SIDEBAND_R].isConnected())
             {
                 float ml = inputs[SIDEBAND_L].getVoltageSum();
                 modulatorL[bufferPos] = ml;
@@ -341,6 +341,7 @@ template <int fxType> struct FX : modules::XTModule
                 modulatorR[bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
             }
         }
+        bufferPos++;
 
         if (bufferPos >= BLOCK_SIZE)
         {

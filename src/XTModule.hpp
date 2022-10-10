@@ -17,6 +17,7 @@
 
 #include "filesystem/import.h"
 #include <fmt/core.h>
+#include <thread>
 
 namespace logger = rack::logger;
 using rack::appGet;
@@ -28,6 +29,8 @@ namespace sst::surgext_rack::modules
 {
 struct XTModule : public rack::Module
 {
+    static std::mutex xtSurgeCreateMutex;
+
     XTModule() : rack::Module() { storage.reset(nullptr); }
 
     std::string getBuildInfo()
