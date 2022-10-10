@@ -33,13 +33,10 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
     return {
         {LayoutItem::KNOB12, "FREQUENCY", rm_t::rm_carrier_freq, colC, row1},
 
-        {LayoutItem::KNOB9, "DETUNE", rm_t::rm_unison_detune, col[0], row2},
-        {LayoutItem::KNOB9, "VOICES", rm_t::rm_unison_voices, col[1], row2},
-        LayoutItem::createGrouplabel("CARRIER", col[0], row2, 2),
 
-        {LayoutItem::KNOB9, "BIAS", rm_t::rm_diode_fwdbias, col[2], row2},
-        {LayoutItem::KNOB9, "LINEAR", rm_t::rm_diode_linregion, col[3], row2},
-        LayoutItem::createGrouplabel("DIODE", col[2], row2, 2),
+        {LayoutItem::KNOB9, "BIAS", rm_t::rm_diode_fwdbias, col[1], row2},
+        {LayoutItem::KNOB9, "LINEAR", rm_t::rm_diode_linregion, col[2], row2},
+        LayoutItem::createGrouplabel("DIODE", col[1], row2, 2),
 
         {LayoutItem::KNOB9, "", rm_t::rm_lowcut, col[0], row3},
         {LayoutItem::KNOB9, "", rm_t::rm_highcut, col[1], row3},
@@ -48,10 +45,12 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
         LayoutItem::createKnobSpanLabel("LO - CUT - HI", col[0], row3, 2),
         LayoutItem::createGrouplabel("EQ", col[0], row3, 2).withExtra("SHORTRIGHT", 1).withExtra("SHORTLEFT", 1),
 
+       {LayoutItem::KNOB9, "DETUNE", rm_t::rm_unison_detune, col[2], row3},
         {LayoutItem::KNOB9, "MIX", rm_t::rm_mix, col[3], row3},
 
         LayoutItem::createPresetPlusOneArea(),
-        LayoutItem::createSingleMenuItem("SHAPE", rm_t::rm_carrier_shape)
+        LayoutItem::createLeftMenuItem("SHAPE", rm_t::rm_carrier_shape),
+        LayoutItem::createRightMenuItem("Voices", rm_t::rm_unison_voices)
     };
     // clang-format on
 }
