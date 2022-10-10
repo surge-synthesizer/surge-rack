@@ -351,7 +351,33 @@ struct VCF : public modules::XTModule
             processPosition = 0;
         }
 
-        if (stereoStack)
+        if (stereoStack && lastPolyL == lastPolyR && lastPolyR == 1)
+        {
+            // dual poly case
+            float iv alignas(16)[4] {0,0,0,0}, ov alignas(16)[4] {0,0,0,0};
+            iv[0] = inputs[INPUT_L].getVoltage(0);
+            iv[1] = inputs[INPUT_R].getVoltage(0);
+
+            const auto &mv = modulationAssistant.values;
+
+            auto in =
+                _mm_mul_ps(_mm_load_ps(iv), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+
+            auto pre = _mm_mul_ps(in, _mm_set1_ps(mv[IN_GAIN - FREQUENCY][0]));
+            auto filt = filterPtr(&qfus[0], pre);
+
+            auto post = _mm_mul_ps(filt, _mm_set1_ps(mv[OUT_GAIN - FREQUENCY][0]));
+            auto omm = _mm_sub_ps(_mm_set1_ps(1.f), _mm_set1_ps(mv[MIX - FREQUENCY][0]));
+
+            auto fin =
+                _mm_add_ps(_mm_mul_ps(_mm_set1_ps(mv[MIX - FREQUENCY][0]), post), _mm_mul_ps(omm, in));
+            fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
+            _mm_store_ps(ov, fin);
+
+            outputs[OUTPUT_L].setVoltage(ov[0]);
+            outputs[OUTPUT_R].setVoltage(ov[1]);
+        }
+        else if (stereoStack)
         {
             // We can make this more efficient with smarter SIMD loads later
             float tmpVal alignas(16)[MAX_POLY << 2];

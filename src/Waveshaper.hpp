@@ -350,6 +350,27 @@ struct Waveshaper : public modules::XTModule
             modulationAssistant.updateValues(this);
         }
 
+        if (stereoStack && lastPolyL == lastPolyR && lastPolyR == 1)
+        {
+            float iv alignas(16)[4] {0,0,0,0}, ov alignas(16)[4] {0,0,0,0};
+            iv[0] = inputs[INPUT_L].getVoltage(0);
+            iv[1] = inputs[INPUT_R].getVoltage(0);
+
+            const auto &mv = modulationAssistant.values;
+
+            float dt alignas(16)[4];
+
+            auto drive = _mm_set1_ps(storage->db_to_linear(mv[0][0]));
+            auto in = _mm_mul_ps(_mm_load_ps(iv), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+            in = _mm_add_ps(in, _mm_set1_ps(mv[BIAS - DRIVE][0]));
+            auto fin = wsPtr(&wss[0], in, drive);
+            fin = _mm_mul_ps(fin, _mm_set1_ps(mv[OUT_GAIN - DRIVE][0]));
+            fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
+            _mm_store_ps(ov, fin);
+
+            outputs[OUTPUT_L].setVoltage(ov[0]);
+            outputs[OUTPUT_R].setVoltage(ov[1]);
+        }
         if (stereoStack)
         {
             // We can make this more efficient with smarter SIMD loads later
