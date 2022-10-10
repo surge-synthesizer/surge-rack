@@ -62,4 +62,5 @@ struct FXLayoutHelper
 #include "fxconfig/Neuron.h"
 #include "fxconfig/Combulator.h"
 #include "fxconfig/Vocoder.h"
+#include "fxconfig/RingModulator.h"
 #endif
