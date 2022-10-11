@@ -85,8 +85,8 @@ struct Waveshaper : public modules::XTModule
         configParam(DRIVE, -24, 24, 0, "Drive", "dB"); // UNITS
         configParam(BIAS, -1, 1, 0, "Bias");
         configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
-        configParam(LOCUT, -60, 70, -60);
-        configParam(HICUT, -60, 70, 70);
+        configParam(LOCUT, -60, 70, -60, "Low Cut");
+        configParam(HICUT, -60, 70, 70, "High Cut");
         configParam(LOCUT_ENABLED, 0, 1, 0);
         configParam(HICUT_ENABLED, 0, 1, 0);
 

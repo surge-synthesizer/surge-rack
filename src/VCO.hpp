@@ -125,15 +125,17 @@ template <int oscType> struct VCO : public modules::XTModule
 
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
                                     storage->getPatch().scenedata[0], oscdisplaybuffer[0]);
-        config_osc->init(72.0);
         config_osc->init_ctrltypes();
         config_osc->init_default_values();
+        config_osc->init_extra_config();
+        config_osc->init(72.0);
 
         auto display_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
                                      storage->getPatch().scenedata[0], oscdisplaybuffer[1]);
-        display_osc->init(72.0, true);
         display_osc->init_ctrltypes();
         display_osc->init_default_values();
+        display_osc->init_extra_config();
+        display_osc->init(72.0, true);
 
         VCOConfig<oscType>::oscillatorSpecificSetup(this);
 
@@ -404,7 +406,6 @@ template <int oscType> struct VCO : public modules::XTModule
                                              storage->getPatch().scenedata[0], oscbuffer[c]);
 
                     surge_osc[c]->init(pitch0);
-                    surge_osc[c]->init_ctrltypes();
                 }
                 else
                 {
