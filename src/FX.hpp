@@ -42,6 +42,7 @@ template <int fxType> struct FXConfig
     static constexpr bool usesClock() { return false; }
     static constexpr bool usesPresets() { return true; }
     static constexpr int numParams() { return n_fx_params; }
+    static constexpr bool allowsPolyphony() { return true; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -156,6 +157,8 @@ template <int fxType> struct FX : modules::XTModule
     std::atomic<int> loadedPreset{-1}, maxPresets{0};
     std::atomic<bool> presetIsDirty{false};
     std::vector<Surge::Storage::FxUserPreset::Preset> presets;
+
+    std::atomic<bool> polyphonicMode{false};
 
     void setupSurge()
     {
@@ -472,6 +475,11 @@ template <int fxType> struct FX : modules::XTModule
         {
             json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
         }
+
+        if (FXConfig<fxType>::allowsPolyphony())
+        {
+            json_object_set(fx, "polyphonicMode", json_boolean(polyphonicMode));
+        }
         return fx;
     }
 
@@ -501,6 +509,16 @@ template <int fxType> struct FX : modules::XTModule
             {
                 auto csv = json_integer_value(cs);
                 clockProc.clockStyle = static_cast<typename modules::ClockProcessor<FX<fxType>>::ClockStyle>(csv);
+            }
+        }
+
+        if (FXConfig<fxType>::allowsPolyphony())
+        {
+            auto pm = json_object_get(modJ, "polyphonicMode");
+            if (pm)
+            {
+                auto pmv = json_boolean_value(pm);
+                polyphonicMode = pmv;
             }
         }
     }

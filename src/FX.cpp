@@ -26,6 +26,18 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
         if (!module)
             return;
         auto xtm = static_cast<FX<fxType> *>(module);
+
+        if constexpr (false && FXConfig<fxType>::allowsPolyphony())
+        {
+            menu->addChild(new rack::ui::MenuSeparator);
+            bool t = xtm->polyphonicMode;
+            menu->addChild(rack::createMenuItem("Monophonic Stereo Processing", CHECKMARK(!t),
+                                                [xtm] { xtm->polyphonicMode = false; }));
+
+            menu->addChild(rack::createMenuItem("Polyphonic Stereo Processing", CHECKMARK(t),
+                                                [xtm] { xtm->polyphonicMode = true; }));
+        }
+
         if (FXConfig<fxType>::usesClock())
         {
             typedef modules::ClockProcessor<FX<fxType>> cp_t;
