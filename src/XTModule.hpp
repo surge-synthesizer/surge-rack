@@ -311,7 +311,6 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
         return par;
     }
 
-#if 0
     virtual void setDisplayValueString(std::string s) override
     {
         auto par = surgepar();
@@ -322,10 +321,11 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
         }
 
         std::string emsg;
-        par->set_value_from_string(s, emsg);
-        setValue(par->get_value_f01());
+        bool valid{false};
+        float v = par->calculate_modulation_value_from_string(s, emsg, valid);
+        if (valid)
+            setValue(v * (par->val_max.f-par->val_min.f));
     }
-#endif
 
     virtual std::string getLabel() override
     {
