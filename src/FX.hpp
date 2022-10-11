@@ -108,7 +108,10 @@ template <int fxType> struct FX : modules::XTModule
 
         for (int i = 0; i < n_fx_params * n_mod_inputs; ++i)
         {
-            configParam(FX_MOD_PARAM_0 + i, -1, 1, 0);
+            std::string name{"Mod"};
+            name += std::to_string((i - FX_MOD_PARAM_0) % 4 + 1);
+
+            configParam<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1, 0, name);
         }
 
         FXConfig<fxType>::configSpecificParams(this);
@@ -116,6 +119,10 @@ template <int fxType> struct FX : modules::XTModule
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
         configInput(INPUT_CLOCK, "Clock/Tempo CV");
+
+        configInput(SIDEBAND_L, "Left Sideband");
+        configInput(SIDEBAND_R, "Right Sideband");
+
         for (int m = 0; m < n_mod_inputs; ++m)
         {
             auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
@@ -233,6 +240,23 @@ template <int fxType> struct FX : modules::XTModule
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
         if (paramId < FX_PARAM_0 || paramId >= FX_PARAM_0 + n_fx_params)
+            return nullptr;
+
+        return &fxstorage->p[paramId - FX_PARAM_0];
+    }
+
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - FX_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_fx_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs;
+    }
+
+    Parameter *surgeDisplayParameterForModulatorParamId(int modParamId) override
+    {
+        auto paramId = paramModulatedBy(modParamId);
+        if (paramId < FX_PARAM_0|| paramId >= FX_PARAM_0 + n_fx_params)
             return nullptr;
 
         return &fxstorage->p[paramId - FX_PARAM_0];
