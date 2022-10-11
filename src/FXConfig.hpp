@@ -63,4 +63,5 @@ struct FXLayoutHelper
 #include "fxconfig/Combulator.h"
 #include "fxconfig/Vocoder.h"
 #include "fxconfig/RingModulator.h"
+#include "fxconfig/Phaser.h"
 #endif
