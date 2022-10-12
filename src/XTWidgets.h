@@ -206,6 +206,13 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         nvgTextAlign(vg, NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER);
         nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
         nvgText(vg, box.size.x * 0.5, box.size.y - 2, "Missing Panel", nullptr);
+
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, style()->fontId(vg));
+        nvgFontSize(vg, 17);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_CENTER);
+        nvgFillColor(vg, nvgRGB(0xFF, 0x90, 0x00));
+        nvgText(vg, box.size.x * 0.5, 2, title.c_str(), nullptr);
     }
 
     void onStyleChanged() override
