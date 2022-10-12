@@ -34,6 +34,9 @@ struct LFO : modules::XTModule
         E_SUSTAIN,
         E_RELEASE,
 
+        SHAPE,
+        UNIPOLAR,
+
         LFO_MOD_PARAM_0,
 
         LFO_TYPE = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
@@ -54,7 +57,9 @@ struct LFO : modules::XTModule
         OUTPUT_MIX,
         OUTPUT_ENV,
         OUTPUT_WAVE,
-        OUTPUT_PHASE_TRIGGER,
+        OUTPUT_TRIGPHASE,
+        OUTPUT_TRIGF,
+        OUTPUT_TRIGA,
         NUM_OUTPUTS
     };
     enum LightIds
@@ -66,6 +71,12 @@ struct LFO : modules::XTModule
     {
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    }
+
+    static int modulatorIndexFor(int baseParam, int modulator)
+    {
+        int offset = baseParam - RATE;
+        return LFO_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
     std::string getName() override { return "LFO"; }
