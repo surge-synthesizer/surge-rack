@@ -95,10 +95,11 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     }
 #endif
 
+    typedef layout::LayoutItem li_t;
+
     {
         const auto &col = layout::LayoutConstants::columnCenters_MM;
         const auto row1 = layout::LayoutConstants::rowStart_MM - 6;
-        typedef layout::LayoutItem li_t;
         // fixme use the enums
         // clang-format off
          std::vector<li_t> layout = {
@@ -121,11 +122,10 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
         const auto row2 = layout::LayoutConstants::rowStart_MM + 10;
         float cw = layout::LayoutConstants::columnWidth_MM;
         float c0 = layout::LayoutConstants::columnCenters_MM[3] + cw;
-        typedef layout::LayoutItem li_t;
         // fixme use the enums
         // clang-format off
          std::vector<li_t> layout = {
-                {li_t::KNOB9, "DELAY", M::E_DECAY, c0, row1},
+                {li_t::KNOB9, "DELAY", M::E_DELAY, c0, row1},
                 {li_t::KNOB9, "ATTACK", M::E_ATTACK, c0 + cw, row1},
                 {li_t::KNOB9, "HOLD", M::E_HOLD, c0 + 2 * cw, row1},
                 {li_t::KNOB9, "DECAY", M::E_DECAY, c0, row2},
@@ -160,9 +160,12 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
         }
     }
 
-    auto lcd =
-        widgets::LCDBackground::createWithHeight(layout::LayoutConstants::rowStart_MM - 19, 21);
+    auto ht = layout::LayoutConstants::rowStart_MM - 19;
+    auto lcd = widgets::LCDBackground::createWithHeight(ht, 21);
     addChild(lcd);
+
+    li_t shape{li_t::LCD_MENU_ITEM_SURGE_PARAM, "SHAPE", M::SHAPE, 0, ht};
+    engine_t::layoutItem(this, shape, "LFO");
 
     {
         int col = 0;

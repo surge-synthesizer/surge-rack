@@ -82,6 +82,7 @@ struct XTModule : public rack::Module
 
         showBuildInfo();
         storage = std::make_unique<SurgeStorage>(dataPath);
+        storage->getPatch().init_default_values();
 
         std::atomic<bool> showedPathsOnce{false};
         if (!showedPathsOnce)
