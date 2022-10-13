@@ -22,8 +22,8 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
     typedef layout::LayoutEngine<DelayLineByFreqWidget, M::VOCT> engine_t;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 6, rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "DelayLineByFreq", "other", "DelayLineByFreq");
-    addChild(bg);
+    // auto bg = new widgets::Background(box.size, "DelayLineByFreq", "other", "DelayLineByFreq");
+    // addChild(bg);
 
     {
         auto cx = box.size.x * 0.5;
