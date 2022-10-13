@@ -33,7 +33,7 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
 
     auto titleLabelLower = widgets::Label::createWithBaselineBox(
         rack::Vec(0, 0),
-        rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM + 6.2)),
+        rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM + 5.2)),
         "DELAY", layout::LayoutConstants::mainLabelSize_PT);
     titleLabelLower->tracking = 0.7;
     addChild(titleLabelLower);
@@ -41,8 +41,8 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
     {
         auto cx = box.size.x * 0.5;
         auto cy = rack::mm2px(28);
-        addParam(rack::createParamCentered<widgets::Knob16>(rack::Vec(cx, cy), module, M::VOCT));
-        auto bl = cy + rack::mm2px(8 + 4);
+        addParam(rack::createParamCentered<widgets::Knob14>(rack::Vec(cx, cy), module, M::VOCT));
+        auto bl = cy + rack::mm2px(7 + 4);
         auto lab = widgets::Label::createWithBaselineBox(rack::Vec(0, bl - rack::mm2px(5)),
                                                          rack::Vec(box.size.x, rack::mm2px(5)),
                                                          "V/OCT OFFSET");
@@ -52,10 +52,10 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
         auto cx = box.size.x * 0.5;
         auto cy = rack::mm2px(28 + 16 + 8);
         auto k =
-            rack::createParamCentered<widgets::Knob16>(rack::Vec(cx, cy), module, M::CORRECTION);
+            rack::createParamCentered<widgets::Knob14>(rack::Vec(cx, cy), module, M::CORRECTION);
         addParam(k);
 
-        auto bl = cy + rack::mm2px(8 + 4);
+        auto bl = cy + rack::mm2px(7 + 4);
         auto lab = widgets::Label::createWithBaselineBox(rack::Vec(0, bl - rack::mm2px(5)),
                                                          rack::Vec(box.size.x, rack::mm2px(5)),
                                                          "SAMPLE OFFSET");
@@ -63,13 +63,13 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
     }
 
     {
-        auto yp = layout::LayoutConstants::inputRowCenter_MM - 36;
+        auto yp = layout::LayoutConstants::inputRowCenter_MM - 40;
         auto xp = box.size.x * 0.5;
         addInput(rack::createInputCentered<widgets::Port>(rack::Vec(xp, rack::mm2px(yp)), module,
                                                           M::INPUT_VOCT));
-        auto bl = layout::LayoutConstants::inputLabelBaseline_MM - 37;
+        auto bl = layout::LayoutConstants::inputLabelBaseline_MM - 26.5;
         auto lab = widgets::Label::createWithBaselineBox(
-            rack::Vec(0, rack::mm2px(bl - 5)), rack::Vec(box.size.x, rack::mm2px(5)), "V/OCT");
+            rack::Vec(0, rack::mm2px(bl - 5)), rack::Vec(box.size.x, rack::mm2px(5)), "PITCH");
         addChild(lab);
     }
 
