@@ -267,7 +267,7 @@ FXMODEL(fxt_ensemble, Ensemble);
 FXMODEL(fxt_combulator, Combulator);
 // skip Nimbus - there's loads of clouds out there
 // ski Tape - chow has that covered
-// skip Treemonster - write a poly version instead
 // skip Waveshaper - write a poly version instead
 // skip MSTool - covered by vcv core
 FXMODEL(fxt_spring_reverb, SpringReverb);
+FXMODEL(fxt_treemonster, TreeMonster);

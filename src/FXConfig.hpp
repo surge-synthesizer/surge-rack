@@ -64,4 +64,5 @@ struct FXLayoutHelper
 #include "fxconfig/Vocoder.h"
 #include "fxconfig/RingModulator.h"
 #include "fxconfig/Phaser.h"
+#include "fxconfig/TreeMonster.h"
 #endif
