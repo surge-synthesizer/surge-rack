@@ -37,6 +37,10 @@ struct LayoutConstants
     static constexpr float VCOplotControlsH_MM = 5;
 
     static constexpr float labelSize_pt = 7.2;
+
+    // background
+    static constexpr float mainLabelBaseline_MM = 6.295, mainLabelSize_PT = 10.5;
+
 };
 } // namespace sst::surgext_rack::layout
 

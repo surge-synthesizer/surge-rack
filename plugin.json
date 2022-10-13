@@ -323,7 +323,7 @@
     },
     {
       "slug": "SurgeXTDelayLineByFreq",
-      "name": "Delay Line by Frequency",
+      "name": "Tuned Delay Line by Frequency",
       "description": "The Surge XT Delay Line, tuned by v/oct with sample offset for KS and so on",
       "tags": [
         "Effect",

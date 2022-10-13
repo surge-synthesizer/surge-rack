@@ -27,6 +27,10 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
             return;
         auto xtm = static_cast<FX<fxType> *>(module);
 
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createMenuItem("Re-Initialize Effect", "",
+                                            [xtm] { xtm->reinitialize(); }));
+
         if constexpr (FXConfig<fxType>::allowsPolyphony())
         {
             menu->addChild(new rack::ui::MenuSeparator);
