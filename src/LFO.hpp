@@ -74,9 +74,12 @@ struct LFO : modules::XTModule
     LFO() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        setupSurge();
+        // setupSurge();
     }
+    
+    std::string getName() override { return "LFO"; }
 
+#if 0
     std::array<std::unique_ptr<LFOModulationSource>, MAX_POLY> surge_lfo;
     std::unique_ptr<StepSequencerStorage> surge_ss;
     std::unique_ptr<MSEGStorage> surge_ms;
@@ -162,8 +165,6 @@ struct LFO : modules::XTModule
     int lastStep = BLOCK_SIZE;
     int lastNChan = -1;
     bool firstProcess{true};
-
-    std::string getName() override { return "LFO"; }
 
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
     bool isGated[MAX_POLY], isGateConnected[MAX_POLY];
@@ -262,6 +263,7 @@ struct LFO : modules::XTModule
             outputI.store(outputs[OUTPUT_MIX].getVoltages(c));
         }
     }
+#endif
 };
 } // namespace sst::surgext_rack::lfo
 #endif // RACK_HACK_LFO_HPP

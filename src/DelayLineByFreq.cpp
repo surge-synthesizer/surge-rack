@@ -19,6 +19,9 @@ struct DelayLineByFreqWidget : widgets::XTModuleWidget
 DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 6, rack::app::RACK_GRID_HEIGHT);
+  
+#if 0
     typedef layout::LayoutEngine<DelayLineByFreqWidget, M::VOCT> engine_t;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 6, rack::app::RACK_GRID_HEIGHT);
@@ -102,6 +105,7 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
     }
 
     resetStyleCouplingToModule();
+#endif
 }
 } // namespace sst::surgext_rack::delay::ui
 

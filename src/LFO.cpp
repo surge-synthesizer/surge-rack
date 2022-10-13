@@ -23,7 +23,10 @@ struct LFOWidget : widgets::XTModuleWidget
 LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
-
+    int screwWidth = 21;
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * screwWidth, rack::app::RACK_GRID_HEIGHT);
+ 
+#if 0
     typedef layout::LayoutEngine<LFOWidget, M::RATE> engine_t;
     engine_t::initializeModulationToBlank(this);
 
@@ -161,6 +164,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     engine_t::addModulationSection(this, M::n_mod_inputs, M::LFO_MOD_INPUT);
 
     resetStyleCouplingToModule();
+#endif
 }
 } // namespace sst::surgext_rack::lfo::ui
 
