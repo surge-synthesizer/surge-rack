@@ -180,7 +180,6 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
     std::string panelName, groupName, title;
     std::function<void(NVGcontext *)> moduleSpecificDraw;
 
-    static constexpr float mainLabelBaseline_MM = 6.295, mainLabelSize_PT = 10.5;
     Label *titleLabel{nullptr};
     rack::app::SvgPanel *svgPanel{nullptr};
 
@@ -243,11 +242,11 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
             addChild(bdw);
         }
 
-        if (!titleLabel)
+        if (!titleLabel && !title.empty())
         {
             titleLabel = Label::createWithBaselineBox(
-                rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(mainLabelBaseline_MM)), title,
-                mainLabelSize_PT);
+                rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM)), title,
+                layout::LayoutConstants::mainLabelSize_PT);
             titleLabel->tracking = 0.7;
             addChild(titleLabel);
         }

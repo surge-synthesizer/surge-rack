@@ -363,6 +363,10 @@ template <int fxType> struct FX : modules::XTModule
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
+
+        outputs[OUTPUT_L].setChannels(1);
+        outputs[OUTPUT_R].setChannels(1);
+
         if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
         {
             bufferL[0][bufferPos] = inl;
@@ -454,6 +458,14 @@ template <int fxType> struct FX : modules::XTModule
 
     int lastNChan{-1};
 
+    void reinitialize()
+    {
+        surge_effect->init();
+        for (const auto &s : surge_effect_poly)
+            if (s)
+                s->init();
+    }
+
     void guaranteePolyFX(int chan)
     {
         for (int i=0; i<chan; ++i)
@@ -469,15 +481,17 @@ template <int fxType> struct FX : modules::XTModule
 
     void processPoly(const typename rack::Module::ProcessArgs &args)
     {
-        auto chan = std::max(1, inputs[INPUT_L].getChannels());
+        auto chan = std::max({1, inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels()});
 
         if (chan != lastNChan)
         {
             lastNChan = chan;
             guaranteePolyFX(chan);
-            outputs[OUTPUT_L].setChannels(chan);
-            outputs[OUTPUT_R].setChannels(chan);
+            reinitialize();
         }
+
+        outputs[OUTPUT_L].setChannels(chan);
+        outputs[OUTPUT_R].setChannels(chan);
 
         for (int c=0; c < chan; ++c)
         {
