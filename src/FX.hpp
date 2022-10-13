@@ -409,7 +409,7 @@ template <int fxType> struct FX : modules::XTModule
                 FXConfig<fxType>::processSpecificParams(this);
             }
 
-            for (int i = 0; i < n_fx_params; ++i)
+            for (int i = 0; i < FXConfig<fxType>::numParams(); ++i)
             {
                 fxstorage->p[i].set_value_f01(modAssist.basevalues[i]);
             }
@@ -419,7 +419,7 @@ template <int fxType> struct FX : modules::XTModule
             copyGlobaldataSubset(storage_id_start, storage_id_end);
 
             auto *oap = &fxstorage->p[0];
-            auto *eap = &fxstorage->p[n_fx_params - 1];
+            auto *eap = &fxstorage->p[FXConfig<fxType>::numParams() - 1];
             auto &pt = storage->getPatch().globaldata;
             int idx = 0;
             while (oap <= eap)
@@ -523,7 +523,7 @@ template <int fxType> struct FX : modules::XTModule
                 FXConfig<fxType>::processSpecificParams(this);
             }
 
-            for (int i = 0; i < n_fx_params; ++i)
+            for (int i = 0; i < FXConfig<fxType>::numParams(); ++i)
             {
                 fxstorage->p[i].set_value_f01(polyModAssist.basevalues[i]);
             }
@@ -544,7 +544,7 @@ template <int fxType> struct FX : modules::XTModule
                 copyGlobaldataSubset(storage_id_start, storage_id_end);
 
                 auto *oap = &fxstorage->p[0];
-                auto *eap = &fxstorage->p[n_fx_params - 1];
+                auto *eap = &fxstorage->p[FXConfig<fxType>::numParams() - 1];
                 auto &pt = storage->getPatch().globaldata;
                 int idx = 0;
                 while (oap <= eap)

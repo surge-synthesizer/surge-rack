@@ -280,6 +280,8 @@ NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor 
     case RED:
         return nvgRGB(240, 67, 67);
     }
+
+    return nvgRGB(255,0,1);
 }
 std::map<std::string, int> InternalFontMgr::fontMap;
 
