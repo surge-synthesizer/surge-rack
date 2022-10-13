@@ -135,6 +135,7 @@
       "description": "The Surge XT Reverb",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Reverb"
       ]
     },
@@ -144,6 +145,7 @@
       "description": "The Surge XT Phaser",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Phaser"
       ]
     },
@@ -161,6 +163,7 @@
       "description": "The Surge XT Distortion",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Distortion"
       ]
     },
@@ -178,6 +181,7 @@
       "description": "The Surge XT Chorus",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Chorus"
       ]
     },
@@ -187,6 +191,7 @@
       "description": "The Surge XT Vocoder",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Vocoder"
       ]
     },
@@ -196,6 +201,7 @@
       "description": "The Surge XT Reverb2",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Reverb"
       ]
     },
@@ -205,6 +211,7 @@
       "description": "The Surge XT Flanger",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Flanger"
       ]
     },
@@ -214,6 +221,7 @@
       "description": "The Surge XT RingMod",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Ring modulator"
       ]
     },
@@ -223,6 +231,7 @@
       "description": "The Surge XT Neuron",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Distortion"
       ]
     },
@@ -232,6 +241,7 @@
       "description": "The Surge XT Resonator",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Filter"
       ]
     },
@@ -241,6 +251,7 @@
       "description": "The Surge XT Chow",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Distortion"
       ]
     },
@@ -258,6 +269,7 @@
       "description": "The Surge XT Ensemble",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Chorus"
       ]
     },
@@ -267,6 +279,7 @@
       "description": "The Surge XT Combulator",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Filter"
       ]
     },
@@ -276,7 +289,18 @@
       "description": "The Surge XT SpringReverb",
       "tags": [
         "Effect",
+        "Polyphonic",
         "Reverb"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXTreeMonster",
+      "name": "TreeMonster",
+      "description": "You'll love it. Its a way of life",
+      "tags": [
+        "Effect",
+        "Polyphonic",
+        "Ring modulator"
       ]
     },
     {
@@ -323,16 +347,6 @@
       "tags": [
         "Utility",
         "Polyphonic"
-      ]
-    },
-    {
-      "slug": "SurgeXTTreeMonster",
-      "name": "TreeMonster",
-      "description": "You'll love it. Its a way of life",
-      "tags": [
-        "Effect",
-        "Polyphonic",
-        "Ring modulator"
       ]
     }
   ]
