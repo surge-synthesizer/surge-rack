@@ -86,6 +86,11 @@ template <int fxType> struct FX : modules::XTModule
                                            FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
         modAssist;
 
+
+    modules::ModulationAssistant<FX<fxType>, FXConfig<fxType>::numParams(),
+                                 FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
+        polyModAssist;
+
     FX() : XTModule()
     {
         std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
@@ -134,7 +139,7 @@ template <int fxType> struct FX : modules::XTModule
         configOutput(OUTPUT_R, "Right");
 
         modAssist.initialize(this);
-
+        polyModAssist.initialize(this);
         if (maxPresets > 0)
             loadPreset(0);
 
@@ -182,8 +187,8 @@ template <int fxType> struct FX : modules::XTModule
             modScales[i] = fxstorage->p[i].val_max.f - fxstorage->p[i].val_min.f;
         }
 
-        std::fill(processedL, processedL + BLOCK_SIZE, 0);
-        std::fill(processedR, processedR + BLOCK_SIZE, 0);
+        memset(processedL, 0, sizeof(float) * MAX_POLY * BLOCK_SIZE);
+        memset(processedR, 0, sizeof(float) * MAX_POLY * BLOCK_SIZE);
 
         if (FXConfig<fxType>::usesPresets())
         {
@@ -276,7 +281,10 @@ template <int fxType> struct FX : modules::XTModule
         int idx = paramId - FX_PARAM_0;
         if (idx < 0 || idx >= n_fx_params)
             return 0;
-        return modAssist.modvalues[idx];
+        if (polyphonicMode)
+            return polyModAssist.modvalues[idx][0];
+        else
+            return modAssist.modvalues[idx];
     }
 
     bool isBipolar(int paramId) override
@@ -326,9 +334,9 @@ template <int fxType> struct FX : modules::XTModule
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
 
     int bufferPos{0};
-    float bufferL alignas(16)[BLOCK_SIZE], bufferR alignas(16)[BLOCK_SIZE];
-    float modulatorL alignas(16)[BLOCK_SIZE], modulatorR alignas(16)[BLOCK_SIZE];
-    float processedL alignas(16)[BLOCK_SIZE], processedR alignas(16)[BLOCK_SIZE];
+    float bufferL alignas(16)[MAX_POLY][BLOCK_SIZE], bufferR alignas(16)[MAX_POLY][BLOCK_SIZE];
+    float modulatorL alignas(16)[MAX_POLY][BLOCK_SIZE], modulatorR alignas(16)[MAX_POLY][BLOCK_SIZE];
+    float processedL alignas(16)[MAX_POLY][BLOCK_SIZE], processedR alignas(16)[MAX_POLY][BLOCK_SIZE];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -340,18 +348,30 @@ template <int fxType> struct FX : modules::XTModule
                 clockProc.disconnect(this);
         }
 
+        if (polyphonicMode)
+        {
+            processPoly(args);
+        }
+        else
+        {
+            processMono(args);
+        }
+
+    }
+    void processMono(const typename rack::Module::ProcessArgs &args)
+    {
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
         if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
         {
-            bufferL[bufferPos] = inl;
-            bufferR[bufferPos] = inl;
+            bufferL[0][bufferPos] = inl;
+            bufferR[0][bufferPos] = inl;
         }
         else
         {
-            bufferL[bufferPos] = inl;
-            bufferR[bufferPos] = inr;
+            bufferL[0][bufferPos] = inl;
+            bufferR[0][bufferPos] = inr;
         }
 
         if constexpr (FXConfig<fxType>::usesSideband())
@@ -359,13 +379,13 @@ template <int fxType> struct FX : modules::XTModule
             if (inputs[SIDEBAND_L].isConnected() && !inputs[SIDEBAND_R].isConnected())
             {
                 float ml = inputs[SIDEBAND_L].getVoltageSum();
-                modulatorL[bufferPos] = ml;
-                modulatorR[bufferPos] = ml;
+                modulatorL[0][bufferPos] = ml;
+                modulatorR[0][bufferPos] = ml;
             }
             else
             {
-                modulatorL[bufferPos] = inputs[SIDEBAND_L].getVoltageSum();
-                modulatorR[bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
+                modulatorL[0][bufferPos] = inputs[SIDEBAND_L].getVoltageSum();
+                modulatorR[0][bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
             }
         }
         bufferPos++;
@@ -412,13 +432,13 @@ template <int fxType> struct FX : modules::XTModule
                 oap++;
             }
 
-            surge_effect->process_ringout(processedL, processedR, true);
+            surge_effect->process_ringout(processedL[0], processedR[0], true);
 
             bufferPos = 0;
         }
 
-        float outl = processedL[bufferPos] * SURGE_TO_RACK_OSC_MUL;
-        float outr = processedR[bufferPos] * SURGE_TO_RACK_OSC_MUL;
+        float outl = processedL[0][bufferPos] * SURGE_TO_RACK_OSC_MUL;
+        float outr = processedR[0][bufferPos] * SURGE_TO_RACK_OSC_MUL;
 
         if (outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected())
         {
@@ -431,9 +451,141 @@ template <int fxType> struct FX : modules::XTModule
         }
     }
 
+
+    int lastNChan{-1};
+
+    void guaranteePolyFX(int chan)
+    {
+        for (int i=0; i<chan; ++i)
+        {
+            if (!surge_effect_poly[i])
+            {
+                 surge_effect_poly[i].reset(
+                     spawn_effect(fxType, storage.get(), fxstorage, storage->getPatch().globaldata));
+                 surge_effect_poly[i]->init();
+            }
+        }
+    }
+
+    void processPoly(const typename rack::Module::ProcessArgs &args)
+    {
+        auto chan = std::max(1, inputs[INPUT_L].getChannels());
+
+        if (chan != lastNChan)
+        {
+            lastNChan = chan;
+            guaranteePolyFX(chan);
+            outputs[OUTPUT_L].setChannels(chan);
+            outputs[OUTPUT_R].setChannels(chan);
+        }
+
+        for (int c=0; c < chan; ++c)
+        {
+            float inl = inputs[INPUT_L].getVoltage(c) * RACK_TO_SURGE_OSC_MUL;
+            float inr = inputs[INPUT_R].getVoltage(c) * RACK_TO_SURGE_OSC_MUL;
+
+            if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
+            {
+                bufferL[c][bufferPos] = inl;
+                bufferR[c][bufferPos] = inl;
+            }
+            else
+            {
+                bufferL[c][bufferPos] = inl;
+                bufferR[c][bufferPos] = inr;
+            }
+        }
+
+        // FIXME make this poly
+        if constexpr (FXConfig<fxType>::usesSideband())
+        {
+            if (inputs[SIDEBAND_L].isConnected() && !inputs[SIDEBAND_R].isConnected())
+            {
+                float ml = inputs[SIDEBAND_L].getVoltageSum();
+                modulatorL[0][bufferPos] = ml;
+                modulatorR[0][bufferPos] = ml;
+            }
+            else
+            {
+                modulatorL[0][bufferPos] = inputs[SIDEBAND_L].getVoltageSum();
+                modulatorR[0][bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
+            }
+        }
+        bufferPos++;
+
+        if (bufferPos >= BLOCK_SIZE)
+        {
+            polyModAssist.setupMatrix(this);
+            polyModAssist.updateValues(this);
+
+            if constexpr (FXConfig<fxType>::specificParamCount() > 0)
+            {
+                FXConfig<fxType>::processSpecificParams(this);
+            }
+
+            for (int i = 0; i < n_fx_params; ++i)
+            {
+                fxstorage->p[i].set_value_f01(polyModAssist.basevalues[i]);
+            }
+
+            FXConfig<fxType>::processExtraInputs(this);
+
+            for (int c=0; c<chan; ++c)
+            {
+                std::memcpy(processedL[c], bufferL[c], BLOCK_SIZE * sizeof(float));
+                std::memcpy(processedR[c], bufferR[c], BLOCK_SIZE * sizeof(float));
+
+                if constexpr (FXConfig<fxType>::usesSideband())
+                {
+                    std::memcpy(storage->audio_in_nonOS[0], modulatorL, BLOCK_SIZE * sizeof(float));
+                    std::memcpy(storage->audio_in_nonOS[1], modulatorR, BLOCK_SIZE * sizeof(float));
+                }
+
+                copyGlobaldataSubset(storage_id_start, storage_id_end);
+
+                auto *oap = &fxstorage->p[0];
+                auto *eap = &fxstorage->p[n_fx_params - 1];
+                auto &pt = storage->getPatch().globaldata;
+                int idx = 0;
+                while (oap <= eap)
+                {
+                    if (oap->valtype == vt_float)
+                    {
+                        pt[oap->id].f += polyModAssist.modvalues[idx][c] * modScales[idx];
+                    }
+                    idx++;
+                    oap++;
+                }
+
+                surge_effect_poly[c]->process_ringout(processedL[c], processedR[c], true);
+            }
+            bufferPos = 0;
+        }
+
+        bool mono = outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected();
+        for (int c=0; c<chan; ++c)
+        {
+            float outl = processedL[c][bufferPos] * SURGE_TO_RACK_OSC_MUL;
+            float outr = processedR[c][bufferPos] * SURGE_TO_RACK_OSC_MUL;
+
+            if (mono)
+            {
+                outputs[OUTPUT_L].setVoltage(0.5 * (outl + outr), c);
+            }
+            else
+            {
+                outputs[OUTPUT_L].setVoltage(outl, c);
+                outputs[OUTPUT_R].setVoltage(outr, c);
+            }
+        }
+    }
+
     int polyChannelCount()
     {
-        return 1; // these arent' polyphonic fx
+        if (polyphonicMode)
+            return std::max(inputs[INPUT_L].getChannels(), 1);
+        else
+            return 1; // these arent' polyphonic fx
     }
 
     void activateTempoSync()
@@ -524,6 +676,7 @@ template <int fxType> struct FX : modules::XTModule
     }
 
     std::unique_ptr<Effect> surge_effect;
+    std::array<std::unique_ptr<Effect>,MAX_POLY> surge_effect_poly;
     FxStorage *fxstorage{nullptr};
 };
 } // namespace sst::surgext_rack::fx
