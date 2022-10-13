@@ -23,8 +23,6 @@ template <> FXConfig<fxt_ensemble>::layout_t FXConfig<fxt_ensemble>::getLayout()
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - (14 - 9) * 0.5f;
 
-    typedef FX<fxt_ensemble> fx_t;
-
     // clang-format off
     return {
         {LayoutItem::KNOB12, "LFO RATE 1",  BBDEnsembleEffect::ens_lfo_freq1, FXLayoutHelper::bigCol0, row1},

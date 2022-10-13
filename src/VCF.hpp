@@ -559,6 +559,7 @@ struct VCF : public modules::XTModule
                 break;
             }
         }
+        return "Error";
     }
 };
 

@@ -21,7 +21,7 @@ namespace sst::surgext_rack::lfo
 struct LFO : modules::XTModule
 {
     static constexpr int n_lfo_params{10};
-    static constexpr int n_mod_inputs{5};
+    static constexpr int n_mod_inputs{4};
     static constexpr int n_arbitrary_switches{4};
 
     enum ParamIds
@@ -74,12 +74,11 @@ struct LFO : modules::XTModule
     LFO() : XTModule()
     {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        // setupSurge();
+        setupSurge();
     }
     
     std::string getName() override { return "LFO"; }
 
-#if 0
     std::array<std::unique_ptr<LFOModulationSource>, MAX_POLY> surge_lfo;
     std::unique_ptr<StepSequencerStorage> surge_ss;
     std::unique_ptr<MSEGStorage> surge_ms;
@@ -263,7 +262,7 @@ struct LFO : modules::XTModule
             outputI.store(outputs[OUTPUT_MIX].getVoltages(c));
         }
     }
-#endif
+
 };
 } // namespace sst::surgext_rack::lfo
 #endif // RACK_HACK_LFO_HPP
