@@ -27,7 +27,7 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
             return;
         auto xtm = static_cast<FX<fxType> *>(module);
 
-        if constexpr (false && FXConfig<fxType>::allowsPolyphony())
+        if constexpr (FXConfig<fxType>::allowsPolyphony())
         {
             menu->addChild(new rack::ui::MenuSeparator);
             bool t = xtm->polyphonicMode;
