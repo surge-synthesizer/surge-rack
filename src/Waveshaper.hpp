@@ -78,8 +78,10 @@ struct Waveshaper : public modules::XTModule
 
     Waveshaper() : XTModule()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
+        std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
+
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+        setupSurgeCommon(NUM_PARAMS, false);
 
         // FIXME attach formatters here
         configParam(DRIVE, -24, 24, 0, "Drive", "dB"); // UNITS
@@ -109,7 +111,18 @@ struct Waveshaper : public modules::XTModule
         configOutput(OUTPUT_L, "Left");
         configOutput(OUTPUT_R, "Right");
 
-        setupSurge();
+        processPosition = BLOCK_SIZE;
+
+        for (int i = 0; i < MAX_POLY; ++i)
+        {
+            lpPost[i] = std::make_unique<BiquadFilter>(storage.get());
+            lpPost[i]->suspend();
+            hpPost[i] = std::make_unique<BiquadFilter>(storage.get());
+            hpPost[i]->suspend();
+        }
+
+        restackSIMD();
+        resetWaveshaperRegisters();
 
         modulationAssistant.initialize(this);
 
@@ -135,22 +148,6 @@ struct Waveshaper : public modules::XTModule
 
     static constexpr int nQFUs = MAX_POLY >> 1; // >> 2 for SIMD <<1 for stereo
     bool locutOn{false}, hicutOn{false};
-
-    void setupSurge()
-    {
-        processPosition = BLOCK_SIZE;
-
-        for (int i = 0; i < MAX_POLY; ++i)
-        {
-            lpPost[i] = std::make_unique<BiquadFilter>(storage.get());
-            lpPost[i]->suspend();
-            hpPost[i] = std::make_unique<BiquadFilter>(storage.get());
-            hpPost[i]->suspend();
-        }
-
-        restackSIMD();
-        resetWaveshaperRegisters();
-    }
 
     void moduleSpecificSampleRateChange() override { resetWaveshaperRegisters(); }
 

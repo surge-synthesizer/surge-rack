@@ -73,6 +73,8 @@ struct XTModule : public rack::Module
 
     virtual void moduleSpecificSampleRateChange() {}
 
+    static std::atomic<bool> showedPathsOnce;
+
     void setupSurgeCommon(int NUM_PARAMS, bool loadWavetables)
     {
         std::string dataPath = SurgeStorage::skipPatchLoadDataPathSentinel;
@@ -84,7 +86,6 @@ struct XTModule : public rack::Module
         storage = std::make_unique<SurgeStorage>(dataPath);
         storage->getPatch().init_default_values();
 
-        std::atomic<bool> showedPathsOnce{false};
         if (!showedPathsOnce)
         {
             showedPathsOnce = true;

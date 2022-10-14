@@ -213,18 +213,18 @@ template <int fxType> struct FX : modules::XTModule
                                 p.type = fxType;
                                 for (int q=0; q<n_fx_params; ++q)
                                 {
-                                    // Set up with default values
-                                    if (fxstorage->p[i].valtype == vt_float)
+                                    // Set up with default values remember q index
+                                    if (fxstorage->p[q].valtype == vt_float)
                                     {
-                                        p.p[i] = fxstorage->p[i].val.f;
+                                        p.p[q] = fxstorage->p[q].val.f;
                                     }
-                                    if (fxstorage->p[i].valtype == vt_int)
+                                    if (fxstorage->p[q].valtype == vt_int)
                                     {
-                                        p.p[i] = fxstorage->p[i].val.i;
+                                        p.p[q] = fxstorage->p[q].val.i;
                                     }
-                                    if (fxstorage->p[i].valtype == vt_bool)
+                                    if (fxstorage->p[q].valtype == vt_bool)
                                     {
-                                        p.p[i] = fxstorage->p[i].val.b;
+                                        p.p[q] = fxstorage->p[q].val.b;
                                     }
 
                                 }
