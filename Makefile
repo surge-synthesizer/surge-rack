@@ -76,6 +76,11 @@ CFLAGS +=
 # Static libraries are fine.
 LDFLAGS +=
 
+# Comment this out for sanitizer then run with
+# DYLD_INSERT_LIBRARIES=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/14.0.0/lib/darwin/libclang_rt.asan_osx_dynamic.dylib /Applications/VCV\ Rack\ 2\ Pro.app/Contents/MacOS/Rack
+# FLAGS += -fsanitize=address -fsanitize=undefined
+# LDFLAGS += -fsanitize=address -fsanitize=undefined
+
 # Add .cpp and .c files to the build
 SOURCES += $(wildcard src/*.cpp)
 
