@@ -127,7 +127,12 @@ struct Mixer : modules::XTModule
                 noisegen[i][c][1] = 0.f;
             }
         }
+
+        modulationAssistant.initialize(this);
     }
+
+    modules::ModulationAssistant<Mixer, n_mixer_params, OSC1_LEV, n_mod_inputs, MIXER_MOD_INPUT>
+        modulationAssistant;
 
     void updateRoutes()
     {
@@ -169,17 +174,19 @@ struct Mixer : modules::XTModule
     std::string getName() override { return "Mixer"; }
 
     static constexpr int slowUpdate{8};
-    int blockPos{0};
+    int blockPos{slowUpdate};
 
     int polyDepth{1}, polyDepthBy4{1};
     int polyDepthPerOsc[n_osc];
+
+    int polyChannelCount() { return polyDepth; }
 
     void process(const ProcessArgs &args) override
     {
         if (blockPos == slowUpdate)
         {
             updateRoutes();
-            // modulationAssistant.setupMatrix(this);
+            modulationAssistant.setupMatrix(this);
             blockPos = 0;
 
             for (int i = INPUT_OSC1_L; i <= INPUT_OSC3_L; i += 2)
@@ -187,10 +194,13 @@ struct Mixer : modules::XTModule
                 auto pd = inputs[i].getChannels();
                 polyDepth = std::max(polyDepth, pd);
                 polyDepthPerOsc[(i - INPUT_OSC1_L) / 2] = pd;
-                polyDepthPerOsc[(i - INPUT_OSC1_L) / 2] = inputs[i].isConnected();
             }
             polyDepthBy4 = (polyDepth - 1) / 4 + 1;
         }
+
+        outputs[OUTPUT_L].setChannels(polyDepth);
+        outputs[OUTPUT_R].setChannels(polyDepth);
+        modulationAssistant.updateValues(this);
 
         rack::simd::float_4 oL[n_poly_quads]{0, 0, 0, 0};
         rack::simd::float_4 oR[n_poly_quads]{0, 0, 0, 0};
@@ -208,15 +218,16 @@ struct Mixer : modules::XTModule
                 for (int p = 0; p < polyDepthBy4; ++p)
                 {
                     osc[i][0][p] =
-                        RACK_TO_SURGE_OSC_MUL *
-                        rack::simd::float_4::load(inputs[INPUT_OSC1_L + i * 2].getVoltages(p * 4));
+                        rack::simd::float_4::load(inputs[INPUT_OSC1_L + i * 2].getVoltages(p * 4)) *
+                        RACK_TO_SURGE_OSC_MUL;
                     osc[i][1][p] =
-                        RACK_TO_SURGE_OSC_MUL *
-                        rack::simd::float_4::load(inputs[INPUT_OSC1_R + i * 2].getVoltages(p * 4));
+                        rack::simd::float_4::load(inputs[INPUT_OSC1_R + i * 2].getVoltages(p * 4)) *
+                        RACK_TO_SURGE_OSC_MUL;
                 }
             }
             else
             {
+                // this is basically loading up the mono signal across the braodcast set
                 for (int p = 0; p < polyDepthBy4; ++p)
                 {
                     osc[i][0][p] =
@@ -231,8 +242,8 @@ struct Mixer : modules::XTModule
 
             for (int p = 0; p < polyDepthBy4; ++p)
             {
-                oL[p] += osc[i][0][p] * params[OSC1_LEV + i].getValue();
-                oR[p] += osc[i][1][p] * params[OSC1_LEV + i].getValue();
+                oL[p] += osc[i][0][p] * modulationAssistant.valuesSSE[OSC1_LEV + i][p];
+                oR[p] += osc[i][1][p] * modulationAssistant.valuesSSE[OSC1_LEV + i][p];
             }
         }
 
@@ -243,10 +254,10 @@ struct Mixer : modules::XTModule
                 auto col = std::clamp(params[NOISE_COL].getValue(), -1.f, 1.f);
                 oL[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
                                          noisegen[p][0][0], noisegen[p][0][1], col, storage.get()) *
-                                     params[NOISE_LEV].getValue();
+                                     modulationAssistant.values[NOISE_LEV][p];
                 oR[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
                                          noisegen[p][1][0], noisegen[p][1][1], col, storage.get()) *
-                                     params[NOISE_LEV].getValue();
+                                     modulationAssistant.values[NOISE_LEV][p];
             }
         }
 
@@ -254,8 +265,10 @@ struct Mixer : modules::XTModule
         {
             for (int p = 0; p < polyDepthBy4; ++p)
             {
-                oL[p] += osc[osc1][0][p] * osc[osc2][0][p] * params[RM1X2_LEV].getValue();
-                oR[p] += osc[osc1][1][p] * osc[osc2][1][p] * params[RM1X2_LEV].getValue();
+                oL[p] +=
+                    osc[osc1][0][p] * osc[osc2][0][p] * modulationAssistant.valuesSSE[RM1X2_LEV][p];
+                oR[p] +=
+                    osc[osc1][1][p] * osc[osc2][1][p] * modulationAssistant.valuesSSE[RM1X2_LEV][p];
             }
         }
 
@@ -263,15 +276,20 @@ struct Mixer : modules::XTModule
         {
             for (int p = 0; p < polyDepthBy4; ++p)
             {
-                oL[p] += osc[osc3][0][p] * osc[osc2][0][p] * params[RM2X3_LEV].getValue();
-                oR[p] += osc[osc3][1][p] * osc[osc2][1][p] * params[RM2X3_LEV].getValue();
+                oL[p] +=
+                    osc[osc3][0][p] * osc[osc2][0][p] * modulationAssistant.valuesSSE[RM2X3_LEV][p];
+                oR[p] +=
+                    osc[osc3][1][p] * osc[osc2][1][p] * modulationAssistant.valuesSSE[RM2X3_LEV][p];
             }
         }
 
         for (int p = 0; p < polyDepthBy4; ++p)
         {
-            oL[p] *= SURGE_TO_RACK_OSC_MUL * params[GAIN].getValue();
-            oR[p] *= SURGE_TO_RACK_OSC_MUL * params[GAIN].getValue();
+            oL[p] *= modulationAssistant.valuesSSE[GAIN][p];
+            oR[p] *= modulationAssistant.valuesSSE[GAIN][p];
+            oL[p] *= SURGE_TO_RACK_OSC_MUL;
+            oR[p] *= SURGE_TO_RACK_OSC_MUL;
+
             oL[p].store(outputs[OUTPUT_L].getVoltages(p * 4));
             oR[p].store(outputs[OUTPUT_R].getVoltages(p * 4));
         }
