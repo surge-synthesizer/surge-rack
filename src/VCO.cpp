@@ -22,6 +22,15 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
         if (toggles[mod])
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
+
+    virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (module)
+        {
+            auto m = static_cast<M *>(module);
+            VCOConfig<oscType>::addMenuItems(m, menu);
+        }
+    }
 };
 
 template <int oscType> struct WavetableSelector : widgets::PresetJogSelector

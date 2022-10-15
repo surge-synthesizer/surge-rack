@@ -286,6 +286,8 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
         par->get_display_alt(talt, true, getValue());
         if (strlen(talt))
         {
+            if (std::string(talt) == " ")
+                return std::string(txt);
             return std::string(txt) + " (" + talt + ")";
         }
 
