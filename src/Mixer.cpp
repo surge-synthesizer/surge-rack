@@ -28,7 +28,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
                          rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "Mixer", "other", "Mixer");
+    auto bg = new widgets::Background(box.size, "MIXER", "other", "Mixer");
     addChild(bg);
 
     std::vector<std::string> labels{"OSC1", "OSC2", "OSC3",  "NOISE",

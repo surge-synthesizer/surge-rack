@@ -93,6 +93,8 @@ struct Mixer : modules::XTModule
 
     Mixer() : XTModule()
     {
+        std::lock_guard<std::mutex> ltg(xtSurgeCreateMutex);
+
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -251,7 +253,7 @@ struct Mixer : modules::XTModule
         {
             for (int p = 0; p < polyDepth; ++p)
             {
-                auto col = std::clamp(params[NOISE_COL].getValue(), -1.f, 1.f);
+                auto col = std::clamp(modulationAssistant.values[NOISE_COL][p], -1.f, 1.f);
                 oL[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
                                          noisegen[p][0][0], noisegen[p][0][1], col, storage.get()) *
                                      modulationAssistant.values[NOISE_LEV][p];
