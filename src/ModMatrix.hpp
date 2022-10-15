@@ -95,12 +95,14 @@ struct ModMatrix : modules::XTModule
             modulationAssistant.setupMatrix(this);
             blockPos = 0;
 
+            auto npd = 1;
             for (int i = MATRIX_MOD_INPUT; i < MATRIX_MOD_INPUT + n_mod_inputs; i++)
             {
                 auto pd = inputs[i].getChannels();
-                polyDepth = std::max(polyDepth, pd);
+                npd = std::max(npd, pd);
             }
 
+            polyDepth = npd;
             polyDepthBy4 = (polyDepth - 1) / 4 + 1;
 
             blockPos = 0;
