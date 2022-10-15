@@ -20,6 +20,8 @@ template <int oscType> struct VCOConfig
         return {
         };
     }
+    // Note if you add stuff, add a separator first please
+    static void addMenuItems(VCO<oscType> *m, rack::ui::Menu *toThis) {}
 
     static constexpr bool supportsUnison() { return false; }
     static constexpr int maximumUnison() { return 9; }
