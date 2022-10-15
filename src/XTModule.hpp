@@ -596,15 +596,20 @@ struct MonophonicModulationAssistant
 template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs, uint32_t input0>
 struct ModulationAssistant
 {
-    float f[nPar], fInv[nPar];
-    float mu[nPar][nInputs];
-    __m128 muSSE[nPar][nInputs];
+    float f alignas(16)[nPar], fInv alignas(16)[nPar];
+    float mu alignas(16)[nPar][nInputs];
     float values alignas(16)[nPar][MAX_POLY];
     float basevalues alignas(16)[nPar];
     float modvalues alignas(16)[nPar][MAX_POLY];
-    __m128 valuesSSE[nPar][MAX_POLY >> 2];
-    float animValues[nPar];
+    __m128 valuesSSE alignas(16)[nPar][MAX_POLY >> 2];
+    __m128 muSSE alignas(16)[nPar][nInputs];
+    float animValues alignas(16)[nPar];
+
     bool connected[nInputs];
+    bool connectedParameter[nPar];
+    bool broadcast[nInputs];
+    int chans{1};
+    bool anyConnected{false};
     void initialize(M *m)
     {
         for (auto p = 0; p < nPar; ++p)
@@ -618,30 +623,16 @@ struct ModulationAssistant
 
     void setupMatrix(M *m)
     {
-        for (auto p = 0; p < nPar; ++p)
-        {
-            for (auto i = 0; i < nInputs; ++i)
-            {
-                auto idx = m->modulatorIndexFor(p + par0, i);
-                mu[p][i] = m->params[idx].getValue() * f[p];
-                muSSE[p][i] = _mm_load1_ps(&mu[p][i]);
-            }
-        }
-    }
+        chans = std::max(1, m->polyChannelCount());
 
-    void updateValues(M *m)
-    {
-        auto ci = 0;
-        bool broadcast[nInputs];
-        auto chans = std::max({1, m->polyChannelCount(), ci});
-
+        anyConnected = false;
         for (int i = 0; i < nInputs; ++i)
         {
             connected[i] = m->inputs[i + input0].isConnected();
+            anyConnected = anyConnected || connected[i];
             if (connected[i])
             {
                 auto ch = m->inputs[i + input0].getChannels();
-                ci = std::max(ci, ch);
                 broadcast[i] = ch != chans;
             }
             else
@@ -650,89 +641,127 @@ struct ModulationAssistant
             }
         }
 
+        for (auto p = 0; p < nPar; ++p)
+        {
+            auto sm = 0.f;
+            for (auto i = 0; i < nInputs; ++i)
+            {
+                auto idx = m->modulatorIndexFor(p + par0, i);
+                mu[p][i] = m->params[idx].getValue() * f[p];
+                sm += fabs(mu[p][i]);
+                muSSE[p][i] = _mm_set1_ps(mu[p][i]);
+            }
+            connectedParameter[p] = (sm > 1e-6f) && anyConnected;
+        }
+    }
+
+    void updateValues(M *m)
+    {
         if (chans == 1)
         {
             // Special case: chans = 1 can skip all the channel loops
             float inp[nInputs];
             for (int i = 0; i < nInputs; ++i)
             {
-                inp[i] = m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+                inp[i] = connected[i] * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
             }
             for (int p = 0; p < nPar; ++p)
             {
                 // Set up the base values
                 auto mv = 0.f;
-                for (int i = 0; i < nInputs; ++i)
+                if (connectedParameter[p])
                 {
-                    mv += connected[i] * mu[p][i] * inp[i];
+                    for (int i = 0; i < nInputs; ++i)
+                    {
+                        mv += mu[p][i] * inp[i];
+                    }
                 }
                 modvalues[p][0] = mv;
                 basevalues[p] = m->params[p + par0].getValue();
                 values[p][0] = mv + basevalues[p];
+                valuesSSE[p][0] = _mm_set1_ps(values[p][0]);
+
                 animValues[p] = fInv[p] * mv;
             }
         }
         else
         {
-            // general poly-poly case. So what do we need to do?
-            // We we have the matrix as SSEs so we need to make
-            // that from the inputs and voia. But we need to deal with
-            // the broadcast inputs first.
-            //
-            // This is structured so we can do SIMD later but lets
-            // do regular way first
-            float snapInputs[nInputs][MAX_POLY];
+            const auto r2scv = _mm_set1_ps(RACK_TO_SURGE_CV_MUL);
+            int polyChans = (chans-1)/4 + 1;
+            __m128 snapInputs[nInputs][MAX_POLY >> 2];
             for (int i = 0; i < nInputs; ++i)
             {
-                if (broadcast[i])
+                if (!connected[i])
                 {
-                    auto iv =
-                        connected[i] * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
-                    for (int c = 0; c < chans; ++c)
+                    for (int c = 0; c < polyChans; ++c)
                     {
-                        snapInputs[i][c] = iv;
+                        snapInputs[i][c] = _mm_setzero_ps();
+                    }
+                }
+                else if (broadcast[i])
+                {
+                    auto iv = m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+                    for (int c = 0; c < polyChans; ++c)
+                    {
+                        snapInputs[i][c] = _mm_set1_ps(iv);
                     }
                 }
                 else
                 {
                     // This loop can SIMD-ize
-                    for (int c = 0; c < chans; ++c)
+                    for (int c = 0; c < polyChans; ++c)
                     {
-                        auto iv = connected[i] * m->inputs[i + input0].getVoltage(c) *
-                                  RACK_TO_SURGE_CV_MUL;
-                        snapInputs[i][c] = iv;
+                        auto v = _mm_loadu_ps(m->inputs[i + input0].getVoltages(c * 4));
+                        v = _mm_mul_ps(v, r2scv);
+                        snapInputs[i][c] = v;
                     }
                 }
             }
             for (int p = 0; p < nPar; ++p)
             {
-                float mv[MAX_POLY];
-                memset(mv, 0, chans * sizeof(float));
-
-                for (int i = 0; i < nInputs; ++i)
+                if (!connectedParameter[p])
                 {
-                    // This is the loop we will simd-4 stride
-                    for (int c = 0; c < chans; ++c)
+                    basevalues[p] = m->params[p + par0].getValue();
+                    auto v0 = _mm_set1_ps(basevalues[p]);
+
+                    for (int c=0; c<polyChans; ++c)
                     {
-                        mv[c] += connected[i] * mu[p][i] * snapInputs[i][c];
+                        _mm_store_ps(&modvalues[p][c*4], _mm_setzero_ps());
+                        valuesSSE[p][c] = v0;
+                        _mm_store_ps(&values[p][c*4], valuesSSE[p][c]);
                     }
-                }
-                auto v0 = m->params[p + par0].getValue();
-                for (int c = 0; c < chans; ++c)
-                {
-                    modvalues[p][c] = mv[c];
-                    values[p][c] = mv[c] + v0;
-                }
-                basevalues[p] = v0;
-                animValues[p] = fInv[p] * mv[0];
-            }
-        }
 
-        for (int p = 0; p < nPar; ++p)
-        {
-            for (auto csse = 0; csse < (MAX_POLY >> 2); csse++)
-            {
-                valuesSSE[p][csse] = _mm_load_ps(&values[p][csse << 2]);
+                    animValues[p] = fInv[p] * modvalues[p][0];
+                }
+                else
+                {
+                    __m128 mv[MAX_POLY >> 2];
+                    memset(mv, 0, polyChans * sizeof(__m128));
+
+                    for (int i = 0; i < nInputs; ++i)
+                    {
+                        if (!connected[i])
+                            continue;
+
+                        // This is the loop we will simd-4 stride
+                        for (int c = 0; c < polyChans; ++c)
+                        {
+                            mv[c] = _mm_add_ps(mv[c], _mm_mul_ps(muSSE[p][i], snapInputs[i][c]));
+                        }
+                    }
+
+                    basevalues[p] = m->params[p + par0].getValue();
+                    auto v0 = _mm_set1_ps(basevalues[p]);
+
+                    for (int c = 0; c < polyChans; ++c)
+                    {
+                        _mm_store_ps(&modvalues[p][c * 4], mv[c]);
+                        valuesSSE[p][c] = _mm_add_ps(v0, mv[c]);
+                        _mm_store_ps(&values[p][c * 4], valuesSSE[p][c]);
+                    }
+
+                    animValues[p] = fInv[p] * modvalues[p][0];
+                }
             }
         }
     }
