@@ -191,6 +191,7 @@ struct Mixer : modules::XTModule
             modulationAssistant.setupMatrix(this);
             blockPos = 0;
 
+            polyDepth = 1;
             for (int i = INPUT_OSC1_L; i <= INPUT_OSC3_L; i += 2)
             {
                 auto pd = inputs[i].getChannels();
