@@ -23,11 +23,57 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
+
+    virtual void characterMenu(rack::Menu *p, M *m)
+    {
+        if (!m || !m->paramQuantities[M::CHARACTER])
+            return;
+        auto pq  = m->paramQuantities[M::CHARACTER];
+        auto pqvi = (int)std::round(pq->getValue());
+
+        for (auto c : {cm_warm, cm_neutral, cm_bright})
+        {
+            p->addChild(rack::createMenuItem(character_names[c],
+                                             CHECKMARK(pqvi == c),
+                                             [pq, c]() { pq->setValue(c); }));
+        }
+    }
+
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (module)
         {
             auto m = static_cast<M *>(module);
+            menu->addChild(new rack::ui::MenuSeparator);
+
+            auto addBoolMenu = [menu, m](auto *l, auto p)
+            {
+                if (!m || !m->paramQuantities[p])
+                    return;
+
+                auto v = m->paramQuantities[p]->getValue() > 0.5;
+                menu->addChild(rack::createMenuItem(l,
+                                                    CHECKMARK(v),
+                                                    [m,v,p]() {
+                                                        m->paramQuantities[p]->setValue(v ? 0 : 1);
+                                                        }));
+            };
+
+            addBoolMenu("Retrigger With Phase=0", M::RETRIGGER_STYLE);
+            if (VCOConfig<oscType>::supportsUnison())
+            {
+                addBoolMenu("Extend Unison Detune", M::EXTEND_UNISON);
+                addBoolMenu("Absolute Unison Detune", M::ABSOLUTE_UNISON);
+            }
+            menu->addChild(rack::createSubmenuItem( "Character", "", [this, m](auto *x) {
+                characterMenu(x, m);
+            }));
+
+            auto driftSlider = new rack::ui::Slider;
+            driftSlider->quantity = module->paramQuantities[M::DRIFT];
+            driftSlider->box.size.x = 125;
+            menu->addChild(driftSlider);
+
             VCOConfig<oscType>::addMenuItems(m, menu);
         }
     }
@@ -280,6 +326,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     int dirtyCount{0};
     int sumDeact{-1};
     int sumAbs{-1};
+    int charF{-1};
     uint32_t wtloadCompare{842932918};
 
     bool isDirty()
@@ -305,6 +352,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             {
                 sumDeact = lSumDeact;
                 sumAbs = lSumAbs;
+                dval = true;
+            }
+
+            if (charF != storage->getPatch().character.val.i)
+            {
+                charF = storage->getPatch().character.val.i;
                 dval = true;
             }
         }
