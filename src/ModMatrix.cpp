@@ -29,7 +29,7 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
                          rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "MOD MATRIX", "other", "Mixer");
+    auto bg = new widgets::Background(box.size, "MOD MATRIX", "other", "Matrix");
     addChild(bg);
 
     int kr{0}, kc{0};
