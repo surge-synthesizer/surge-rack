@@ -67,7 +67,12 @@ template <int oscType> struct VCO : public modules::XTModule
 
         ARBITRARY_SWITCH_0,
 
-        NUM_PARAMS = ARBITRARY_SWITCH_0 + n_arbitrary_switches
+        RETRIGGER_STYLE = ARBITRARY_SWITCH_0 + n_arbitrary_switches,
+        EXTEND_UNISON,
+        ABSOLUTE_UNISON,
+        CHARACTER,
+        DRIFT,
+        NUM_PARAMS
     };
     enum InputIds
     {
@@ -178,6 +183,12 @@ template <int oscType> struct VCO : public modules::XTModule
                 configParam<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name);
             }
         }
+
+        configParam(RETRIGGER_STYLE, 0, 1, 0, "Random Phase on Retrigger");
+        configParam(EXTEND_UNISON, 0, 1, 0, "Extend Unison");
+        configParam(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
+        configParam(CHARACTER, 0, 2, 1, "Character Filter" );
+        configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
 
         VCOConfig<oscType>::configureArbitrarySwitches(this);
         config_osc->~Oscillator();
@@ -459,6 +470,12 @@ template <int oscType> struct VCO : public modules::XTModule
                 monoRetriggerOn = reTrigger[0].process(inputs[RETRIGGER].getVoltage());
             }
 
+            auto characterFilter = (int)std::round(params[CHARACTER].getValue());
+            if (storage->getPatch().character.val.i != characterFilter)
+                reInitEveryOSC = true;
+            storage->getPatch().character.val.i = characterFilter;
+            auto driftVal = std::clamp(params[DRIFT].getValue(), 0.f, 1.f);
+
             for (int c = 0; c < nChan; ++c)
             {
                 bool needsReInit{reInitEveryOSC};
@@ -488,6 +505,21 @@ template <int oscType> struct VCO : public modules::XTModule
                         }
                     }
 
+                    oscstorage->retrigger.val.b = (params[RETRIGGER_STYLE].getValue() > 0.5);
+                    if constexpr (VCOConfig<oscType>::supportsUnison())
+                    {
+                        auto extendDetune = params[EXTEND_UNISON].getValue() > 0.5;
+                        auto absoluteDetune = params[ABSOLUTE_UNISON].getValue() > 0.5;
+                        // We need the display here because it is used for formatting
+                        if (oscstorage->p[n_osc_params-2].extend_range != extendDetune)
+                        {
+                            oscstorage->p[n_osc_params-2].set_extend_range(extendDetune);
+                            oscstorage_display->p[n_osc_params-2].set_extend_range(extendDetune);
+                        }
+                        oscstorage->p[n_osc_params-2].absolute = absoluteDetune;
+                        oscstorage_display->p[n_osc_params-2].absolute = absoluteDetune;
+                    }
+
                     float pitch0 =
                         (modAssist.values[0][c] + 5) * 12 +
                         (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
@@ -497,7 +529,7 @@ template <int oscType> struct VCO : public modules::XTModule
                     {
                         surge_osc[c]->init(pitch0);
                     }
-                    surge_osc[c]->process_block(pitch0, 0, true);
+                    surge_osc[c]->process_block(pitch0, driftVal, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
                     halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
@@ -596,6 +628,7 @@ template <int oscType> struct VCO : public modules::XTModule
             json_object_set(wtT, "data", json_string(b64.c_str()));
             json_object_set(vco, "wavetable", wtT);
         }
+
         return vco;
     }
     void readModuleSpecificJson(json_t *modJ) override
@@ -654,6 +687,21 @@ template <int oscType> struct VCO : public modules::XTModule
                 wavetableIndex = supposedIdx;
             }
         }
+
+        auto getBool = [](auto *n, auto *str, auto def)
+        {
+            auto v = json_object_get(n, str);
+            if (!v)
+                return def;
+            return json_boolean_value(v);
+        };
+        auto getInt = [](auto *n, auto *str, auto def) -> int
+        {
+            auto v = json_object_get(n, str);
+            if (!v)
+                return def;
+            return json_integer_value(v);
+        };
     }
 };
 
