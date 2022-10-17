@@ -140,50 +140,55 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     auto padlcd = 1;
     auto lcd = widgets::LCDBackground::createWithHeight(eolcd);
     if (!module)
-        lcd->noModuleText = "Mixer";
-    addChild(lcd);
-    for (int i = 0; i < 6; ++i)
     {
-        std::string lab = "O" + std::to_string(i + 1);
-        if (i == 3)
-            lab = "N";
-        if (i == 4)
-            lab = "1X2";
-        if (i == 5)
-            lab = "2x3";
-
-        auto pm = M::OSC1_MUTE + i;
-        auto ps = M::OSC1_SOLO + i;
-        auto sxm = widgets::LCDBackground::posx_MM + padlcd;
-        auto wm = rack::app::RACK_GRID_WIDTH * 12 * 25.4 / 75 - 2 * sxm;
-
-        auto dx = wm / 6.0;
-
-        auto hm = eolcd - solcd - 2 * padlcd;
-        auto dy = hm / 5.0;
-        auto y0 = solcd + padlcd;
-
-        auto sz = rack::mm2px(rack::Vec(dx - 0.5, dy + 1));
-        auto pLab = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 - 2));
-        addChild(widgets::Label::createWithBaselineBox(pLab, sz, lab,
-                                                       layout::LayoutConstants::labelSize_pt,
-                                                       style::XTStyle::PLOT_CONTROL_TEXT));
-
-        auto pmute = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + dy - 1));
-        addParam(widgets::PlotAreaSwitch::create(pmute, sz, "M", module, pm));
-
-        auto psolo = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 2 * dy - 1));
-        addParam(widgets::PlotAreaSwitch::create(psolo, sz, "S", module, ps));
-
-        if (i == 0)
+        lcd->noModuleText = "Mixer";
+        lcd->noModuleSize = 30;
+    }
+    addChild(lcd);
+    if (module)
+    {
+        for (int i = 0; i < 6; ++i)
         {
-            auto pvu = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 3 * dy + 1));
-            auto vusz = rack::mm2px(rack::Vec(wm - 1, 2 * dy - 1));
-            auto vu = VUWidget::create(pvu, vusz, module);
-            addChild(vu);
+            std::string lab = "O" + std::to_string(i + 1);
+            if (i == 3)
+                lab = "N";
+            if (i == 4)
+                lab = "1X2";
+            if (i == 5)
+                lab = "2x3";
+
+            auto pm = M::OSC1_MUTE + i;
+            auto ps = M::OSC1_SOLO + i;
+            auto sxm = widgets::LCDBackground::posx_MM + padlcd;
+            auto wm = rack::app::RACK_GRID_WIDTH * 12 * 25.4 / 75 - 2 * sxm;
+
+            auto dx = wm / 6.0;
+
+            auto hm = eolcd - solcd - 2 * padlcd;
+            auto dy = hm / 5.0;
+            auto y0 = solcd + padlcd;
+
+            auto sz = rack::mm2px(rack::Vec(dx - 0.5, dy + 1));
+            auto pLab = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 - 2));
+            addChild(widgets::Label::createWithBaselineBox(pLab, sz, lab,
+                                                           layout::LayoutConstants::labelSize_pt,
+                                                           style::XTStyle::PLOT_CONTROL_TEXT));
+
+            auto pmute = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + dy - 1));
+            addParam(widgets::PlotAreaSwitch::create(pmute, sz, "M", module, pm));
+
+            auto psolo = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 2 * dy - 1));
+            addParam(widgets::PlotAreaSwitch::create(psolo, sz, "S", module, ps));
+
+            if (i == 0)
+            {
+                auto pvu = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 3 * dy + 1));
+                auto vusz = rack::mm2px(rack::Vec(wm - 1, 2 * dy - 1));
+                auto vu = VUWidget::create(pvu, vusz, module);
+                addChild(vu);
+            }
         }
     }
-
     auto portSpacing = layout::LayoutConstants::inputRowCenter_MM -
                        layout::LayoutConstants::modulationRowCenters_MM[1];
 

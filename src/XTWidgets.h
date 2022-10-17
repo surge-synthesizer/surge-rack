@@ -1378,6 +1378,7 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
 {
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::string noModuleText;
+    int noModuleSize{17};
     static constexpr float posx = 12.08506f;
     static constexpr float posx_MM = posx * 25.4 / 75.0;
     static constexpr float posy = 25.408199;
@@ -1466,7 +1467,7 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
             nvgBeginPath(vg);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, 17);
+            nvgFontSize(vg, noModuleSize);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, noModuleText.c_str(), nullptr);
         }
