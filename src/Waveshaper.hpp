@@ -257,6 +257,8 @@ struct Waveshaper : public modules::XTModule
    
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+
         auto wstype =
             (sst::waveshapers::WaveshaperType)(int)(std::round(params[WSHP_TYPE].getValue()));
         auto lc = inputs[INPUT_L].isConnected() ? inputs[INPUT_L].getChannels() : 0;

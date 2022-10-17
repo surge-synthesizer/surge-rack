@@ -105,6 +105,8 @@ template <int oscType> struct VCO : public modules::XTModule
     VCO() : XTModule(), halfbandIN(6, true)
     {
         std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+
         surge_osc.fill(nullptr);
         lastUnison.fill(-1);
 
@@ -354,6 +356,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+
         int nChan = polyChannelCount();
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);

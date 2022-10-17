@@ -237,6 +237,8 @@ struct Mixer : modules::XTModule
 
     void process(const ProcessArgs &args) override
     {
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+        
         if (blockPos == slowUpdate)
         {
             updateRoutes();

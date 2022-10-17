@@ -64,7 +64,8 @@ struct DelayLineByFreq : modules::XTModule
     static constexpr size_t delayLineLength = 1 << 14;
     std::array<std::unique_ptr<SSESincDelayLine<delayLineLength>>, MAX_POLY> lineL, lineR;
 
-    bool isBipolar(int paramId) override {
+    bool isBipolar(int paramId) override
+    {
         if (paramId == VOCT)
             return true;
         return false;
@@ -72,6 +73,8 @@ struct DelayLineByFreq : modules::XTModule
 
     void process(const ProcessArgs &args) override
     {
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+
         int cc = std::max(inputs[INPUT_L].getChannels(), 1);
 
         outputs[OUTPUT_L].setChannels(cc);

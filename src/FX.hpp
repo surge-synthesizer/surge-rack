@@ -340,6 +340,8 @@ template <int fxType> struct FX : modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+
         if constexpr (FXConfig<fxType>::usesClock())
         {
             if (inputs[INPUT_CLOCK].isConnected())

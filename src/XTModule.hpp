@@ -19,6 +19,8 @@
 #include <fmt/core.h>
 #include <thread>
 
+#include <sst/plugininfra/cpufeatures.h>
+
 namespace logger = rack::logger;
 using rack::appGet;
 
