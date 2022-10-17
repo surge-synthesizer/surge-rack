@@ -85,10 +85,10 @@ struct Waveshaper : public modules::XTModule
 
         // FIXME attach formatters here
         configParam(DRIVE, -24, 24, 0, "Drive", "dB"); // UNITS
-        configParam(BIAS, -1, 1, 0, "Bias");
+        configParam(BIAS, -1, 1, 0, "Bias", "V", 0, 5);
         configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
-        configParam(LOCUT, -60, 70, -60, "Low Cut");
-        configParam(HICUT, -60, 70, 70, "High Cut");
+        configParam<modules::MidiNoteParamQuantity<69>>(LOCUT, -60, 70, -60, "Low Cut");
+        configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "High Cut");
         configParam(LOCUT_ENABLED, 0, 1, 0);
         configParam(HICUT_ENABLED, 0, 1, 0);
 
@@ -98,7 +98,12 @@ struct Waveshaper : public modules::XTModule
 
         for (int i = 0; i < n_wshp_params * n_mod_inputs; ++i)
         {
-            configParam(WSHP_MOD_PARAM_0 + i, -1, 1, 0);
+            int tp = paramModulatedBy(i + WSHP_MOD_PARAM_0);
+            auto lb = paramQuantities[tp]->getLabel();
+            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " +
+                               lb;
+
+            configParam(WSHP_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
         configInput(INPUT_L, "Left");
@@ -487,6 +492,14 @@ struct Waveshaper : public modules::XTModule
         if (idx < 0 || idx >= n_wshp_params)
             return 0;
         return modulationAssistant.animValues[idx];
+    }
+
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - WSHP_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_wshp_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs + DRIVE;
     }
 };
 

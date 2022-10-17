@@ -35,6 +35,7 @@ DEPS += $(libsurge)
 $(libsurge):
 	# Out-of-source build dir
 	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8
+	# -DSURGE_SANITIZE=TRUE
 	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
 	cd $(SURGE_BLD) && make -j 4 surge-common
 
@@ -78,8 +79,8 @@ LDFLAGS +=
 
 # Comment this out for sanitizer then run with
 # DYLD_INSERT_LIBRARIES=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/14.0.0/lib/darwin/libclang_rt.asan_osx_dynamic.dylib /Applications/VCV\ Rack\ 2\ Pro.app/Contents/MacOS/Rack
-# FLAGS += -fsanitize=address -fsanitize=undefined
-# LDFLAGS += -fsanitize=address -fsanitize=undefined
+#FLAGS += -fsanitize=address -fsanitize=undefined
+#LDFLAGS += -fsanitize=address -fsanitize=undefined
 
 # Add .cpp and .c files to the build
 SOURCES += $(wildcard src/*.cpp)
