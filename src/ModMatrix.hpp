@@ -64,6 +64,10 @@ struct ModMatrix : modules::XTModule
     }
     std::string getName() override { return "ModMatrix"; }
 
+    float modulationDisplayValue(int paramId) override
+    {
+        return modulationAssistant.animValues[paramId - TARGET0];
+    }
     static int modulatorIndexFor(int baseParam, int modulator)
     {
         int offset = baseParam - TARGET0;

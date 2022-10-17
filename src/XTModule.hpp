@@ -540,6 +540,30 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     }
 };
 
+template<typename M>
+struct DecibelModulatorParamQuantity : rack::ParamQuantity
+{
+    inline M *xtm() { return static_cast<M *>(module); }
+    inline ParamQuantity *under()
+    {
+        auto m = xtm();
+        if (!m)
+            return nullptr;
+
+        auto underParamId = m->paramModulatedBy(paramId);
+        if (underParamId < 0)
+            return nullptr;
+
+        return m->paramQuantities[underParamId];
+    }
+    std::string getLabel() override {
+        auto upq = under();
+        if (!upq)
+            return ParamQuantity::getLabel();
+        return ParamQuantity::getLabel() + " to " + upq->getLabel();
+    }
+};
+
 template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs, uint32_t input0>
 struct MonophonicModulationAssistant
 {
