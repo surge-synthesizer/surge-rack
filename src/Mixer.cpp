@@ -18,8 +18,87 @@ struct MixerWidget : widgets::XTModuleWidget
     std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, M::n_mixer_params> overlays;
     std::array<widgets::KnobN *, M::n_mixer_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    virtual void meterChannelMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+
+        for (int c = 0; c < m->polyChannelCount(); ++c)
+        {
+            p->addChild(rack::createMenuItem(std::string("Channel ") + std::to_string(c + 1),
+                                             CHECKMARK(c == m->vuChannel),
+                                             [m, c]() { m->vuChannel = c; }));
+        }
+    }
+
+    virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (!module)
+            return;
+        auto m = static_cast<M *>(module);
+
+        auto pc = m->polyChannelCount();
+        if (pc > 1)
+        {
+            menu->addChild(new rack::ui::MenuSeparator);
+            menu->addChild(rack::createSubmenuItem("Meter Channel", "",
+                                                   [this, m](auto *x) { meterChannelMenu(x, m); }));
+        }
+    }
 };
 
+struct VUWidget : rack::TransparentWidget, style::StyleParticipant
+{
+    Mixer *module{nullptr};
+    VUWidget() {}
+    static VUWidget *create(rack::Vec pos, rack::Vec size, Mixer *module)
+    {
+        auto res = new VUWidget();
+        res->box.size = size;
+        res->box.pos = pos;
+        res->module = module;
+
+        return res;
+    }
+
+    void drawLayer(const DrawArgs &args, int layer) override
+    {
+        if (layer == 0)
+            return;
+        if (!module)
+            return;
+        auto vg = args.vg;
+        auto ll = module->vuLevel[0];
+        auto lr = module->vuLevel[1];
+
+        ll = std::clamp(ll / 6.f, 0.f, 1.f);
+        lr = std::clamp(lr / 6.f, 0.f, 1.f);
+
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, 1, ll * box.size.x, box.size.y * 0.5 - 2);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        nvgFill(vg);
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, box.size.y * 0.5 + 1, lr * box.size.x, box.size.y * 0.5 - 2);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        nvgFill(vg);
+
+        int nLines = 24;
+        for (int i = 0; i < nLines; ++i)
+        {
+            float x = box.size.x * i * 1.f / nLines;
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
+            nvgStrokeWidth(vg, 0.5);
+            nvgMoveTo(vg, x, 0);
+            nvgLineTo(vg, x, box.size.y);
+            nvgStroke(vg);
+        }
+    }
+
+    void onStyleChanged() override {}
+};
 MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
@@ -95,6 +174,14 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 
         auto psolo = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 2 * dy - 1));
         addParam(widgets::PlotAreaSwitch::create(psolo, sz, "S", module, ps));
+
+        if (i == 0)
+        {
+            auto pvu = rack::mm2px(rack::Vec(sxm + i * dx + 0.25, y0 + 3 * dy + 1));
+            auto vusz = rack::mm2px(rack::Vec(wm - 1, 2 * dy - 1));
+            auto vu = VUWidget::create(pvu, vusz, module);
+            addChild(vu);
+        }
     }
 
     auto portSpacing = layout::LayoutConstants::inputRowCenter_MM -

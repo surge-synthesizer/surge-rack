@@ -101,26 +101,46 @@ struct Mixer : modules::XTModule
         // Config
         for (int i = OSC1_LEV; i <= RM2X3_LEV; ++i)
         {
-            configParam(i, 0, 1, i == OSC1_LEV ? 1 : 0);
+            std::string name = "Osc " + std::to_string(i - OSC1_LEV + 1) + " Level";
+            configParam<modules::DecibelParamQuantity>(i, 0, 1, i == OSC1_LEV ? 1 : 0, name);
         }
-        configParam(NOISE_COL, -1, 1, 0);
-        configParam(GAIN, 0, 1, 1);
+        configParam(NOISE_COL, -1, 1, 0, "Noise Color", "%", 0, 100);
+        configParam<modules::DecibelParamQuantity>(GAIN, 0, 1, 1, "Gain");
 
         for (int i = OSC1_SOLO; i <= RM2x3_SOLO; ++i)
         {
-            configParam(i, 0, 1, 0);
+            std::string name = "Osc " + std::to_string(i - OSC1_LEV + 1) + " Solo";
+            configParam(i, 0, 1, 0, name);
         }
 
         for (int i = OSC1_MUTE; i <= RM2x3_MUTE; ++i)
         {
-            configParam(i, 0, 1, i == OSC1_MUTE ? 0 : 1);
+            std::string name = "Osc " + std::to_string(i - OSC1_LEV + 1) + " Mute";
+            configParam(i, 0, 1, i == OSC1_MUTE ? 0 : 1, name);
         }
 
         for (int i = 0; i < n_mixer_params * n_mod_inputs; ++i)
         {
-            configParam(MIXER_MOD_PARAM_0 + i, -1, 1, 0);
+            auto name = std::string("Mod ") + std::to_string(i % 4 + 1);
+
+            configParam<modules::DecibelModulatorParamQuantity<Mixer>>(MIXER_MOD_PARAM_0 + i, -1, 1,
+                                                                       0, name);
         }
 
+        for (int i = 0; i < n_mod_inputs; ++i)
+        {
+            configInput(MIXER_MOD_INPUT + i, std::string("Modulator ") + std::to_string(i + 1));
+        }
+
+        for (int i = INPUT_OSC1_L; i <= INPUT_OSC3_L; i += 2)
+        {
+            std::string nbase = "Osc " + std::to_string(i / 2 + 1);
+            configInput(i, nbase + " Left");
+            configInput(i + 1, nbase + " Right");
+        }
+
+        configOutput(OUTPUT_L, "Left");
+        configOutput(OUTPUT_L, "Right");
         for (int i = 0; i < MAX_POLY; ++i)
         {
             for (int c = 0; c < 2; ++c)
@@ -131,10 +151,21 @@ struct Mixer : modules::XTModule
         }
 
         modulationAssistant.initialize(this);
+
+        vuLevel[0] = 0.f;
+        vuLevel[1] = 0.f;
     }
 
     modules::ModulationAssistant<Mixer, n_mixer_params, OSC1_LEV, n_mod_inputs, MIXER_MOD_INPUT>
         modulationAssistant;
+
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - MIXER_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_mixer_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs + OSC1_LEV;
+    }
 
     void updateRoutes()
     {
@@ -168,10 +199,22 @@ struct Mixer : modules::XTModule
         needed[osc3] = routes[osc3] || routes[r2x3];
     }
 
+    float modulationDisplayValue(int paramId) override
+    {
+        return modulationAssistant.animValues[paramId - OSC1_LEV];
+    }
+
     static int modulatorIndexFor(int baseParam, int modulator)
     {
         int offset = baseParam - OSC1_LEV;
         return MIXER_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
+    }
+
+    bool isBipolar(int paramId) override
+    {
+        if (paramId == NOISE_COL)
+            return true;
+        return false;
     }
     std::string getName() override { return "Mixer"; }
 
@@ -182,6 +225,15 @@ struct Mixer : modules::XTModule
     int polyDepthPerOsc[n_osc];
 
     int polyChannelCount() { return polyDepth; }
+
+    float vuLevel[2];
+    float vuFalloff{0.999};
+    std::atomic<int> vuChannel{0};
+
+    void moduleSpecificSampleRateChange() override
+    {
+        vuFalloff = exp(-2.0 * M_PI * 8 / APP->engine->getSampleRate());
+    }
 
     void process(const ProcessArgs &args) override
     {
@@ -199,6 +251,9 @@ struct Mixer : modules::XTModule
                 polyDepthPerOsc[(i - INPUT_OSC1_L) / 2] = pd;
             }
             polyDepthBy4 = (polyDepth - 1) / 4 + 1;
+
+            if (vuChannel > polyChannelCount())
+                vuChannel = 0;
         }
 
         outputs[OUTPUT_L].setChannels(polyDepth);
@@ -296,7 +351,28 @@ struct Mixer : modules::XTModule
             oL[p].store(outputs[OUTPUT_L].getVoltages(p * 4));
             oR[p].store(outputs[OUTPUT_R].getVoltages(p * 4));
         }
+        for (int i = 0; i < 2; ++i)
+        {
+            vuLevel[i] = std::min(10.f, vuFalloff * vuLevel[i]);
+            vuLevel[i] = std::max(vuLevel[i], outputs[OUTPUT_L + i].getVoltage(vuChannel));
+        }
+
         blockPos++;
+    }
+
+    json_t *makeModuleSpecificJson() override
+    {
+        auto vco = json_object();
+        json_object_set(vco, "vuChannel", json_integer(vuChannel));
+        return vco;
+    }
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        auto v = json_object_get(modJ, "vuChannel");
+        if (!v)
+            vuChannel = 0;
+        else
+            vuChannel = json_integer_value(v);
     }
 };
 } // namespace sst::surgext_rack::mixer
