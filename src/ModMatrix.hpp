@@ -53,11 +53,26 @@ struct ModMatrix : modules::XTModule
 
         for (int i = TARGET0; i <= TARGET0 + n_matrix_params; ++i)
         {
-            configParam(i, -10, 10, 0);
+            auto name = std::string("Target ") + std::to_string(i + 1);
+            configParam(i, -10, 10, 0, name, "V");
         }
         for (int i = 0; i < n_matrix_params * n_mod_inputs; ++i)
         {
-            configParam(MATRIX_MOD_PARAM_0 + i, -1, 1, 0);
+            int tp = paramModulatedBy(i + MATRIX_MOD_PARAM_0);
+            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to Target " +
+                               std::to_string(tp - TARGET0 + 1);
+
+            configParam(MATRIX_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+        }
+
+        for (int i = 0; i < n_mod_inputs; ++i)
+        {
+            configInput(MATRIX_MOD_INPUT + i, std::string("Modulator ") + std::to_string(i + 1));
+        }
+        for (int i = 0; i < n_matrix_params; ++i)
+        {
+            std::string name = std::string("Modulated Target ") + std::to_string(i + 1);
+            configOutput(OUTPUT_0 + i, name);
         }
 
         modulationAssistant.initialize(this);
@@ -72,6 +87,13 @@ struct ModMatrix : modules::XTModule
     {
         int offset = baseParam - TARGET0;
         return MATRIX_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
+    }
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - MATRIX_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_matrix_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs + TARGET0;
     }
 
     bool isBipolar(int paramId) override
