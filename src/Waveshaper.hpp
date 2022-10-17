@@ -252,6 +252,9 @@ struct Waveshaper : public modules::XTModule
         return in;
     }
 
+    const __m128 rackToSurgeOsc{_mm_set1_ps(RACK_TO_SURGE_OSC_MUL)};
+    const __m128 surgeToRackOsc{_mm_set1_ps(SURGE_TO_RACK_OSC_MUL)};
+   
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         auto wstype =
@@ -363,11 +366,11 @@ struct Waveshaper : public modules::XTModule
             float dt alignas(16)[4];
 
             auto drive = _mm_set1_ps(storage->db_to_linear(mv[0][0]));
-            auto in = _mm_mul_ps(_mm_load_ps(iv), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+            auto in = _mm_mul_ps(_mm_load_ps(iv), rackToSurgeOsc);
             in = _mm_add_ps(in, _mm_set1_ps(mv[BIAS - DRIVE][0]));
             auto fin = wsPtr(&wss[0], in, drive);
             fin = _mm_mul_ps(fin, _mm_set1_ps(mv[OUT_GAIN - DRIVE][0]));
-            fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
+            fin = _mm_mul_ps(fin, surgeToRackOsc);
             _mm_store_ps(ov, fin);
 
             outputs[OUTPUT_L].setVoltage(ov[0]);
@@ -416,11 +419,11 @@ struct Waveshaper : public modules::XTModule
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
                 auto in =
-                    _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+                    _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mods[BIAS - DRIVE]);
                 auto fin = wsPtr(&wss[i], in, mods[0 /* DRIVE - DRIVE */]);
                 fin = _mm_mul_ps(fin, mods[OUT_GAIN - DRIVE]);
-                fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
+                fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(tmpValOut + (i << 2), fin);
             }
 
@@ -455,11 +458,11 @@ struct Waveshaper : public modules::XTModule
                 }
                 auto drive = _mm_load_ps(dt);
                 auto in =
-                    _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), _mm_set1_ps(RACK_TO_SURGE_OSC_MUL));
+                    _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
                 auto fin = wsPtr(&wss[i], in, drive);
                 fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);
-                fin = _mm_mul_ps(fin, _mm_set1_ps(SURGE_TO_RACK_OSC_MUL));
+                fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(ov + (i << 2), fin);
             }
         }

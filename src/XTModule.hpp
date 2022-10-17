@@ -564,6 +564,7 @@ struct DecibelModulatorParamQuantity : rack::ParamQuantity
     }
 };
 
+
 template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs, uint32_t input0>
 struct MonophonicModulationAssistant
 {
