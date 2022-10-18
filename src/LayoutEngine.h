@@ -159,6 +159,15 @@ struct LayoutItem
                                    LayoutConstants::vcoRowCenters_MM[row], span);
     }
 
+    static LayoutItem createVCOSpanDynamicLabel(std::function<std::string(modules::XTModule *m)> df,
+                                                int row, int col, int span)
+    {
+        auto res = createVCOSpanLabel("DYN", row, col, span);
+        res.dynamicLabel = true;
+        res.dynLabelFn = df;
+        return res;
+    }
+
     std::unordered_map<std::string, float> extras{};
     LayoutItem &withExtra(const std::string &s, float f)
     {
@@ -273,6 +282,14 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
             auto s0 = rack::mm2px(rack::Vec(lc::columnWidth_MM * lay.spanmm, 5));
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+
+            if (lay.dynamicLabel && module)
+            {
+                lab->hasDynamicLabel = true;
+                lab->module = static_cast<modules::XTModule *>(module);
+                lab->dynamicLabel = lay.dynLabelFn;
+            }
+
             w->addChild(lab);
         }
         break;
