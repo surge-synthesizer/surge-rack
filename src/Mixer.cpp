@@ -15,8 +15,8 @@ struct MixerWidget : widgets::XTModuleWidget
     typedef mixer::Mixer M;
     MixerWidget(M *module);
 
-    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, M::n_mixer_params> overlays;
-    std::array<widgets::KnobN *, M::n_mixer_params> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_mixer_params> overlays;
+    std::array<widgets::ModulatableKnob *, M::n_mixer_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
     virtual void meterChannelMenu(rack::Menu *p, M *m)

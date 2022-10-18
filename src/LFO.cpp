@@ -15,8 +15,8 @@ struct LFOWidget : widgets::XTModuleWidget
     typedef lfo::LFO M;
     LFOWidget(M *module);
 
-    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, M::n_lfo_params> overlays;
-    std::array<widgets::KnobN *, M::n_lfo_params> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_lfo_params> overlays;
+    std::array<widgets::ModulatableKnob *, M::n_lfo_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
@@ -36,7 +36,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 
     {
         const auto &col = layout::LayoutConstants::columnCenters_MM;
-        const auto row1 = layout::LayoutConstants::rowStart_MM - 6;
+        const auto row1 = layout::LayoutConstants::rowStart_MM - 3;
         // fixme use the enums
         // clang-format off
          std::vector<li_t> layout = {
@@ -55,20 +55,19 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     }
 
     {
-        const auto row1 = layout::LayoutConstants::rowStart_MM - 6;
-        const auto row2 = layout::LayoutConstants::rowStart_MM + 10;
-        float cw = layout::LayoutConstants::columnWidth_MM;
-        float c0 = layout::LayoutConstants::columnCenters_MM[3] + cw;
+        const auto row1 = layout::LayoutConstants::rowStart_MM + 3;
+        float cw = layout::LayoutConstants::columnWidth_MM * 0.5;
+        float c0 = layout::LayoutConstants::columnCenters_MM[3] + 1.75 * cw;
         // fixme use the enums
         // clang-format off
          std::vector<li_t> layout = {
-                {li_t::KNOB9, "DELAY", M::E_DELAY, c0, row1},
-                {li_t::KNOB9, "ATTACK", M::E_ATTACK, c0 + cw, row1},
-                {li_t::KNOB9, "HOLD", M::E_HOLD, c0 + 2 * cw, row1},
-                {li_t::KNOB9, "DECAY", M::E_DECAY, c0, row2},
-                {li_t::KNOB9, "SUSTAIN", M::E_SUSTAIN, c0 + cw, row2},
-                {li_t::KNOB9, "RELEASE", M::E_RELEASE, c0 + 2*cw, row2},
-                li_t::createGrouplabel("ENVELOPE", c0, row1, 3)
+                {li_t::VSLIDER, "D", M::E_DELAY, c0, row1, 23},
+                {li_t::VSLIDER, "A", M::E_ATTACK, c0 + cw, row1, 23},
+                {li_t::VSLIDER, "H", M::E_HOLD, c0 + 2 * cw, row1, 23},
+                {li_t::VSLIDER, "D", M::E_DECAY, c0 + 3 * cw, row1, 23},
+                {li_t::VSLIDER, "S", M::E_SUSTAIN, c0 + 4 * cw, row1, 23},
+                {li_t::VSLIDER, "R", M::E_RELEASE, c0 + 5 *cw, row1, 23},
+                li_t::createGrouplabel("ENVELOPE", c0 + 0.25*cw, layout::LayoutConstants::rowStart_MM - 3, 3.3)
          };
         // clang-format on
 
@@ -97,7 +96,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
         }
     }
 
-    auto ht = layout::LayoutConstants::rowStart_MM - 19;
+    auto ht = layout::LayoutConstants::rowStart_MM - 16;
     auto lcd = widgets::LCDBackground::createWithHeight(ht, 21);
     addChild(lcd);
 

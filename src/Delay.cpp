@@ -15,8 +15,8 @@ struct DelayWidget : widgets::XTModuleWidget
     typedef delay::Delay M;
     DelayWidget(M *module);
 
-    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, M::n_delay_params> overlays;
-    std::array<widgets::KnobN *, M::n_delay_params> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_delay_params> overlays;
+    std::array<widgets::ModulatableKnob *, M::n_delay_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
     void appendModuleSpecificMenu(rack::ui::Menu *menu) override

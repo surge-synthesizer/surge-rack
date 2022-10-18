@@ -15,8 +15,8 @@ struct ModMatrixWidget : widgets::XTModuleWidget
     typedef modmatrix::ModMatrix M;
     ModMatrixWidget(M *module);
 
-    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, M::n_matrix_params> overlays;
-    std::array<widgets::KnobN *, M::n_matrix_params> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_matrix_params> overlays;
+    std::array<widgets::ModulatableKnob *, M::n_matrix_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 

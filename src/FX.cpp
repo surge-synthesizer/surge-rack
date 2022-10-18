@@ -11,8 +11,8 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
     typedef FX<fxType> M;
     FXWidget(M *module);
 
-    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, n_fx_params> overlays;
-    std::array<widgets::KnobN *, n_fx_params> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, n_fx_params> overlays;
+    std::array<widgets::ModulatableKnob *, n_fx_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
     void selectModulator(int mod) override
@@ -28,8 +28,8 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
         auto xtm = static_cast<FX<fxType> *>(module);
 
         menu->addChild(new rack::ui::MenuSeparator);
-        menu->addChild(rack::createMenuItem("Re-Initialize Effect", "",
-                                            [xtm] { xtm->reinitialize(); }));
+        menu->addChild(
+            rack::createMenuItem("Re-Initialize Effect", "", [xtm] { xtm->reinitialize(); }));
 
         if constexpr (FXConfig<fxType>::allowsPolyphony())
         {
