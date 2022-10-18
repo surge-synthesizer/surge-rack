@@ -255,7 +255,13 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
 
 struct ModRingKnob;
 
-struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
+struct ModulatableKnob
+{
+    virtual void setIsModEditing(bool b) = 0;
+    virtual rack::Widget *asWidget() = 0;
+};
+
+struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant, ModulatableKnob
 {
     static constexpr float ringWidth_MM = 0.7f;
     static constexpr float ringPad_MM = 0.5f;
@@ -266,6 +272,7 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     std::string knobPointerAsset, knobBackgroundAsset;
 
     KnobN() {}
+    Widget *asWidget() override { return this; }
 
     bool isBipolar()
     {
@@ -284,7 +291,7 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     }
 
     bool isModEditing{false};
-    void setIsModEditing(bool b)
+    void setIsModEditing(bool b) override
     {
         isModEditing = b;
         bwValue->dirty = true;
@@ -488,15 +495,21 @@ struct Port : public rack::app::SvgPort, style::StyleParticipant
     }
 };
 
-struct ModRingKnob : rack::app::Knob, style::StyleParticipant
+struct HasBDW
 {
+    virtual ~HasBDW() {}
     BufferedDrawFunctionWidget *bdw{nullptr};
+};
+
+struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
+{
     rack::app::Knob *underlyerParamWidget{nullptr};
 
     int modIndex{0};
     float radius{1};
 
     ModRingKnob() { box.size = rack::Vec(45, 45); }
+
     void drawWidget(NVGcontext *vg)
     {
         auto *pq = getParamQuantity();
@@ -1575,6 +1588,255 @@ template <int nLights = 4> struct ThereAreFourLights : rack::app::SliderKnob, st
         Knob::onAction(e);
     }
 };
+
+struct VerticalSliderModulator;
+
+struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, ModulatableKnob
+{
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+
+    std::unordered_set<VerticalSliderModulator *> modSliders;
+
+    static VerticalSlider *createCentered(const rack::Vec &pos, float height,
+                                   modules::XTModule *module, int paramId)
+    {
+        auto res = new VerticalSlider();
+        auto width = rack::mm2px(4);
+        res->box.pos = pos;
+        res->box.pos.x -= width / 2;
+        res->box.pos.y -= height/2;
+        res->box.size = rack::Vec(width, height);
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
+                                                  res->box.size,
+                                                  [res](auto *vg) { res->drawSlider(vg); });
+        res->addChild(res->bdw);
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+
+        return res;
+    }
+
+    void onChange(const ChangeEvent &e) override;
+
+    float priorV{-103241.f};
+    void step() override {
+        auto pq = getParamQuantity();
+        if (!pq)
+            return;
+        if (pq->getValue() != priorV)
+        {
+            bdw->dirty = true;
+        }
+        priorV = pq->getValue();
+    }
+
+    void drawSlider(NVGcontext *vg)
+    {
+        auto pq = getParamQuantity();
+        auto nv{0.f};
+        if (pq)
+        {
+            nv =
+                (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
+        }
+        auto np = (1-nv) * (box.size.y-4) + 2;
+
+        auto inset = rack::mm2px(1.f);
+
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, inset, 0, box.size.x - 2 * inset, box.size.y, inset);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
+        nvgFill(vg);
+
+        nvgBeginPath(vg);
+
+        if (!isModEdit)
+        {
+            nvgRoundedRect(vg, box.size.x * 0.5 - inset * 0.5, np, inset,
+                           box.size.y - np - inset * 0.5, inset);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 0.5);
+            nvgStroke(vg);
+        }
+
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, inset, 0, box.size.x - 2 * inset, box.size.y, inset);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::LED_HIGHLIGHT));
+        nvgStrokeWidth(vg, 0.5);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, 0, np - 1.5, box.size.x, 3, inset);
+        nvgFillColor(vg, nvgRGB(0x90, 0x90, 0xA0));
+        nvgStrokeColor(vg, nvgRGB(0xFF, 0xFF, 0xFF));
+        nvgFill(vg);
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+    }
+    void onStyleChanged() override {
+        bdw->dirty = true;
+    }
+    Widget *asWidget() override { return this; }
+
+    bool isModEdit{false};
+    void setIsModEditing(bool b) override
+    {
+        isModEdit = b;
+        bdw->dirty = true;
+    }
+};
+
+
+struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasBDW
+{
+    rack::app::Knob *underlyerParamWidget{nullptr};
+
+    int modIndex{0};
+
+    VerticalSliderModulator() { box.size = rack::Vec(45, 45); }
+
+    void drawWidget(NVGcontext *vg)
+    {
+        auto *pq = getParamQuantity();
+        auto *uq = underlyerParamWidget->getParamQuantity();
+        if (!pq || !uq)
+            return;
+
+        auto uv =
+            (uq->getValue() - uq->getMinValue()) / (uq->getMaxValue() - uq->getMinValue());
+
+        auto np = (1-uv) * (box.size.y-4) + 2;
+
+        auto mv = pq->getValue();
+        auto mp = std::clamp(1.f-(uv+mv), 0.f, 1.f) * (box.size.y-4) + 2;
+        auto dp = std::clamp(1.f-(uv-mv), 0.f, 1.f) * (box.size.y-4) + 2;
+
+        {
+            auto start = std::min(mp, np);
+            auto height = fabs(mp - np);
+            auto inset = rack::mm2px(1.5f);
+
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, inset, start, box.size.x - 2 * inset, height, inset);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_PLUS));
+            nvgFill(vg);
+        }
+
+        {
+            auto start = std::min(np, dp);
+            auto height = fabs(np - dp);
+            auto inset = rack::mm2px(1.5f);
+
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, inset, start, box.size.x - 2 * inset, height, inset);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MINUS));
+            nvgFill(vg);
+        }
+    }
+
+    static VerticalSliderModulator *createCentered(rack::Vec pos, float heightMM, rack::Module *module,
+                                       int paramId)
+    {
+        auto *res = rack::createWidget<VerticalSliderModulator>(pos);
+
+        auto width = rack::mm2px(4);
+        auto height = rack::mm2px(heightMM);
+        res->box.pos = pos;
+        res->box.pos.x -= width / 2;
+        res->box.pos.y -= height/2;
+        res->box.size = rack::Vec(width, height);
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
+                                                  res->box.size,
+                                                  [res](auto *vg) { res->drawWidget(vg); });
+        res->addChild(res->bdw);
+
+        res->module = module;
+        res->paramId = paramId;
+        res->initParamQuantity();
+
+        return res;
+    }
+
+    void onChange(const ChangeEvent &e) override
+    {
+        if (bdw)
+            bdw->dirty = true;
+
+        rack::app::Knob::onChange(e);
+    }
+
+    void onStyleChanged() override
+    {
+        if (bdw)
+            bdw->dirty = true;
+    }
+    bool bypassGesture()
+    {
+        if (APP->window)
+        {
+            int mods = APP->window->getMods();
+            if ((mods & RACK_MOD_MASK) == (GLFW_MOD_ALT | GLFW_MOD_SHIFT))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    void onHover(const HoverEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onHover(e);
+    }
+    void onButton(const ButtonEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onButton(e);
+    }
+    void onDragStart(const DragStartEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onDragStart(e);
+    }
+    void onDragEnd(const DragEndEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onDragEnd(e);
+    }
+    void onDragMove(const DragMoveEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onDragMove(e);
+    }
+    void onDragLeave(const DragLeaveEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onDragLeave(e);
+    }
+    void onHoverScroll(const HoverScrollEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onHoverScroll(e);
+    }
+    void onLeave(const LeaveEvent &e) override
+    {
+        if (!bypassGesture())
+            rack::SliderKnob::onLeave(e);
+    }
+};
+
+
+inline void VerticalSlider::onChange(const rack::widget::Widget::ChangeEvent &e)
+{
+    bdw->dirty = true;
+    // bwValue->dirty = true;
+    for (auto *m : modSliders)
+    {
+        m->bdw->dirty = true;
+    }
+    SliderKnob::onChange(e);
+}
 
 } // namespace sst::surgext_rack::widgets
 

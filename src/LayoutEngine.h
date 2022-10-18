@@ -17,6 +17,7 @@ struct LayoutItem
         KNOB12,
         KNOB14,
         KNOB16,
+        VSLIDER,
         PORT,
         MOMENTARY_PARAM,
         TOGGLE_PARAM,
@@ -212,8 +213,9 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         case LayoutItem::KNOB12:
         case LayoutItem::KNOB14:
         case LayoutItem::KNOB16:
+        case LayoutItem::VSLIDER:
         {
-            widgets::KnobN *knob{nullptr};
+            widgets::ModulatableKnob *knob{nullptr};
             int diff = lay.type - LayoutItem::KNOB9;
             auto pos = rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm));
             float halfSize{0}; // diff in radius from 4.5
@@ -238,9 +240,15 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 knob = rack::createParamCentered<widgets::Knob16>(pos, module, par);
                 halfSize = (16 - 9) * 0.5;
             }
+            if (diff == 4)
+            {
+                knob = widgets::VerticalSlider::createCentered(pos, rack::mm2px(lay.spanmm), module,
+                                                               par);
+                halfSize = (lay.spanmm - 9) * 0.5;
+            }
             if (knob)
             {
-                w->addChild(knob);
+                w->addChild(knob->asWidget());
 
                 auto boxx0 = lay.xcmm - lc::columnWidth_MM * 0.5 - halfSize;
                 auto boxy0 = lay.ycmm + 8.573 + halfSize - 5;
@@ -257,19 +265,38 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 }
 
                 w->addChild(lab);
-
                 w->underKnobs[lay.parId] = knob;
 
-                for (int m = 0; m < W::M::n_mod_inputs; ++m)
+                if (diff != 4)
                 {
-                    auto radius = rack::mm2px(knob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
-                    int id = W::M::modulatorIndexFor(lay.parId + param0, m);
-                    auto *k = widgets::ModRingKnob::createCentered(pos, radius, module, id);
-                    w->overlays[lay.parId][m] = k;
-                    k->setVisible(false);
-                    k->underlyerParamWidget = knob;
-                    knob->modRings.insert(k);
-                    w->addChild(k);
+                    auto rknob = static_cast<widgets::KnobN *>(knob->asWidget());
+                    for (int m = 0; m < W::M::n_mod_inputs; ++m)
+                    {
+                        auto radius =
+                            rack::mm2px(rknob->knobSize_MM + 2 * widgets::KnobN::ringWidth_MM);
+                        int id = W::M::modulatorIndexFor(lay.parId + param0, m);
+                        auto *k = widgets::ModRingKnob::createCentered(pos, radius, module, id);
+                        w->overlays[lay.parId][m] = k;
+                        k->setVisible(false);
+                        k->underlyerParamWidget = rknob;
+                        rknob->modRings.insert(k);
+                        w->addChild(k);
+                    }
+                }
+                else
+                {
+                    auto rknob = static_cast<widgets::VerticalSlider *>(knob->asWidget());
+                    for (int m = 0; m < W::M::n_mod_inputs; ++m)
+                    {
+                        int id = W::M::modulatorIndexFor(lay.parId + param0, m);
+                        auto *k = widgets::VerticalSliderModulator::createCentered(pos, lay.spanmm,
+                                                                                   module, id);
+                        w->overlays[lay.parId][m] = k;
+                        k->setVisible(false);
+                        k->underlyerParamWidget = rknob;
+                        rknob->modSliders.insert(k);
+                        w->addChild(k);
+                    }
                 }
             }
         }
@@ -538,7 +565,11 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                         if (ob[toggleIdx])
                         {
                             ob[toggleIdx]->setVisible(true);
-                            ob[toggleIdx]->bdw->dirty = true;
+                            auto w = dynamic_cast<widgets::HasBDW *>(ob[toggleIdx]);
+                            if (w)
+                            {
+                                w->bdw->dirty = true;
+                            }
                         }
                     for (const auto &uk : w->underKnobs)
                         if (uk)

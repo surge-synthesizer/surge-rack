@@ -59,8 +59,8 @@ struct LFO : modules::XTModule
     enum OutputIds
     {
         OUTPUT_MIX,
-        OUTPUT_ENV,
         OUTPUT_WAVE,
+        OUTPUT_ENV,
         OUTPUT_TRIGPHASE,
         OUTPUT_TRIGF,
         OUTPUT_TRIGA,
@@ -76,7 +76,7 @@ struct LFO : modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         setupSurge();
     }
-    
+
     std::string getName() override { return "LFO"; }
 
     std::array<std::unique_ptr<LFOModulationSource>, MAX_POLY> surge_lfo;
@@ -125,6 +125,13 @@ struct LFO : modules::XTModule
                                                               par->get_name());
         }
 
+        for (int p = LFO_MOD_PARAM_0; p < LFO_TYPE; ++p)
+        {
+            auto name =
+                std::string("Mod ") + std::to_string((p - LFO_MOD_PARAM_0) % n_mod_inputs + 1);
+            configParam<modules::SurgeParameterModulationQuantity>(p, -1, 1, 0, name);
+        }
+
         for (int i = 0; i < MAX_POLY; ++i)
         {
             surge_lfo[i]->assign(storage.get(), lfostorage, storage->getPatch().scenedata[0],
@@ -147,12 +154,35 @@ struct LFO : modules::XTModule
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
         if (paramOffsetByID.find(paramId) == paramOffsetByID.end())
+        {
+            std::cout << "NOT FOUND PARAM ID " << paramId << std::endl;
+            return nullptr;
+        }
+
+        auto po = paramOffsetByID[paramId];
+        auto *par0 = &(lfostorage->rate);
+        auto *par = &par0[po];
+        return par;
+    }
+
+    Parameter *surgeDisplayParameterForModulatorParamId(int modParamId) override
+    {
+        auto paramId = paramModulatedBy(modParamId);
+        if (paramId < RATE || paramId >= RATE + n_lfo_params)
             return nullptr;
 
         auto po = paramOffsetByID[paramId];
         auto *par0 = &(lfostorage->rate);
         auto *par = &par0[po];
         return par;
+    }
+
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - LFO_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_lfo_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs;
     }
 
     static int modulatorIndexFor(int baseParam, int modulator)
@@ -191,7 +221,7 @@ struct LFO : modules::XTModule
                 for (int i = 0; i < 4; ++i)
                     output0[s][i] = output1[s][i];
 
-            float ts[16];
+            float ts[3][16];
 
             for (int c = 0; c < nChan; ++c)
             {
@@ -244,10 +274,12 @@ struct LFO : modules::XTModule
                     output0[2][c / 4].s[c % 4] = surge_lfo[c]->get_output(2);
                     surge_lfo[c]->process_block();
                 }
-                ts[c] = surge_lfo[c]->get_output(0);
+                for (int p = 0; p < 3; ++p)
+                    ts[p][c] = surge_lfo[c]->get_output(p);
             }
-            for (int i = 0; i < 4; ++i)
-                output1[0][i] = rack::simd::float_4::load(ts + i * 4);
+            for (int p = 0; p < 3; ++p)
+                for (int i = 0; i < 4; ++i)
+                    output1[p][i] = rack::simd::float_4::load(&ts[p][i * 4]);
 
             firstProcess = false;
         }
@@ -256,13 +288,15 @@ struct LFO : modules::XTModule
         lastStep++;
         for (int c = 0; c < nChan; c += 4)
         {
-            rack::simd::float_4 outputI =
-                (output0[0][c / 4] * (1.0 - frac) + output1[0][c / 4] * frac) *
-                SURGE_TO_RACK_OSC_MUL;
-            outputI.store(outputs[OUTPUT_MIX].getVoltages(c));
+            for (int p = 0; p < 3; ++p)
+            {
+                rack::simd::float_4 outputI =
+                    (output0[p][c / 4] * (1.0 - frac) + output1[p][c / 4] * frac) *
+                    SURGE_TO_RACK_OSC_MUL;
+                outputI.store(outputs[OUTPUT_MIX + p].getVoltages(c));
+            }
         }
     }
-
 };
 } // namespace sst::surgext_rack::lfo
 #endif // RACK_HACK_LFO_HPP

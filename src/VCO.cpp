@@ -13,8 +13,8 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
     typedef VCO<oscType> M;
     VCOWidget(M *module);
 
-    std::array<std::array<widgets::ModRingKnob *, M::n_mod_inputs>, 8> overlays;
-    std::array<widgets::KnobN *, 8> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, 8> overlays;
+    std::array<widgets::ModulatableKnob *, 8> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
     void selectModulator(int mod) override
