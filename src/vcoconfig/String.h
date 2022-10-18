@@ -21,9 +21,9 @@ template <> VCOConfig<ot_string>::layout_t VCOConfig<ot_string>::getLayout()
         LayoutItem::createVCOKnob(cp+3, "", 0, 3),
         LayoutItem::createVCOSpanLabel("S1 - DECAY - S2", 0, 2, 2),
         LayoutItem::createVCOPort(M::AUDIO_INPUT, "Audio", 1,0),
-        LayoutItem::createVCOKnob(cp+4, "STIFF", 1, 1),
+        LayoutItem::createVCOKnob(cp+4, "DETUNE", 1, 1),
         LayoutItem::createVCOKnob(cp+5, "BALANCE", 1, 2),
-        LayoutItem::createVCOKnob(cp+6, "DETUNE", 1, 3),
+        LayoutItem::createVCOKnob(cp+6, "STIFF", 1, 3),
         // clang-format on
     };
 }

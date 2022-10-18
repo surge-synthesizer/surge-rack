@@ -17,15 +17,31 @@ template <> VCOConfig<ot_FM3>::layout_t VCOConfig<ot_FM3>::getLayout()
         LayoutItem::createVCOKnob(cp + 0, "", 0, 2),
         LayoutItem::createVCOKnob(cp + 1, "", 0, 3),
 
-        LayoutItem::createVCOSpanLabel("AMT - M1 - RATIO", 0, 2, 2),
+        LayoutItem::createVCOSpanDynamicLabel(
+                [](auto *m) -> std::string
+                {
+                    auto l0 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+                    if (l0)
+                        return "AMT - M1 - FREQ";
+                    return "AMT - M1 - RATIO";
+                },
+            0, 2, 2),
 
         LayoutItem::createVCOKnob(cp + 2, "", 1, 0),
         LayoutItem::createVCOKnob(cp + 3, "", 1, 1),
-        LayoutItem::createVCOSpanLabel("AMT - M2 - RATIO", 1, 0, 2),
+        LayoutItem::createVCOSpanDynamicLabel(
+                [](auto *m) -> std::string
+                {
+                    auto l0 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+                    if (l0)
+                        return "AMT - M2 - FREQ";
+                    return "AMT - M2 - RATIO";
+                },
+            1, 0, 2),
 
         LayoutItem::createVCOKnob(cp + 4, "", 1, 2),
         LayoutItem::createVCOKnob(cp + 5, "", 1, 3),
-        LayoutItem::createVCOSpanLabel("AMT - M3 - RATIO", 1, 2, 2),
+        LayoutItem::createVCOSpanLabel("AMT - M3 - FREQ", 1, 2, 2),
 
         // clang-format on
     };
