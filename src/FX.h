@@ -190,6 +190,7 @@ template <int fxType> struct FX : modules::XTModule
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
+        setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params - 1]));
         copyGlobaldataSubset(storage_id_start, storage_id_end);
 
         surge_effect.reset(
@@ -200,7 +201,6 @@ template <int fxType> struct FX : modules::XTModule
 
         // This is a micro-hack to stop ranges blowing up
         fxstorage->return_level.id = -1;
-        setupStorageRanges(&(fxstorage->type), &(fxstorage->p[n_fx_params - 1]));
 
         for (int i = 0; i < n_fx_params; ++i)
         {

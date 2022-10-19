@@ -30,8 +30,8 @@ template <> constexpr int FXConfig<fxt_ringmod>::numParams() { return 11; }
 template <> constexpr int FXConfig<fxt_ringmod>::specificParamCount() { return 2; }
 template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
-
+    const auto col = FXLayoutHelper::standardColumns_MM();
+    
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - (14 - 9) * 0.5f;

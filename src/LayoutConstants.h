@@ -23,11 +23,14 @@ struct LayoutConstants
     // Standard module constants
     static constexpr int numberOfScrews = 12;
 
-    static constexpr std::array<float, 4> columnCenters_MM{9.48, 23.48, 37.48, 51.48};
+    // static constexpr std::array<float, 4> columnCenters_MM{9.48, 23.48, 37.48, 51.48};
+    static constexpr float firstColumnCenter_MM{9.48};
+    static constexpr float columnWidth_MM = 14;
+
     static constexpr std::array<float, 2> modulationRowCenters_MM{85.32, 100.16};
     static constexpr std::array<float, 2> vcoRowCenters_MM{55, 71};
     static constexpr float inputRowCenter_MM = 114.5;
-    static constexpr float columnWidth_MM = 14;
+
     static constexpr float modulationLabelBaseline_MM = 94.864;
     static constexpr float inputLabelBaseline_MM = 109.203;
     static constexpr float verticalPortOffset_MM = 0.5;
@@ -36,8 +39,8 @@ struct LayoutConstants
     static constexpr float rowStart_MM = 71;
     static constexpr float unlabeledGap_MM = 16;
     static constexpr float labeledGap_MM = 20;
-    static constexpr float bigCol0 = columnCenters_MM[1] - 7;
-    static constexpr float bigCol1 = columnCenters_MM[2] + 7;
+    static constexpr float bigCol0 = firstColumnCenter_MM + columnWidth_MM - 7;
+    static constexpr float bigCol1 = firstColumnCenter_MM + 2 * columnWidth_MM + 7;
     static constexpr float knobGap16_MM = unlabeledGap_MM - 9 + 18;
 
     // VCO VCF Waveshaper

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="uuid-189432c9-bbfc-406e-bec3-a1fb2f9dd12c"
+   data-name="Layer 2"
+   width="11mm"
+   height="5.9999986mm"
+   viewBox="0 0 41.574802 22.677161"
+   version="1.1"
+   sodipodi:docname="saw.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs12" />
+  <sodipodi:namedview
+     id="namedview10"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="38.805557"
+     inkscape:cx="15.59055"
+     inkscape:cy="8.5039366"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="uuid-189432c9-bbfc-406e-bec3-a1fb2f9dd12c"
+     inkscape:document-units="mm" />
+  <g
+     id="uuid-264befe1-4b9d-4d64-bba9-285e4a7a0ad4"
+     data-name="Layer 1"
+     transform="scale(1.3333334)">
+    <g
+       id="g6">
+      <rect
+         width="31.181101"
+         height="17.00787"
+         id="rect2"
+         x="0"
+         y="0" />
+      <path
+         d="m 15.59057,13.33708 c -0.14062,0 -0.27832,-0.05957 -0.375,-0.16895 L 8.46459,5.507 v 7.33008 c 0,0.27637 -0.22363,0.5 -0.5,0.5 -0.27637,0 -0.5,-0.22363 -0.5,-0.5 V 4.18376 C 7.46459,3.97575 7.5935,3.78923 7.78783,3.71599 7.98314,3.6447 8.20238,3.69744 8.33959,3.85271 l 6.75098,7.66113 V 4.18376 c 0,-0.20801 0.12891,-0.39453 0.32324,-0.46777 0.19629,-0.07129 0.41455,-0.01855 0.55176,0.13672 l 7.62598,8.65332 c 0.18262,0.20801 0.1626,0.52344 -0.04443,0.70605 -0.20654,0.18262 -0.52246,0.16211 -0.70557,-0.04395 L 16.09057,5.507 v 7.33008 c 0,0.20801 -0.12891,0.39453 -0.32324,0.46777 -0.05762,0.02148 -0.11768,0.03223 -0.17676,0.03223 z"
+         fill="#ffffff"
+         id="path4" />
+    </g>
+  </g>
+</svg>

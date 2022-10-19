@@ -30,7 +30,7 @@ template <> constexpr int FXConfig<fxt_flanger>::numParams() { return 11; }
 template <> constexpr bool FXConfig<fxt_flanger>::usesClock() { return true; }
 template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
