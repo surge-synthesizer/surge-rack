@@ -41,7 +41,7 @@ namespace sst::surgext_rack::fx
 template <> constexpr int FXConfig<fxt_ensemble>::numParams() { return 11; }
 template <> FXConfig<fxt_ensemble>::layout_t FXConfig<fxt_ensemble>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;

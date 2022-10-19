@@ -34,28 +34,31 @@ struct LFOWidget : widgets::XTModuleWidget
 LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
-    int screwWidth = 21;
+    int screwWidth = 20;
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * screwWidth, rack::app::RACK_GRID_HEIGHT);
 
     typedef layout::LayoutEngine<LFOWidget, M::RATE> engine_t;
     engine_t::initializeModulationToBlank(this);
 
-    auto bg = new widgets::Background(box.size, "LFO", "other", "LFO");
+    auto bg = new widgets::Background(box.size, "LFO x EG", "other", "EGLFO");
     addChild(bg);
+
+    static constexpr float LFOColumnWidth = 13.78f;
 
     typedef layout::LayoutItem li_t;
 
     {
-        const auto &col = layout::LayoutConstants::columnCenters_MM;
+        const auto col = layout::LayoutConstants::firstColumnCenter_MM;
+        const auto cw = LFOColumnWidth; // LFOColumnWidth;
         const auto row1 = layout::LayoutConstants::rowStart_MM - 3;
         // fixme use the enums
         // clang-format off
          std::vector<li_t> layout = {
-                {li_t::KNOB9, "RATE", M::RATE, col[0], row1},
-                {li_t::KNOB9, "PHASE", M::PHASE, col[1], row1},
-                {li_t::KNOB9, "DEFORM", M::DEFORM, col[2], row1},
-                {li_t::KNOB9, "AMP", M::AMPLITUDE, col[3], row1},
-                li_t::createGrouplabel("WAVEFORM", col[0], row1, 4)
+                {li_t::KNOB9, "RATE", M::RATE, col, row1},
+                {li_t::KNOB9, "PHASE", M::PHASE, col + cw, row1},
+                {li_t::KNOB9, "DEFORM", M::DEFORM, col + 2 * cw, row1},
+                {li_t::KNOB9, "AMP", M::AMPLITUDE, col + 3 * cw, row1},
+                li_t::createGrouplabel("WAVEFORM", col, row1, 4, cw)
          };
         // clang-format on
 
@@ -67,8 +70,8 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 
     {
         const auto row1 = layout::LayoutConstants::rowStart_MM + 3;
-        float cw = layout::LayoutConstants::columnWidth_MM * 0.5;
-        float c0 = layout::LayoutConstants::columnCenters_MM[3] + 1.75 * cw;
+        float cw = LFOColumnWidth * 0.46;
+        float c0 = layout::LayoutConstants::firstColumnCenter_MM + LFOColumnWidth * 3 + 1.75 * cw;
         // fixme use the enums
         // clang-format off
          std::vector<li_t> layout = {
@@ -78,7 +81,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
                 {li_t::VSLIDER, "D", M::E_DECAY, c0 + 3 * cw, row1, 23},
                 {li_t::VSLIDER, "S", M::E_SUSTAIN, c0 + 4 * cw, row1, 23},
                 {li_t::VSLIDER, "R", M::E_RELEASE, c0 + 5 *cw, row1, 23},
-                li_t::createGrouplabel("ENVELOPE", c0 + 0.25*cw, layout::LayoutConstants::rowStart_MM - 3, 3.3)
+                li_t::createGrouplabel("ENVELOPE", c0 + 0.25*cw, layout::LayoutConstants::rowStart_MM - 3, 3.1, LFOColumnWidth)
          };
         // clang-format on
 
@@ -95,12 +98,13 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
              {M::INPUT_TRIGGER, M::INPUT_CLOCK_RATE, M::INPUT_CLOCK_ENV, M::INPUT_PHASE_DIRECT})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
-            auto xp = layout::LayoutConstants::columnCenters_MM[col];
+            auto xp = layout::LayoutConstants::firstColumnCenter_MM + LFOColumnWidth * col;
             addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
                                                               module, p));
 
             auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
-            auto lab = engine_t::makeLabelAt(bl, col, labv[col], style::XTStyle::TEXT_LABEL);
+            auto lab = engine_t::makeLabelAt(bl, col, labv[col], style::XTStyle::TEXT_LABEL,
+                                             LFOColumnWidth);
             addChild(lab);
 
             col++;
@@ -108,7 +112,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     }
 
     auto ht = layout::LayoutConstants::rowStart_MM - 16;
-    auto lcd = widgets::LCDBackground::createWithHeight(ht, 21);
+    auto lcd = widgets::LCDBackground::createWithHeight(ht, screwWidth);
     addChild(lcd);
 
     li_t shape{li_t::LCD_MENU_ITEM_SURGE_PARAM, "SHAPE", M::SHAPE, 0, ht};
@@ -120,19 +124,19 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
         for (auto p : {M::OUTPUT_MIX, M::OUTPUT_ENV, M::OUTPUT_WAVE})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
-            auto xp = layout::LayoutConstants::columnCenters_MM[3] +
-                      layout::LayoutConstants::columnWidth_MM * (col + 1);
+            auto xp =
+                layout::LayoutConstants::firstColumnCenter_MM + LFOColumnWidth * (3 + col + 1);
             addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
                                                                 module, p));
 
             auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
             auto cx = xp;
 
-            auto boxx0 = cx - layout::LayoutConstants::columnWidth_MM * 0.5;
+            auto boxx0 = cx - LFOColumnWidth * 0.5;
             auto boxy0 = bl - 5;
 
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-            auto s0 = rack::mm2px(rack::Vec(layout::LayoutConstants::columnWidth_MM, 5));
+            auto s0 = rack::mm2px(rack::Vec(LFOColumnWidth, 5));
 
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, labv[col]);
             addChild(lab);
@@ -147,19 +151,19 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
         for (auto p : {M::OUTPUT_TRIGPHASE, M::OUTPUT_TRIGF, M::OUTPUT_TRIGA})
         {
             auto yp = layout::LayoutConstants::modulationRowCenters_MM[1];
-            auto xp = layout::LayoutConstants::columnCenters_MM[3] +
-                      layout::LayoutConstants::columnWidth_MM * (col + 1);
+            auto xp =
+                layout::LayoutConstants::firstColumnCenter_MM + LFOColumnWidth * (3 + col + 1);
             addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
                                                                 module, p));
 
             auto bl = yp - 5;
             auto cx = xp;
 
-            auto boxx0 = cx - layout::LayoutConstants::columnWidth_MM * 0.5;
+            auto boxx0 = cx - LFOColumnWidth * 0.5;
             auto boxy0 = bl - 5;
 
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-            auto s0 = rack::mm2px(rack::Vec(layout::LayoutConstants::columnWidth_MM, 5));
+            auto s0 = rack::mm2px(rack::Vec(LFOColumnWidth, 5));
 
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, labv[col]);
             addChild(lab);
@@ -168,7 +172,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
         }
     }
 
-    engine_t::addModulationSection(this, M::n_mod_inputs, M::LFO_MOD_INPUT);
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::LFO_MOD_INPUT, 0, LFOColumnWidth);
 
     resetStyleCouplingToModule();
 }

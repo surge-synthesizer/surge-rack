@@ -27,7 +27,7 @@ namespace sst::surgext_rack::fx
 template <> constexpr bool FXConfig<fxt_vocoder>::usesSideband() { return true; }
 template <> FXConfig<fxt_vocoder>::layout_t FXConfig<fxt_vocoder>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;

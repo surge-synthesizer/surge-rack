@@ -24,7 +24,7 @@ template <> constexpr int FXConfig<fxt_freqshift>::numParams() { return 5; }
 template <> constexpr int FXConfig<fxt_freqshift>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_freqshift>::layout_t FXConfig<fxt_freqshift>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto bottomRow = FXLayoutHelper::rowStart_MM;

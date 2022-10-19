@@ -49,6 +49,7 @@ struct LayoutItem
     int parId{-1};
     float xcmm{-1}, ycmm{-1};
     float spanmm{0}; // for group label only
+    float overrideColWidth_MM{layout::LayoutConstants::columnWidth_MM};
 
     bool dynamicLabel{false};
     std::function<std::string(modules::XTModule *m)> dynLabelFn{nullptr};
@@ -95,7 +96,9 @@ struct LayoutItem
         return res.withExtra("SIDE", -1);
     }
 
-    static LayoutItem createGrouplabel(const std::string &label, float xcmm, float ycmm, float span)
+    static LayoutItem
+    createGrouplabel(const std::string &label, float xcmm, float ycmm, float span,
+                     float spanColumnW_MM = layout::LayoutConstants::columnWidth_MM)
     {
         auto res = LayoutItem();
         res.label = label;
@@ -103,6 +106,7 @@ struct LayoutItem
         res.xcmm = xcmm;
         res.ycmm = ycmm;
         res.spanmm = span;
+        res.overrideColWidth_MM = spanColumnW_MM;
         return res;
     }
 
@@ -124,7 +128,7 @@ struct LayoutItem
         res.type = t;
         res.label = label;
         res.parId = param;
-        res.xcmm = LayoutConstants::columnCenters_MM[col];
+        res.xcmm = LayoutConstants::firstColumnCenter_MM + LayoutConstants::columnWidth_MM * col;
         res.ycmm = LayoutConstants::vcoRowCenters_MM[row];
         return res;
     }
@@ -147,8 +151,7 @@ struct LayoutItem
         res.type = KNOB16;
         res.label = label;
         res.parId = param;
-        res.xcmm =
-            (LayoutConstants::columnCenters_MM[0] + LayoutConstants::columnCenters_MM[1]) * 0.5f;
+        res.xcmm = LayoutConstants::firstColumnCenter_MM + LayoutConstants::columnWidth_MM * 0.5;
         res.ycmm =
             (LayoutConstants::vcoRowCenters_MM[0] + LayoutConstants::vcoRowCenters_MM[1]) * 0.5f;
         return res;
@@ -171,8 +174,9 @@ struct LayoutItem
 
     static LayoutItem createVCOSpanLabel(const std::string &label, int row, int col, int span)
     {
-        return createKnobSpanLabel(label, LayoutConstants::columnCenters_MM[col],
-                                   LayoutConstants::vcoRowCenters_MM[row], span);
+        return createKnobSpanLabel(
+            label, LayoutConstants::firstColumnCenter_MM + LayoutConstants::columnWidth_MM * col,
+            LayoutConstants::vcoRowCenters_MM[row], span);
     }
 
     static LayoutItem createVCOSpanDynamicLabel(std::function<std::string(modules::XTModule *m)> df,
@@ -194,17 +198,19 @@ struct LayoutItem
 
 template <typename W, int param0, int clockId = -1> struct LayoutEngine
 {
-    static widgets::Label *makeSpanLabelAt(float rowPos, int col, const std::string label, int span,
-                                           style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+    static widgets::Label *
+    makeSpanLabelAt(float rowPos, int col, const std::string label, int span,
+                    style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL,
+                    float colWidth_MM = layout::LayoutConstants::columnWidth_MM)
     {
-        auto cx = LayoutConstants::columnCenters_MM[col];
+        auto cx = LayoutConstants::firstColumnCenter_MM + colWidth_MM * col;
         auto bl = rowPos;
 
-        auto boxx0 = cx - LayoutConstants::columnWidth_MM * 0.5;
+        auto boxx0 = cx - colWidth_MM * 0.5;
         auto boxy0 = bl - 5;
 
         auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
-        auto s0 = rack::mm2px(rack::Vec(LayoutConstants::columnWidth_MM * span, 5));
+        auto s0 = rack::mm2px(rack::Vec(colWidth_MM * span, 5));
 
         auto lab = widgets::Label::createWithBaselineBox(p0, s0, label,
                                                          LayoutConstants::labelSize_pt, clr);
@@ -212,9 +218,10 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
     }
 
     static widgets::Label *makeLabelAt(float rowPos, int col, const std::string label,
-                                       style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL)
+                                       style::XTStyle::Colors clr = style::XTStyle::TEXT_LABEL,
+                                       float colWidth_MM = layout::LayoutConstants::columnWidth_MM)
     {
-        return makeSpanLabelAt(rowPos, col, label, 1, clr);
+        return makeSpanLabelAt(rowPos, col, label, 1, clr, colWidth_MM);
     }
 
     static void layoutItem(W *w, const LayoutItem &lay, const std::string &panelName)
@@ -434,7 +441,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         case LayoutItem::GROUP_LABEL:
         {
             auto gl = widgets::GroupLabel::createAboveCenterWithColSpan(
-                lay.label, rack::Vec(lay.xcmm, lay.ycmm), lay.spanmm);
+                lay.label, rack::Vec(lay.xcmm, lay.ycmm), lay.spanmm, lay.overrideColWidth_MM);
             if (lay.extras.find("SHORTLEFT") != lay.extras.end())
                 gl->shortLeft = true;
             if (lay.extras.find("SHORTRIGHT") != lay.extras.end())
@@ -547,19 +554,20 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
     }
 
     static void addModulationSection(W *w, int n_mod_inputs, int input0,
-                                     float modulationRowOffset_MM = 0)
+                                     float modulationRowOffset_MM = 0,
+                                     float colW_MM = LayoutConstants::columnWidth_MM)
     {
         for (int i = 0; i < n_mod_inputs; ++i)
         {
-            auto modL =
-                makeLabelAt(LayoutConstants::modulationLabelBaseline_MM + modulationRowOffset_MM, i,
-                            std::string("MOD ") + std::to_string(i + 1));
+            auto modL = makeLabelAt(
+                LayoutConstants::modulationLabelBaseline_MM + modulationRowOffset_MM, i,
+                std::string("MOD ") + std::to_string(i + 1), style::XTStyle::TEXT_LABEL, colW_MM);
             w->addChild(modL);
         }
 
         for (int i = 0; i < n_mod_inputs; ++i)
         {
-            auto uxp = LayoutConstants::columnCenters_MM[i];
+            auto uxp = LayoutConstants::firstColumnCenter_MM + colW_MM * i;
             auto uyp = LayoutConstants::modulationRowCenters_MM[0] + modulationRowOffset_MM;
 
             auto *k = rack::createWidgetCentered<widgets::ModToggleButton>(
@@ -611,7 +619,8 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         for (auto p : {in0, in1})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
-            auto xp = layout::LayoutConstants::columnCenters_MM[col];
+            auto xp = layout::LayoutConstants::firstColumnCenter_MM +
+                      layout::LayoutConstants::columnWidth_MM * col;
             w->addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
                                                                  w->module, p));
             col++;
@@ -620,7 +629,8 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         for (auto p : {out0, out1})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
-            auto xp = layout::LayoutConstants::columnCenters_MM[col];
+            auto xp = layout::LayoutConstants::firstColumnCenter_MM +
+                      layout::LayoutConstants::columnWidth_MM * col;
             w->addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
                                                                    w->module, p));
             col++;

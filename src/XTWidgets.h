@@ -670,12 +670,13 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
     bool shortLeft{false}, shortRight{false};
 
     static GroupLabel *createAboveCenterWithColSpan(const std::string &label,
-                                                    const rack::Vec &ctrInMM, float spanInColumns)
+                                                    const rack::Vec &ctrInMM,
+                                                    float spanInColumns,
+                                                    float colWidthMM = layout::LayoutConstants::columnWidth_MM)
     {
         float ht = rack::mm2px(4.5);
         float yup = rack::mm2px(1.75);
         auto res = new GroupLabel();
-        float colWidthMM = 14;
 
         res->box.pos.x = rack::mm2px(ctrInMM.x - colWidthMM * 0.5);
         res->box.pos.y = rack::mm2px(ctrInMM.y - 8) - yup;

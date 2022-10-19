@@ -31,7 +31,7 @@ template <> constexpr bool FXConfig<fxt_rotaryspeaker>::usesClock() { return tru
 template <> constexpr int FXConfig<fxt_rotaryspeaker>::specificParamCount() { return 1; }
 template <> FXConfig<fxt_rotaryspeaker>::layout_t FXConfig<fxt_rotaryspeaker>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;

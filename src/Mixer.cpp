@@ -127,7 +127,8 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
     {
         auto yc = layout::LayoutConstants::inputRowCenter_MM - 58 - (1 - kr) * 18;
-        auto xc = layout::LayoutConstants::columnCenters_MM[kc];
+        auto xc = layout::LayoutConstants::firstColumnCenter_MM +
+                  layout::LayoutConstants::columnWidth_MM * kc;
 
         auto lay = layout::LayoutItem();
         lay.type = layout::LayoutItem::KNOB9;
@@ -210,7 +211,8 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     for (int i = M::INPUT_OSC1_L; i <= M::INPUT_OSC3_R; ++i)
     {
         auto yc = layout::LayoutConstants::inputRowCenter_MM - (1 - kr) * portSpacing;
-        auto xc = layout::LayoutConstants::columnCenters_MM[kc];
+        auto xc = layout::LayoutConstants::firstColumnCenter_MM +
+                  layout::LayoutConstants::columnWidth_MM * kc;
 
         auto lay = layout::LayoutItem();
         lay.type = layout::LayoutItem::PORT;
@@ -238,11 +240,13 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     }
 
     auto yp = layout::LayoutConstants::inputRowCenter_MM;
-    auto xp = layout::LayoutConstants::columnCenters_MM[2];
+    auto xp =
+        layout::LayoutConstants::firstColumnCenter_MM + layout::LayoutConstants::columnWidth_MM * 2;
     addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
                                                         M::OUTPUT_L));
 
-    xp = layout::LayoutConstants::columnCenters_MM[3];
+    xp =
+        layout::LayoutConstants::firstColumnCenter_MM + layout::LayoutConstants::columnWidth_MM * 3;
     addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
                                                         M::OUTPUT_R));
 

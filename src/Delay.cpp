@@ -59,7 +59,10 @@ DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
     auto bg = new widgets::Background(box.size, "Delay", "fx", "BlankNoDisplay");
     addChild(bg);
 
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    auto col = std::vector<float>();
+    for (int i = 0; i < 4; ++i)
+        col.push_back(layout::LayoutConstants::firstColumnCenter_MM +
+                      layout::LayoutConstants::columnWidth_MM * i);
 
     const auto row1 = layout::LayoutConstants::rowStart_MM;
     const auto row2 = row1 - layout::LayoutConstants::unlabeledGap_MM;

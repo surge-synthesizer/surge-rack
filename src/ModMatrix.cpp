@@ -196,7 +196,8 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
     for (int i = M::TARGET0; i < M::TARGET0 + M::n_matrix_params; ++i)
     {
         auto yc = layout::LayoutConstants::inputRowCenter_MM - 58 - (1 - kr) * 18;
-        auto xc = layout::LayoutConstants::columnCenters_MM[kc];
+        auto xc = layout::LayoutConstants::firstColumnCenter_MM +
+                  layout::LayoutConstants::columnWidth_MM * kc;
 
         auto lay = layout::LayoutItem();
         lay.type = layout::LayoutItem::KNOB9;
@@ -244,7 +245,8 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
     for (int i = M::OUTPUT_0; i < M::OUTPUT_0 + M::n_matrix_params; ++i)
     {
         auto yc = layout::LayoutConstants::inputRowCenter_MM - (1 - kr) * portSpacing;
-        auto xc = layout::LayoutConstants::columnCenters_MM[kc];
+        auto xc = layout::LayoutConstants::firstColumnCenter_MM +
+                  layout::LayoutConstants::columnWidth_MM * kc;
 
         addOutput(
             rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xc, yc)), module, i));

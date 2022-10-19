@@ -27,7 +27,7 @@ template <> constexpr int FXConfig<fxt_chow>::specificParamCount() { return 1; }
 
 template <> FXConfig<fxt_chow>::layout_t FXConfig<fxt_chow>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto bottomRow = FXLayoutHelper::rowStart_MM;

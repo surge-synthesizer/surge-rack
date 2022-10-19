@@ -49,7 +49,7 @@ enum n_t
 template <> constexpr bool FXConfig<fxt_neuron>::usesClock() { return true; }
 template <> FXConfig<fxt_neuron>::layout_t FXConfig<fxt_neuron>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;

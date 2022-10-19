@@ -31,10 +31,21 @@ struct FXLayoutHelper
     static constexpr float unlabeledGap_MM = 16;
     static constexpr float labeledGap_MM = 20;
 
-    static constexpr float bigCol0 = layout::LayoutConstants::columnCenters_MM[1] - 7;
-    static constexpr float bigCol1 = layout::LayoutConstants::columnCenters_MM[2] + 7;
+    static constexpr float bigCol0 = layout::LayoutConstants::firstColumnCenter_MM +
+                                     layout::LayoutConstants::columnWidth_MM * 0.5;
+    static constexpr float bigCol1 = layout::LayoutConstants::firstColumnCenter_MM +
+                                     layout::LayoutConstants::columnWidth_MM * 2.5;
 
     static constexpr float knobGap16_MM = unlabeledGap_MM - 9 + 18;
+
+    static std::vector<float> standardColumns_MM()
+    {
+        auto res = std::vector<float>();
+        for (int i = 0; i < 4; ++i)
+            res.push_back(layout::LayoutConstants::firstColumnCenter_MM +
+                          i * layout::LayoutConstants::columnWidth_MM);
+        return res;
+    }
 
     template <typename T> inline static void processExtend(T *m, int surgePar, int rackPar)
     {

@@ -25,7 +25,7 @@ template <> constexpr int FXConfig<fxt_treemonster>::numParams() { return 8; }
 template <> constexpr int FXConfig<fxt_treemonster>::specificParamCount() { return 2; }
 template <> FXConfig<fxt_treemonster>::layout_t FXConfig<fxt_treemonster>::getLayout()
 {
-    const auto &col = layout::LayoutConstants::columnCenters_MM;
+    const auto col = FXLayoutHelper::standardColumns_MM();
     const auto modRow = layout::LayoutConstants::modulationRowCenters_MM[0];
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
