@@ -172,6 +172,8 @@ template <int fxType> struct FX : modules::XTModule
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
+        copyGlobaldataSubset(storage_id_start, storage_id_end);
+
         surge_effect.reset(
             spawn_effect(fxType, storage.get(), fxstorage, storage->getPatch().globaldata));
         surge_effect->init();
