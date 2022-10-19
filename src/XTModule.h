@@ -10,10 +10,10 @@
 #include <array>
 #include <atomic>
 
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 #include "SurgeStorage.h"
 #include "rack.hpp"
-#include "XTStyle.hpp"
+#include "XTStyle.h"
 
 #include "filesystem/import.h"
 #include <fmt/core.h>

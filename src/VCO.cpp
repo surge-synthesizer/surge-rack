@@ -1,9 +1,9 @@
-#include "VCO.hpp"
-#include "VCOConfig.hpp"
+#include "VCO.h"
+#include "VCOConfig.h"
 #include "XTWidgets.h"
 
-#include "SurgeXT.hpp"
-#include "XTModuleWidget.hpp"
+#include "SurgeXT.h"
+#include "XTModuleWidget.h"
 #include "osdialog.h"
 
 namespace sst::surgext_rack::vco::ui

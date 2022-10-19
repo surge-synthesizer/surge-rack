@@ -5,8 +5,8 @@
 #ifndef XTRACK_MODMATRIX_HPP
 #define XTRACK_MODMATRIX_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"

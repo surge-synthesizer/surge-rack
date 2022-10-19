@@ -5,7 +5,7 @@
 #ifndef SURGEXT_RACK_VCOCONFIG_HPP
 #define SURGEXT_RACK_VCOCONFIG_HPP
 
-#include "VCO.hpp"
+#include "VCO.h"
 #include "vcoconfig/Classic.h"
 #include "vcoconfig/String.h"
 #include "vcoconfig/Modern.h"

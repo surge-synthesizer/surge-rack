@@ -1,4 +1,4 @@
-#include "XTModuleWidget.hpp"
+#include "XTModuleWidget.h"
 
 namespace sst::surgext_rack::widgets
 {

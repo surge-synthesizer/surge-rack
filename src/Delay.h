@@ -5,8 +5,8 @@
 #ifndef XTRACK_DELAY_HPP
 #define XTRACK_DELAY_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"
@@ -130,7 +130,7 @@ struct Delay : modules::XTModule
     void process(const ProcessArgs &args) override
     {
         auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
-        
+
         if (inputs[INPUT_CLOCK].isConnected())
             clockProc.process(this, INPUT_CLOCK);
         else

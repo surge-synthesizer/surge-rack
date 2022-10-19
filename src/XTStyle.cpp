@@ -1,4 +1,4 @@
-#include "XTStyle.hpp"
+#include "XTStyle.h"
 #include "filesystem/import.h"
 #include "rack.hpp"
 #include "tinyxml/tinyxml.h"
@@ -281,7 +281,7 @@ NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor 
         return nvgRGB(240, 67, 67);
     }
 
-    return nvgRGB(255,0,1);
+    return nvgRGB(255, 0, 1);
 }
 std::map<std::string, int> InternalFontMgr::fontMap;
 

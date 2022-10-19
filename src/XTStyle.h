@@ -3,7 +3,7 @@
 ** gradients, and drawing panel backgrounds
 */
 #pragma once
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 #include "rack.hpp"
 #include <map>
 #include <unordered_map>

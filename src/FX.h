@@ -1,9 +1,9 @@
 #ifndef SURGE_XT_RACK_FXHPP
 #define SURGE_XT_RACK_FXHPP
 
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 #include "dsp/Effect.h"
-#include "XTModule.hpp"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 

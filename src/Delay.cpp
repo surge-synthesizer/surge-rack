@@ -2,9 +2,9 @@
 // Created by Paul Walker on 9/20/22.
 //
 
-#include "Delay.hpp"
-#include "SurgeXT.hpp"
-#include "XTModuleWidget.hpp"
+#include "Delay.h"
+#include "SurgeXT.h"
+#include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "LayoutEngine.h"
 

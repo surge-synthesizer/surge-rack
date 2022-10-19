@@ -1,6 +1,6 @@
 #pragma once
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "dsp/Oscillator.h"
 #include "rack.hpp"
 #include <cstring>

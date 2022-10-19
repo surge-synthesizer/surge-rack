@@ -2,9 +2,9 @@
 // Created by Paul Walker on 8/29/22.
 //
 
-#include "Waveshaper.hpp"
-#include "SurgeXT.hpp"
-#include "XTModuleWidget.hpp"
+#include "Waveshaper.h"
+#include "SurgeXT.h"
+#include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "dsp/DSPExternalAdapterUtils.h"
 #include "LayoutEngine.h"

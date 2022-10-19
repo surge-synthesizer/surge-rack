@@ -7,8 +7,8 @@
 
 #include <rack.hpp>
 #include <iostream>
-#include "XTStyle.hpp"
-#include "XTModule.hpp"
+#include "XTStyle.h"
+#include "XTModule.h"
 #include "LayoutConstants.h"
 
 namespace sst::surgext_rack::widgets

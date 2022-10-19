@@ -1,6 +1,6 @@
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 #include "SurgeStorage.h"
-#include "XTStyle.hpp"
+#include "XTStyle.h"
 
 namespace logger = rack::logger;
 rack::Plugin *pluginInstance;

@@ -1,9 +1,9 @@
 #ifndef SURGE_XT_RACK_FXCONFIGHPP
 #define SURGE_XT_RACK_FXCONFIGHPP
 
-#include "FX.hpp"
+#include "FX.h"
 #include "dsp/Effect.h"
-#include "XTModuleWidget.hpp"
+#include "XTModuleWidget.h"
 
 #include "dsp/effects/FrequencyShifterEffect.h"
 #include "dsp/effects/DelayEffect.h"

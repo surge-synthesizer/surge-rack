@@ -5,8 +5,8 @@
 #ifndef XTRACK_mixer_HPP
 #define XTRACK_mixer_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"
@@ -238,7 +238,7 @@ struct Mixer : modules::XTModule
     void process(const ProcessArgs &args) override
     {
         auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
-        
+
         if (blockPos == slowUpdate)
         {
             updateRoutes();

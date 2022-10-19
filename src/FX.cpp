@@ -1,8 +1,8 @@
-#include "FX.hpp"
-#include "FXConfig.hpp"
-#include "XTModuleWidget.hpp"
+#include "FX.h"
+#include "FXConfig.h"
+#include "XTModuleWidget.h"
 #include "XTWidgets.h"
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 
 namespace sst::surgext_rack::fx::ui
 {

@@ -5,8 +5,8 @@
 #ifndef SURGE_RACK_SURGEWAVESHAPER_HPP
 #define SURGE_RACK_SURGEWAVESHAPER_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "globals.h"

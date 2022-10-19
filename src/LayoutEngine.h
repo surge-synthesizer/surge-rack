@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 #include "XTWidgets.h"
-#include "XTModuleWidget.hpp"
+#include "XTModuleWidget.h"
 #include "LayoutConstants.h"
 
 namespace sst::surgext_rack::layout

@@ -2,7 +2,7 @@
 #define SURGE_RACK_XTMODULEWIDGET 1
 
 #include "rack.hpp"
-#include "XTStyle.hpp"
+#include "XTStyle.h"
 #include <array>
 #include "XTWidgets.h"
 
