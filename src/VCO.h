@@ -16,10 +16,7 @@ template <int oscType> struct VCOConfig
 {
     typedef sst::surgext_rack::layout::LayoutItem LayoutItem;
     typedef std::vector<LayoutItem> layout_t;
-    static layout_t getLayout() {
-        return {
-        };
-    }
+    static layout_t getLayout() { return {}; }
     // Note if you add stuff, add a separator first please
     static void addMenuItems(VCO<oscType> *m, rack::ui::Menu *toThis) {}
 
@@ -190,7 +187,7 @@ template <int oscType> struct VCO : public modules::XTModule
         configParam(RETRIGGER_STYLE, 0, 1, 0, "Random Phase on Retrigger");
         configParam(EXTEND_UNISON, 0, 1, 0, "Extend Unison");
         configParam(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
-        configParam(CHARACTER, 0, 2, 1, "Character Filter" );
+        configParam(CHARACTER, 0, 2, 1, "Character Filter");
         configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
 
         VCOConfig<oscType>::configureArbitrarySwitches(this);
@@ -284,7 +281,6 @@ template <int oscType> struct VCO : public modules::XTModule
 
         return &oscstorage_display->p[paramId - OSC_CTRL_PARAM_0];
     }
-
 
     Parameter *surgeDisplayParameterForModulatorParamId(int modParamId) override
     {
@@ -516,13 +512,13 @@ template <int oscType> struct VCO : public modules::XTModule
                         auto extendDetune = params[EXTEND_UNISON].getValue() > 0.5;
                         auto absoluteDetune = params[ABSOLUTE_UNISON].getValue() > 0.5;
                         // We need the display here because it is used for formatting
-                        if (oscstorage->p[n_osc_params-2].extend_range != extendDetune)
+                        if (oscstorage->p[n_osc_params - 2].extend_range != extendDetune)
                         {
-                            oscstorage->p[n_osc_params-2].set_extend_range(extendDetune);
-                            oscstorage_display->p[n_osc_params-2].set_extend_range(extendDetune);
+                            oscstorage->p[n_osc_params - 2].set_extend_range(extendDetune);
+                            oscstorage_display->p[n_osc_params - 2].set_extend_range(extendDetune);
                         }
-                        oscstorage->p[n_osc_params-2].absolute = absoluteDetune;
-                        oscstorage_display->p[n_osc_params-2].absolute = absoluteDetune;
+                        oscstorage->p[n_osc_params - 2].absolute = absoluteDetune;
+                        oscstorage_display->p[n_osc_params - 2].absolute = absoluteDetune;
                     }
 
                     float pitch0 =
@@ -693,15 +689,13 @@ template <int oscType> struct VCO : public modules::XTModule
             }
         }
 
-        auto getBool = [](auto *n, auto *str, auto def)
-        {
+        auto getBool = [](auto *n, auto *str, auto def) {
             auto v = json_object_get(n, str);
             if (!v)
                 return def;
             return json_boolean_value(v);
         };
-        auto getInt = [](auto *n, auto *str, auto def) -> int
-        {
+        auto getInt = [](auto *n, auto *str, auto def) -> int {
             auto v = json_object_get(n, str);
             if (!v)
                 return def;
