@@ -132,6 +132,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
+        copyScenedataSubset(0, storage_id_start, storage_id_end);
         auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
                                     storage->getPatch().scenedata[0], oscdisplaybuffer[0]);
         config_osc->init_ctrltypes();
