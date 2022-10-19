@@ -150,4 +150,4 @@ struct ModMatrix : modules::XTModule
     }
 };
 } // namespace sst::surgext_rack::modmatrix
-#endif // RACK_HACK_mixer_HPP
+#endif

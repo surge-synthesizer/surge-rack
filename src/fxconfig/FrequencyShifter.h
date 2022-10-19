@@ -4,8 +4,8 @@
 
 #include "dsp/effects/FrequencyShifterEffect.h"
 
-#ifndef RACK_HACK_FREQUENCYSHIFTER_H
-#define RACK_HACK_FREQUENCYSHIFTER_H
+#ifndef SURGEXT_RACK_FX_FREQUENCYSHIFTER_H
+#define SURGEXT_RACK_FX_FREQUENCYSHIFTER_H
 
 namespace sst::surgext_rack::fx
 {
@@ -62,4 +62,4 @@ template <> void FXConfig<fxt_freqshift>::processSpecificParams(FX<fxt_freqshift
     }
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_FREQUENCYSHIFTER_H
+#endif // SURGEXT_RACK_FX_FREQUENCYSHIFTER_H

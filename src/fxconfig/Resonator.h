@@ -4,8 +4,8 @@
 
 #include "dsp/effects/ResonatorEffect.h"
 
-#ifndef RACK_HACK_RESONATOR_H
-#define RACK_HACK_RESONATOR_H
+#ifndef SURGEXT_RACK_FX_RESONATOR_H
+#define SURGEXT_RACK_FX_RESONATOR_H
 
 namespace sst::surgext_rack::fx
 {
@@ -98,4 +98,4 @@ bool FXConfig<fxt_resonator>::isDirtyPresetVsSpecificParams(
  * END OF RESONATOR
  */
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_RESONATOR_H
+#endif // SURGEXT_RACK_FX_RESONATOR_H

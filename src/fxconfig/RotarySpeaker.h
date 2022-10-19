@@ -4,8 +4,8 @@
 
 #include "dsp/effects/RotarySpeakerEffect.h"
 
-#ifndef RACK_HACK_ROTARYSPEAKER_H
-#define RACK_HACK_ROTARYSPEAKER_H
+#ifndef SURGEXT_RACK_FX_ROTARYSPEAKER_H
+#define SURGEXT_RACK_FX_ROTARYSPEAKER_H
 
 namespace sst::surgext_rack::fx
 {
@@ -92,4 +92,4 @@ bool FXConfig<fxt_rotaryspeaker>::isDirtyPresetVsSpecificParams(
     return !(p0 == !ps.da[sx_t::rot_drive]);
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

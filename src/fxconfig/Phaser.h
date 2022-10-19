@@ -5,8 +5,8 @@
 // Because of JUCE we can't include this here currently
 #include "dsp/effects/PhaserEffect.h"
 
-#ifndef RACK_HACK_PHASER_H
-#define RACK_HACK_PHASER_H
+#ifndef SURGEXT_RACK_FX_PHASER_H
+#define SURGEXT_RACK_FX_PHASER_H
 
 namespace sst::surgext_rack::fx
 {
@@ -88,4 +88,4 @@ bool FXConfig<fxt_phaser>::isDirtyPresetVsSpecificParams(
     return !(p0 == !ps.da[sx_t::ph_tone]);
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

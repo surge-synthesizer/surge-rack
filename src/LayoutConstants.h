@@ -2,8 +2,8 @@
 // Created by Paul Walker on 10/8/22.
 //
 
-#ifndef RACK_HACK_LAYOUTCONSTANTS_H
-#define RACK_HACK_LAYOUTCONSTANTS_H
+#ifndef SURGEXT_RACK_LAYOUTCONSTANTS_H
+#define SURGEXT_RACK_LAYOUTCONSTANTS_H
 
 namespace sst::surgext_rack::layout
 {
@@ -40,8 +40,7 @@ struct LayoutConstants
 
     // background
     static constexpr float mainLabelBaseline_MM = 6.295, mainLabelSize_PT = 10.5;
-
 };
 } // namespace sst::surgext_rack::layout
 
-#endif // RACK_HACK_LAYOUTCONSTANTS_H
+#endif // SURGEXT_RACK_LAYOUTCONSTANTS_H

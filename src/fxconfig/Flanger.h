@@ -4,8 +4,8 @@
 
 #include "dsp/effects/FlangerEffect.h"
 
-#ifndef RACK_HACK_FLANGER_H
-#define RACK_HACK_FLANGER_H
+#ifndef SURGEXT_RACK_FX_FLANGER_H
+#define SURGEXT_RACK_FX_FLANGER_H
 
 namespace sst::surgext_rack::fx
 {
@@ -59,4 +59,4 @@ template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
 }
 
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

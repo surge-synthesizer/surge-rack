@@ -4,8 +4,8 @@
 
 #include "dsp/effects/ChorusEffect.h"
 
-#ifndef RACK_HACK_CHORUS_H
-#define RACK_HACK_CHORUS_H
+#ifndef SURGEXT_RACK_FX_CHORUS_H
+#define SURGEXT_RACK_FX_CHORUS_H
 
 namespace sst::surgext_rack::fx
 {
@@ -98,4 +98,4 @@ bool FXConfig<fxt_chorus4>::isDirtyPresetVsSpecificParams(
     return !(p0 == !ps.da[sx_t::ch_lowcut] && p1 == !ps.da[sx_t::ch_highcut]);
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_CHORUS_H
+#endif // SURGEXT_RACK_FX_CHORUS_H

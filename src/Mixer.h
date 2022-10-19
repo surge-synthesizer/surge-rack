@@ -378,4 +378,4 @@ struct Mixer : modules::XTModule
     }
 };
 } // namespace sst::surgext_rack::mixer
-#endif // RACK_HACK_mixer_HPP
+#endif

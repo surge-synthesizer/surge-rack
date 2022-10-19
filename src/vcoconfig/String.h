@@ -4,8 +4,8 @@
 
 #include "dsp/oscillators/StringOscillator.h"
 
-#ifndef RACK_HACK_STRING_H
-#define RACK_HACK_STRING_H
+#ifndef SURGEXT_RACK_VCO_STRING_H
+#define SURGEXT_RACK_VCO_STRING_H
 
 namespace sst::surgext_rack::vco
 {
@@ -83,4 +83,4 @@ template <> void VCOConfig<ot_string>::oscillatorSpecificSetup(VCO<ot_string> *m
     }
 }
 } // namespace sst::surgext_rack::vco
-#endif // RACK_HACK_STRING_H
+#endif // SURGEXT_RACK_VCO_STRING_H

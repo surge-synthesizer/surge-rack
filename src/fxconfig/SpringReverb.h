@@ -6,8 +6,8 @@
 // wrong level so for SR and SR only don't use the enums
 // #include "dsp/effects/chowdsp/SpringReverbEffect.h"
 
-#ifndef RACK_HACK_SPRING_REVERB_H
-#define RACK_HACK_SPRING_REVERB_H
+#ifndef SURGEXT_RACK_FX_SPRING_REVERB_H
+#define SURGEXT_RACK_FX_SPRING_REVERB_H
 
 namespace sst::surgext_rack::fx
 {
@@ -75,4 +75,4 @@ template <> void FXConfig<fxt_spring_reverb>::processExtraInputs(FX<fxt_spring_r
     }
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

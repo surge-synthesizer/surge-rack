@@ -4,8 +4,8 @@
 
 #include "dsp/effects/TreemonsterEffect.h"
 
-#ifndef RACK_HACK_TREEMONSTER_H
-#define RACK_HACK_TREEMONSTER_H
+#ifndef SURGEXT_RACK_FX_TREEMONSTER_H
+#define SURGEXT_RACK_FX_TREEMONSTER_H
 
 namespace sst::surgext_rack::fx
 {
@@ -104,4 +104,4 @@ bool FXConfig<fxt_treemonster>::isDirtyPresetVsSpecificParams(
     return !((p0 == !ps.da[sx_t::tm_hp]) && (p1 == !ps.da[sx_t::tm_lp]));
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

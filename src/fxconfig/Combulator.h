@@ -4,8 +4,8 @@
 
 #include "dsp/effects/CombulatorEffect.h"
 
-#ifndef RACK_HACK_COMBULATOR_H
-#define RACK_HACK_COMBULATOR_H
+#ifndef SURGEXT_RACK_FX_COMBULATOR_H
+#define SURGEXT_RACK_FX_COMBULATOR_H
 
 namespace sst::surgext_rack::fx
 {
@@ -90,4 +90,4 @@ bool FXConfig<fxt_combulator>::isDirtyPresetVsSpecificParams(
     return !(p0 == !ps.da[sx_t::combulator_tone]);
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

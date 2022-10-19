@@ -299,4 +299,4 @@ struct LFO : modules::XTModule
     }
 };
 } // namespace sst::surgext_rack::lfo
-#endif // RACK_HACK_LFO_HPP
+#endif

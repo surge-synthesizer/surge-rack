@@ -4,8 +4,8 @@
 
 #include "dsp/effects/chowdsp/ExciterEffect.h"
 
-#ifndef RACK_HACK_EXCITER_H
-#define RACK_HACK_EXCITER_H
+#ifndef SURGEXT_RACK_FX_EXCITER_H
+#define SURGEXT_RACK_FX_EXCITER_H
 
 namespace sst::surgext_rack::fx
 {
@@ -35,4 +35,4 @@ template <> FXConfig<fxt_exciter>::layout_t FXConfig<fxt_exciter>::getLayout()
     };
 }
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_ROTARYSPEAKER_H
+#endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

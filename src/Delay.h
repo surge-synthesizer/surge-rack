@@ -254,4 +254,4 @@ struct Delay : modules::XTModule
     }
 };
 } // namespace sst::surgext_rack::delay
-#endif // RACK_HACK_mixer_HPP
+#endif

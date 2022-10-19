@@ -4,8 +4,8 @@
 
 #include "dsp/effects/Reverb1Effect.h"
 
-#ifndef RACK_HACK_REVERB1_H
-#define RACK_HACK_REVERB1_H
+#ifndef SURGEXT_RACK_FX_REVERB1_H
+#define SURGEXT_RACK_FX_REVERB1_H
 
 namespace sst::surgext_rack::fx
 {
@@ -93,4 +93,4 @@ bool FXConfig<fxt_reverb>::isDirtyPresetVsSpecificParams(
  * END OF REVERB2
  */
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_REVERB2_H
+#endif // SURGEXT_RACK_FX_REVERB2_H
