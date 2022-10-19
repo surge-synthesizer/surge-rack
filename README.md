@@ -1,4 +1,4 @@
-# SurgeXT in Rack
+# SurgeXT for VCV Rack
 
 This repository builds SurgeXT Rack extensions, our reboot of the old Surge 1.7 Rack modules
 with more features, better design, and lots of other exciting stuff, which is a work in progress.
