@@ -1,10 +1,21 @@
-//
-// Created by Paul Walker on 8/29/22.
-//
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
-#include "Waveshaper.hpp"
-#include "SurgeXT.hpp"
-#include "XTModuleWidget.hpp"
+#include "Waveshaper.h"
+#include "SurgeXT.h"
+#include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "dsp/DSPExternalAdapterUtils.h"
 #include "LayoutEngine.h"
@@ -117,15 +128,13 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         bool dval{false};
         if (module)
         {
-            auto wstype = (sst::waveshapers::WaveshaperType)
-                std::round(module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
+            auto wstype = (sst::waveshapers::WaveshaperType)std::round(
+                module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
 
             auto ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
             auto bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
 
-            dval = wstype != lastType ||
-                ddb != lastDrive ||
-                bias != lastBias;
+            dval = wstype != lastType || ddb != lastDrive || bias != lastBias;
         }
         return dval;
     }
@@ -133,13 +142,14 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
     sst::waveshapers::WaveshaperType lastType{waveshapers::WaveshaperType::wst_none};
     float lastDrive{-100}, lastBias{-100};
 
-    void recalcPath() {
+    void recalcPath()
+    {
         if (!module)
             return;
 
         outputSignal.clear();
-        auto wstype = (sst::waveshapers::WaveshaperType)
-            std::round(module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
+        auto wstype = (sst::waveshapers::WaveshaperType)std::round(
+            module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
         sst::waveshapers::QuadWaveshaperState wss;
         float R[4];
 
@@ -163,7 +173,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         lastBias = bias;
         lastDrive = ddb;
 
-        for (const auto &[x,y] : inputSignal)
+        for (const auto &[x, y] : inputSignal)
         {
             auto ivs = _mm_set1_ps(y + bias);
             auto ov1 = ivs;
@@ -407,12 +417,12 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
     typedef layout::LayoutEngine<WaveshaperWidget, M::DRIVE> engine_t;
     engine_t::initializeModulationToBlank(this);
 
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
+                         rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "WAVESHAPER", "vco", "BlankVCO");
     addChild(bg);
 
     int idx = 0;
-
 
     float plotStartX = rack::mm2px(layout::LayoutConstants::VCOplotCX_MM -
                                    layout::LayoutConstants::VCOplotW_MM * 0.5);
@@ -423,7 +433,6 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
                               layout::LayoutConstants::VCOplotControlsH_MM);
     float underPlotStartY = plotStartY + plotH;
     float underPlotH = rack::mm2px(layout::LayoutConstants::VCOplotControlsH_MM);
-
 
     auto fivemm = rack::mm2px(5);
     auto halfmm = rack::mm2px(0.5);
@@ -439,16 +448,16 @@ WaveshaperWidget::WaveshaperWidget(WaveshaperWidget::M *module) : XTModuleWidget
                                             rack::Vec(plotW, plotH + underPlotH), module);
     addChild(fpw);
 
-
     typedef layout::LayoutItem lay_t;
-    for (const auto &lay : {lay_t::createVCFWSBigKnob(M::DRIVE, "DRIVE"),
-                            lay_t::createVCOKnob(M::BIAS, "BIAS", 0, 2),
-                            lay_t::createVCOKnob(M::OUT_GAIN, "GAIN", 0, 3),
-                            lay_t::createVCOKnob(M::LOCUT, "", 1, 2),
-                            lay_t::createVCOKnob(M::HICUT, "", 1, 3),
-                            lay_t::createVCOSpanLabel("LO - CUT - HI", 1, 2, 2),
-                            lay_t::createVCOLight(layout::LayoutItem::POWER_LIGHT, M::LOCUT_ENABLED, 1, 2),
-                            lay_t::createVCOLight(layout::LayoutItem::POWER_LIGHT, M::HICUT_ENABLED, 1, 3),
+    for (const auto &lay : {
+             lay_t::createVCFWSBigKnob(M::DRIVE, "DRIVE"),
+             lay_t::createVCOKnob(M::BIAS, "BIAS", 0, 2),
+             lay_t::createVCOKnob(M::OUT_GAIN, "GAIN", 0, 3),
+             lay_t::createVCOKnob(M::LOCUT, "", 1, 2),
+             lay_t::createVCOKnob(M::HICUT, "", 1, 3),
+             lay_t::createVCOSpanLabel("LO - CUT - HI", 1, 2, 2),
+             lay_t::createVCOLight(layout::LayoutItem::POWER_LIGHT, M::LOCUT_ENABLED, 1, 2),
+             lay_t::createVCOLight(layout::LayoutItem::POWER_LIGHT, M::HICUT_ENABLED, 1, 3),
          })
     {
         engine_t::layoutItem(this, lay, "VCF");

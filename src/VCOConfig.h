@@ -13,7 +13,20 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-#include "XTModule.h"
+#ifndef SURGEXT_RACK_VCOCONFIG_HPP
+#define SURGEXT_RACK_VCOCONFIG_HPP
 
-std::mutex sst::surgext_rack::modules::XTModule::xtSurgeCreateMutex{};
-std::atomic<bool> sst::surgext_rack::modules::XTModule::showedPathsOnce{false};
+#include "VCO.h"
+#include "vcoconfig/Classic.h"
+#include "vcoconfig/String.h"
+#include "vcoconfig/Modern.h"
+#include "vcoconfig/Wavetable.h"
+#include "vcoconfig/Window.h"
+#include "vcoconfig/Sine.h"
+#include "vcoconfig/FM2.h"
+#include "vcoconfig/FM3.h"
+#include "vcoconfig/Alias.h"
+#include "vcoconfig/SHNoise.h"
+#include "vcoconfig/Twist.h"
+
+#endif // SURGEXT_RACK_VCOCONFIG_HPP

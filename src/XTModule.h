@@ -1,7 +1,17 @@
 /*
-** A common base class for all of our Modules, introducing core functions to
-** make sure surge is correctly configured in your module
-*/
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
 #pragma once
 #include <iostream>
@@ -10,10 +20,10 @@
 #include <array>
 #include <atomic>
 
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 #include "SurgeStorage.h"
 #include "rack.hpp"
-#include "XTStyle.hpp"
+#include "XTStyle.h"
 
 #include "filesystem/import.h"
 #include <fmt/core.h>
@@ -185,7 +195,8 @@ struct XTModule : public rack::Module
         return rootJ;
     }
 
-    void readCommonDataJson(json_t *commonJ) {
+    void readCommonDataJson(json_t *commonJ)
+    {
         auto icg = json_object_get(commonJ, "isCoupledToGlobalStyle");
         if (icg)
             isCoupledToGlobalStyle = json_boolean_value(icg);
@@ -302,7 +313,6 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
     }
 };
 
-
 struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
 {
     inline XTModule *xtm() { return static_cast<XTModule *>(module); }
@@ -330,7 +340,7 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
         bool valid{false};
         float v = par->calculate_modulation_value_from_string(s, emsg, valid);
         if (valid)
-            setValue(v * (par->val_max.f-par->val_min.f));
+            setValue(v * (par->val_max.f - par->val_min.f));
     }
 
     virtual std::string getLabel() override
@@ -353,7 +363,8 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
         }
 
         char txt[256];
-        par->get_display_of_modulation_depth(txt, getValue(), true, Parameter::ModulationDisplayMode::Menu);
+        par->get_display_of_modulation_depth(txt, getValue(), true,
+                                             Parameter::ModulationDisplayMode::Menu);
 
         return txt;
     }
@@ -542,8 +553,7 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     }
 };
 
-template<typename M>
-struct DecibelModulatorParamQuantity : rack::ParamQuantity
+template <typename M> struct DecibelModulatorParamQuantity : rack::ParamQuantity
 {
     inline M *xtm() { return static_cast<M *>(module); }
     inline ParamQuantity *under()
@@ -558,14 +568,14 @@ struct DecibelModulatorParamQuantity : rack::ParamQuantity
 
         return m->paramQuantities[underParamId];
     }
-    std::string getLabel() override {
+    std::string getLabel() override
+    {
         auto upq = under();
         if (!upq)
             return ParamQuantity::getLabel();
         return ParamQuantity::getLabel() + " to " + upq->getLabel();
     }
 };
-
 
 template <typename M, uint32_t nPar, uint32_t par0, uint32_t nInputs, uint32_t input0>
 struct MonophonicModulationAssistant
@@ -603,13 +613,14 @@ struct MonophonicModulationAssistant
         float inp[4];
         for (int i = 0; i < nInputs; ++i)
         {
-            inp[i] = m->inputs[i+input0].isConnected() * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
+            inp[i] = m->inputs[i + input0].isConnected() * m->inputs[i + input0].getVoltage(0) *
+                     RACK_TO_SURGE_CV_MUL;
         }
         for (int p = 0; p < nPar; ++p)
         {
             // Set up the base values
             auto mv = 0.f;
-            for (int i=0; i<nInputs; ++i)
+            for (int i = 0; i < nInputs; ++i)
             {
                 mv += (mu[p][i] * inp[i]);
             }
@@ -714,7 +725,7 @@ struct ModulationAssistant
         else
         {
             const auto r2scv = _mm_set1_ps(RACK_TO_SURGE_CV_MUL);
-            int polyChans = (chans-1)/4 + 1;
+            int polyChans = (chans - 1) / 4 + 1;
             __m128 snapInputs[nInputs][MAX_POLY >> 2];
             for (int i = 0; i < nInputs; ++i)
             {
@@ -751,11 +762,11 @@ struct ModulationAssistant
                     basevalues[p] = m->params[p + par0].getValue();
                     auto v0 = _mm_set1_ps(basevalues[p]);
 
-                    for (int c=0; c<polyChans; ++c)
+                    for (int c = 0; c < polyChans; ++c)
                     {
-                        _mm_store_ps(&modvalues[p][c*4], _mm_setzero_ps());
+                        _mm_store_ps(&modvalues[p][c * 4], _mm_setzero_ps());
                         valuesSSE[p][c] = v0;
-                        _mm_store_ps(&values[p][c*4], valuesSSE[p][c]);
+                        _mm_store_ps(&values[p][c * 4], valuesSSE[p][c]);
                     }
 
                     animValues[p] = fInv[p] * modvalues[p][0];
@@ -796,7 +807,8 @@ struct ModulationAssistant
 
 template <typename T> struct ClockProcessor
 {
-    enum ClockStyle {
+    enum ClockStyle
+    {
         QUARTER_NOTE,
         BPM_VOCT
     } clockStyle{QUARTER_NOTE};

@@ -1,12 +1,23 @@
-//
-// Created by Paul Walker on 8/29/22.
-//
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
 #ifndef SURGE_RACK_SURGEWAVESHAPER_HPP
 #define SURGE_RACK_SURGEWAVESHAPER_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "globals.h"
@@ -100,8 +111,7 @@ struct Waveshaper : public modules::XTModule
         {
             int tp = paramModulatedBy(i + WSHP_MOD_PARAM_0);
             auto lb = paramQuantities[tp]->getLabel();
-            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " +
-                               lb;
+            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
 
             configParam(WSHP_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
@@ -254,7 +264,7 @@ struct Waveshaper : public modules::XTModule
 
     const __m128 rackToSurgeOsc{_mm_set1_ps(RACK_TO_SURGE_OSC_MUL)};
     const __m128 surgeToRackOsc{_mm_set1_ps(SURGE_TO_RACK_OSC_MUL)};
-   
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
@@ -276,14 +286,13 @@ struct Waveshaper : public modules::XTModule
             {
                 if (!locutOn)
                 {
-                    for (int p=0; p<MAX_POLY; ++p)
+                    for (int p = 0; p < MAX_POLY; ++p)
                         hpPost[p]->suspend();
                 }
-                for (int p=0; p<lc; ++p)
+                for (int p = 0; p < lc; ++p)
                 {
                     hpPost[p]->coeff_HP(
-                        hpPost[p]->calc_omega(modulationAssistant.values[LOCUT][p] / 12.0),
-                        0.707);
+                        hpPost[p]->calc_omega(modulationAssistant.values[LOCUT][p] / 12.0), 0.707);
                     if (!locutOn)
                         hpPost[p]->coeff_instantize();
                 }
@@ -299,14 +308,13 @@ struct Waveshaper : public modules::XTModule
             {
                 if (!hicutOn)
                 {
-                    for (int p=0; p<MAX_POLY; ++p)
+                    for (int p = 0; p < MAX_POLY; ++p)
                         lpPost[p]->suspend();
                 }
-                for (int p=0; p<lc; ++p)
+                for (int p = 0; p < lc; ++p)
                 {
                     lpPost[p]->coeff_LP2B(
-                        lpPost[p]->calc_omega(modulationAssistant.values[HICUT][p] / 12.0),
-                        0.707);
+                        lpPost[p]->calc_omega(modulationAssistant.values[HICUT][p] / 12.0), 0.707);
                     if (!hicutOn)
                         lpPost[p]->coeff_instantize();
                 }
@@ -359,7 +367,7 @@ struct Waveshaper : public modules::XTModule
 
         if (stereoStack && lastPolyL == lastPolyR && lastPolyR == 1)
         {
-            float iv alignas(16)[4] {0,0,0,0}, ov alignas(16)[4] {0,0,0,0};
+            float iv alignas(16)[4]{0, 0, 0, 0}, ov alignas(16)[4]{0, 0, 0, 0};
             iv[0] = inputs[INPUT_L].getVoltage(0);
             iv[1] = inputs[INPUT_R].getVoltage(0);
 
@@ -420,8 +428,7 @@ struct Waveshaper : public modules::XTModule
                 for (int p = 0; p < n_wshp_params; ++p)
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
-                auto in =
-                    _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
+                auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mods[BIAS - DRIVE]);
                 auto fin = wsPtr(&wss[i], in, mods[0 /* DRIVE - DRIVE */]);
                 fin = _mm_mul_ps(fin, mods[OUT_GAIN - DRIVE]);
@@ -459,8 +466,7 @@ struct Waveshaper : public modules::XTModule
                     // dt[v] = sst::filters::db_to_linear(dt[v]);
                 }
                 auto drive = _mm_load_ps(dt);
-                auto in =
-                    _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
+                auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
                 auto fin = wsPtr(&wss[i], in, drive);
                 fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);
@@ -473,7 +479,7 @@ struct Waveshaper : public modules::XTModule
         {
             auto L = outputs[OUTPUT_L].getVoltages();
             auto R = outputs[OUTPUT_R].getVoltages();
-            for (int i=0; i<std::max(lc, rc); ++i)
+            for (int i = 0; i < std::max(lc, rc); ++i)
             {
                 lpPost[i]->process_sample(L[i], R[i], L[i], R[i]);
             }
@@ -482,7 +488,7 @@ struct Waveshaper : public modules::XTModule
         {
             auto L = outputs[OUTPUT_L].getVoltages();
             auto R = outputs[OUTPUT_R].getVoltages();
-            for (int i=0; i<std::max(lc, rc); ++i)
+            for (int i = 0; i < std::max(lc, rc); ++i)
             {
                 hpPost[i]->process_sample(L[i], R[i], L[i], R[i]);
             }

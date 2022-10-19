@@ -1,11 +1,22 @@
-//
-// Created by Paul Walker on 9/27/22.
-//
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
 #include "dsp/effects/ResonatorEffect.h"
 
-#ifndef RACK_HACK_RESONATOR_H
-#define RACK_HACK_RESONATOR_H
+#ifndef SURGEXT_RACK_FX_RESONATOR_H
+#define SURGEXT_RACK_FX_RESONATOR_H
 
 namespace sst::surgext_rack::fx
 {
@@ -98,4 +109,4 @@ bool FXConfig<fxt_resonator>::isDirtyPresetVsSpecificParams(
  * END OF RESONATOR
  */
 } // namespace sst::surgext_rack::fx
-#endif // RACK_HACK_RESONATOR_H
+#endif // SURGEXT_RACK_FX_RESONATOR_H

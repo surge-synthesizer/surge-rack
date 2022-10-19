@@ -1,14 +1,25 @@
-//
-// Created by Paul Walker on 9/4/22.
-//
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
 #ifndef SURGEXT_RACK_XTWIDGETS_H
 #define SURGEXT_RACK_XTWIDGETS_H
 
 #include <rack.hpp>
 #include <iostream>
-#include "XTStyle.hpp"
-#include "XTModule.hpp"
+#include "XTStyle.h"
+#include "XTModule.h"
 #include "LayoutConstants.h"
 
 namespace sst::surgext_rack::widgets
@@ -245,8 +256,9 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         if (!titleLabel && !title.empty())
         {
             titleLabel = Label::createWithBaselineBox(
-                rack::Vec(0, 0), rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM)), title,
-                layout::LayoutConstants::mainLabelSize_PT);
+                rack::Vec(0, 0),
+                rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM)),
+                title, layout::LayoutConstants::mainLabelSize_PT);
             titleLabel->tracking = 0.7;
             addChild(titleLabel);
         }
@@ -1488,7 +1500,8 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
     void onStyleChanged() override { bdw->dirty = true; }
 };
 
-template <int nLights = 4> struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
+template <int nLights = 4>
+struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdwRings{nullptr}, *bdwLight{nullptr};
 
@@ -1535,11 +1548,13 @@ template <int nLights = 4> struct ThereAreFourLights : rack::app::SliderKnob, st
     }
     void drawLight(NVGcontext *vg)
     {
-        if (!getParamQuantity()) return;
+        if (!getParamQuantity())
+            return;
         auto ringpx = rack::mm2px(ring_MM);
         auto padpx = rack::mm2px(pad_MM);
 
-        auto pq = nLights - 1 - Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights-1);
+        auto pq = nLights - 1 -
+                  Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights - 1);
         nvgBeginPath(vg);
         auto y0 = pq * (ringpx + padpx);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
@@ -1550,20 +1565,22 @@ template <int nLights = 4> struct ThereAreFourLights : rack::app::SliderKnob, st
         nvgStroke(vg);
     }
 
-    void onChange(const ChangeEvent &e) override {
+    void onChange(const ChangeEvent &e) override
+    {
         bdwLight->dirty = true;
         bdwRings->dirty = true;
         rack::app::Knob::onChange(e);
     }
 
-
-    void onStyleChanged() override {
+    void onStyleChanged() override
+    {
         bdwLight->dirty = true;
         bdwRings->dirty = true;
     }
 
     float buttonY{-1};
-    void onButton(const ButtonEvent &e) override {
+    void onButton(const ButtonEvent &e) override
+    {
         buttonY = e.pos.y;
         if (e.action == GLFW_RELEASE)
             buttonY = -1;
@@ -1581,7 +1598,8 @@ template <int nLights = 4> struct ThereAreFourLights : rack::app::SliderKnob, st
             {
                 if (getParamQuantity())
                 {
-                    getParamQuantity()->setValue(Parameter::intScaledToFloat(nLights - 1 - i, nLights - 1));
+                    getParamQuantity()->setValue(
+                        Parameter::intScaledToFloat(nLights - 1 - i, nLights - 1));
                 }
             }
         }
@@ -1598,16 +1616,15 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     std::unordered_set<VerticalSliderModulator *> modSliders;
 
     static VerticalSlider *createCentered(const rack::Vec &pos, float height,
-                                   modules::XTModule *module, int paramId)
+                                          modules::XTModule *module, int paramId)
     {
         auto res = new VerticalSlider();
         auto width = rack::mm2px(4);
         res->box.pos = pos;
         res->box.pos.x -= width / 2;
-        res->box.pos.y -= height/2;
+        res->box.pos.y -= height / 2;
         res->box.size = rack::Vec(width, height);
-        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
-                                                  res->box.size,
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
                                                   [res](auto *vg) { res->drawSlider(vg); });
         res->addChild(res->bdw);
         res->module = module;
@@ -1620,7 +1637,8 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     void onChange(const ChangeEvent &e) override;
 
     float priorV{-103241.f};
-    void step() override {
+    void step() override
+    {
         auto pq = getParamQuantity();
         if (!pq)
             return;
@@ -1637,10 +1655,9 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto nv{0.f};
         if (pq)
         {
-            nv =
-                (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
+            nv = (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
         }
-        auto np = (1-nv) * (box.size.y-4) + 2;
+        auto np = (1 - nv) * (box.size.y - 4) + 2;
 
         auto inset = rack::mm2px(1.f);
 
@@ -1675,9 +1692,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         nvgStrokeWidth(vg, 1);
         nvgStroke(vg);
     }
-    void onStyleChanged() override {
-        bdw->dirty = true;
-    }
+    void onStyleChanged() override { bdw->dirty = true; }
     Widget *asWidget() override { return this; }
 
     bool isModEdit{false};
@@ -1687,7 +1702,6 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         bdw->dirty = true;
     }
 };
-
 
 struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasBDW
 {
@@ -1704,14 +1718,13 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         if (!pq || !uq)
             return;
 
-        auto uv =
-            (uq->getValue() - uq->getMinValue()) / (uq->getMaxValue() - uq->getMinValue());
+        auto uv = (uq->getValue() - uq->getMinValue()) / (uq->getMaxValue() - uq->getMinValue());
 
-        auto np = (1-uv) * (box.size.y-4) + 2;
+        auto np = (1 - uv) * (box.size.y - 4) + 2;
 
         auto mv = pq->getValue();
-        auto mp = std::clamp(1.f-(uv+mv), 0.f, 1.f) * (box.size.y-4) + 2;
-        auto dp = std::clamp(1.f-(uv-mv), 0.f, 1.f) * (box.size.y-4) + 2;
+        auto mp = std::clamp(1.f - (uv + mv), 0.f, 1.f) * (box.size.y - 4) + 2;
+        auto dp = std::clamp(1.f - (uv - mv), 0.f, 1.f) * (box.size.y - 4) + 2;
 
         {
             auto start = std::min(mp, np);
@@ -1736,8 +1749,8 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         }
     }
 
-    static VerticalSliderModulator *createCentered(rack::Vec pos, float heightMM, rack::Module *module,
-                                       int paramId)
+    static VerticalSliderModulator *createCentered(rack::Vec pos, float heightMM,
+                                                   rack::Module *module, int paramId)
     {
         auto *res = rack::createWidget<VerticalSliderModulator>(pos);
 
@@ -1745,10 +1758,9 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         auto height = rack::mm2px(heightMM);
         res->box.pos = pos;
         res->box.pos.x -= width / 2;
-        res->box.pos.y -= height/2;
+        res->box.pos.y -= height / 2;
         res->box.size = rack::Vec(width, height);
-        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
-                                                  res->box.size,
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
                                                   [res](auto *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
 
@@ -1825,7 +1837,6 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
             rack::SliderKnob::onLeave(e);
     }
 };
-
 
 inline void VerticalSlider::onChange(const rack::widget::Widget::ChangeEvent &e)
 {

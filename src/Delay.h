@@ -1,12 +1,23 @@
-//
-// Created by Paul Walker on 9/20/22.
-//
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
 #ifndef XTRACK_DELAY_HPP
 #define XTRACK_DELAY_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"
@@ -130,7 +141,7 @@ struct Delay : modules::XTModule
     void process(const ProcessArgs &args) override
     {
         auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
-        
+
         if (inputs[INPUT_CLOCK].isConnected())
             clockProc.process(this, INPUT_CLOCK);
         else
@@ -254,4 +265,4 @@ struct Delay : modules::XTModule
     }
 };
 } // namespace sst::surgext_rack::delay
-#endif // RACK_HACK_mixer_HPP
+#endif

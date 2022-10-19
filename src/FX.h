@@ -1,9 +1,24 @@
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
+
 #ifndef SURGE_XT_RACK_FXHPP
 #define SURGE_XT_RACK_FXHPP
 
-#include "SurgeXT.hpp"
+#include "SurgeXT.h"
 #include "dsp/Effect.h"
-#include "XTModule.hpp"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 
@@ -20,11 +35,7 @@ template <int fxType> struct FXConfig
 {
     typedef sst::surgext_rack::layout::LayoutItem LayoutItem;
     typedef std::vector<LayoutItem> layout_t;
-    static layout_t getLayout() {
-        return {
-            LayoutItem::createPresetLCDArea()
-        };
-    }
+    static layout_t getLayout() { return {LayoutItem::createPresetLCDArea()}; }
 
     static constexpr int extraInputs() { return 0; }
     static constexpr int extraSchmidtTriggers() { return 1; }
@@ -34,8 +45,15 @@ template <int fxType> struct FXConfig
     static constexpr int specificParamCount() { return 0; }
     static void configSpecificParams(FX<fxType> *M) {}
     static void processSpecificParams(FX<fxType> *M) {}
-    static void loadPresetOntoSpecificParams(FX<fxType> *M, const Surge::Storage::FxUserPreset::Preset &) {}
-    static bool isDirtyPresetVsSpecificParams(FX<fxType> *M, const Surge::Storage::FxUserPreset::Preset &) { return false; }
+    static void loadPresetOntoSpecificParams(FX<fxType> *M,
+                                             const Surge::Storage::FxUserPreset::Preset &)
+    {
+    }
+    static bool isDirtyPresetVsSpecificParams(FX<fxType> *M,
+                                              const Surge::Storage::FxUserPreset::Preset &)
+    {
+        return false;
+    }
 
     static constexpr int panelWidthInScrews() { return 12; }
     static constexpr bool usesSideband() { return false; }
@@ -82,13 +100,12 @@ template <int fxType> struct FX : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::MonophonicModulationAssistant<FX<fxType>, FXConfig<fxType>::numParams(),
-                                           FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
+    modules::MonophonicModulationAssistant<FX<fxType>, FXConfig<fxType>::numParams(), FX_PARAM_0,
+                                           n_mod_inputs, MOD_INPUT_0>
         modAssist;
 
-
-    modules::ModulationAssistant<FX<fxType>, FXConfig<fxType>::numParams(),
-                                 FX_PARAM_0, n_mod_inputs, MOD_INPUT_0>
+    modules::ModulationAssistant<FX<fxType>, FXConfig<fxType>::numParams(), FX_PARAM_0,
+                                 n_mod_inputs, MOD_INPUT_0>
         polyModAssist;
 
     FX() : XTModule()
@@ -109,7 +126,7 @@ template <int fxType> struct FX : modules::XTModule
         if (lastParam != FXConfig<fxType>::numParams() - 1)
         {
             std::cout << "WARNING: " << fx_type_names[fxType] << " last non-param is "
-                      << lastParam + 1 << " not " << FXConfig<fxType>::numParams()  << std::endl;
+                      << lastParam + 1 << " not " << FXConfig<fxType>::numParams() << std::endl;
         }
 
         for (int i = 0; i < n_fx_params * n_mod_inputs; ++i)
@@ -117,7 +134,8 @@ template <int fxType> struct FX : modules::XTModule
             std::string name{"Mod"};
             name += std::to_string((i - FX_MOD_PARAM_0) % 4 + 1);
 
-            configParam<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1, 0, name);
+            configParam<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1, 0,
+                                                                   name);
         }
 
         FXConfig<fxType>::configSpecificParams(this);
@@ -198,22 +216,21 @@ template <int fxType> struct FX : modules::XTModule
             if (sect)
             {
                 auto type = sect->FirstChildElement();
-                while(type)
+                while (type)
                 {
                     int i;
 
-                    if (type->Value() && strcmp(type->Value(), "type") == 0
-                        && type->QueryIntAttribute("i", &i) == TIXML_SUCCESS &&
-                        i == fxType)
+                    if (type->Value() && strcmp(type->Value(), "type") == 0 &&
+                        type->QueryIntAttribute("i", &i) == TIXML_SUCCESS && i == fxType)
                     {
                         auto kid = type->FirstChildElement();
-                        while(kid)
+                        while (kid)
                         {
                             if (strcmp(kid->Value(), "snapshot") == 0)
                             {
                                 auto p = Surge::Storage::FxUserPreset::Preset();
                                 p.type = fxType;
-                                for (int q=0; q<n_fx_params; ++q)
+                                for (int q = 0; q < n_fx_params; ++q)
                                 {
                                     // Set up with default values remember q index
                                     if (fxstorage->p[q].valtype == vt_float)
@@ -228,7 +245,6 @@ template <int fxType> struct FX : modules::XTModule
                                     {
                                         p.p[q] = fxstorage->p[q].val.b;
                                     }
-
                                 }
                                 storage->fxUserPreset->readFromXMLSnapshot(p, kid);
                                 p.isFactory = true;
@@ -266,7 +282,7 @@ template <int fxType> struct FX : modules::XTModule
     Parameter *surgeDisplayParameterForModulatorParamId(int modParamId) override
     {
         auto paramId = paramModulatedBy(modParamId);
-        if (paramId < FX_PARAM_0|| paramId >= FX_PARAM_0 + n_fx_params)
+        if (paramId < FX_PARAM_0 || paramId >= FX_PARAM_0 + n_fx_params)
             return nullptr;
 
         return &fxstorage->p[paramId - FX_PARAM_0];
@@ -301,7 +317,8 @@ template <int fxType> struct FX : modules::XTModule
     float value01for(int i, float f)
     {
         const auto &p = fxstorage->p[i];
-        if (p.ctrltype == ct_none) return 0;
+        if (p.ctrltype == ct_none)
+            return 0;
 
         if (p.valtype == vt_float)
         {
@@ -322,9 +339,9 @@ template <int fxType> struct FX : modules::XTModule
     {
         const auto &ps = presets[which];
 
-        for (int i=0; i<n_fx_params; ++i)
+        for (int i = 0; i < n_fx_params; ++i)
         {
-            paramQuantities[FX_PARAM_0+i]->setValue(value01for(i, ps.p[i]));
+            paramQuantities[FX_PARAM_0 + i]->setValue(value01for(i, ps.p[i]));
         }
 
         FXConfig<fxType>::loadPresetOntoSpecificParams(this, ps);
@@ -337,8 +354,10 @@ template <int fxType> struct FX : modules::XTModule
 
     int bufferPos{0};
     float bufferL alignas(16)[MAX_POLY][BLOCK_SIZE], bufferR alignas(16)[MAX_POLY][BLOCK_SIZE];
-    float modulatorL alignas(16)[MAX_POLY][BLOCK_SIZE], modulatorR alignas(16)[MAX_POLY][BLOCK_SIZE];
-    float processedL alignas(16)[MAX_POLY][BLOCK_SIZE], processedR alignas(16)[MAX_POLY][BLOCK_SIZE];
+    float modulatorL alignas(16)[MAX_POLY][BLOCK_SIZE], modulatorR
+        alignas(16)[MAX_POLY][BLOCK_SIZE];
+    float processedL alignas(16)[MAX_POLY][BLOCK_SIZE], processedR
+        alignas(16)[MAX_POLY][BLOCK_SIZE];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -360,13 +379,11 @@ template <int fxType> struct FX : modules::XTModule
         {
             processMono(args);
         }
-
     }
     void processMono(const typename rack::Module::ProcessArgs &args)
     {
         float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
-
 
         outputs[OUTPUT_L].setChannels(1);
         outputs[OUTPUT_R].setChannels(1);
@@ -459,7 +476,6 @@ template <int fxType> struct FX : modules::XTModule
         }
     }
 
-
     int lastNChan{-1};
 
     void reinitialize()
@@ -472,13 +488,13 @@ template <int fxType> struct FX : modules::XTModule
 
     void guaranteePolyFX(int chan)
     {
-        for (int i=0; i<chan; ++i)
+        for (int i = 0; i < chan; ++i)
         {
             if (!surge_effect_poly[i])
             {
-                 surge_effect_poly[i].reset(
-                     spawn_effect(fxType, storage.get(), fxstorage, storage->getPatch().globaldata));
-                 surge_effect_poly[i]->init();
+                surge_effect_poly[i].reset(
+                    spawn_effect(fxType, storage.get(), fxstorage, storage->getPatch().globaldata));
+                surge_effect_poly[i]->init();
             }
         }
     }
@@ -497,7 +513,7 @@ template <int fxType> struct FX : modules::XTModule
         outputs[OUTPUT_L].setChannels(chan);
         outputs[OUTPUT_R].setChannels(chan);
 
-        for (int c=0; c < chan; ++c)
+        for (int c = 0; c < chan; ++c)
         {
             float inl = inputs[INPUT_L].getVoltage(c) * RACK_TO_SURGE_OSC_MUL;
             float inr = inputs[INPUT_R].getVoltage(c) * RACK_TO_SURGE_OSC_MUL;
@@ -548,7 +564,7 @@ template <int fxType> struct FX : modules::XTModule
 
             FXConfig<fxType>::processExtraInputs(this);
 
-            for (int c=0; c<chan; ++c)
+            for (int c = 0; c < chan; ++c)
             {
                 std::memcpy(processedL[c], bufferL[c], BLOCK_SIZE * sizeof(float));
                 std::memcpy(processedR[c], bufferR[c], BLOCK_SIZE * sizeof(float));
@@ -581,7 +597,7 @@ template <int fxType> struct FX : modules::XTModule
         }
 
         bool mono = outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected();
-        for (int c=0; c<chan; ++c)
+        for (int c = 0; c < chan; ++c)
         {
             float outl = processedL[c][bufferPos] * SURGE_TO_RACK_OSC_MUL;
             float outr = processedR[c][bufferPos] * SURGE_TO_RACK_OSC_MUL;
@@ -678,7 +694,8 @@ template <int fxType> struct FX : modules::XTModule
             if (cs)
             {
                 auto csv = json_integer_value(cs);
-                clockProc.clockStyle = static_cast<typename modules::ClockProcessor<FX<fxType>>::ClockStyle>(csv);
+                clockProc.clockStyle =
+                    static_cast<typename modules::ClockProcessor<FX<fxType>>::ClockStyle>(csv);
             }
         }
 
@@ -694,7 +711,7 @@ template <int fxType> struct FX : modules::XTModule
     }
 
     std::unique_ptr<Effect> surge_effect;
-    std::array<std::unique_ptr<Effect>,MAX_POLY> surge_effect_poly;
+    std::array<std::unique_ptr<Effect>, MAX_POLY> surge_effect_poly;
     FxStorage *fxstorage{nullptr};
 };
 } // namespace sst::surgext_rack::fx

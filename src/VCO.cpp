@@ -1,9 +1,24 @@
-#include "VCO.hpp"
-#include "VCOConfig.hpp"
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
+
+#include "VCO.h"
+#include "VCOConfig.h"
 #include "XTWidgets.h"
 
-#include "SurgeXT.hpp"
-#include "XTModuleWidget.hpp"
+#include "SurgeXT.h"
+#include "XTModuleWidget.h"
 #include "osdialog.h"
 
 namespace sst::surgext_rack::vco::ui
@@ -23,18 +38,16 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
-
     virtual void characterMenu(rack::Menu *p, M *m)
     {
         if (!m || !m->paramQuantities[M::CHARACTER])
             return;
-        auto pq  = m->paramQuantities[M::CHARACTER];
+        auto pq = m->paramQuantities[M::CHARACTER];
         auto pqvi = (int)std::round(pq->getValue());
 
         for (auto c : {cm_warm, cm_neutral, cm_bright})
         {
-            p->addChild(rack::createMenuItem(character_names[c],
-                                             CHECKMARK(pqvi == c),
+            p->addChild(rack::createMenuItem(character_names[c], CHECKMARK(pqvi == c),
                                              [pq, c]() { pq->setValue(c); }));
         }
     }
@@ -46,17 +59,13 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             auto m = static_cast<M *>(module);
             menu->addChild(new rack::ui::MenuSeparator);
 
-            auto addBoolMenu = [menu, m](auto *l, auto p)
-            {
+            auto addBoolMenu = [menu, m](auto *l, auto p) {
                 if (!m || !m->paramQuantities[p])
                     return;
 
                 auto v = m->paramQuantities[p]->getValue() > 0.5;
-                menu->addChild(rack::createMenuItem(l,
-                                                    CHECKMARK(v),
-                                                    [m,v,p]() {
-                                                        m->paramQuantities[p]->setValue(v ? 0 : 1);
-                                                        }));
+                menu->addChild(rack::createMenuItem(
+                    l, CHECKMARK(v), [m, v, p]() { m->paramQuantities[p]->setValue(v ? 0 : 1); }));
             };
 
             addBoolMenu("Retrigger With Phase=0", M::RETRIGGER_STYLE);
@@ -65,9 +74,8 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
                 addBoolMenu("Extend Unison Detune", M::EXTEND_UNISON);
                 addBoolMenu("Absolute Unison Detune", M::ABSOLUTE_UNISON);
             }
-            menu->addChild(rack::createSubmenuItem( "Character", "", [this, m](auto *x) {
-                characterMenu(x, m);
-            }));
+            menu->addChild(rack::createSubmenuItem("Character", "",
+                                                   [this, m](auto *x) { characterMenu(x, m); }));
 
             auto driftSlider = new rack::ui::Slider;
             driftSlider->quantity = module->paramQuantities[M::DRIFT];
@@ -866,7 +874,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
     typedef layout::LayoutEngine<VCOWidget<oscType>, M::PITCH_0> engine_t;
     engine_t::initializeModulationToBlank(this);
 
-    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews, rack::app::RACK_GRID_HEIGHT);
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
+                         rack::app::RACK_GRID_HEIGHT);
 
     std::string panelLabel = std::string(M::name) + " VCO";
     for (auto &q : panelLabel)
@@ -957,7 +966,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
             men->addChild(rack::createMenuLabel(pq->getLabel()));
 
             int step{1};
-            for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i+= step)
+            for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i += step)
             {
                 char txt[256];
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);

@@ -1,12 +1,23 @@
-//
-// Created by Paul Walker on 8/29/22.
-//
+/*
+ * SurgeXT for VCV Rack - a Surge Synth Team product
+ *
+ * Copyright 2019 - 2022, Various authors, as described in the github
+ * transaction log.
+ *
+ * SurgeXT for VCV Rack is released under the Gnu General Public Licence
+ * V3 or later (GPL-3.0-or-later). The license is found in the file
+ * "LICENSE" in the root of this repository or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * All source for Surge XT for VCV Rack is available at
+ * https://github.com/surge-synthesizer/surge-rack/
+ */
 
 #ifndef SURGE_RACK_SURGEVCF_HPP
 #define SURGE_RACK_SURGEVCF_HPP
 
-#include "SurgeXT.hpp"
-#include "XTModule.hpp"
+#include "SurgeXT.h"
+#include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
 #include "DebugHelpers.h"
@@ -107,8 +118,7 @@ struct VCF : public modules::XTModule
         {
             int tp = paramModulatedBy(i + VCF_MOD_PARAM_0);
             auto lb = paramQuantities[tp]->getLabel();
-            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " +
-                               lb;
+            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
 
             if (tp == FREQUENCY)
                 configParam(VCF_MOD_PARAM_0 + i, -1, 1, 0, name, " Oct/V");
@@ -195,7 +205,7 @@ struct VCF : public modules::XTModule
             }
         }
 
-        for (int i=0; i<MAX_POLY >> 2; ++i)
+        for (int i = 0; i < MAX_POLY >> 2; ++i)
         {
             currentInGain[i] = modulationAssistant.valuesSSE[IN_GAIN][i];
             currentOutGain[i] = modulationAssistant.valuesSSE[OUT_GAIN][i];
@@ -374,22 +384,22 @@ struct VCF : public modules::XTModule
                 coefMaker[pv].updateState(qfus[qf], qp);
             }
 
-            for (int i=0; i<nSIMDSlots; ++i)
+            for (int i = 0; i < nSIMDSlots; ++i)
             {
                 auto tig = modulationAssistant.valuesSSE[IN_GAIN][i];
-                dInGain[i] = _mm_mul_ps(_mm_sub_ps(tig,currentInGain[i]), oneOverBlock);
+                dInGain[i] = _mm_mul_ps(_mm_sub_ps(tig, currentInGain[i]), oneOverBlock);
 
                 auto tog = modulationAssistant.valuesSSE[OUT_GAIN][i];
-                dOutGain[i] = _mm_mul_ps(_mm_sub_ps(tog,currentOutGain[i]), oneOverBlock);
+                dOutGain[i] = _mm_mul_ps(_mm_sub_ps(tog, currentOutGain[i]), oneOverBlock);
 
                 auto tmix = modulationAssistant.valuesSSE[MIX][i];
-                dMix[i] = _mm_mul_ps(_mm_sub_ps(tmix,currentMix[i]), oneOverBlock);
+                dMix[i] = _mm_mul_ps(_mm_sub_ps(tmix, currentMix[i]), oneOverBlock);
             }
 
             processPosition = 0;
         }
 
-        for (int i=0; i<nSIMDSlots; ++i)
+        for (int i = 0; i < nSIMDSlots; ++i)
         {
             currentInGain[i] = _mm_add_ps(currentInGain[i], dInGain[i]);
             currentOutGain[i] = _mm_add_ps(currentOutGain[i], dOutGain[i]);
@@ -399,17 +409,18 @@ struct VCF : public modules::XTModule
         if (stereoStack && lastPolyL == lastPolyR && lastPolyR == 1)
         {
             // dual poly case
-            float iv alignas(16)[4] {0,0,0,0}, ov alignas(16)[4] {0,0,0,0};
+            float iv alignas(16)[4]{0, 0, 0, 0}, ov alignas(16)[4]{0, 0, 0, 0};
             iv[0] = inputs[INPUT_L].getVoltage(0);
             iv[1] = inputs[INPUT_R].getVoltage(0);
 
-            //const auto &mv = modulationAssistant.values;
-            const auto ig = _mm_shuffle_ps(currentInGain[0], currentInGain[0], _MM_SHUFFLE(0,0,0,0));
-            const auto og = _mm_shuffle_ps(currentOutGain[0], currentOutGain[0], _MM_SHUFFLE(0,0,0,0));
-            const auto mx = _mm_shuffle_ps(currentMix[0], currentMix[0], _MM_SHUFFLE(0,0,0,0));
+            // const auto &mv = modulationAssistant.values;
+            const auto ig =
+                _mm_shuffle_ps(currentInGain[0], currentInGain[0], _MM_SHUFFLE(0, 0, 0, 0));
+            const auto og =
+                _mm_shuffle_ps(currentOutGain[0], currentOutGain[0], _MM_SHUFFLE(0, 0, 0, 0));
+            const auto mx = _mm_shuffle_ps(currentMix[0], currentMix[0], _MM_SHUFFLE(0, 0, 0, 0));
 
-            auto in =
-                _mm_mul_ps(_mm_load_ps(iv), rackToSurgeOsc);
+            auto in = _mm_mul_ps(_mm_load_ps(iv), rackToSurgeOsc);
 
             auto pre = _mm_mul_ps(in, ig);
             auto filt = filterPtr(&qfus[0], pre);
@@ -417,8 +428,7 @@ struct VCF : public modules::XTModule
             auto post = _mm_mul_ps(filt, og);
             auto omm = _mm_sub_ps(oneSimd, mx);
 
-            auto fin =
-                _mm_add_ps(_mm_mul_ps(mx, post), _mm_mul_ps(omm, in));
+            auto fin = _mm_add_ps(_mm_mul_ps(mx, post), _mm_mul_ps(omm, in));
             fin = _mm_mul_ps(fin, surgeToRackOsc);
             _mm_store_ps(ov, fin);
 
@@ -447,7 +457,7 @@ struct VCF : public modules::XTModule
             }
 
             float mvUnload alignas(16)[n_vcf_params][MAX_POLY];
-            for (int i=0; i<nSIMDSlots; ++i)
+            for (int i = 0; i < nSIMDSlots; ++i)
             {
                 _mm_store_ps(&mvUnload[IN_GAIN][i << 2], currentInGain[i]);
                 _mm_store_ps(&mvUnload[OUT_GAIN][i << 2], currentOutGain[i]);
@@ -469,8 +479,7 @@ struct VCF : public modules::XTModule
                 for (int p = IN_GAIN; p <= OUT_GAIN; ++p)
                     mods[p] = _mm_load_ps(modsRaw[p]);
 
-                auto in =
-                    _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
+                auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
                 auto pre = _mm_mul_ps(in, mods[IN_GAIN - FREQUENCY]);
                 auto filt = filterPtr(&qfus[i], pre);
 
@@ -504,8 +513,7 @@ struct VCF : public modules::XTModule
 
             for (int i = 0; i < nSIMDSlots; ++i)
             {
-                auto in =
-                    _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
+                auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
 
                 auto pre = _mm_mul_ps(in, currentInGain[i]);
                 auto filt = filterPtr(&qfus[i], pre);
@@ -513,8 +521,7 @@ struct VCF : public modules::XTModule
                 auto post = _mm_mul_ps(filt, currentOutGain[i]);
                 auto omm = _mm_sub_ps(oneSimd, currentMix[i]);
 
-                auto fin =
-                    _mm_add_ps(_mm_mul_ps(currentMix[i], post), _mm_mul_ps(omm, in));
+                auto fin = _mm_add_ps(_mm_mul_ps(currentMix[i], post), _mm_mul_ps(omm, in));
                 fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(ov + (i << 2), fin);
             }
