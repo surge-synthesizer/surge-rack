@@ -96,6 +96,8 @@ struct LFO : modules::XTModule
     std::unique_ptr<FormulaModulatorStorage> surge_fs;
     LFOStorage *lfostorage;
 
+    modules::ModulationAssistant<LFO, n_lfo_params, RATE, n_mod_inputs, LFO_MOD_INPUT> modAssist;
+
     rack::simd::float_4 output0[3][4], output1[3][4];
 
     std::map<int, size_t> paramOffsetByID;
@@ -160,13 +162,15 @@ struct LFO : modules::XTModule
                 output1[s][i] = rack::simd::float_4::zero();
             }
         }
+
+        modAssist.initialize(this);
     }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
         if (paramOffsetByID.find(paramId) == paramOffsetByID.end())
         {
-            std::cout << "NOT FOUND PARAM ID " << paramId << std::endl;
+            std::cout << "ERROR: NOT FOUND PARAM ID " << paramId << std::endl;
             return nullptr;
         }
 
@@ -202,6 +206,8 @@ struct LFO : modules::XTModule
         return LFO_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
     }
 
+    int polyChannelCount() { return std::max(1, lastNChan); }
+
     int lastStep = BLOCK_SIZE;
     int lastNChan = -1;
     bool firstProcess{true};
@@ -228,6 +234,9 @@ struct LFO : modules::XTModule
 
         if (lastStep == 0)
         {
+            modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
+
             for (int s = 0; s < 3; ++s)
                 for (int i = 0; i < 4; ++i)
                     output0[s][i] = output1[s][i];
@@ -241,7 +250,11 @@ struct LFO : modules::XTModule
                 for (int p = RATE; p < LFO_MOD_PARAM_0; ++p)
                 {
                     auto *par = &par0[paramOffsetByID[p]];
-                    par->set_value_f01(params[p].getValue());
+
+                    if (p < n_lfo_params)
+                        par->set_value_f01(modAssist.values[p - RATE][c]);
+                    else
+                        par->set_value_f01(params[p].getValue());
                 }
 
                 bool inNewAttack = firstProcess;
