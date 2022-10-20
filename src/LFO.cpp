@@ -31,6 +31,149 @@ struct LFOWidget : widgets::XTModuleWidget
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
+struct LFOTypeWidget : rack::app::ParamWidget, style::StyleParticipant
+{
+
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+
+    /*
+     * auto logoSvg = SurgeInternal::getSurgeLogo();
+
+auto hn = logoSvg->handle;
+auto pt = panelTitle();
+for( auto s = hn->shapes; s; s = s->next )
+{
+    s->fill.color = (255 << 24) + (( (int)( pt.b * 255 ) ) << 16 )+ (( (int)( pt.g * 255 ) ) << 8) +
+(int)( pt.r * 255 );
+}
+     */
+
+    static constexpr int nTypes{8};
+    std::array<std::shared_ptr<rack::Svg>, nTypes> svgs;
+
+    static LFOTypeWidget *create(float widthInScrews, LFO *module, int param)
+    {
+        auto res = new LFOTypeWidget();
+        res->box.pos.x = rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+        res->box.pos.y = widgets::LCDBackground::posy + rack::mm2px(1);
+        res->box.size.x = rack::app::RACK_GRID_WIDTH * widthInScrews -
+                          rack::mm2px(2 * widgets::LCDBackground::contentPosX_MM);
+        res->box.size.y = rack::mm2px(6);
+        res->module = module;
+        res->paramId = param;
+        res->initParamQuantity();
+
+        res->setup();
+
+        return res;
+    }
+
+    void setup()
+    {
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto vg) { this->drawWidget(vg); });
+        addChild(bdw);
+        reloadGlyphs();
+    }
+
+    int sel{0};
+    void step() override
+    {
+        int nsel = sel;
+        if (module)
+        {
+            auto lf = static_cast<LFO *>(module);
+            nsel = lf->lfostorage->shape.val.i;
+        }
+        if (nsel != sel)
+            bdw->dirty = true;
+        sel = nsel;
+    }
+
+    void drawWidget(NVGcontext *vg)
+    {
+        auto dSpan = box.size.x / nTypes;
+        auto col = style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT);
+        for (int i = 0; i < nTypes; ++i)
+        {
+            auto x = dSpan * i;
+            auto y = 0;
+            auto w = dSpan;
+            auto h = box.size.y;
+
+            auto pt = col;
+            if (i == sel)
+            {
+                pt = style()->getColor(style::XTStyle::LED_PANEL);
+                nvgBeginPath(vg);
+                nvgRect(vg, x, y, w, h);
+                nvgFillColor(vg, col);
+                nvgFill(vg);
+            }
+
+            if (i != 0)
+            {
+                nvgBeginPath(vg);
+                nvgMoveTo(vg, x, 0);
+                nvgLineTo(vg, x, box.size.x);
+                nvgStrokeWidth(vg, 0.5);
+                nvgStrokeColor(vg, col);
+                nvgStroke(vg);
+            }
+
+            auto hn = svgs[i]->handle;
+            for (auto s = hn->shapes; s; s = s->next)
+            {
+                s->fill.color = (255 << 24) + (((int)(pt.b * 255)) << 16) +
+                                (((int)(pt.g * 255)) << 8) + (int)(pt.r * 255);
+            }
+
+            float centerFudge = 1;
+            nvgSave(vg);
+            nvgTranslate(vg, x + centerFudge, y);
+            rack::svgDraw(vg, svgs[i]->handle);
+            nvgRestore(vg);
+        }
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, 0, box.size.y);
+        nvgLineTo(vg, box.size.x, box.size.y);
+        nvgStrokeWidth(vg, 1.0);
+        nvgStrokeColor(vg, col);
+        nvgStroke(vg);
+    }
+
+    void onButton(const ButtonEvent &e) override
+    {
+        if (!module || !module->paramQuantities[LFO::SHAPE])
+            return;
+
+        if (e.action == GLFW_PRESS)
+        {
+            auto dSpan = box.size.x / (nTypes + 1);
+            float which = std::floor(e.pos.x / dSpan);
+            module->paramQuantities[LFO::SHAPE]->setValue(which / n_lfo_types);
+            bdw->dirty = true;
+            e.consume(this);
+        }
+    }
+
+    void reloadGlyphs()
+    {
+        for (int i = 0; i < nTypes; ++i)
+        {
+            auto svg = rack::Svg::load(rack::asset::plugin(
+                pluginInstance, std::string("res/xt/glyphs/lt_") + std::to_string(i) + ".svg"));
+            svgs[i] = svg;
+        }
+    }
+    void onStyleChanged() override
+    {
+        bdw->dirty = true;
+        reloadGlyphs();
+    }
+    void onChange(const ChangeEvent &e) override { bdw->dirty = true; }
+};
+
 LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
@@ -131,8 +274,8 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     auto lcd = widgets::LCDBackground::createWithHeight(ht, screwWidth);
     addChild(lcd);
 
-    li_t shape{li_t::LCD_MENU_ITEM_SURGE_PARAM, "SHAPE", M::SHAPE, 0, ht};
-    engine_t::layoutItem(this, shape, "LFO");
+    auto tw = LFOTypeWidget::create(screwWidth, module, M::SHAPE);
+    addChild(tw);
 
     {
         int col = 0;

@@ -200,6 +200,14 @@ struct LFO : modules::XTModule
         return offset / n_mod_inputs;
     }
 
+    float modulationDisplayValue(int paramId) override
+    {
+        int idx = paramId - RATE;
+        if (idx < 0 || idx >= n_lfo_params + 1)
+            return 0;
+        return modAssist.animValues[idx];
+    }
+
     static int modulatorIndexFor(int baseParam, int modulator)
     {
         int offset = baseParam - RATE;
