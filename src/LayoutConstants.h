@@ -52,6 +52,11 @@ struct LayoutConstants
 
     static constexpr float labelSize_pt = 7.2;
 
+    // LFO
+    static constexpr float lfoColumnWidth_MM = 13.78f;
+    static constexpr float vSliderHeight_MM = 19.f;
+    static constexpr float vSliderSpacing_MM = 6.5f;
+
     // background
     static constexpr float mainLabelBaseline_MM = 6.295, mainLabelSize_PT = 10.5;
 };
