@@ -266,7 +266,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             {
                 knob = widgets::VerticalSlider::createCentered(pos, rack::mm2px(lay.spanmm), module,
                                                                par);
-                halfSize = (lay.spanmm - 9) * 0.5;
+                halfSize = (19 - 9) * 0.5;
             }
             if (knob)
             {
@@ -311,8 +311,8 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                     for (int m = 0; m < W::M::n_mod_inputs; ++m)
                     {
                         int id = W::M::modulatorIndexFor(lay.parId + param0, m);
-                        auto *k = widgets::VerticalSliderModulator::createCentered(pos, lay.spanmm,
-                                                                                   module, id);
+                        auto *k =
+                            widgets::VerticalSliderModulator::createCentered(pos, 19, module, id);
                         w->overlays[lay.parId][m] = k;
                         k->setVisible(false);
                         k->underlyerParamWidget = rknob;

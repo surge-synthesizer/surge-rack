@@ -674,6 +674,7 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
                                                     float spanInColumns,
                                                     float colWidthMM = layout::LayoutConstants::columnWidth_MM)
     {
+        // If you change this remember to fix the LFO also
         float ht = rack::mm2px(4.5);
         float yup = rack::mm2px(1.75);
         auto res = new GroupLabel();
@@ -1612,7 +1613,9 @@ struct VerticalSliderModulator;
 
 struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, ModulatableKnob
 {
-    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+    rack::widget::FramebufferWidget *baseFB{nullptr}, *handleFB{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwLight{nullptr};
+    rack::widget::SvgWidget *tray{nullptr}, *handle{nullptr};
 
     std::unordered_set<VerticalSliderModulator *> modSliders;
 
@@ -1620,14 +1623,19 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
                                           modules::XTModule *module, int paramId)
     {
         auto res = new VerticalSlider();
-        auto width = rack::mm2px(4);
+
+        auto compDir = res->style()->skinAssetDir() + "/components";
+        auto bg = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
+
+        auto sz = rack::Vec(5,20);
+        if (bg)
+            sz = bg->getSize();
         res->box.pos = pos;
-        res->box.pos.x -= width / 2;
-        res->box.pos.y -= height / 2;
-        res->box.size = rack::Vec(width, height);
-        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
-                                                  [res](auto *vg) { res->drawSlider(vg); });
-        res->addChild(res->bdw);
+        res->box.pos.x -= sz.x / 2;
+        res->box.pos.y -= sz.y / 2;
+        res->box.size = sz;
+
+        res->setup();
         res->module = module;
         res->paramId = paramId;
         res->initParamQuantity();
@@ -1635,7 +1643,63 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         return res;
     }
 
+    void setup()
+    {
+        baseFB = new rack::widget::FramebufferWidget();
+        baseFB->box.size = box.size;
+        baseFB->box.pos = rack::Vec(0,0);
+
+        handleFB = new rack::widget::FramebufferWidget();
+        handleFB->box.size = box.size;
+        handleFB->box.pos = rack::Vec(0,0);
+
+        tray = new rack::SvgWidget();
+        handle = new rack::SvgWidget();
+        auto compDir = style()->skinAssetDir() + "/components";
+
+        tray->setSvg(
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg")));
+        baseFB->addChild(tray);
+
+        handle->setSvg(
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_handle.svg")));
+        handle->box.pos.x = 1;
+        handle->box.pos.y = 0;
+        handleFB->addChild(handle);
+
+        bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                  [this](auto *vg) { this->drawSlider(vg); });
+        bdwLight = new BufferedDrawFunctionWidgetOnLayer(rack::Vec(0, 0), box.size,
+                                             [this](auto *vg) { this->drawLight(vg); });
+
+
+        addChild(baseFB);
+        addChild(bdw);
+        addChild(handleFB);
+        addChild(bdwLight);
+        baseFB->setDirty();
+        bdw->setDirty();
+        bdwLight->setDirty();
+        handleFB->setDirty();
+
+        speed = 2.0;
+    }
+
     void onChange(const ChangeEvent &e) override;
+
+    void positionHandleByQuantity()
+    {
+        auto pq = getParamQuantity();
+        if (!pq || ! handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
+            return;
+
+        auto npos = (pq->getValue() - pq->getMinValue())/(pq->getMaxValue()-pq->getMinValue());
+        npos = 1.0 - npos;
+        auto hsize = handle->box.size.y;
+        auto tsize = tray->box.size.y;
+        auto span = tsize - hsize - 2;
+        handle->box.pos.y = npos * span + 1;
+    }
 
     float priorV{-103241.f};
     void step() override
@@ -1648,52 +1712,68 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
             bdw->dirty = true;
         }
         priorV = pq->getValue();
+
+        rack::app::SliderKnob::step();
     }
 
-    void drawSlider(NVGcontext *vg)
+
+    void drawSlider(NVGcontext *vg) {
+        auto rwidth = rack::mm2px(0.88);
+        auto hsize = handle->box.size.y;
+        auto tsize = tray->box.size.y;
+        auto span = tsize - hsize - 2;
+        auto off = hsize * 0.5 + 1;
+
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, box.size.x * 0.5 - rwidth * 0.5, off, rwidth, span, rwidth);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
+        nvgFill(vg);
+    }
+
+    void drawLight(NVGcontext *vg)
     {
         auto pq = getParamQuantity();
+        if (!pq || ! handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
+            return;
+
+        auto rwidth = rack::mm2px(0.88);
+        auto hsize = handle->box.size.y;
+        auto tsize = tray->box.size.y;
+        auto span = tsize - hsize - 2;
+        auto off = hsize * 0.5 + 1;
         auto nv{0.f};
         if (pq)
         {
             nv = (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
         }
-        auto np = (1 - nv) * (box.size.y - 4) + 2;
+        auto np = (1 - nv) * span;
 
-        auto inset = rack::mm2px(1.f);
-
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, inset, 0, box.size.x - 2 * inset, box.size.y, inset);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
-        nvgFill(vg);
-
-        nvgBeginPath(vg);
+        auto sp = np + hsize * 0.5 + off;
+        nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
 
         if (!isModEdit)
         {
-            nvgRoundedRect(vg, box.size.x * 0.5 - inset * 0.5, np, inset,
-                           box.size.y - np - inset * 0.5, inset);
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth,
+                           span - np, rwidth);
             nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
             nvgFill(vg);
             nvgStrokeWidth(vg, 0.5);
             nvgStroke(vg);
         }
-
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, inset, 0, box.size.x - 2 * inset, box.size.y, inset);
-        nvgStrokeColor(vg, style()->getColor(style::XTStyle::LED_HIGHLIGHT));
-        nvgStrokeWidth(vg, 0.5);
-        nvgStroke(vg);
-
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, 0, np - 1.5, box.size.x, 3, inset);
-        nvgFillColor(vg, nvgRGB(0x90, 0x90, 0xA0));
-        nvgStrokeColor(vg, nvgRGB(0xFF, 0xFF, 0xFF));
-        nvgFill(vg);
-        nvgStrokeWidth(vg, 1);
-        nvgStroke(vg);
     }
-    void onStyleChanged() override { bdw->dirty = true; }
+    void onStyleChanged() override {
+        bdw->dirty = true;
+        bdwLight->dirty = true;
+
+        auto compDir = style()->skinAssetDir() + "/components";
+
+        auto ts = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
+        auto hs = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_handle.svg"));
+
+        tray->setSvg(ts);
+        handle->setSvg(hs);
+    }
     Widget *asWidget() override { return this; }
 
     bool isModEdit{false};
@@ -1701,12 +1781,13 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     {
         isModEdit = b;
         bdw->dirty = true;
+        bdwLight->dirty = true;
     }
 };
 
 struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasBDW
 {
-    rack::app::Knob *underlyerParamWidget{nullptr};
+    VerticalSlider *underlyerParamWidget{nullptr};
 
     int modIndex{0};
 
@@ -1761,7 +1842,7 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         res->box.pos.x -= width / 2;
         res->box.pos.y -= height / 2;
         res->box.size = rack::Vec(width, height);
-        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
+        res->bdw = new BufferedDrawFunctionWidgetOnLayer(rack::Vec(0, 0), res->box.size,
                                                   [res](auto *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
 
@@ -1777,7 +1858,7 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         if (bdw)
             bdw->dirty = true;
 
-        rack::app::Knob::onChange(e);
+        rack::app::SliderKnob::onChange(e);
     }
 
     void onStyleChanged() override
@@ -1842,11 +1923,17 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
 inline void VerticalSlider::onChange(const rack::widget::Widget::ChangeEvent &e)
 {
     bdw->dirty = true;
-    // bwValue->dirty = true;
+    bdwLight->dirty = true;
     for (auto *m : modSliders)
     {
         m->bdw->dirty = true;
     }
+
+    positionHandleByQuantity();
+
+    baseFB->setDirty(true);
+    handleFB->setDirty(true);
+
     SliderKnob::onChange(e);
 }
 
