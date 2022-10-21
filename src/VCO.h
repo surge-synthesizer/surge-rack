@@ -695,27 +695,14 @@ template <int oscType> struct VCO : public modules::XTModule
                 }
 
                 oscstorage->wt.current_id = supposedIdx;
-                strncpy(oscstorage->wavetable_display_name, dname.c_str(), 256);
+                strncpy(oscstorage->wavetable_display_name, dname.c_str(), 255);
 
                 oscstorage_display->wt.current_id = supposedIdx;
-                strncpy(oscstorage_display->wavetable_display_name, dname.c_str(), 256);
+                strncpy(oscstorage_display->wavetable_display_name, dname.c_str(), 255);
 
                 wavetableIndex = supposedIdx;
             }
         }
-
-        auto getBool = [](auto *n, auto *str, auto def) {
-            auto v = json_object_get(n, str);
-            if (!v)
-                return def;
-            return json_boolean_value(v);
-        };
-        auto getInt = [](auto *n, auto *str, auto def) -> int {
-            auto v = json_object_get(n, str);
-            if (!v)
-                return def;
-            return json_integer_value(v);
-        };
     }
 };
 

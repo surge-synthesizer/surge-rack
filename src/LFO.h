@@ -95,6 +95,7 @@ struct LFO : modules::XTModule
     std::unique_ptr<MSEGStorage> surge_ms;
     std::unique_ptr<FormulaModulatorStorage> surge_fs;
     LFOStorage *lfostorage;
+    LFOStorage *lfostorageDisplay;
 
     modules::ModulationAssistant<LFO, n_lfo_params, RATE, n_mod_inputs, LFO_MOD_INPUT> modAssist;
 
@@ -107,6 +108,7 @@ struct LFO : modules::XTModule
         setupSurgeCommon(NUM_PARAMS, false);
         for (int i = 0; i < MAX_POLY; ++i)
             surge_lfo[i] = std::make_unique<LFOModulationSource>();
+
         surge_ss = std::make_unique<StepSequencerStorage>();
         surge_ms = std::make_unique<MSEGStorage>();
         surge_fs = std::make_unique<FormulaModulatorStorage>();
@@ -114,6 +116,10 @@ struct LFO : modules::XTModule
         lfostorage = &(storage->getPatch().scene[0].lfo[0]);
         lfostorage->delay.deactivated = false;
         lfostorage->trigmode.val.i = lm_keytrigger;
+
+        lfostorageDisplay = &(storage->getPatch().scene[0].lfo[1]);
+        lfostorageDisplay->delay.deactivated = false;
+        lfostorageDisplay->trigmode.val.i = lm_keytrigger;
 
         paramOffsetByID[RATE] = 0;
         paramOffsetByID[SHAPE] = 1;
@@ -250,6 +256,16 @@ struct LFO : modules::XTModule
                     output0[s][i] = output1[s][i];
 
             float ts[3][16];
+
+            {
+                // Setup the display storage
+                auto *par0 = &(lfostorageDisplay->rate);
+                for (int p = RATE; p < LFO_MOD_PARAM_0; ++p)
+                {
+                    auto *par = &par0[paramOffsetByID[p]];
+                    par->set_value_f01(params[p].getValue());
+                }
+            }
 
             for (int c = 0; c < nChan; ++c)
             {
