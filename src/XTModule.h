@@ -101,8 +101,8 @@ struct XTModule : public rack::Module
         if (!showedPathsOnce)
         {
             showedPathsOnce = true;
-            INFO("[SurgeXTRack] storage::dataPath = '%s'", storage->datapath.c_str());
-            INFO("[SurgeXTRack] storage::userDataPath = '%s'", storage->userDataPath.c_str());
+            INFO("[SurgeXTRack] storage::dataPath = '%s'", storage->datapath.u8string().c_str());
+            INFO("[SurgeXTRack] storage::userDataPath = '%s'", storage->userDataPath.u8string().c_str());
         }
 
         onSampleRateChange();
