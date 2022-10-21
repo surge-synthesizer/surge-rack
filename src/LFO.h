@@ -334,13 +334,15 @@ struct LFO : modules::XTModule
 
         float frac = 1.0 * lastStep / BLOCK_SIZE;
         lastStep++;
+        auto mul = SURGE_TO_RACK_OSC_MUL;
+        if (lfostorage->unipolar.val.b)
+            mul = SURGE_TO_RACK_CV_MUL;
         for (int c = 0; c < nChan; c += 4)
         {
             for (int p = 0; p < 3; ++p)
             {
                 rack::simd::float_4 outputI =
-                    (output0[p][c / 4] * (1.0 - frac) + output1[p][c / 4] * frac) *
-                    SURGE_TO_RACK_OSC_MUL;
+                    (output0[p][c / 4] * (1.0 - frac) + output1[p][c / 4] * frac) * mul;
                 outputI.store(outputs[OUTPUT_MIX + p].getVoltages(c));
             }
         }

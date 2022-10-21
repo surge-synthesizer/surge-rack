@@ -215,6 +215,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         changed =
             changed || (tp[lfodata->start_phase.param_id_in_scene].i != lfodata->start_phase.val.i);
         changed = changed || (tp[lfodata->deform.param_id_in_scene].i != lfodata->deform.val.i);
+        changed = changed || (tp[lfodata->unipolar.param_id_in_scene].i != lfodata->unipolar.val.i);
 
         if (changed)
         {
@@ -237,6 +238,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         tp[lfodata->magnitude.param_id_in_scene].i = lfodata->magnitude.val.i;
         tp[lfodata->rate.param_id_in_scene].i = lfodata->rate.val.i;
         tp[lfodata->shape.param_id_in_scene].i = lfodata->shape.val.i;
+        tp[lfodata->unipolar.param_id_in_scene].i = lfodata->unipolar.val.i;
         tp[lfodata->start_phase.param_id_in_scene].i = lfodata->start_phase.val.i;
         tp[lfodata->deform.param_id_in_scene].i = lfodata->deform.val.i;
         tp[lfodata->trigmode.param_id_in_scene].i = lm_keytrigger;
@@ -255,6 +257,8 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         float rateInHz = pow(2.0, (double)lfodata->rate.val.f);
         if (lfodata->rate.temposync)
             rateInHz *= storage->temposyncratio;
+
+        bool isuni = lfodata->unipolar.val.b;
 
         /*
          * What we want is no more than 50 wavelengths. So
@@ -292,6 +296,9 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         std::string invalidMessage;
 
         std::vector<std::pair<float, float>> pathV, eupathV, edpathV;
+
+        float scaleComp = 0.9;
+        float scaleOff = (1.0 - scaleComp) * 0.5;
 
         for (int i = 0; i < totalSamples; i += averagingWindow)
         {
@@ -340,13 +347,13 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             val = val / averagingWindow;
             wval = wval / averagingWindow;
             eval = eval / averagingWindow;
-            val = ((-val + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
-            wval = ((-wval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
-            minwval = ((-minwval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
-            maxwval = ((-maxwval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
+            val = ((-val + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
+            wval = ((-wval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
+            minwval = ((-minwval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
+            maxwval = ((-maxwval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
 
-            float euval = ((-eval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
-            float edval = ((eval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
+            float euval = ((-eval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
+            float edval = ((eval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
             float xc = valScale * i / totalSamples;
 
             if (i == 0)
@@ -360,8 +367,8 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             }
             else
             {
-                minval = ((-minval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
-                maxval = ((-maxval + 1.0f) * 0.5 * 0.8 + 0.1) * valScale;
+                minval = ((-minval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
+                maxval = ((-maxval + 1.0f) * 0.5 * scaleComp + scaleOff) * valScale;
                 // Windows is sensitive to out-of-order line draws in a way which causes spikes.
                 // Make sure we draw one closest to prior first. See #1438
                 float firstval = minval;
@@ -373,8 +380,8 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                     secondval = minval;
                 }
 
-                pathV.emplace_back(xc - 0.1 * valScale / totalSamples, firstval);
-                pathV.emplace_back(xc + 0.1 * valScale / totalSamples, secondval);
+                pathV.emplace_back(xc - scaleOff * valScale / totalSamples, firstval);
+                pathV.emplace_back(xc + scaleOff * valScale / totalSamples, secondval);
 
                 priorval = val;
                 eupathV.emplace_back(xc, euval);
@@ -383,11 +390,15 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         }
 
         tlfo->completedModulation();
+
+        auto sx = box.size.x / valScale, sy = box.size.y / valScale;
+        if (isuni)
+            sy = sy * 2;
+        for (const auto &pt : {eupathV, edpathV})
         {
             bool first{true};
             nvgBeginPath(vg);
-            auto sx = box.size.x / valScale, sy = box.size.y / valScale;
-            for (const auto &[x, y] : eupathV)
+            for (const auto &[x, y] : pt)
             {
                 if (first)
                 {
@@ -403,12 +414,31 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             nvgStrokeWidth(vg, 0.5);
             nvgStroke(vg);
         }
+
+        // Now fill the actual path with gradients then stroke the line
+        auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+        auto gcp = col;
+        gcp.a = 0.5;
+        auto gcn = col;
+        gcn.a = 0.0;
+
+        for (int i = 0; i < 3; ++i)
         {
+            if (isuni && i == 1)
+                continue;
             bool first{true};
             nvgBeginPath(vg);
-            auto sx = box.size.x / valScale, sy = box.size.y / valScale;
-            for (const auto &[x, y] : edpathV)
+
+            for (const auto &[x, yorig] : pathV)
             {
+                auto y = yorig;
+                if (isuni)
+                {
+                }
+                else if (i == 0)
+                    y = std::max(sy * yorig, box.size.y * 0.5f) / sy;
+                else if (i == 1)
+                    y = std::min(sy * yorig, box.size.y * 0.5f) / sy;
                 if (first)
                 {
                     nvgMoveTo(vg, sx * x, sy * y);
@@ -419,29 +449,38 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 }
                 first = false;
             }
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgStrokeWidth(vg, 0.5);
-            nvgStroke(vg);
-        }
-        {
-            bool first{true};
-            nvgBeginPath(vg);
-            auto sx = box.size.x / valScale, sy = box.size.y / valScale;
-            for (const auto &[x, y] : pathV)
+            if (i == 2)
             {
-                if (first)
+                nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+                nvgStrokeWidth(vg, 1.25);
+                nvgStroke(vg);
+            }
+            else
+            {
+                if (isuni)
                 {
-                    nvgMoveTo(vg, sx * x, sy * y);
+                    nvgLineTo(vg, box.size.x, box.size.y);
+                    nvgLineTo(vg, 0, box.size.y);
+                    nvgFillPaint(
+                        vg, nvgLinearGradient(vg, 0, box.size.y * 0.2, 0, box.size.y, gcn, gcp));
+                    // nvgFillColor(vg, nvgRGB(255, 0, 0));
+                }
+                else if (i == 1)
+                {
+                    nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+                    nvgLineTo(vg, 0, box.size.y * 0.5);
+                    nvgFillPaint(vg, nvgLinearGradient(vg, 0, box.size.y * 0.2, 0, box.size.y * 0.5,
+                                                       gcp, gcn));
                 }
                 else
                 {
-                    nvgLineTo(vg, sx * x, sy * y);
+                    nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+                    nvgLineTo(vg, 0, box.size.y * 0.5);
+                    nvgFillPaint(vg, nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.8,
+                                                       gcn, gcp));
                 }
-                first = false;
+                nvgFill(vg);
             }
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgStrokeWidth(vg, 1.25);
-            nvgStroke(vg);
         }
 
 #if 0
@@ -790,6 +829,13 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     ww->box.size.y = rack::mm2px(ht) - ww->box.pos.y - rack::mm2px(6);
     ww->setup();
     addChild(ww);
+
+    auto gutterX = ww->box.pos.x;
+    auto gutterY = ww->box.pos.y + ww->box.size.y + rack::mm2px(0.5);
+    auto gutterHeight = rack::mm2px(5);
+    auto uni = widgets::PlotAreaSwitch::create(
+        rack::Vec(gutterX, gutterY), rack::Vec(22, gutterHeight), "UNI", module, M::UNIPOLAR);
+    addChild(uni);
 
     {
         int col = 0;
