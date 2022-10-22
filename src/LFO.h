@@ -55,6 +55,7 @@ struct LFO : modules::XTModule
         LFO_MOD_PARAM_0,
 
         LFO_TYPE = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
+        DEFORM_TYPE,
         NUM_PARAMS
     };
     enum InputIds
@@ -157,6 +158,8 @@ struct LFO : modules::XTModule
                                  nullptr, surge_ss.get(), surge_ms.get(), surge_fs.get());
             isGated[i] = false;
             isGateConnected[i] = false;
+            priorIntPhase[i] = -1;
+            endPhaseCountdown[i] = 0;
         }
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
 
@@ -228,6 +231,7 @@ struct LFO : modules::XTModule
 
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
     bool isGated[MAX_POLY], isGateConnected[MAX_POLY];
+    int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -312,6 +316,7 @@ struct LFO : modules::XTModule
                 if (inNewAttack)
                 {
                     surge_lfo[c]->attack();
+                    priorIntPhase[c] = -1;
                 }
                 surge_lfo[c]->process_block();
                 if (inNewAttack)
@@ -321,6 +326,12 @@ struct LFO : modules::XTModule
                     output0[1][c / 4].s[c % 4] = surge_lfo[c]->get_output(1);
                     output0[2][c / 4].s[c % 4] = surge_lfo[c]->get_output(2);
                     surge_lfo[c]->process_block();
+                }
+                // repeat for env stage also
+                if (surge_lfo[c]->getIntPhase() != priorIntPhase[c])
+                {
+                    priorIntPhase[c] = surge_lfo[c]->getIntPhase();
+                    endPhaseCountdown[c] = 32;
                 }
                 for (int p = 0; p < 3; ++p)
                     ts[p][c] = surge_lfo[c]->get_output(p);
@@ -345,6 +356,17 @@ struct LFO : modules::XTModule
                     (output0[p][c / 4] * (1.0 - frac) + output1[p][c / 4] * frac) * mul;
                 outputI.store(outputs[OUTPUT_MIX + p].getVoltages(c));
             }
+        }
+
+        for (int c = 0; c < nChan; ++c)
+        {
+            if (endPhaseCountdown[c] > 0)
+            {
+                endPhaseCountdown[c]--;
+                outputs[OUTPUT_TRIGPHASE].setVoltage(10.0, c);
+            }
+            else
+                outputs[OUTPUT_TRIGPHASE].setVoltage(0.0, c);
         }
     }
 };
