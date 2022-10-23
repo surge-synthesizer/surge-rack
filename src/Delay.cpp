@@ -48,6 +48,74 @@ struct DelayWidget : widgets::XTModuleWidget
     }
 };
 
+struct TimeDisplay : rack::widget::TransparentWidget, style::StyleParticipant
+{
+    Delay *module{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+
+    static TimeDisplay *create(Delay *module)
+    {
+        auto res = new TimeDisplay();
+        res->box.pos.x = rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+        res->box.pos.y = rack::mm2px(widgets::LCDBackground::contentPosY_MM);
+        res->box.size.x =
+            rack::RACK_GRID_WIDTH * 12 - 2 * rack::mm2px(widgets::LCDBackground::contentPosX_MM);
+        res->box.size.y = rack::mm2px(4.5);
+
+        res->module = module;
+        res->setup();
+
+        return res;
+    }
+
+    void setup()
+    {
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0),
+                                                      rack::Vec(this->box.size.x, this->box.size.y),
+                                                      [this](auto *v) { this->drawDelays(v); });
+        this->addChild(bdw);
+    }
+
+    std::string ll{"1.00 s"}, lr{"0.25 s"};
+    void step() override
+    {
+        if (module)
+        {
+            auto l = module->paramQuantities[Delay::TIME_L]->getDisplayValueString();
+            auto r = module->paramQuantities[Delay::TIME_R]->getDisplayValueString();
+            if (ll != l || lr != r)
+                bdw->dirty = true;
+            ll = l;
+            lr = r;
+        }
+        rack::widget::TransparentWidget::step();
+    }
+    void drawDelays(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+        nvgMoveTo(vg, box.size.x * 0.5, rack::mm2px(widgets::LCDBackground::padY_MM));
+        nvgLineTo(vg, box.size.x * 0.5, box.size.y - rack::mm2px(widgets::LCDBackground::padY_MM));
+        nvgStrokeWidth(vg, 1);
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        nvgText(vg, 0, box.size.y * 0.5, ll.c_str(), nullptr);
+
+        nvgBeginPath(vg);
+        nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        nvgText(vg, box.size.x, box.size.y * 0.5, lr.c_str(), nullptr);
+    }
+
+    void onStyleChanged() override { bdw->dirty = true; }
+};
 DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
@@ -65,32 +133,32 @@ DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
                       layout::LayoutConstants::columnWidth_MM * i);
 
     const auto row1 = layout::LayoutConstants::rowStart_MM;
-    const auto row2 = row1 - layout::LayoutConstants::unlabeledGap_MM;
-    const auto row2S = row2 - layout::LayoutConstants::unlabeledGap_MM;
-    const auto bigRow = row2 - layout::LayoutConstants::knobGap16_MM - 3;
+    const auto row2 = row1 - layout::LayoutConstants::labeledGap_MM;
+    const auto row2S = row2 - layout::LayoutConstants::labeledGap_MM - 2;
 
-    const auto endOfPanel = bigRow - 8;
+    const auto endOfPanel = row2S - 6;
 
     typedef layout::LayoutItem li_t;
     // fixme use the enums
     // clang-format off
     std::vector<li_t> layout = {
-        {li_t::KNOB14, "LEFT", M::TIME_L, layout::LayoutConstants::bigCol0-2, bigRow},
-        {li_t::KNOB14, "RIGHT", M::TIME_R, layout::LayoutConstants::bigCol1+2, bigRow},
+        {li_t::KNOB14, "LEFT", M::TIME_L, layout::LayoutConstants::bigCol0-3, row2S - 2.5f},
+        {li_t::KNOB14, "RIGHT", M::TIME_R, layout::LayoutConstants::bigCol1+3, row2S - 2.5f},
         {li_t::KNOB9, "FINE", M::TIME_S, (col[2]+col[1]) * 0.5f, row2S},
 
-        {li_t::KNOB9, "FEEDBACK", M::FEEDBACK, col[0], row2},
-        {li_t::KNOB9, "XFEED", M::CROSSFEED, col[1], row2},
+        {li_t::KNOB9, "DEPTH", M::FEEDBACK, col[0], row2},
+        {li_t::KNOB9, "CROSS", M::CROSSFEED, col[1], row2},
+        li_t::createGrouplabel("FEEDBACK", col[0], row2, 2),
 
-        {li_t::KNOB9, "", M::LOCUT, col[2], row2},
-        {li_t::KNOB9, "", M::HICUT, col[3], row2},
-        li_t::createKnobSpanLabel("LO - CUT - HI", col[2], row2, 2),
+        {li_t::KNOB9, "LO", M::LOCUT, col[2], row2},
+        {li_t::KNOB9, "HI", M::HICUT, col[3], row2},
+        li_t::createGrouplabel("EQ", col[2], row2, 2),
 
         {li_t::PORT, "CLOCK", M::INPUT_CLOCK, col[0], row1},
 
-        {li_t::KNOB9, "", M::MODRATE, col[1], row1},
-        {li_t::KNOB9, "", M::MODDEPTH, col[2], row1},
-        li_t::createKnobSpanLabel("RATE - MOD - DEPTH", col[1], row1, 2),
+        {li_t::KNOB9, "RATE", M::MODRATE, col[1], row1},
+        {li_t::KNOB9, "DEPTH", M::MODDEPTH, col[2], row1},
+        li_t::createGrouplabel("MOD", col[1], row1, 2),
 
         {li_t::KNOB9, "MIX", M::MIX, col[3], row1},
 
@@ -102,6 +170,9 @@ DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
     {
         engine_t::layoutItem(this, lay, "Delay");
     }
+
+    auto t = TimeDisplay::create(module);
+    addChild(t);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::DELAY_MOD_INPUT);
     engine_t::createInputOutputPorts(this, M::INPUT_L, M::INPUT_R, M::OUTPUT_L, M::OUTPUT_R);

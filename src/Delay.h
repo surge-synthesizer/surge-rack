@@ -28,6 +28,7 @@
 
 namespace sst::surgext_rack::delay
 {
+
 struct Delay : modules::XTModule
 {
     static constexpr int n_delay_params{10};
@@ -84,27 +85,98 @@ struct Delay : modules::XTModule
         modulationAssistant;
     modules::ClockProcessor<Delay> clockProc;
 
+    float tsV(float f)
+    {
+        float a, b = modff(f, &a);
+        if (b < 0)
+        {
+            b += 1.f;
+            a -= 1.f;
+        }
+        b = powf(2.0f, b);
+
+        if (b > 1.41f)
+        {
+            b = log2(1.5f);
+        }
+        else if (b > 1.167f)
+        {
+            b = log2(1.3333333333f);
+        }
+        else
+        {
+            b = 0.f;
+        }
+        return a + b;
+    };
+
+    struct DelayTimeParamQuantity : public rack::engine::ParamQuantity
+    {
+        inline Delay *dm() { return static_cast<Delay *>(module); }
+        virtual std::string getDisplayValueString() override
+        {
+            auto m = dm();
+            if (!m)
+                return "ERROR";
+
+            auto v = getValue();
+            if (m->tempoSync)
+            {
+                auto ts = m->tsV(v);
+                Parameter p;
+                return p.tempoSyncNotationValue(ts);
+            }
+            else
+            {
+                auto tl = m->storage->note_to_pitch_ignoring_tuning(12 * v);
+                tl = std::clamp(m->storage->samplerate * tl, 0.f, delayLineLength * 1.f) *
+                     m->storage->samplerate_inv;
+                return fmt::format("{:6.2f} s", tl);
+            }
+            return "ERROR";
+        }
+    };
+
+    struct QuadRateParamQuantity : public rack::engine::ParamQuantity
+    {
+        virtual std::string getDisplayValueString() override
+        {
+            auto v = getValue();
+            return fmt::format("{:6.2f} Hz", v * v);
+        }
+    };
     Delay() : XTModule()
     {
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam(TIME_L, -3, 5, 0, "Left Delay");
-        configParam(TIME_R, -3, 5, 0, "Right Delay");
-        configParam(TIME_S, -1, 1, 0, "Time Tweak");
-        configParam(FEEDBACK, 0, 1, .5, "Feedback");
-        configParam(CROSSFEED, 0, 1, 0, "CrossFeed");
-        configParam(LOCUT, -60, 70, -60, "LoCut");
-        configParam(HICUT, -60, 70, 70, "HiCut");
+        configParam<DelayTimeParamQuantity>(TIME_L, -3, log2(10.0), 0, "Left Delay");
+        configParam<DelayTimeParamQuantity>(TIME_R, -3, log2(10.0), 0, "Right Delay");
+        configParam(TIME_S, -1, 1, 0, "Time Tweak", "%", 0, 2);
+        configParam(FEEDBACK, 0, 1, .5, "Feedback", "%", 0, 100);
+        configParam(CROSSFEED, 0, 1, 0, "CrossFeed", "%", 0, 100);
+        configParam<modules::MidiNoteParamQuantity<69>>(LOCUT, -60, 70, -60, "LoCut");
+        configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "HiCut");
 
-        configParam(MODRATE, 0, 4, 2, "ModRate");
-        configParam(MODDEPTH, 0, 1, 0, "ModDepth");
-        configParam(MIX, 0, 1, 1, "Mix");
+        configParam<QuadRateParamQuantity>(MODRATE, 0, 4, 2, "ModRate"); // 0 - 16 hz quadratic
+        configParam(MODDEPTH, 0, 1, 0, "ModDepth", "%", 0, 100);
+        configParam(MIX, 0, 1, 1, "Mix", "%", 0, 100);
 
         for (int i = 0; i < n_delay_params * n_mod_inputs; ++i)
         {
-            configParam(DELAY_MOD_PARAM_0 + i, -1, 1, 0);
+            int tp = paramModulatedBy(i + DELAY_MOD_PARAM_0);
+            auto lb = paramQuantities[tp]->getLabel();
+            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
+
+            configParam(DELAY_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
+
+        configInput(INPUT_L, "Left");
+        configInput(INPUT_R, "Right");
+        for (int i = 0; i < n_mod_inputs; ++i)
+            configInput(DELAY_MOD_INPUT + i, std::string("Mod ") + std::to_string(i + 1));
+        configOutput(OUTPUT_L, "Left");
+        configOutput(OUTPUT_L, "Right");
 
         lineL = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
         lineR = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
@@ -129,6 +201,14 @@ struct Delay : modules::XTModule
     static constexpr size_t delayLineLength = 1 << 19;
     std::unique_ptr<SSESincDelayLine<delayLineLength>> lineL, lineR;
     std::unique_ptr<BiquadFilter> lpPost, hpPost;
+
+    static int paramModulatedBy(int modIndex)
+    {
+        int offset = modIndex - DELAY_MOD_PARAM_0;
+        if (offset >= n_mod_inputs * (n_delay_params + 1) || offset < 0)
+            return -1;
+        return offset / n_mod_inputs;
+    }
 
     bool tempoSync{false};
     void activateTempoSync() { tempoSync = true; }
@@ -167,29 +247,6 @@ struct Delay : modules::XTModule
 
             if (tempoSync)
             {
-                auto tsV = [](float f) {
-                    float a, b = modff(f, &a);
-                    if (b < 0)
-                    {
-                        b += 1.f;
-                        a -= 1.f;
-                    }
-                    b = powf(2.0f, b);
-
-                    if (b > 1.41f)
-                    {
-                        b = log2(1.5f);
-                    }
-                    else if (b > 1.167f)
-                    {
-                        b = log2(1.3333333333f);
-                    }
-                    else
-                    {
-                        b = 0.f;
-                    }
-                    return a + b;
-                };
                 tsL = tsV(params[TIME_L].getValue());
                 /*Parameter p;
                 std::cout << tsL << " " << p.tempoSyncNotationValue(tsL) << std::endl;
@@ -223,6 +280,8 @@ struct Delay : modules::XTModule
             tr = storage->samplerate * storage->note_to_pitch_ignoring_tuning(
                                            12 * wobble * modulationAssistant.values[TIME_R]);
         }
+        tl = std::clamp(tl, 0.f, delayLineLength * 1.f);
+        tr = std::clamp(tr, 0.f, delayLineLength * 1.f);
         auto dl = std::clamp(lineL->read(tl), -1.5f, 1.5f);
         auto dr = std::clamp(lineR->read(tr), -1.5f, 1.5f);
 
