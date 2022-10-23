@@ -52,6 +52,28 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
         }
     }
 
+    virtual void downsampleMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+
+        auto hbM = m->halfbandM;
+        auto hbS = m->halfbandSteep;
+
+        for (auto steep : { true, false})
+        {
+            for (auto M : { 6, 5, 4, 3, 2, 1})
+            {
+                auto name = std::string("M = ") + std::to_string(M) + ", " +
+                            (steep ? "steep" : "shallow");
+                p->addChild(rack::createMenuItem(name, CHECKMARK(hbM == M && hbS == steep),
+                                                 [m, M, steep] { m->setHalfbandCharacteristics(M, steep);}));
+            }
+            if (steep)
+                p->addChild(new rack::MenuSeparator);
+        }
+    }
+
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (module)
@@ -74,6 +96,7 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
                 addBoolMenu("Extend Unison Detune", M::EXTEND_UNISON);
                 addBoolMenu("Absolute Unison Detune", M::ABSOLUTE_UNISON);
             }
+            menu->addChild(new rack::MenuSeparator);
             menu->addChild(rack::createSubmenuItem("Character", "",
                                                    [this, m](auto *x) { characterMenu(x, m); }));
 
@@ -81,6 +104,8 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             driftSlider->quantity = module->paramQuantities[M::DRIFT];
             driftSlider->box.size.x = 125;
             menu->addChild(driftSlider);
+            menu->addChild(rack::createSubmenuItem("Halfband Filter", "",
+                                                   [this,m](auto *x) { downsampleMenu(x,m);}));
 
             VCOConfig<oscType>::addMenuItems(m, menu);
         }
@@ -280,6 +305,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(
             rack::Vec(0, 0), box.size, [this](auto *vg) { drawPlot(vg); });
         addChild(bdwPlot);
+
+        for (int i=0; i<n_osc_params; ++i)
+            priorDeform[i] = 0;
     }
 
     void step() override
@@ -334,7 +362,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     int dirtyCount{0};
     int sumDeact{-1};
     int sumAbs{-1};
+    int priorDeform[n_osc_params]{};
     int charF{-1};
+
     uint32_t wtloadCompare{842932918};
 
     bool isDirty()
@@ -354,6 +384,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
                 lSumDeact += oscdata->p[i].deactivated * (1 << i);
                 lSumAbs += oscdata->p[i].absolute * (1 << i);
+
+                dval = dval || (priorDeform[i] != oscdata->p[i].deform_type);
+                priorDeform[i] = oscdata->p[i].deform_type;
             }
 
             if (lSumDeact != sumDeact || lSumAbs != sumAbs)

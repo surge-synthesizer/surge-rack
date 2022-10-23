@@ -209,11 +209,7 @@ template <int oscType> struct VCO : public modules::XTModule
         config_osc->~Oscillator();
         display_osc->~Oscillator();
 
-        for (int i = 0; i < MAX_POLY; ++i)
-        {
-            halfbandOUT.emplace_back(6, true);
-            halfbandOUT[i].reset();
-        }
+        resetHalfbandOut();
 
         halfbandIN.reset();
 
@@ -229,6 +225,28 @@ template <int oscType> struct VCO : public modules::XTModule
 
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
         modAssist.initialize(this);
+    }
+
+    void setHalfbandCharacteristics(int M, bool steep)
+    {
+        if (M < 1 || M > 6)
+            return;
+
+        if (halfbandM == M && halfbandSteep == steep)
+            return;
+
+        halfbandM = M;
+        halfbandSteep = steep;
+        resetHalfbandOut();
+    }
+
+    void resetHalfbandOut()
+    {
+        for (int i = 0; i < MAX_POLY; ++i)
+        {
+            halfbandOUT[i] = std::make_unique<sst::filters::HalfRate::HalfRateFilter>(halfbandM, halfbandSteep);
+            halfbandOUT[i]->reset();
+        }
     }
 
     static int modulatorIndexFor(int baseParam, int modulator)
@@ -548,7 +566,7 @@ template <int oscType> struct VCO : public modules::XTModule
                     surge_osc[c]->process_block(pitch0, driftVal, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
-                    halfbandOUT[c].process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
+                    halfbandOUT[c]->process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
                                                     BLOCK_SIZE_OS);
                 }
             }
@@ -599,7 +617,9 @@ template <int oscType> struct VCO : public modules::XTModule
 
     OscillatorStorage *oscstorage, *oscstorage_display;
     float osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
-    std::vector<sst::filters::HalfRate::HalfRateFilter> halfbandOUT;
+    int halfbandM{6};
+    bool halfbandSteep{true};
+    std::array<std::unique_ptr<sst::filters::HalfRate::HalfRateFilter>, MAX_POLY> halfbandOUT;
     sst::filters::HalfRate::HalfRateFilter halfbandIN;
     float audioInBuffer[BLOCK_SIZE_OS];
 
@@ -644,6 +664,9 @@ template <int oscType> struct VCO : public modules::XTModule
             json_object_set(wtT, "data", json_string(b64.c_str()));
             json_object_set(vco, "wavetable", wtT);
         }
+
+        json_object_set(vco, "halfbandM", json_integer(halfbandM));
+        json_object_set(vco, "halfbandSteep", json_boolean(halfbandSteep));
 
         return vco;
     }
@@ -702,6 +725,15 @@ template <int oscType> struct VCO : public modules::XTModule
 
                 wavetableIndex = supposedIdx;
             }
+        }
+
+        auto hbm = json_object_get(modJ, "halfbandM");
+        auto hbs = json_object_get(modJ, "halfbandSteep");
+        if (hbm && hbs)
+        {
+            auto hbmv = json_integer_value(hbm);
+            auto hbsv = json_boolean_value(hbs);
+            setHalfbandCharacteristics(hbmv, hbsv);
         }
     }
 };
