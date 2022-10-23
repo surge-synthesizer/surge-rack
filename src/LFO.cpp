@@ -29,6 +29,50 @@ struct LFOWidget : widgets::XTModuleWidget
     std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_lfo_params> overlays;
     std::array<widgets::ModulatableKnob *, M::n_lfo_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (!module)
+            return;
+        auto m = static_cast<M *>(module);
+        {
+            auto shp = m->lfostorage->shape.val.i;
+            auto mx = lt_num_deforms[shp];
+            if (mx > 0)
+            {
+                menu->addChild(new rack::MenuSeparator);
+                auto dv = (int)std::round(m->paramQuantities[LFO::DEFORM_TYPE]->getValue());
+                for (int i = 0; i < mx; ++i)
+                {
+                    auto nm = "Deform Type " + std::to_string(i + 1);
+
+                    menu->addChild(rack::createMenuItem(nm, CHECKMARK(i == dv), [m, i] {
+                        m->paramQuantities[LFO::DEFORM_TYPE]->setValue(i);
+                    }));
+                }
+            }
+        }
+
+        menu->addChild(new rack::MenuSeparator);
+        typedef modules::ClockProcessor<LFO> cp_t;
+
+        auto wts = (int)std::round(m->paramQuantities[LFO::WHICH_TEMPOSYNC]->getValue());
+        auto wtR = (bool)(wts & 1);
+        auto wtE = (bool)(wts & 2);
+        menu->addChild(rack::createMenuItem("Temposync LFO Rate", CHECKMARK(wtR),
+                                            [m, wtE, wtR]() { m->setWhichTemposyc(!wtR, wtE); }));
+        menu->addChild(rack::createMenuItem("Temposync Env Rates", CHECKMARK(wtE),
+                                            [m, wtE, wtR]() { m->setWhichTemposyc(wtR, !wtE); }));
+        menu->addChild(new rack::MenuSeparator);
+
+        auto t = m->clockProc.clockStyle;
+        menu->addChild(
+            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
+                                 [m]() { m->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
+
+        menu->addChild(rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
+                                            [m]() { m->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+    }
 };
 
 struct LFOTypeWidget : rack::app::ParamWidget, style::StyleParticipant
@@ -102,7 +146,7 @@ struct LFOTypeWidget : rack::app::ParamWidget, style::StyleParticipant
             {
                 nvgBeginPath(vg);
                 nvgMoveTo(vg, x, 0);
-                nvgLineTo(vg, x, box.size.x);
+                nvgLineTo(vg, x, box.size.y);
                 nvgStrokeWidth(vg, 0.5);
                 nvgStrokeColor(vg, col);
                 nvgStroke(vg);
@@ -192,6 +236,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
     }
 
     pdata tp[n_scene_params];
+    int priorDef{-1};
     void step() override
     {
         if (!module)
@@ -217,6 +262,8 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         changed = changed || (tp[lfodata->deform.param_id_in_scene].i != lfodata->deform.val.i);
         changed = changed || (tp[lfodata->unipolar.param_id_in_scene].i != lfodata->unipolar.val.i);
 
+        changed = changed || (priorDef != lfodata->deform.deform_type);
+        priorDef = lfodata->deform.deform_type;
         if (changed)
         {
             bdwLight->dirty = true;
@@ -795,9 +842,8 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 
     {
         int col = 0;
-        std::vector<std::string> labv{"TRIG", "CLK RATE", "CLK ENV", "PHASE"};
-        for (auto p :
-             {M::INPUT_TRIGGER, M::INPUT_CLOCK_RATE, M::INPUT_CLOCK_ENV, M::INPUT_PHASE_DIRECT})
+        std::vector<std::string> labv{"TRIG", "CLOCK", "PHASE"};
+        for (auto p : {M::INPUT_TRIGGER, M::INPUT_CLOCK_RATE, M::INPUT_PHASE_DIRECT})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
             auto xp = layout::LayoutConstants::firstColumnCenter_MM +
@@ -816,6 +862,11 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 
     auto ht = layout::LayoutConstants::rowStart_MM - 11;
     auto lcd = widgets::LCDBackground::createWithHeight(ht, screwWidth);
+    if (!module)
+    {
+        lcd->noModuleText = "LFO x EG";
+        lcd->noModuleSize = 30;
+    }
     addChild(lcd);
 
     auto tw = LFOTypeWidget::create(screwWidth, module, M::SHAPE);
@@ -836,6 +887,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     auto uni = widgets::PlotAreaSwitch::create(
         rack::Vec(gutterX, gutterY), rack::Vec(22, gutterHeight), "UNI", module, M::UNIPOLAR);
     addChild(uni);
+    gutterX += 22 + 2;
 
     {
         int col = 0;

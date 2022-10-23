@@ -56,13 +56,13 @@ struct LFO : modules::XTModule
 
         LFO_TYPE = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
         DEFORM_TYPE,
+        WHICH_TEMPOSYNC,
         NUM_PARAMS
     };
     enum InputIds
     {
         INPUT_TRIGGER,
         INPUT_CLOCK_RATE,
-        INPUT_CLOCK_ENV,
         INPUT_PHASE_DIRECT,
         LFO_MOD_INPUT,
         NUM_INPUTS = LFO_MOD_INPUT + n_mod_inputs,
@@ -152,12 +152,16 @@ struct LFO : modules::XTModule
             configParam<modules::SurgeParameterModulationQuantity>(p, -1, 1, 0, name);
         }
 
+        configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
+        configParam(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
+
         for (int i = 0; i < MAX_POLY; ++i)
         {
             surge_lfo[i]->assign(storage.get(), lfostorage, storage->getPatch().scenedata[0],
                                  nullptr, surge_ss.get(), surge_ms.get(), surge_fs.get());
             isGated[i] = false;
             isGateConnected[i] = false;
+            isTriggered[i] = false;
             priorIntPhase[i] = -1;
             endPhaseCountdown[i] = 0;
         }
@@ -230,8 +234,43 @@ struct LFO : modules::XTModule
     bool firstProcess{true};
 
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
-    bool isGated[MAX_POLY], isGateConnected[MAX_POLY];
+    bool isGated[MAX_POLY], isGateConnected[MAX_POLY], isTriggered[MAX_POLY];
     int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY];
+
+    modules::ClockProcessor<LFO> clockProc;
+
+    void activateTempoSync()
+    {
+        auto wts = (int)std::round(paramQuantities[LFO::WHICH_TEMPOSYNC]->getValue());
+        auto wtR = (bool)(wts & 1);
+        auto wtE = (bool)(wts & 2);
+
+        for (auto ls : {lfostorage, lfostorageDisplay})
+        {
+            ls->rate.temposync = wtR;
+            auto *par0 = &(ls->rate);
+
+            for (int p = E_DELAY; p < LFO_MOD_PARAM_0; ++p)
+            {
+                auto *par = &par0[paramOffsetByID[p]];
+                if (par->can_temposync())
+                    par->temposync = wtE;
+            }
+        }
+    }
+    void deactivateTempoSync()
+    {
+        for (auto ls : {lfostorage, lfostorageDisplay})
+        {
+            auto *par0 = &(ls->rate);
+            for (int p = RATE; p < LFO_MOD_PARAM_0; ++p)
+            {
+                auto *par = &par0[paramOffsetByID[p]];
+                if (par->can_temposync())
+                    par->temposync = false;
+            }
+        }
+    }
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -246,6 +285,16 @@ struct LFO : modules::XTModule
             for (int i = nChan; i < MAX_POLY; ++i)
                 lastStep = BLOCK_SIZE;
         }
+
+        for (int c = 0; c < nChan; ++c)
+            if (inputs[INPUT_TRIGGER].isConnected() &&
+                envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
+                isTriggered[c] = true;
+
+        if (inputs[INPUT_CLOCK_RATE].isConnected())
+            clockProc.process(this, INPUT_CLOCK_RATE);
+        else
+            clockProc.disconnect(this);
 
         if (lastStep == BLOCK_SIZE)
             lastStep = 0;
@@ -269,6 +318,15 @@ struct LFO : modules::XTModule
                     auto *par = &par0[paramOffsetByID[p]];
                     par->set_value_f01(params[p].getValue());
                 }
+
+                auto dt = (int)std::round(params[LFO::DEFORM_TYPE].getValue());
+                auto nd = lt_num_deforms[lfostorageDisplay->shape.val.i];
+                auto dto = std::clamp(dt, 0, nd ? (nd - 1) : 0);
+                if (dto != dt)
+                {
+                    params[LFO::DEFORM_TYPE].setValue(dto);
+                }
+                lfostorageDisplay->deform.deform_type = dto;
             }
 
             for (int c = 0; c < nChan; ++c)
@@ -284,17 +342,20 @@ struct LFO : modules::XTModule
                     else
                         par->set_value_f01(params[p].getValue());
                 }
+                auto dt = (int)std::round(params[LFO::DEFORM_TYPE].getValue());
+                dt = std::clamp(dt, 0, lt_num_deforms[lfostorage->shape.val.i]);
+                lfostorage->deform.deform_type = dt;
 
                 bool inNewAttack = firstProcess;
                 // move this to every sample and record it eliminating the first process thing too
-                if (inputs[INPUT_TRIGGER].isConnected() &&
-                    envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
+                if (isTriggered[c])
                 {
                     lfostorage->trigmode.val.i = lm_keytrigger;
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     isGated[c] = true;
                     inNewAttack = true;
                     isGateConnected[c] = true;
+                    isTriggered[c] = false;
                 }
                 else if (inputs[INPUT_TRIGGER].isConnected() && isGated[c] &&
                          inputs[INPUT_TRIGGER].getVoltage(c) < 1.f)
@@ -369,6 +430,37 @@ struct LFO : modules::XTModule
             else
                 outputs[OUTPUT_TRIGPHASE].setVoltage(0.0, c);
         }
+    }
+
+    void moduleSpecificSampleRateChange() override
+    {
+        clockProc.setSampleRate(APP->engine->getSampleRate());
+    }
+
+    json_t *makeModuleSpecificJson() override
+    {
+        auto fx = json_object();
+        json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+        return fx;
+    }
+
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        auto cs = json_object_get(modJ, "clockStyle");
+        if (cs)
+        {
+            auto csv = json_integer_value(cs);
+            clockProc.clockStyle =
+                static_cast<typename modules::ClockProcessor<LFO>::ClockStyle>(csv);
+        }
+    }
+
+    void setWhichTemposyc(bool doRate, bool doEnv)
+    {
+        auto val = (doRate ? 1 : 0) | (doEnv ? 2 : 0);
+        paramQuantities[WHICH_TEMPOSYNC]->setValue(val);
+        if (inputs[INPUT_CLOCK_RATE].isConnected())
+            activateTempoSync();
     }
 };
 } // namespace sst::surgext_rack::lfo
