@@ -286,6 +286,7 @@ struct LFO : modules::XTModule
                 }
 
                 bool inNewAttack = firstProcess;
+                // move this to every sample and record it eliminating the first process thing too
                 if (inputs[INPUT_TRIGGER].isConnected() &&
                     envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
                 {
