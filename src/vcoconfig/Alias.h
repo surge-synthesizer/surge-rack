@@ -20,6 +20,7 @@ namespace sst::surgext_rack::vco
 {
 
 template <> constexpr bool VCOConfig<ot_alias>::supportsUnison() { return true; }
+template <> constexpr int VCOConfig<ot_alias>::additionalVCOParameterCount() { return 16; }
 template <> VCOConfig<ot_alias>::layout_t VCOConfig<ot_alias>::getLayout()
 {
     typedef VCO<ot_alias> M;
@@ -40,6 +41,15 @@ template <> VCOConfig<ot_alias>::layout_t VCOConfig<ot_alias>::getLayout()
 }
 template <> int VCOConfig<ot_alias>::rightMenuParamId() { return 0; }
 template <> constexpr bool VCOConfig<ot_alias>::supportsAudioIn() { return true; }
+
+template <> void VCOConfig<ot_alias>::configureVCOSpecificParameters(VCO<ot_alias> *m)
+{
+    for (int i = 0; i < additionalVCOParameterCount(); ++i)
+    {
+        m->configParam(VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i, -1, 1, 1.0 / (i + 1),
+                       std::string("Additive Harmonic ") + std::to_string(i + 1));
+    }
+}
 
 } // namespace sst::surgext_rack::vco
 

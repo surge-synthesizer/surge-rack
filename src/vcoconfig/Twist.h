@@ -209,7 +209,7 @@ template <> VCOConfig<ot_twist>::layout_t VCOConfig<ot_twist>::getLayout()
 template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }
 template <> std::string VCOConfig<ot_twist>::retriggerLabel() { return "TRIG"; }
 
-template <> void VCOConfig<ot_twist>::processLightParameters(VCO<ot_twist> *m)
+template <> void VCOConfig<ot_twist>::processVCOSpecificParameters(VCO<ot_twist> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
 

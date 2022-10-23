@@ -51,7 +51,7 @@ template <> void VCOConfig<ot_sine>::oscillatorSpecificSetup(VCO<ot_sine> *m)
     }
 }
 
-template <> void VCOConfig<ot_sine>::processLightParameters(VCO<ot_sine> *m)
+template <> void VCOConfig<ot_sine>::processVCOSpecificParameters(VCO<ot_sine> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
     auto l1 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);

@@ -62,7 +62,7 @@ template <> VCOConfig<ot_FM3>::layout_t VCOConfig<ot_FM3>::getLayout()
     };
 }
 
-template <> void VCOConfig<ot_FM3>::processLightParameters(VCO<ot_FM3> *m)
+template <> void VCOConfig<ot_FM3>::processVCOSpecificParameters(VCO<ot_FM3> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
     auto l1 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
