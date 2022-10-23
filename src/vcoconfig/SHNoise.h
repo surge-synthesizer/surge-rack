@@ -44,7 +44,7 @@ template <> VCOConfig<ot_shnoise>::layout_t VCOConfig<ot_shnoise>::getLayout()
     };
 }
 
-template <> void VCOConfig<ot_shnoise>::processLightParameters(VCO<ot_shnoise> *m)
+template <> void VCOConfig<ot_shnoise>::processVCOSpecificParameters(VCO<ot_shnoise> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
     auto l1 = (bool)(m->params[VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);

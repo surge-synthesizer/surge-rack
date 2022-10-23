@@ -63,7 +63,7 @@ template <> constexpr bool VCOConfig<ot_string>::supportsAudioIn() { return true
 template <> std::string VCOConfig<ot_string>::retriggerLabel() { return "TRIG"; }
 template <> int VCOConfig<ot_string>::getMenuLightID() { return 0; }
 template <> std::string VCOConfig<ot_string>::getMenuLightString() { return "2X"; }
-template <> void VCOConfig<ot_string>::processLightParameters(VCO<ot_string> *m)
+template <> void VCOConfig<ot_string>::processVCOSpecificParameters(VCO<ot_string> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_string>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
 

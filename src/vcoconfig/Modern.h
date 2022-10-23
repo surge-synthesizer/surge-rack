@@ -75,7 +75,7 @@ template <> void VCOConfig<ot_modern>::oscillatorSpecificSetup(VCO<ot_modern> *m
     }
 }
 
-template <> void VCOConfig<ot_modern>::configureArbitrarySwitches(VCO<ot_modern> *m)
+template <> void VCOConfig<ot_modern>::configureVCOSpecificParameters(VCO<ot_modern> *m)
 {
     auto bs = VCO<ot_modern>::ARBITRARY_SWITCH_0;
     m->configParam(bs, ModernOscillator::momt_triangle, ModernOscillator::momt_square,
@@ -85,7 +85,7 @@ template <> void VCOConfig<ot_modern>::configureArbitrarySwitches(VCO<ot_modern>
     m->configParam(bs + 3, 0, 1, 0, "Unused");
 }
 
-template <> void VCOConfig<ot_modern>::processLightParameters(VCO<ot_modern> *m)
+template <> void VCOConfig<ot_modern>::processVCOSpecificParameters(VCO<ot_modern> *m)
 {
     auto l0 = (int)std::round(m->params[VCO<ot_modern>::ARBITRARY_SWITCH_0 + 0].getValue());
     auto l1 = (bool)(m->params[VCO<ot_modern>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);

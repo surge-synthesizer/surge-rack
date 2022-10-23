@@ -50,8 +50,10 @@ template <int oscType> struct VCOConfig
     }
 
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
-    static void processLightParameters(VCO<oscType> *) {}
-    static void configureArbitrarySwitches(VCO<oscType> *);
+    static void processVCOSpecificParameters(VCO<oscType> *m) {}
+    static void configureVCOSpecificParameters(VCO<oscType> *m);
+    static constexpr int additionalVCOParameterCount() { return 0; } // really only used by alias.
+
     static std::string retriggerLabel() { return "RESET"; }
 
     /*
@@ -84,7 +86,9 @@ template <int oscType> struct VCO : public modules::XTModule
         ABSOLUTE_UNISON,
         CHARACTER,
         DRIFT,
-        NUM_PARAMS
+
+        ADDITIONAL_VCO_PARAMS,
+        NUM_PARAMS = ADDITIONAL_VCO_PARAMS + VCOConfig<oscType>::additionalVCOParameterCount()
     };
     enum InputIds
     {
@@ -205,7 +209,7 @@ template <int oscType> struct VCO : public modules::XTModule
         configParam(CHARACTER, 0, 2, 1, "Character Filter");
         configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
 
-        VCOConfig<oscType>::configureArbitrarySwitches(this);
+        VCOConfig<oscType>::configureVCOSpecificParameters(this);
         config_osc->~Oscillator();
         display_osc->~Oscillator();
 
@@ -485,7 +489,7 @@ template <int oscType> struct VCO : public modules::XTModule
                 memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
             }
 
-            VCOConfig<oscType>::processLightParameters(this);
+            VCOConfig<oscType>::processVCOSpecificParameters(this);
 
             for (int i = 0; i < n_osc_params; ++i)
             {
@@ -738,7 +742,7 @@ template <int oscType> struct VCO : public modules::XTModule
     }
 };
 
-template <int oscType> inline void VCOConfig<oscType>::configureArbitrarySwitches(VCO<oscType> *m)
+template <int oscType> inline void VCOConfig<oscType>::configureVCOSpecificParameters(VCO<oscType> *m)
 {
     for (int i = 0; i < VCO<oscType>::n_arbitrary_switches; ++i)
     {

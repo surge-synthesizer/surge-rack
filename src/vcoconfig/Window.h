@@ -54,7 +54,7 @@ template <> void VCOConfig<ot_window>::oscillatorSpecificSetup(VCO<ot_window> *m
     }
 }
 
-template <> void VCOConfig<ot_window>::processLightParameters(VCO<ot_window> *m)
+template <> void VCOConfig<ot_window>::processVCOSpecificParameters(VCO<ot_window> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_window>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
     auto l1 = (bool)(m->params[VCO<ot_window>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
