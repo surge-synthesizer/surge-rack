@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="uuid-600b4ad3-6500-4183-8601-43e50c31287d"
+   data-name="Layer 2"
+   width="3.5mm"
+   height="19mm"
+   viewBox="0 0 13.228347 71.811025"
+   version="1.1"
+   sodipodi:docname="light fb.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs18" />
+  <sodipodi:namedview
+     id="namedview16"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="5.4419826"
+     inkscape:cx="39.140147"
+     inkscape:cy="12.679203"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="uuid-600b4ad3-6500-4183-8601-43e50c31287d"
+     inkscape:document-units="mm" />
+  <g
+     id="uuid-726dd64a-98fd-41f8-8b34-1f7097461a4f"
+     data-name="Layer 5"
+     transform="scale(1.3333333)">
+    <g
+       id="g12">
+      <rect
+         x="1.07717"
+         y="1.07717"
+         width="7.7663598"
+         height="51.703941"
+         fill="#e3e3e3"
+         id="rect2" />
+      <polygon
+         points="1.07717,1.07717 1.07717,52.7811 0,53.85827 0,0 "
+         fill="#d9d9d9"
+         id="polygon4" />
+      <polygon
+         points="9.92069,0 9.92069,53.85827 8.84352,52.7811 8.84352,1.07717 "
+         fill="#d9d9d9"
+         id="polygon6" />
+      <polygon
+         points="0,53.85827 9.92126,53.85827 8.84352,52.7811 1.07717,52.7811 "
+         fill="#f0f0f0"
+         id="polygon8" />
+      <polygon
+         points="1.07717,1.07717 8.84352,1.07717 9.92126,0 0,0 "
+         fill="#c2c2c2"
+         id="polygon10" />
+    </g>
+  </g>
+</svg>
