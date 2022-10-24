@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="uuid-8f39013c-a6d7-41b8-81f6-43ce321372dc"
+   data-name="Layer 2"
+   width="2.7364874mm"
+   height="6mm"
+   viewBox="0 0 10.34263 22.677165"
+   version="1.1"
+   sodipodi:docname="dark fh.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview34"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="12.185535"
+     inkscape:cx="-29.29703"
+     inkscape:cy="19.531353"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="uuid-8f39013c-a6d7-41b8-81f6-43ce321372dc"
+     inkscape:document-units="mm" />
+  <defs
+     id="defs12">
+    <linearGradient
+       id="uuid-4bd9ca4b-c11a-4b07-9263-7157ed9f1e27"
+       x1="3.87849"
+       y1="0"
+       x2="3.87849"
+       y2="17.00787"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#6f6f6f"
+         id="stop2" />
+      <stop
+         offset="1"
+         stop-color="#393939"
+         id="stop4" />
+    </linearGradient>
+    <linearGradient
+       id="uuid-614ba170-c91f-4d60-9dab-8fa9098bdef0"
+       x1="3.87849"
+       y1="15.15867"
+       x2="3.87849"
+       y2="1.84921"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#686868"
+         id="stop7" />
+      <stop
+         offset="1"
+         stop-color="#353535"
+         id="stop9" />
+    </linearGradient>
+  </defs>
+  <g
+     id="uuid-dcbe4ab9-67c0-4a8e-a39e-4d964eddc8da"
+     data-name="Layer 5"
+     transform="scale(1.3333337)">
+    <g
+       id="g30">
+      <rect
+         width="7.7569699"
+         height="17.00787"
+         fill="url(#uuid-4bd9ca4b-c11a-4b07-9263-7157ed9f1e27)"
+         id="rect14"
+         style="fill:url(#uuid-4bd9ca4b-c11a-4b07-9263-7157ed9f1e27)"
+         x="0"
+         y="0" />
+      <rect
+         y="1.84921"
+         width="7.7569699"
+         height="13.30946"
+         fill="url(#uuid-614ba170-c91f-4d60-9dab-8fa9098bdef0)"
+         id="rect16"
+         style="fill:url(#uuid-614ba170-c91f-4d60-9dab-8fa9098bdef0)"
+         x="0" />
+      <rect
+         y="7.7424598"
+         width="7.7569699"
+         height="1.5229501"
+         fill="#cccccc"
+         id="rect18"
+         x="0" />
+      <rect
+         y="1.3857599"
+         width="7.7569699"
+         height="0.46345001"
+         fill="#b6b6b6"
+         opacity="0.29"
+         id="rect20"
+         x="0" />
+      <rect
+         y="15.15867"
+         width="7.7569699"
+         height="0.46345001"
+         fill="#b6b6b6"
+         opacity="0.19"
+         id="rect22"
+         x="0" />
+      <rect
+         x="0.63938999"
+         y="14.69522"
+         width="6.4782"
+         height="0.46345001"
+         fill="#b6b6b6"
+         opacity="0.19"
+         id="rect24" />
+      <rect
+         y="1.84921"
+         width="0.63938999"
+         height="13.30946"
+         fill="#282829"
+         opacity="0.39"
+         id="rect26"
+         x="0" />
+      <rect
+         x="7.1175799"
+         y="1.84921"
+         width="0.63938999"
+         height="13.30946"
+         fill="#242424"
+         opacity="0.39"
+         id="rect28" />
+    </g>
+  </g>
+</svg>
