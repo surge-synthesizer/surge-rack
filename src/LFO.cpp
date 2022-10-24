@@ -30,6 +30,9 @@ struct LFOWidget : widgets::XTModuleWidget
     std::array<widgets::ModulatableKnob *, M::n_lfo_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
+    int priorShape{-1};
+    rack::Widget *wavePlot{nullptr}, *stepEditor{nullptr};
+    void step() override;
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (!module)
@@ -80,6 +83,109 @@ struct LFOWidget : widgets::XTModuleWidget
         menu->addChild(rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
                                             [m]() { m->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
+};
+
+struct LFOStepWidget : rack::Widget, style::StyleParticipant
+{
+    struct StepSlider : rack::app::SliderKnob, style::StyleParticipant
+    {
+        widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+        widgets::BufferedDrawFunctionWidget *bdwLight{nullptr};
+
+        static StepSlider *create(const rack::Vec &pos, const rack::Vec &sz,
+                                  modules::XTModule *module, int paramId)
+        {
+            auto res = new StepSlider();
+
+            res->box.pos = pos;
+            res->box.size = sz;
+
+            res->module = module;
+            res->paramId = paramId;
+            res->initParamQuantity();
+
+            res->setup();
+
+            return res;
+        }
+
+        void setup()
+        {
+            bdw = new widgets::BufferedDrawFunctionWidget(
+                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawSlider(vg); });
+            bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
+                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawLight(vg); });
+
+            addChild(bdw);
+            addChild(bdwLight);
+        }
+
+        void drawSlider(NVGcontext *vg)
+        {
+            nvgBeginPath(vg);
+            nvgRect(vg, 0, 0, box.size.x, box.size.y);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+        }
+
+        void drawLight(NVGcontext *vg)
+        {
+            auto pq = getParamQuantity();
+            if (!pq)
+                return;
+            auto v = (-pq->getValue()) * 0.5 + 0.5;
+
+            auto s = box.size.y * 0.5;
+            auto e = box.size.y * v;
+            if (s > e)
+                std::swap(s, e);
+            nvgBeginPath(vg);
+            nvgRect(vg, 1, s, box.size.x - 2, e - s);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgFill(vg);
+        }
+
+        inline void onChange(const rack::widget::Widget::ChangeEvent &e) override
+        {
+            bdw->dirty = true;
+            bdwLight->dirty = true;
+        }
+
+        void onStyleChanged() override
+        {
+            bdw->dirty = true;
+            bdwLight->dirty = true;
+        }
+    };
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdwLight{nullptr};
+    LFO *module{nullptr};
+    void setup()
+    {
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto vg) { this->drawEditorBG(vg); });
+        addChild(bdw);
+        bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), box.size, [this](auto vg) { this->drawEditorLights(vg); });
+        addChild(bdwLight);
+
+        auto dx = box.size.x / LFO::n_steps;
+        for (int i = 0; i < LFO::n_steps; ++i)
+        {
+            auto pos = rack::Vec(i * dx, 0);
+            auto sz = rack::Vec(dx, box.size.y);
+            auto ks = StepSlider::create(pos, sz, module, LFO::STEP_SEQUENCER_STEP_0 + i);
+            addChild(ks);
+        }
+    }
+    void onStyleChanged() override
+    {
+        bdw->dirty = true;
+        bdwLight->dirty = true;
+    }
+    void drawEditorBG(NVGcontext *vg) {}
+    void drawEditorLights(NVGcontext *vg) {}
 };
 
 struct LFOTypeWidget : rack::app::ParamWidget, style::StyleParticipant
@@ -888,6 +994,18 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     ww->box.size.y = rack::mm2px(ht) - ww->box.pos.y - rack::mm2px(6);
     ww->setup();
     addChild(ww);
+    wavePlot = ww;
+
+    auto ws = new LFOStepWidget();
+    ws->module = module;
+    ws->box.pos.x = tw->box.pos.x;
+    ws->box.pos.y = tw->box.pos.y + tw->box.size.y;
+    ws->box.size.x = tw->box.size.x;
+    ws->box.size.y = rack::mm2px(ht) - ww->box.pos.y - rack::mm2px(6);
+    ws->setup();
+    addChild(ws);
+    ws->setVisible(false);
+    stepEditor = ws;
 
     auto gutterX = ww->box.pos.x;
     auto gutterY = ww->box.pos.y + ww->box.size.y + rack::mm2px(0.5);
@@ -955,6 +1073,36 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
                                    layout::LayoutConstants::lfoColumnWidth_MM);
 
     resetStyleCouplingToModule();
+}
+
+void LFOWidget::step()
+{
+    if (module)
+    {
+        auto lm = static_cast<LFO *>(module);
+        auto sh = lm->lfostorage->shape.val.i;
+
+        if (sh != priorShape)
+        {
+            priorShape = sh;
+
+            if (sh == lt_stepseq)
+            {
+                if (wavePlot)
+                    wavePlot->setVisible(false);
+                if (stepEditor)
+                    stepEditor->setVisible(true);
+            }
+            else
+            {
+                if (wavePlot)
+                    wavePlot->setVisible(true);
+                if (stepEditor)
+                    stepEditor->setVisible(false);
+            }
+        }
+    }
+    widgets::XTModuleWidget::step();
 }
 } // namespace sst::surgext_rack::lfo::ui
 
