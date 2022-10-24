@@ -54,6 +54,13 @@ struct LFOWidget : widgets::XTModuleWidget
         }
 
         menu->addChild(new rack::MenuSeparator);
+        menu->addChild(rack::createMenuItem(
+            "Random Phase on Attack", CHECKMARK(m->params[LFO::RANDOM_PHASE].getValue() > 0.5),
+            [m]() {
+                auto v = m->paramQuantities[LFO::RANDOM_PHASE]->getValue() > 0.5;
+                m->paramQuantities[LFO::RANDOM_PHASE]->setValue(v ? 0 : 1);
+            }));
+        menu->addChild(new rack::MenuSeparator);
         typedef modules::ClockProcessor<LFO> cp_t;
 
         auto wts = (int)std::round(m->paramQuantities[LFO::WHICH_TEMPOSYNC]->getValue());
@@ -842,8 +849,9 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 
     {
         int col = 0;
-        std::vector<std::string> labv{"TRIG", "CLOCK", "PHASE"};
-        for (auto p : {M::INPUT_TRIGGER, M::INPUT_CLOCK_RATE, M::INPUT_PHASE_DIRECT})
+        std::vector<std::string> labv{"TRIG", "TRIGENV", "CLOCK", "PHASE"};
+        for (auto p : {M::INPUT_TRIGGER, M::INPUT_TRIGGER_ENVONLY, M::INPUT_CLOCK_RATE,
+                       M::INPUT_PHASE_DIRECT})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
             auto xp = layout::LayoutConstants::firstColumnCenter_MM +
@@ -919,7 +927,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     {
         int col = 0;
         std::vector<std::string> labv{"TRIGA", "TRIGB", "EOC"};
-        for (auto p : {M::OUTPUT_TRIGF, M::OUTPUT_TRIGA, M::OUTPUT_TRIGPHASE})
+        for (auto p : {M::OUTPUT_TRIGA, M::OUTPUT_TRIGB, M::OUTPUT_TRIGPHASE})
         {
             auto yp = layout::LayoutConstants::modulationRowCenters_MM[1];
             auto xp = layout::LayoutConstants::firstColumnCenter_MM +
