@@ -1721,11 +1721,11 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto rwidth = rack::mm2px(0.88);
         auto hsize = handle->box.size.y;
         auto tsize = tray->box.size.y;
-        auto span = tsize - hsize - 2;
-        auto off = hsize * 0.5 + 1;
+        auto off = rack::mm2px(0.4);
+        auto span = box.size.y - 2 * off;
 
         nvgBeginPath(vg);
-        nvgRoundedRect(vg, box.size.x * 0.5 - rwidth * 0.5, off, rwidth, span, rwidth);
+        nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, off, rwidth, span);
         nvgFillColor(vg, style()->getColor(style::XTStyle::LED_PANEL));
         nvgFill(vg);
     }
@@ -1736,11 +1736,15 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         if (!pq || ! handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
             return;
 
+        if (isModEdit)
+            return;
+
         auto rwidth = rack::mm2px(0.88);
         auto hsize = handle->box.size.y;
         auto tsize = tray->box.size.y;
-        auto span = tsize - hsize - 2;
-        auto off = hsize * 0.5 + 1;
+        auto off = rack::mm2px(0.4);
+        auto span = box.size.y - 2 * off;
+
         auto nv{0.f};
         if (pq)
         {
@@ -1748,19 +1752,16 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         }
         auto np = (1 - nv) * span;
 
-        auto sp = np + hsize * 0.5 + off;
+        auto sp = handle->box.pos.y + handle->box.size.y;
         nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
 
-        if (!isModEdit)
-        {
-            nvgBeginPath(vg);
-            nvgRoundedRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth,
-                           span - np, rwidth);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
-            nvgFill(vg);
-            nvgStrokeWidth(vg, 0.5);
-            nvgStroke(vg);
-        }
+        nvgBeginPath(vg);
+        nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth,
+                           span - np);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
+        nvgFill(vg);
+        nvgStrokeWidth(vg, 0.5);
+        nvgStroke(vg);
     }
     void onStyleChanged() override {
         bdw->dirty = true;

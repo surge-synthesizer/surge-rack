@@ -35,6 +35,14 @@ struct LFO : modules::XTModule
     static constexpr int n_mod_inputs{4};
     static constexpr int n_arbitrary_switches{4};
 
+    enum trigTypes
+    {
+        END_OF_ENV,
+        END_OF_ENV_PHASE,
+        STEP_F,
+        STEP_A
+    };
+
     enum ParamIds
     {
         RATE,
@@ -57,11 +65,15 @@ struct LFO : modules::XTModule
         LFO_TYPE = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
         DEFORM_TYPE,
         WHICH_TEMPOSYNC,
+        RANDOM_PHASE,
+        TRIGA_TYPE,
+        TRIGB_TYPE,
         NUM_PARAMS
     };
     enum InputIds
     {
         INPUT_TRIGGER,
+        INPUT_TRIGGER_ENVONLY,
         INPUT_CLOCK_RATE,
         INPUT_PHASE_DIRECT,
         LFO_MOD_INPUT,
@@ -74,8 +86,8 @@ struct LFO : modules::XTModule
         OUTPUT_WAVE,
         OUTPUT_ENV,
         OUTPUT_TRIGPHASE,
-        OUTPUT_TRIGF,
         OUTPUT_TRIGA,
+        OUTPUT_TRIGB,
         NUM_OUTPUTS
     };
     enum LightIds
@@ -154,6 +166,10 @@ struct LFO : modules::XTModule
 
         configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
         configParam(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
+        configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Iniital Phase");
+
+        configParam(TRIGA_TYPE, 0, 3, END_OF_ENV, "Trigger A Type");
+        configParam(TRIGB_TYPE, 0, 3, END_OF_ENV_PHASE, "Trigger B Type");
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -162,6 +178,7 @@ struct LFO : modules::XTModule
             isGated[i] = false;
             isGateConnected[i] = false;
             isTriggered[i] = false;
+            isTriggeredEnvOnly[i] = false;
             priorIntPhase[i] = -1;
             endPhaseCountdown[i] = 0;
         }
@@ -233,8 +250,9 @@ struct LFO : modules::XTModule
     int lastNChan = -1;
     bool firstProcess{true};
 
-    rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envRetrig[MAX_POLY];
-    bool isGated[MAX_POLY], isGateConnected[MAX_POLY], isTriggered[MAX_POLY];
+    rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envGateTriggerEnvOnly[MAX_POLY];
+    bool isGated[MAX_POLY], isGateConnected[MAX_POLY];
+    bool isTriggered[MAX_POLY], isTriggeredEnvOnly[MAX_POLY];
     int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY];
 
     modules::ClockProcessor<LFO> clockProc;
@@ -275,6 +293,7 @@ struct LFO : modules::XTModule
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         int nChan = std::max(1, inputs[INPUT_TRIGGER].getChannels());
+        nChan = std::max(nChan, inputs[INPUT_TRIGGER_ENVONLY].getChannels());
         outputs[OUTPUT_MIX].setChannels(nChan);
         outputs[OUTPUT_ENV].setChannels(nChan);
         outputs[OUTPUT_WAVE].setChannels(nChan);
@@ -287,9 +306,14 @@ struct LFO : modules::XTModule
         }
 
         for (int c = 0; c < nChan; ++c)
+        {
             if (inputs[INPUT_TRIGGER].isConnected() &&
                 envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
                 isTriggered[c] = true;
+            if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() &&
+                envGateTriggerEnvOnly[c].process(inputs[INPUT_TRIGGER_ENVONLY].getVoltage(c)))
+                isTriggeredEnvOnly[c] = true;
+        }
 
         if (inputs[INPUT_CLOCK_RATE].isConnected())
             clockProc.process(this, INPUT_CLOCK_RATE);
@@ -303,6 +327,8 @@ struct LFO : modules::XTModule
         {
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
+
+            auto direct = inputs[INPUT_PHASE_DIRECT].isConnected();
 
             for (int s = 0; s < 3; ++s)
                 for (int i = 0; i < 4; ++i)
@@ -329,6 +355,7 @@ struct LFO : modules::XTModule
                 lfostorageDisplay->deform.deform_type = dto;
             }
 
+            lfostorage->rate.deactivated = direct;
             for (int c = 0; c < nChan; ++c)
             {
                 // FIX obvs replace this with the mod matrix
@@ -347,24 +374,39 @@ struct LFO : modules::XTModule
                 lfostorage->deform.deform_type = dt;
 
                 bool inNewAttack = firstProcess;
+                bool inNewEnvAttack = false;
                 // move this to every sample and record it eliminating the first process thing too
                 if (isTriggered[c])
                 {
-                    lfostorage->trigmode.val.i = lm_keytrigger;
-                    copyScenedataSubset(0, storage_id_start, storage_id_end);
                     isGated[c] = true;
                     inNewAttack = true;
                     isGateConnected[c] = true;
                     isTriggered[c] = false;
                 }
+                else if (isTriggeredEnvOnly[c])
+                {
+                    inNewEnvAttack = true;
+                    isTriggeredEnvOnly[c] = false;
+                    isGated[c] = true;
+                    isGateConnected[c] = true;
+                }
                 else if (inputs[INPUT_TRIGGER].isConnected() && isGated[c] &&
-                         inputs[INPUT_TRIGGER].getVoltage(c) < 1.f)
+                         (inputs[INPUT_TRIGGER].getVoltage(c) < 1.f))
                 {
                     isGated[c] = false;
                     surge_lfo[c]->release();
                     isGateConnected[c] = true;
                 }
-                else if (!inputs[INPUT_TRIGGER].isConnected())
+                else if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() && isGated[c] &&
+                         (inputs[INPUT_TRIGGER_ENVONLY].getVoltage(c) < 1.f))
+                {
+                    isGated[c] = false;
+                    surge_lfo[c]->release();
+
+                    isGateConnected[c] = true;
+                }
+                else if (!inputs[INPUT_TRIGGER].isConnected() &&
+                         !inputs[INPUT_TRIGGER_ENVONLY].isConnected())
                 {
                     if (isGateConnected[c])
                         inNewAttack = true;
@@ -373,6 +415,14 @@ struct LFO : modules::XTModule
                     isGated[c] = true;
                     isGateConnected[c] = false;
                 }
+
+                if (direct)
+                {
+                    auto pd = inputs[INPUT_PHASE_DIRECT].getVoltage(c) * RACK_TO_SURGE_CV_MUL;
+                    lfostorage->start_phase.set_value_f01(pd);
+                }
+                lfostorage->trigmode.val.i =
+                    params[RANDOM_PHASE].getValue() > 0.5 ? lm_random : lm_keytrigger;
 
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
                 if (inNewAttack)
@@ -388,6 +438,10 @@ struct LFO : modules::XTModule
                     output0[1][c / 4].s[c % 4] = surge_lfo[c]->get_output(1);
                     output0[2][c / 4].s[c % 4] = surge_lfo[c]->get_output(2);
                     surge_lfo[c]->process_block();
+                }
+                else if (inNewEnvAttack)
+                {
+                    surge_lfo[c]->retriggerEnvelope();
                 }
                 // repeat for env stage also
                 if (surge_lfo[c]->getIntPhase() != priorIntPhase[c])
