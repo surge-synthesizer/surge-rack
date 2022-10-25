@@ -33,7 +33,8 @@ struct LFO : modules::XTModule
 {
     static constexpr int n_lfo_params{10};
     static constexpr int n_mod_inputs{4};
-    static constexpr int n_arbitrary_switches{4};
+
+    static constexpr int n_steps{16};
 
     enum trigTypes
     {
@@ -68,6 +69,10 @@ struct LFO : modules::XTModule
         RANDOM_PHASE,
         TRIGA_TYPE,
         TRIGB_TYPE,
+        STEP_SEQUENCER_STEP_0,
+        STEP_SEQUENCER_TRIGGER_0 = STEP_SEQUENCER_STEP_0 + n_steps,
+        STEP_SEQUENCER_START = STEP_SEQUENCER_TRIGGER_0 + n_steps,
+        STEP_SEQUENCER_END,
         NUM_PARAMS
     };
     enum InputIds
@@ -123,6 +128,8 @@ struct LFO : modules::XTModule
             surge_lfo[i] = std::make_unique<LFOModulationSource>();
 
         surge_ss = std::make_unique<StepSequencerStorage>();
+        surge_ss->loop_start = 0;
+        surge_ss->loop_end = n_steps;
         surge_ms = std::make_unique<MSEGStorage>();
         surge_fs = std::make_unique<FormulaModulatorStorage>();
 
@@ -170,6 +177,12 @@ struct LFO : modules::XTModule
 
         configParam(TRIGA_TYPE, 0, 3, END_OF_ENV, "Trigger A Type");
         configParam(TRIGB_TYPE, 0, 3, END_OF_ENV_PHASE, "Trigger B Type");
+
+        for (int i = 0; i < n_steps; ++i)
+        {
+            configParam(STEP_SEQUENCER_STEP_0 + i, -1, 1, 1.f * i / n_steps,
+                        std::string("Step ") + std::to_string(i + 1));
+        }
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -335,7 +348,6 @@ struct LFO : modules::XTModule
                     output0[s][i] = output1[s][i];
 
             float ts[3][16];
-
             {
                 // Setup the display storage
                 auto *par0 = &(lfostorageDisplay->rate);
@@ -353,6 +365,14 @@ struct LFO : modules::XTModule
                     params[LFO::DEFORM_TYPE].setValue(dto);
                 }
                 lfostorageDisplay->deform.deform_type = dto;
+            }
+
+            if (lfostorageDisplay->shape.val.i == lt_stepseq)
+            {
+                for (int i = 0; i < n_steps; ++i)
+                {
+                    surge_ss->steps[i] = params[STEP_SEQUENCER_STEP_0 + i].getValue();
+                }
             }
 
             lfostorage->rate.deactivated = direct;
