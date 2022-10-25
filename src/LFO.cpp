@@ -32,6 +32,7 @@ struct LFOWidget : widgets::XTModuleWidget
 
     int priorShape{-1};
     rack::Widget *wavePlot{nullptr}, *stepEditor{nullptr};
+    rack::Widget *stepStart{nullptr}, *stepEnd{nullptr};
     void step() override;
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
@@ -120,10 +121,54 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             addChild(bdwLight);
         }
 
+        bool isInLoop()
+        {
+            auto step = paramId - LFO::STEP_SEQUENCER_STEP_0;
+            return step >= sp && step < ep;
+        }
+        bool isInOrBeforeLoop()
+        {
+            auto step = paramId - LFO::STEP_SEQUENCER_STEP_0;
+            return step < ep;
+        }
+
+        static constexpr float cramY = 0.98, padY = (1.f - cramY) * 0.5f;
         void drawSlider(NVGcontext *vg)
         {
             nvgBeginPath(vg);
             nvgRect(vg, 0, 0, box.size.x, box.size.y);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+
+            auto pq = getParamQuantity();
+            if (!pq)
+                return;
+            auto v = (-pq->getValue()) * 0.5 + 0.5;
+
+            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+            if (!isInLoop())
+                col = style()->getColor(style::XTStyle::PLOT_MARKS);
+            auto gcp = col;
+            gcp.a = 0.0;
+            auto gcn = col;
+            gcn.a = 0.9;
+
+            auto s = box.size.y * 0.5;
+            auto e = cramY * box.size.y * v + padY;
+            if (s > e)
+            {
+                std::swap(gcp, gcn);
+                std::swap(s, e);
+            }
+            nvgBeginPath(vg);
+            nvgRect(vg, 1, s, box.size.x - 2, e - s);
+            nvgFillPaint(vg, nvgLinearGradient(vg, 0, s, 0, e, gcp, gcn));
+            nvgFill(vg);
+
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, 0, box.size.y * 0.5);
+            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
             nvgStrokeWidth(vg, 0.75);
             nvgStroke(vg);
@@ -136,14 +181,39 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
                 return;
             auto v = (-pq->getValue()) * 0.5 + 0.5;
 
-            auto s = box.size.y * 0.5;
-            auto e = box.size.y * v;
-            if (s > e)
-                std::swap(s, e);
+            auto e = cramY * box.size.y * v + padY;
+
+            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+            if (!isInOrBeforeLoop())
+                col = style()->getColor(style::XTStyle::PLOT_MARKS);
+
             nvgBeginPath(vg);
-            nvgRect(vg, 1, s, box.size.x - 2, e - s);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgFill(vg);
+            nvgMoveTo(vg, 1, e);
+            nvgLineTo(vg, box.size.x - 1, e);
+            nvgStrokeWidth(vg, 1.5);
+            nvgStrokeColor(vg, col);
+            nvgStroke(vg);
+        }
+
+        int sp{-1}, ep{-1};
+        void step() override
+        {
+            if (module)
+            {
+                auto ss =
+                    (int)std::round(module->paramQuantities[LFO::STEP_SEQUENCER_START]->getValue());
+                auto se =
+                    (int)std::round(module->paramQuantities[LFO::STEP_SEQUENCER_END]->getValue());
+
+                if (sp != ss || ep != se)
+                {
+                    bdwLight->dirty = true;
+                    bdw->dirty = true;
+                }
+                sp = ss;
+                ep = se;
+            }
+            rack::app::SliderKnob::step();
         }
 
         inline void onChange(const rack::widget::Widget::ChangeEvent &e) override
@@ -158,6 +228,177 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             bdwLight->dirty = true;
         }
     };
+
+    struct TriggerSwitch : rack::app::Switch, style::StyleParticipant
+    {
+        widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+        widgets::BufferedDrawFunctionWidget *bdwLight{nullptr};
+
+        static TriggerSwitch *create(const rack::Vec &pos, const rack::Vec &sz,
+                                     modules::XTModule *module, int paramId)
+        {
+            auto res = new TriggerSwitch();
+
+            res->box.pos = pos;
+            res->box.size = sz;
+
+            res->module = module;
+            res->paramId = paramId;
+            res->initParamQuantity();
+
+            res->setup();
+
+            return res;
+        }
+
+        void setup()
+        {
+            bdw = new widgets::BufferedDrawFunctionWidget(
+                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawSlider(vg); });
+            bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
+                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawLight(vg); });
+
+            addChild(bdw);
+            addChild(bdwLight);
+        }
+
+        void drawSlider(NVGcontext *vg)
+        {
+            nvgBeginPath(vg);
+            nvgRect(vg, 0, 0, box.size.x, box.size.y);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg, style()->fontId(vg));
+            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgText(vg, 0.5, box.size.y * 0.5, "A", nullptr);
+
+            nvgBeginPath(vg);
+            nvgFontFaceId(vg, style()->fontId(vg));
+            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+            nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgText(vg, box.size.x - 0.5, box.size.y * 0.5, "B", nullptr);
+        }
+
+        void drawLight(NVGcontext *vg)
+        {
+            auto pq = getParamQuantity();
+            if (!pq)
+                return;
+            auto sv = (int)std::round(pq->getValue());
+
+            if (sv & 1)
+            {
+                nvgBeginPath(vg);
+                nvgFontFaceId(vg, style()->fontId(vg));
+                nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+                nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+                nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+                nvgText(vg, 0.5, box.size.y * 0.5, "A", nullptr);
+            }
+            if (sv & 2)
+            {
+                nvgBeginPath(vg);
+                nvgFontFaceId(vg, style()->fontId(vg));
+                nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+                nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
+                nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+                nvgText(vg, box.size.x - 0.5, box.size.y * 0.5, "B", nullptr);
+            }
+        }
+
+        inline void onChange(const rack::widget::Widget::ChangeEvent &e) override
+        {
+            bdw->dirty = true;
+            bdwLight->dirty = true;
+        }
+
+        void onStyleChanged() override
+        {
+            bdw->dirty = true;
+            bdwLight->dirty = true;
+        }
+    };
+
+    struct JogPatternButton : rack::Widget, style::StyleParticipant
+    {
+        widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+        LFO *module{nullptr};
+
+        static JogPatternButton *create(const rack::Vec &pos, const rack::Vec &sz, LFO *module)
+        {
+            auto res = new JogPatternButton();
+
+            res->box.pos = pos;
+            res->box.size = sz;
+
+            res->module = module;
+
+            res->setup();
+
+            return res;
+        }
+
+        void setup()
+        {
+            bdw = new widgets::BufferedDrawFunctionWidget(
+                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawButton(vg); });
+            addChild(bdw);
+        }
+        void drawButton(NVGcontext *vg)
+        {
+            // > in top half < in bottom
+            auto tq = box.size.y * 0.25;
+            auto bq = box.size.y * 0.75;
+            auto ts = box.size.x;
+
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, 0, tq - ts * 0.5);
+            nvgLineTo(vg, box.size.x, tq);
+            nvgLineTo(vg, 0, tq + ts * 0.5);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgFill(vg);
+
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, box.size.x, bq - ts * 0.5);
+            nvgLineTo(vg, 0, bq);
+            nvgLineTo(vg, box.size.x, bq + ts * 0.5);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgFill(vg);
+        }
+        void onStyleChanged() override { bdw->dirty = true; }
+        void onButton(const ButtonEvent &e) override
+        {
+            if (module && e.action == GLFW_PRESS)
+            {
+                int dir = 1;
+                if (e.pos.y > box.size.y * 0.5)
+                {
+                    dir = -1;
+                }
+                float tvals[LFO::n_steps];
+                for (int i = 0; i < LFO::n_steps; ++i)
+                {
+                    tvals[i] = module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->getValue();
+                }
+                for (int i = 0; i < LFO::n_steps; ++i)
+                {
+                    auto next = (i + dir) & (LFO::n_steps - 1);
+                    module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + next]->setValue(tvals[i]);
+                }
+
+                e.consume(this);
+                return;
+            }
+            Widget::onButton(e);
+        }
+    };
+
     widgets::BufferedDrawFunctionWidget *bdw{nullptr};
     widgets::BufferedDrawFunctionWidget *bdwLight{nullptr};
     LFO *module{nullptr};
@@ -170,13 +411,27 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             rack::Vec(0, 0), box.size, [this](auto vg) { this->drawEditorLights(vg); });
         addChild(bdwLight);
 
-        auto dx = box.size.x / LFO::n_steps;
+        float x0 = 15, pad = rack::mm2px(2);
+
+        auto ys = 25;
+        float ytrig0 = rack::mm2px(1), y0 = rack::mm2px(4), ypad = rack::mm2px(1);
+        auto dx = (box.size.x - x0 - pad) / LFO::n_steps;
+
+        auto jog = JogPatternButton::create(
+            rack::Vec(2, y0 + ytrig0), rack::Vec(x0 - 4, box.size.y - y0 - ypad - ytrig0), module);
+        addChild(jog);
+
         for (int i = 0; i < LFO::n_steps; ++i)
         {
-            auto pos = rack::Vec(i * dx, 0);
-            auto sz = rack::Vec(dx, box.size.y);
+            auto pos = rack::Vec(i * dx + x0, y0 + ytrig0);
+            auto sz = rack::Vec(dx, box.size.y - y0 - ypad - ytrig0);
             auto ks = StepSlider::create(pos, sz, module, LFO::STEP_SEQUENCER_STEP_0 + i);
             addChild(ks);
+
+            auto spos = rack::Vec(i * dx + x0, ytrig0);
+            auto ssz = rack::Vec(dx, y0);
+            auto sks = TriggerSwitch::create(spos, ssz, module, LFO::STEP_SEQUENCER_TRIGGER_0 + i);
+            addChild(sks);
         }
     }
     void onStyleChanged() override
@@ -1013,7 +1268,20 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     auto uni = widgets::PlotAreaSwitch::create(
         rack::Vec(gutterX, gutterY), rack::Vec(22, gutterHeight), "UNI", module, M::UNIPOLAR);
     addChild(uni);
-    gutterX += 22 + 2;
+    gutterX += 22 + 3;
+
+    stepStart = widgets::LabeledPlotAreaControl::create(rack::Vec(gutterX, gutterY),
+                                                        rack::Vec(42, gutterHeight), "START",
+                                                        module, M::STEP_SEQUENCER_START);
+    addChild(stepStart);
+    stepStart->setVisible(false);
+    gutterX += 42 + 3;
+    stepEnd = widgets::LabeledPlotAreaControl::create(rack::Vec(gutterX, gutterY),
+                                                      rack::Vec(35, gutterHeight), "END", module,
+                                                      M::STEP_SEQUENCER_END);
+    addChild(stepEnd);
+    stepEnd->setVisible(false);
+    gutterX += 35 + 3;
 
     {
         int col = 0;
@@ -1086,20 +1354,15 @@ void LFOWidget::step()
         {
             priorShape = sh;
 
-            if (sh == lt_stepseq)
-            {
-                if (wavePlot)
-                    wavePlot->setVisible(false);
-                if (stepEditor)
-                    stepEditor->setVisible(true);
-            }
-            else
-            {
-                if (wavePlot)
-                    wavePlot->setVisible(true);
-                if (stepEditor)
-                    stepEditor->setVisible(false);
-            }
+            auto stepSide = (sh == lt_stepseq);
+            if (wavePlot)
+                wavePlot->setVisible(!stepSide);
+            if (stepEditor)
+                stepEditor->setVisible(stepSide);
+            if (stepStart)
+                stepStart->setVisible(stepSide);
+            if (stepEnd)
+                stepEnd->setVisible(stepSide);
         }
     }
     widgets::XTModuleWidget::step();

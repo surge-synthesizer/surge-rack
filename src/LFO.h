@@ -129,7 +129,7 @@ struct LFO : modules::XTModule
 
         surge_ss = std::make_unique<StepSequencerStorage>();
         surge_ss->loop_start = 0;
-        surge_ss->loop_end = n_steps;
+        surge_ss->loop_end = n_steps - 1;
         surge_ms = std::make_unique<MSEGStorage>();
         surge_fs = std::make_unique<FormulaModulatorStorage>();
 
@@ -180,9 +180,15 @@ struct LFO : modules::XTModule
 
         for (int i = 0; i < n_steps; ++i)
         {
-            configParam(STEP_SEQUENCER_STEP_0 + i, -1, 1, 1.f * i / n_steps,
+            configParam(STEP_SEQUENCER_STEP_0 + i, -1, 1, 0,
                         std::string("Step ") + std::to_string(i + 1));
+            params[STEP_SEQUENCER_STEP_0 + i].setValue(1.f * i / (n_steps - 1));
+            configParam(STEP_SEQUENCER_TRIGGER_0 + i, 0, 3, 0,
+                        std::string("Step Trigger ") + std::to_string(i + 1));
         }
+        configParam(STEP_SEQUENCER_START, 0, n_steps - 1, 0, "First Loop Point")->snapEnabled =
+            true;
+        configParam(STEP_SEQUENCER_END, 1, n_steps, n_steps, "Last Loop Point")->snapEnabled = true;
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -373,6 +379,8 @@ struct LFO : modules::XTModule
                 {
                     surge_ss->steps[i] = params[STEP_SEQUENCER_STEP_0 + i].getValue();
                 }
+                surge_ss->loop_start = (int)std::round(params[STEP_SEQUENCER_START].getValue());
+                surge_ss->loop_end = (int)std::round(params[STEP_SEQUENCER_END].getValue()) - 1;
             }
 
             lfostorage->rate.deactivated = direct;
