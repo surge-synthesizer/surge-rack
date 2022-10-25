@@ -394,14 +394,19 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
                     dir = -1;
                 }
                 float tvals[LFO::n_steps];
+                float gvals[LFO::n_steps];
                 for (int i = 0; i < LFO::n_steps; ++i)
                 {
                     tvals[i] = module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->getValue();
+                    gvals[i] =
+                        module->paramQuantities[LFO::STEP_SEQUENCER_TRIGGER_0 + i]->getValue();
                 }
                 for (int i = 0; i < LFO::n_steps; ++i)
                 {
                     auto next = (i + dir) & (LFO::n_steps - 1);
                     module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + next]->setValue(tvals[i]);
+                    module->paramQuantities[LFO::STEP_SEQUENCER_TRIGGER_0 + next]->setValue(
+                        gvals[i]);
                 }
 
                 e.consume(this);

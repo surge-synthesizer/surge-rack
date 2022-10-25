@@ -36,10 +36,11 @@ struct LFO : modules::XTModule
 
     static constexpr int n_steps{16};
 
-    enum trigTypes
+    enum TrigTypes
     {
+        DEFAULT,
         END_OF_ENV,
-        END_OF_ENV_PHASE,
+        END_OF_ENV_SEGMENT,
         STEP_F,
         STEP_A
     };
@@ -175,8 +176,8 @@ struct LFO : modules::XTModule
         configParam(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
         configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Iniital Phase");
 
-        configParam(TRIGA_TYPE, 0, 3, END_OF_ENV, "Trigger A Type");
-        configParam(TRIGB_TYPE, 0, 3, END_OF_ENV_PHASE, "Trigger B Type");
+        configParam(TRIGA_TYPE, 0, 3, DEFAULT, "Trigger A");
+        configParam(TRIGB_TYPE, 0, 3, DEFAULT, "Trigger B");
 
         for (int i = 0; i < n_steps; ++i)
         {
@@ -200,6 +201,8 @@ struct LFO : modules::XTModule
             isTriggeredEnvOnly[i] = false;
             priorIntPhase[i] = -1;
             endPhaseCountdown[i] = 0;
+            trigABCountdown[0][i] = 0;
+            trigABCountdown[1][i] = 0;
         }
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
 
@@ -272,7 +275,8 @@ struct LFO : modules::XTModule
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envGateTriggerEnvOnly[MAX_POLY];
     bool isGated[MAX_POLY], isGateConnected[MAX_POLY];
     bool isTriggered[MAX_POLY], isTriggeredEnvOnly[MAX_POLY];
-    int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY];
+    int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY], priorEnvStage[MAX_POLY];
+    int trigABCountdown[2][MAX_POLY];
 
     modules::ClockProcessor<LFO> clockProc;
 
@@ -353,6 +357,20 @@ struct LFO : modules::XTModule
                 for (int i = 0; i < 4; ++i)
                     output0[s][i] = output1[s][i];
 
+            auto tat = (TrigTypes)std::round(params[TRIGA_TYPE].getValue());
+            auto tbt = (TrigTypes)std::round(params[TRIGB_TYPE].getValue());
+
+            if (lfostorageDisplay->shape.val.i == lt_stepseq)
+            {
+                tat = (tat == DEFAULT) ? STEP_F : tat;
+                tbt = (tbt == DEFAULT) ? STEP_A : tbt;
+            }
+            else
+            {
+                tat = (tat == DEFAULT) ? END_OF_ENV_SEGMENT : tat;
+                tbt = (tbt == DEFAULT) ? END_OF_ENV : tbt;
+            }
+
             float ts[3][16];
             {
                 // Setup the display storage
@@ -375,9 +393,15 @@ struct LFO : modules::XTModule
 
             if (lfostorageDisplay->shape.val.i == lt_stepseq)
             {
+                surge_ss->trigmask = 0;
                 for (int i = 0; i < n_steps; ++i)
                 {
                     surge_ss->steps[i] = params[STEP_SEQUENCER_STEP_0 + i].getValue();
+                    auto ltm = (int)std::round(params[STEP_SEQUENCER_TRIGGER_0 + i].getValue());
+                    if (ltm & 1)
+                        surge_ss->trigmask |= (UINT64_C(1) << (16 + i));
+                    if (ltm & 2)
+                        surge_ss->trigmask |= (UINT64_C(1) << (32 + i));
                 }
                 surge_ss->loop_start = (int)std::round(params[STEP_SEQUENCER_START].getValue());
                 surge_ss->loop_end = (int)std::round(params[STEP_SEQUENCER_END].getValue()) - 1;
@@ -457,6 +481,7 @@ struct LFO : modules::XTModule
                 {
                     surge_lfo[c]->attack();
                     priorIntPhase[c] = -1;
+                    priorEnvStage[c] = -1;
                 }
                 surge_lfo[c]->process_block();
                 if (inNewAttack)
@@ -475,8 +500,47 @@ struct LFO : modules::XTModule
                 if (surge_lfo[c]->getIntPhase() != priorIntPhase[c])
                 {
                     priorIntPhase[c] = surge_lfo[c]->getIntPhase();
-                    endPhaseCountdown[c] = 32;
+                    endPhaseCountdown[c] = pulseSamples;
                 }
+                bool newEnvStage{false}, newEnvRelease{false};
+                if (surge_lfo[c]->getEnvState() != priorEnvStage[c])
+                {
+                    priorEnvStage[c] = surge_lfo[c]->getEnvState();
+                    newEnvStage = true;
+                    if (priorEnvStage[c] == lfoeg_stuck)
+                        newEnvRelease = !isGated[c];
+                }
+
+                auto feg = surge_lfo[c]->retrigger_FEG;
+                auto aeg = surge_lfo[c]->retrigger_AEG;
+                surge_lfo[c]->retrigger_FEG = false;
+                surge_lfo[c]->retrigger_AEG = false;
+
+                for (int idx = 0; idx < 2; ++idx)
+                {
+                    auto ta = idx == 0 ? tat : tbt;
+                    if (trigABCountdown[idx][c] == 0)
+                    {
+                        switch (ta)
+                        {
+                        case END_OF_ENV:
+                            trigABCountdown[idx][c] = newEnvRelease ? pulseSamples : 0;
+                            break;
+                        case END_OF_ENV_SEGMENT:
+                            trigABCountdown[idx][c] = newEnvStage ? pulseSamples : 0;
+                            break;
+                        case STEP_F:
+                            trigABCountdown[idx][c] = feg ? pulseSamples : 0;
+                            break;
+                        case STEP_A:
+                            trigABCountdown[idx][c] = aeg ? pulseSamples : 0;
+                            break;
+                        case DEFAULT:
+                            break;
+                        }
+                    }
+                }
+
                 for (int p = 0; p < 3; ++p)
                     ts[p][c] = surge_lfo[c]->get_output(p);
             }
@@ -511,12 +575,28 @@ struct LFO : modules::XTModule
             }
             else
                 outputs[OUTPUT_TRIGPHASE].setVoltage(0.0, c);
+
+            for (int ab = 0; ab < 2; ++ab)
+            {
+                if (trigABCountdown[ab][c] > 0)
+                {
+                    trigABCountdown[ab][c]--;
+                    outputs[OUTPUT_TRIGA + ab].setVoltage(10.0, c);
+                }
+                else
+                {
+                    outputs[OUTPUT_TRIGA + ab].setVoltage(0, c);
+                }
+            }
         }
     }
 
+    int pulseSamples{48000 / 100};
     void moduleSpecificSampleRateChange() override
     {
         clockProc.setSampleRate(APP->engine->getSampleRate());
+        // rack spec says triggers are at least 10ms so make it 12 to be safe
+        pulseSamples = (int)std::ceil(APP->engine->getSampleRate() * 0.012);
     }
 
     json_t *makeModuleSpecificJson() override
