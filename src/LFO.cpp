@@ -145,6 +145,8 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             if (!pq)
                 return;
             auto v = (-pq->getValue()) * 0.5 + 0.5;
+            if (uni)
+                v = (1.0 - std::clamp(pq->getValue(), 0.f, 1.f));
 
             auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
             if (!isInLoop())
@@ -155,6 +157,9 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             gcn.a = 0.9;
 
             auto s = box.size.y * 0.5;
+            if (uni)
+                s = box.size.y;
+
             auto e = cramY * box.size.y * v + padY;
             if (s > e)
             {
@@ -166,12 +171,15 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             nvgFillPaint(vg, nvgLinearGradient(vg, 0, s, 0, e, gcp, gcn));
             nvgFill(vg);
 
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, 0, box.size.y * 0.5);
-            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
-            nvgStrokeWidth(vg, 0.75);
-            nvgStroke(vg);
+            if (!uni)
+            {
+                nvgBeginPath(vg);
+                nvgMoveTo(vg, 0, box.size.y * 0.5);
+                nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+                nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+                nvgStrokeWidth(vg, 0.75);
+                nvgStroke(vg);
+            }
         }
 
         void drawLight(NVGcontext *vg)
@@ -180,6 +188,8 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             if (!pq)
                 return;
             auto v = (-pq->getValue()) * 0.5 + 0.5;
+            if (uni)
+                v = (1.0 - std::clamp(pq->getValue(), 0.f, 1.f));
 
             auto e = cramY * box.size.y * v + padY;
 
@@ -196,6 +206,7 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
         }
 
         int sp{-1}, ep{-1};
+        bool uni{false};
         void step() override
         {
             if (module)
@@ -204,14 +215,15 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
                     (int)std::round(module->paramQuantities[LFO::STEP_SEQUENCER_START]->getValue());
                 auto se =
                     (int)std::round(module->paramQuantities[LFO::STEP_SEQUENCER_END]->getValue());
-
-                if (sp != ss || ep != se)
+                auto su = (bool)(module->paramQuantities[LFO::UNIPOLAR]->getValue() > 0.5);
+                if (sp != ss || ep != se || uni != su)
                 {
                     bdwLight->dirty = true;
                     bdw->dirty = true;
                 }
                 sp = ss;
                 ep = se;
+                uni = su;
             }
             rack::app::SliderKnob::step();
         }
@@ -868,6 +880,8 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             {
                 nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
                 nvgStrokeWidth(vg, 1.25);
+                nvgLineJoin(vg, NVG_ROUND);
+                nvgLineCap(vg, NVG_BUTT);
                 nvgStroke(vg);
             }
             else
