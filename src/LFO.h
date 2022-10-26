@@ -215,6 +215,20 @@ struct LFO : modules::XTModule
             }
         }
 
+        configInput(INPUT_TRIGGER, "Retrigger Full LFO");
+        configInput(INPUT_TRIGGER_ENVONLY, "Retrigger Envelope Only");
+        configInput(INPUT_CLOCK_RATE, "Clock");
+        configInput(INPUT_PHASE_DIRECT, "Direct Phase (0-10v for 0-1 Phase)");
+        for (int i = 0; i < n_mod_inputs; ++i)
+            configInput(LFO_MOD_INPUT + i, std::string("Mod ") + std::to_string(i + 1));
+
+        configOutput(OUTPUT_MIX, "LFO Wave x Envelope Generator");
+        configOutput(OUTPUT_WAVE, "LFO Wave");
+        configOutput(OUTPUT_ENV, "Envelope Generator");
+        configOutput(OUTPUT_TRIGPHASE, "Trigger on End of Wave Cycle");
+        configOutput(OUTPUT_TRIGA, "Trigger on end of Envelope Stage or Step Trigger A");
+        configOutput(OUTPUT_TRIGB, "Trigger on end of Envelope or Step Trigger B");
+
         modAssist.initialize(this);
     }
 
