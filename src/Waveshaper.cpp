@@ -389,15 +389,34 @@ struct WaveshaperSelector : widgets::ParamJogSelector
             return;
         if (!getParamQuantity())
             return;
-        getParamQuantity()->setValue(id);
+
+        auto pq = getParamQuantity();
+        auto *h = new rack::history::ParamChange;
+        h->name = std::string("change waveshaper type");
+        h->moduleId = pq->module->id;
+        h->paramId = pq->paramId;
+        h->oldValue = pq->getValue();
+        h->newValue = id;
+        APP->history->push(h);
+        pq->setValue(id);
     }
 
+    int lastShape{-1};
     bool isDirty() override
     {
         if (forceDirty)
         {
             forceDirty = false;
             return true;
+        }
+        if (getParamQuantity())
+        {
+            auto s = (int)std::round(getParamQuantity()->getValue());
+            if (s != lastShape)
+            {
+                lastShape = s;
+                return true;
+            }
         }
         return false;
     }
