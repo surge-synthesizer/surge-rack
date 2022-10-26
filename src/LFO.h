@@ -367,8 +367,8 @@ struct LFO : modules::XTModule
             }
             else
             {
-                tat = (tat == DEFAULT) ? END_OF_ENV_SEGMENT : tat;
-                tbt = (tbt == DEFAULT) ? END_OF_ENV : tbt;
+                tat = END_OF_ENV_SEGMENT;
+                tbt = END_OF_ENV;
             }
 
             float ts[3][16];
