@@ -40,6 +40,38 @@ struct VCFWidget : widgets::XTModuleWidget
     }
 };
 
+struct FilterChangeAction : rack::history::ModuleAction
+{
+    int priorType{0}, priorSubType{0}, newType{0}, newSubType{0};
+    explicit FilterChangeAction(VCF *m)
+    {
+        moduleId = m->id;
+
+        priorType = (int)std::round(m->paramQuantities[VCF::VCF_TYPE]->getValue());
+        priorSubType = (int)std::round(m->paramQuantities[VCF::VCF_SUBTYPE]->getValue());
+        newType = priorType;
+        newSubType = priorSubType;
+    }
+
+    void undo() override
+    {
+        auto *module = APP->engine->getModule(moduleId);
+        if (!module)
+            return;
+        module->paramQuantities[VCF::VCF_TYPE]->setValue(priorType);
+        module->paramQuantities[VCF::VCF_SUBTYPE]->setValue(priorSubType);
+    }
+
+    void redo() override
+    {
+        auto *module = APP->engine->getModule(moduleId);
+        if (!module)
+            return;
+        module->paramQuantities[VCF::VCF_TYPE]->setValue(newType);
+        module->paramQuantities[VCF::VCF_SUBTYPE]->setValue(newSubType);
+    }
+};
+
 struct VCFSelector : widgets::ParamJogSelector
 {
     FilterSelectorMapper fsm;
@@ -120,18 +152,33 @@ struct VCFSelector : widgets::ParamJogSelector
             return;
         if (!getParamQuantity())
             return;
+        auto vcfm = static_cast<VCF *>(module);
+        auto h = new FilterChangeAction(vcfm);
+        h->newType = id;
+        h->newSubType = vcfm->defaultSubtype[id];
+        APP->history->push(h);
+
         getParamQuantity()->setValue(id);
         // FixMe: have a default type per type
-        auto vcfm = static_cast<VCF *>(module);
         module->params[VCF::VCF_SUBTYPE].setValue(vcfm->defaultSubtype[id]);
     }
 
+    int lastType{-1};
     bool isDirty() override
     {
         if (forceDirty)
         {
             forceDirty = false;
             return true;
+        }
+        if (getParamQuantity())
+        {
+            int type = (int)std::round(getParamQuantity()->getValue());
+            if (type != lastType)
+            {
+                lastType = type;
+                return true;
+            }
         }
         return false;
     }
@@ -186,7 +233,7 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         if (i >= sst::filters::fut_subcount[type])
             i = 0;
 
-        getParamQuantity()->setValue(i);
+        setSubType(i);
     }
 
     bool hasPresets() override
@@ -211,7 +258,7 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         for (int i = 0; i < ct; ++i)
         {
             menu->addChild(rack::createMenuItem(VCF::subtypeLabel(type, i), "", [this, i]() {
-                this->getParamQuantity()->setValue(i);
+                setSubType(i);
                 forceDirty = true;
             }));
         }
@@ -222,6 +269,12 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         forceDirty = true;
         if (!getParamQuantity())
             return;
+
+        auto vcfm = static_cast<VCF *>(module);
+        auto h = new FilterChangeAction(vcfm);
+        h->newSubType = id;
+        APP->history->push(h);
+
         getParamQuantity()->setValue(id);
     }
 

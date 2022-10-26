@@ -159,7 +159,7 @@ template <int fxType> struct FX : modules::XTModule
         modAssist.initialize(this);
         polyModAssist.initialize(this);
         if (maxPresets > 0)
-            loadPreset(0);
+            loadPreset(0, false);
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
@@ -335,8 +335,52 @@ template <int fxType> struct FX : modules::XTModule
         return 0;
     }
 
-    void loadPreset(int which)
+    struct PresetChangeAction : rack::history::ModuleAction
     {
+        json_t* moduleJ{nullptr};
+        int presetId{-1};
+
+        ~PresetChangeAction()
+        {
+            if (moduleJ)
+                json_decref(moduleJ);
+        }
+
+        void stash(FX<fxType> *fx, int ps)
+        {
+            assert(fx);
+            moduleId = fx->id;
+            presetId = ps;
+            moduleJ = APP->engine->moduleToJson(fx);
+        }
+
+        void undo()
+        {
+            auto* module = APP->engine->getModule(moduleId);
+            if (module)
+            {
+                module->fromJson(moduleJ);
+            }
+        }
+
+        void redo()
+        {
+            auto* module = APP->engine->getModule(moduleId);
+            auto* fx = dynamic_cast<FX<fxType> *>(module);
+            if (fx)
+                fx->loadPreset(presetId);
+        }
+    };
+
+    void loadPreset(int which, bool recordHistory=true)
+    {
+        if (recordHistory)
+        {
+            auto h = new PresetChangeAction();
+            h->stash(this, which);
+            APP->history->push(h);
+        }
+        
         const auto &ps = presets[which];
 
         for (int i = 0; i < n_fx_params; ++i)
