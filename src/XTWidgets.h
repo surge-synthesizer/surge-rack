@@ -1801,32 +1801,66 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         if (!pq || !uq)
             return;
 
+        auto off = rack::mm2px(0.4);
+        auto span = box.size.y - 2 * off;
+
         auto uv = (uq->getValue() - uq->getMinValue()) / (uq->getMaxValue() - uq->getMinValue());
 
-        auto np = (1 - uv) * (box.size.y - 4) + 2;
+        auto np = (1 - uv) * span + off;
 
         auto mv = pq->getValue();
-        auto mp = std::clamp(1.f - (uv + mv), 0.f, 1.f) * (box.size.y - 4) + 2;
-        auto dp = std::clamp(1.f - (uv - mv), 0.f, 1.f) * (box.size.y - 4) + 2;
+        auto mp = std::clamp(1.f - (uv + mv), 0.f, 1.f) * span + off;
+        auto dp = std::clamp(1.f - (uv - mv), 0.f, 1.f) * span + off;
 
+        auto hp = underlyerParamWidget->handle->box.pos;
+        auto hs = underlyerParamWidget->handle->box.size;
+
+        for (const auto [v,h,c] :{ std::make_tuple(mp,mp-np, style::XTStyle::KNOB_MOD_PLUS),
+                        std::make_tuple(dp, np-dp,style::XTStyle::KNOB_MOD_MINUS)
+            })
         {
-            auto start = std::min(mp, np);
-            auto height = fabs(mp - np);
+            auto start = std::min(v, np);
+            auto height = fabs(h);
             auto inset = rack::mm2px(1.5f);
 
+            // Draw above the handle
+            nvgSave(vg);
+            nvgScissor(vg, 0, 0, box.size.x, hp.y);
             nvgBeginPath(vg);
-            nvgRoundedRect(vg, inset, start, box.size.x - 2 * inset, height, inset);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_PLUS));
+            nvgRect(vg, inset, start, box.size.x - 2 * inset, height);
+            nvgFillColor(vg, style()->getColor(c));
             nvgFill(vg);
+            nvgRestore(vg);
+
+            // And below
+            nvgSave(vg);
+            nvgScissor(vg, 0, hp.y + hs.y, box.size.x, box.size.y - hp.y - hs.y);
+            nvgBeginPath(vg);
+            nvgRect(vg, inset, start, box.size.x - 2 * inset, height);
+            nvgFillColor(vg, style()->getColor(c));
+            nvgFill(vg);
+            nvgRestore(vg);
+
+            // And on transparently
+            nvgSave(vg);
+            nvgScissor(vg, 0, hp.y, box.size.x, hs.y);
+            nvgBeginPath(vg);
+            nvgRect(vg, inset, start, box.size.x - 2 * inset, height);
+            auto co = style()->getColor(c);
+            co.a = 0.3;
+            nvgFillColor(vg, co);
+            nvgFill(vg);
+            nvgRestore(vg);
         }
 
+        if (0)
         {
-            auto start = std::min(np, dp);
+            auto start  = std::min(np, dp);
             auto height = fabs(np - dp);
             auto inset = rack::mm2px(1.5f);
 
             nvgBeginPath(vg);
-            nvgRoundedRect(vg, inset, start, box.size.x - 2 * inset, height, inset);
+            nvgRect(vg, inset, start, box.size.x - 2 * inset, height);
             nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_MOD_MINUS));
             nvgFill(vg);
         }

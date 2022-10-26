@@ -567,7 +567,18 @@ struct LFOTypeWidget : rack::app::ParamWidget, style::StyleParticipant
         {
             auto dSpan = box.size.x / (nTypes);
             float which = std::floor(e.pos.x / dSpan);
-            module->paramQuantities[LFO::SHAPE]->setValue(which / (n_lfo_types - 1));
+
+            auto pq = module->paramQuantities[LFO::SHAPE];
+            auto val = which / (n_lfo_types - 1);
+            auto *h = new rack::history::ParamChange;
+            h->name = std::string("change lfo shape");
+            h->moduleId = pq->module->id;
+            h->paramId = pq->paramId;
+            h->oldValue = pq->getValue();
+            h->newValue = val;
+            APP->history->push(h);
+
+            pq->setValue(val);
             bdw->dirty = true;
             e.consume(this);
         }
@@ -1242,6 +1253,22 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
             auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
             auto lab = engine_t::makeLabelAt(bl, col, labv[col], style::XTStyle::TEXT_LABEL,
                                              layout::LayoutConstants::lfoColumnWidth_MM);
+            if (p == M::INPUT_CLOCK_RATE)
+            {
+                lab->module = module;
+                lab->hasDynamicLabel = true;
+                lab->dynamicLabel = [](auto *xm) {
+                    if (!xm)
+                        return "CLOCK";
+                    auto m = static_cast<LFO *>(xm);
+                    typedef modules::ClockProcessor<LFO> cp_t;
+
+                    if (m->clockProc.clockStyle == cp_t::QUARTER_NOTE)
+                        return "CLOCK";
+                    else
+                        return "BPM";
+                };
+            }
             addChild(lab);
 
             col++;
@@ -1350,6 +1377,44 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
             auto s0 = rack::mm2px(rack::Vec(layout::LayoutConstants::lfoColumnWidth_MM, 5));
 
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, labv[col]);
+            if (p == M::OUTPUT_TRIGA)
+            {
+                lab->module = module;
+                lab->hasDynamicLabel = true;
+                lab->dynamicLabel = [](auto *m) {
+                    if (!m)
+                        return "TRIGA";
+                    auto lf = static_cast<LFO *>(m);
+                    auto t = lf->lfostorage->shape.val.i;
+                    if (t == lt_stepseq)
+                    {
+                        return "TRIGA";
+                    }
+                    else
+                    {
+                        return "EOSEG";
+                    }
+                };
+            }
+            if (p == M::OUTPUT_TRIGB)
+            {
+                lab->module = module;
+                lab->hasDynamicLabel = true;
+                lab->dynamicLabel = [](auto *m) {
+                    if (!m)
+                        return "TRIGB";
+                    auto lf = static_cast<LFO *>(m);
+                    auto t = lf->lfostorage->shape.val.i;
+                    if (t == lt_stepseq)
+                    {
+                        return "TRIGB";
+                    }
+                    else
+                    {
+                        return "EOEG";
+                    }
+                };
+            }
             addChild(lab);
 
             col++;

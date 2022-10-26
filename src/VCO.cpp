@@ -1004,7 +1004,19 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
                 char txt[256];
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
                 surgePar.get_display(txt, true, fv);
-                men->addChild(rack::createMenuItem(txt, "", [pq, fv]() { pq->setValue(fv); }));
+                std::string nm = surgePar.get_name();
+                men->addChild(rack::createMenuItem(
+                    txt, CHECKMARK(i == surgePar.val.i), [nm, pq, fv]() {
+                        auto *h = new rack::history::ParamChange;
+                        h->name = std::string("change ") + nm;
+                        h->moduleId = pq->module->id;
+                        h->paramId = pq->paramId;
+                        h->oldValue = pq->getValue();
+                        h->newValue = fv;
+                        APP->history->push(h);
+
+                        pq->setValue(fv);
+                    }));
             }
         };
         plt->transformLabel = VCOConfig<oscType>::rightMenuTransformFunction();
