@@ -372,9 +372,11 @@ struct LFO : modules::XTModule
             }
 
             float ts[3][16];
+            // setup the base case ready for modulation below
+            for (auto ls : {lfostorageDisplay, lfostorage})
             {
                 // Setup the display storage
-                auto *par0 = &(lfostorageDisplay->rate);
+                auto *par0 = &(ls->rate);
                 for (int p = RATE; p < LFO_MOD_PARAM_0; ++p)
                 {
                     auto *par = &par0[paramOffsetByID[p]];
@@ -388,7 +390,7 @@ struct LFO : modules::XTModule
                 {
                     params[LFO::DEFORM_TYPE].setValue(dto);
                 }
-                lfostorageDisplay->deform.deform_type = dto;
+                ls->deform.deform_type = dto;
             }
 
             if (lfostorageDisplay->shape.val.i == lt_stepseq)
@@ -410,21 +412,6 @@ struct LFO : modules::XTModule
             lfostorage->rate.deactivated = direct;
             for (int c = 0; c < nChan; ++c)
             {
-                // FIX obvs replace this with the mod matrix
-                auto *par0 = &(lfostorage->rate);
-                for (int p = RATE; p < LFO_MOD_PARAM_0; ++p)
-                {
-                    auto *par = &par0[paramOffsetByID[p]];
-
-                    if (p < n_lfo_params)
-                        par->set_value_f01(modAssist.values[p - RATE][c]);
-                    else
-                        par->set_value_f01(params[p].getValue());
-                }
-                auto dt = (int)std::round(params[LFO::DEFORM_TYPE].getValue());
-                dt = std::clamp(dt, 0, lt_num_deforms[lfostorage->shape.val.i]);
-                lfostorage->deform.deform_type = dt;
-
                 bool inNewAttack = firstProcess;
                 bool inNewEnvAttack = false;
                 // move this to every sample and record it eliminating the first process thing too
@@ -477,6 +464,20 @@ struct LFO : modules::XTModule
                     params[RANDOM_PHASE].getValue() > 0.5 ? lm_random : lm_keytrigger;
 
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
+
+                // Apply the modulation to the copied result to preserve temposync
+                auto *par0 = &(lfostorage->rate);
+                auto &pt = storage->getPatch().scenedata[0];
+                for (int p = RATE; p < RATE + n_lfo_params; ++p)
+                {
+                    auto *oap = &par0[paramOffsetByID[p]];
+                    if (oap->valtype == vt_float)
+                    {
+                        pt[oap->param_id_in_scene].f +=
+                            modAssist.modvalues[p - RATE][c] * (oap->val_max.f - oap->val_min.f);
+                    }
+                }
+
                 if (inNewAttack)
                 {
                     surge_lfo[c]->attack();
