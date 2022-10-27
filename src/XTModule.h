@@ -97,6 +97,9 @@ struct XTModule : public rack::Module
         showBuildInfo();
         storage = std::make_unique<SurgeStorage>(dataPath);
         storage->getPatch().init_default_values();
+        storage->getPatch().copy_globaldata(storage->getPatch().globaldata);
+        storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0], 0);
+        storage->getPatch().copy_scenedata(storage->getPatch().scenedata[1], 1);
 
         if (!showedPathsOnce)
         {
