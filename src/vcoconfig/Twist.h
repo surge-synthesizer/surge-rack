@@ -83,7 +83,7 @@ static std::string twistSecondParam(modules::XTModule *mo)
     case 7: // vowel
         return "SPECIES";
     case 8: // gran cloud
-        return "DENISTY";
+        return "DENSITY";
     case 9: // filtered noise
         return "FREQ";
     case 10: // part noise

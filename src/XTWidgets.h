@@ -1699,6 +1699,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto tsize = tray->box.size.y;
         auto span = tsize - hsize - 2;
         handle->box.pos.y = npos * span + 1;
+        handleFB->dirty = true;
     }
 
     float priorV{-103241.f};
@@ -1709,9 +1710,12 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
             return;
         if (pq->getValue() != priorV)
         {
+            positionHandleByQuantity();
             bdw->dirty = true;
+            bdwLight->dirty = true;
+
+            priorV = pq->getValue();
         }
-        priorV = pq->getValue();
 
         rack::app::SliderKnob::step();
     }
