@@ -187,6 +187,9 @@ struct Delay : modules::XTModule
         hpPost->suspend();
 
         modulationAssistant.initialize(this);
+
+        configBypass(INPUT_L, OUTPUT_L);
+        configBypass(INPUT_R, OUTPUT_R);
     }
     std::string getName() override { return "Delay"; }
 
@@ -255,8 +258,8 @@ struct Delay : modules::XTModule
             }
         }
         modulationAssistant.updateValues(this);
-        auto il = inputs[INPUT_L].getVoltage() * RACK_TO_SURGE_OSC_MUL;
-        auto ir = inputs[INPUT_R].getVoltage() * RACK_TO_SURGE_OSC_MUL;
+        auto il = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+        auto ir = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
         modVal += dMod;
 

@@ -69,6 +69,15 @@ struct DelayLineByFreq : modules::XTModule
             lineL[i] = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
             lineR[i] = std::make_unique<SSESincDelayLine<delayLineLength>>(storage->sinctable);
         }
+
+        configInput(INPUT_L, "In Left");
+        configInput(INPUT_R, "In Right");
+        configInput(INPUT_VOCT, "Delay Time as Frequency in v/oct");
+        configInput(OUTPUT_L, "Out Left");
+        configInput(OUTPUT_R, "Out Right");
+
+        configBypass(INPUT_L, OUTPUT_L);
+        configBypass(INPUT_R, OUTPUT_R);
     }
     std::string getName() override { return "DelayLineByFreq"; }
 
