@@ -29,6 +29,12 @@ struct ModMatrixWidget : widgets::XTModuleWidget
     std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_matrix_params> overlays;
     std::array<widgets::ModulatableKnob *, M::n_matrix_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
 };
 
 struct MatrixDisplay : rack::Widget, style::StyleParticipant

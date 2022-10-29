@@ -46,6 +46,13 @@ struct DelayWidget : widgets::XTModuleWidget
             rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
                                  [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
+
+
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
 };
 
 struct TimeDisplay : rack::widget::TransparentWidget, style::StyleParticipant
