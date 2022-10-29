@@ -991,7 +991,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
             if (!pq)
                 return;
 
-            auto &surgePar = vcm->oscstorage->p[VCOConfig<oscType>::rightMenuParamId()];
+            auto &surgePar = vcm->oscstorage_display->p[VCOConfig<oscType>::rightMenuParamId()];
             if (!(surgePar.valtype == vt_int))
                 return;
 

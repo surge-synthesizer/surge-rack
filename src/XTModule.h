@@ -343,7 +343,7 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
         bool valid{false};
         float v = par->calculate_modulation_value_from_string(s, emsg, valid);
         if (valid)
-            setValue(v * (par->val_max.f - par->val_min.f));
+            setValue(v * (par->val_max.f - par->val_min.f) );
     }
 
     virtual std::string getLabel() override
@@ -351,7 +351,7 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
         auto par = surgepar();
         if (!par)
         {
-            return ParamQuantity::getLabel() + " SPLATTO";
+            return ParamQuantity::getLabel() + " SOFTWARE ERROR";
         }
 
         return ParamQuantity::getLabel() + " to " + std::string(par->get_name());
@@ -365,11 +365,22 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
             return ParamQuantity::getDisplayValueString();
         }
 
-        char txt[256];
-        par->get_display_of_modulation_depth(txt, getValue(), true,
+        char txt[256], txt2[256];
+        ModulationDisplayInfoWindowStrings iw;
+        auto norm = surgepar()->val_max.f - surgepar()->val_min.f;
+        par->get_display_of_modulation_depth(txt, getValue() * norm, true,
+                                             Parameter::ModulationDisplayMode::InfoWindow,
+                                             &iw);
+        par->get_display_of_modulation_depth(txt2, getValue() * norm, true,
                                              Parameter::ModulationDisplayMode::Menu);
 
-        return txt;
+        if (iw.val.empty())
+            return txt2;
+
+        std::ostringstream oss;
+        oss << iw.dvalplus << " (" << iw.val << " to " << iw.valplus << " @10v; "
+                          << iw.valminus << " @-10v)";
+        return oss.str();
     }
 };
 
