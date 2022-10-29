@@ -57,6 +57,13 @@ struct MixerWidget : widgets::XTModuleWidget
                                                    [this, m](auto *x) { meterChannelMenu(x, m); }));
         }
     }
+
+
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
 };
 
 struct VUWidget : rack::TransparentWidget, style::StyleParticipant

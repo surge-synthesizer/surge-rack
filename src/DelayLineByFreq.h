@@ -109,7 +109,9 @@ struct DelayLineByFreq : modules::XTModule
                 (params[VOCT].getValue() + 5) * 12 + inputs[INPUT_VOCT].getVoltage(i) * 12;
 
             auto n2p = storage->note_to_pitch_ignoring_tuning(pitch0) * Tunings::MIDI_0_FREQ;
-            auto tm = storage->samplerate / n2p - params[CORRECTION].getValue();
+            float tm = storage->samplerate / n2p - params[CORRECTION].getValue();
+
+            tm = std::clamp(tm, FIRipol_N * 1.f, delayLineLength * 1.f);
 
             auto dl = lineL[i]->read(tm);
             auto dr = lineR[i]->read(tm);

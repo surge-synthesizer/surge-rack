@@ -84,6 +84,12 @@ struct LFOWidget : widgets::XTModuleWidget
         menu->addChild(rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
                                             [m]() { m->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
+    
+    void selectModulator(int mod) override
+    {
+        if (toggles[mod])
+            toggles[mod]->onToggle(!toggles[mod]->pressedState);
+    }
 };
 
 struct LFOStepWidget : rack::Widget, style::StyleParticipant
