@@ -248,6 +248,7 @@ struct VCF : public modules::XTModule
         }
         else if (lastPolyR == -1 || lastPolyL == -1)
         {
+            // mono case
             int channels = std::max(lastPolyL, lastPolyR);
             monoChannelOffset = (lastPolyR == -1) ? 0 : 1;
             int poly = (lastPolyR == -1) ? lastPolyL : lastPolyR;
@@ -384,7 +385,7 @@ struct VCF : public modules::XTModule
                 coefMaker[pv].updateState(qfus[qf], qp);
             }
 
-            for (int i = 0; i < nSIMDSlots; ++i)
+            for (int i = 0; i < MAX_POLY >> 2; ++i)
             {
                 auto tig = modulationAssistant.valuesSSE[IN_GAIN][i];
                 dInGain[i] = _mm_mul_ps(_mm_sub_ps(tig, currentInGain[i]), oneOverBlock);
@@ -399,7 +400,7 @@ struct VCF : public modules::XTModule
             processPosition = 0;
         }
 
-        for (int i = 0; i < nSIMDSlots; ++i)
+        for (int i = 0; i < MAX_POLY >> 2; i ++)
         {
             currentInGain[i] = _mm_add_ps(currentInGain[i], dInGain[i]);
             currentOutGain[i] = _mm_add_ps(currentOutGain[i], dOutGain[i]);
@@ -457,7 +458,7 @@ struct VCF : public modules::XTModule
             }
 
             float mvUnload alignas(16)[n_vcf_params][MAX_POLY];
-            for (int i = 0; i < nSIMDSlots; ++i)
+            for (int i = 0; i < MAX_POLY >> 2; i ++)
             {
                 _mm_store_ps(&mvUnload[IN_GAIN][i << 2], currentInGain[i]);
                 _mm_store_ps(&mvUnload[OUT_GAIN][i << 2], currentOutGain[i]);
