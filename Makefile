@@ -1,19 +1,6 @@
 RACK_DIR ?= ../..
 include $(RACK_DIR)/arch.mk
 
-ifdef ARCH_WIN
-    CMAKE += -DCMAKE_SYSTEM_NAME=Windows
-endif
-ifdef MSYSTEM
-    CMAKE += -G "MSYS Makefiles"
-endif
-ifdef ARCH_MAC
-    CMAKE += -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
-endif
-ifdef ARCH_LIN
-    CMAKE += -DCMAKE_SYSTEM_NAME=Linux
-endif
-
 SURGE_RACK_BASE_VERSION=XT1-0-1
 SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
 SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
@@ -133,6 +120,20 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/
 
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
+
+
+ifdef ARCH_WIN
+    CMAKE += -DCMAKE_SYSTEM_NAME=Windows
+endif
+ifdef MSYSTEM
+    CMAKE += -G "MSYS Makefiles"
+endif
+ifdef ARCH_MAC
+    CMAKE += -DCMAKE_SYSTEM_NAME=Darwin # -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+endif
+ifdef ARCH_LIN
+    CMAKE += -DCMAKE_SYSTEM_NAME=Linux
+endif
 
 
 # Add Surge Specific make flags based on architecture
