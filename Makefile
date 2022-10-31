@@ -122,6 +122,20 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/
 include $(RACK_DIR)/plugin.mk
 
 
+ifdef ARCH_WIN
+    CMAKE += -DCMAKE_SYSTEM_NAME=Windows
+endif
+ifdef MSYSTEM
+    CMAKE += -G "MSYS Makefiles"
+endif
+ifdef ARCH_MAC
+    CMAKE += -DCMAKE_SYSTEM_NAME=Darwin # -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+endif
+ifdef ARCH_LIN
+    CMAKE += -DCMAKE_SYSTEM_NAME=Linux
+endif
+
+
 # Add Surge Specific make flags based on architecture
 ifdef ARCH_MAC
 # Obvioulsy get rid of this one day
