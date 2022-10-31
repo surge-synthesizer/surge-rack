@@ -74,6 +74,8 @@ struct LFO : modules::XTModule
         STEP_SEQUENCER_TRIGGER_0 = STEP_SEQUENCER_STEP_0 + n_steps,
         STEP_SEQUENCER_START = STEP_SEQUENCER_TRIGGER_0 + n_steps,
         STEP_SEQUENCER_END,
+
+        SCALE_RAW_OUTPUTS,
         NUM_PARAMS
     };
     enum InputIds
@@ -190,6 +192,8 @@ struct LFO : modules::XTModule
         configParam(STEP_SEQUENCER_START, 0, n_steps - 1, 0, "First Loop Point")->snapEnabled =
             true;
         configParam(STEP_SEQUENCER_END, 1, n_steps, n_steps, "Last Loop Point")->snapEnabled = true;
+
+        configParam(SCALE_RAW_OUTPUTS, 0, 1, 1, "Scale raw outputs by amp?");
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -424,8 +428,14 @@ struct LFO : modules::XTModule
             }
 
             lfostorage->rate.deactivated = direct;
+            bool scaleAmp = params[SCALE_RAW_OUTPUTS].getValue() > 0.5;
             for (int c = 0; c < nChan; ++c)
             {
+                float ampScale[3];
+                ampScale[0] = 1.f;
+                ampScale[1] = scaleAmp ? modAssist.values[AMPLITUDE][c] : 1;
+                ampScale[2] = scaleAmp ? modAssist.values[AMPLITUDE][c] : 1;
+
                 bool inNewAttack = firstProcess;
                 bool inNewEnvAttack = false;
                 // move this to every sample and record it eliminating the first process thing too
@@ -502,9 +512,9 @@ struct LFO : modules::XTModule
                 if (inNewAttack)
                 {
                     // Do the painful thing in the infrequent case
-                    output0[0][c / 4].s[c % 4] = surge_lfo[c]->get_output(0);
-                    output0[1][c / 4].s[c % 4] = surge_lfo[c]->get_output(1);
-                    output0[2][c / 4].s[c % 4] = surge_lfo[c]->get_output(2);
+                    output0[0][c / 4].s[c % 4] = surge_lfo[c]->get_output(0) * ampScale[0];
+                    output0[1][c / 4].s[c % 4] = surge_lfo[c]->get_output(1) * ampScale[1];
+                    output0[2][c / 4].s[c % 4] = surge_lfo[c]->get_output(2) * ampScale[2];
                     surge_lfo[c]->process_block();
                 }
                 else if (inNewEnvAttack)
@@ -557,7 +567,7 @@ struct LFO : modules::XTModule
                 }
 
                 for (int p = 0; p < 3; ++p)
-                    ts[p][c] = surge_lfo[c]->get_output(p);
+                    ts[p][c] = surge_lfo[c]->get_output(p) * ampScale[p];
             }
             for (int p = 0; p < 3; ++p)
                 for (int i = 0; i < 4; ++i)
