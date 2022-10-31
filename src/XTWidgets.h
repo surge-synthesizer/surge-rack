@@ -994,14 +994,26 @@ struct ModToggleButton : GlowOverlayHoverButton<rack::widget::Widget>
 {
     std::function<void(bool)> onToggle = [](bool isOn) {};
 
+    bool armed{false};
     void onButton(const ButtonEvent &e) override
     {
-        if (e.action == GLFW_RELEASE)
+        if (e.action == GLFW_PRESS)
+        {
+            armed = true;
+        }
+        if (armed && e.action == GLFW_RELEASE)
         {
             setState(!pressedState);
             onToggle(pressedState);
+            armed = false;
             e.consume(this);
         }
+    }
+
+    void onLeave(const LeaveEvent &e) override
+    {
+        armed = false;
+        GlowOverlayHoverButton<rack::widget::Widget>::onLeave(e);
     }
 };
 

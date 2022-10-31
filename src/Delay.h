@@ -135,6 +135,12 @@ struct Delay : modules::XTModule
             }
             return "ERROR";
         }
+
+        void setDisplayValue(float displayValue) override
+        {
+            auto dv = std::max(displayValue, 0.00001f);
+            setValue(log2(dv));
+        }
     };
 
     struct QuadRateParamQuantity : public rack::engine::ParamQuantity
@@ -144,14 +150,20 @@ struct Delay : modules::XTModule
             auto v = getValue();
             return fmt::format("{:6.2f} Hz", v * v);
         }
+
+        void setDisplayValue(float displayValue) override
+        {
+            auto dv = std::max(displayValue, 0.f);
+            setValue(sqrt(dv));
+        }
     };
     Delay() : XTModule()
     {
         setupSurgeCommon(NUM_PARAMS, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam<DelayTimeParamQuantity>(TIME_L, -3, log2(10.0), 0, "Left Delay");
-        configParam<DelayTimeParamQuantity>(TIME_R, -3, log2(10.0), 0, "Right Delay");
+        configParam<DelayTimeParamQuantity>(TIME_L, log2(0.01), log2(10.0), 0, "Left Delay");
+        configParam<DelayTimeParamQuantity>(TIME_R, log2(0.01), log2(10.0), 0, "Right Delay");
         configParam(TIME_S, -1, 1, 0, "Time Tweak", "%", 0, 2);
         configParam(FEEDBACK, 0, 1, .5, "Feedback", "%", 0, 100);
         configParam(CROSSFEED, 0, 1, 0, "CrossFeed", "%", 0, 100);
