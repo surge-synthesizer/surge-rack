@@ -134,7 +134,7 @@ template <int fxType> struct FX : modules::XTModule
             std::string name{"Mod"};
             name += std::to_string((i - FX_MOD_PARAM_0) % 4 + 1);
 
-            configParam<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1, 0,
+            configParamNoRand<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1, 0,
                                                                    name);
         }
 

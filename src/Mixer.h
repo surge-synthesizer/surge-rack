@@ -134,8 +134,8 @@ struct Mixer : modules::XTModule
         {
             auto name = std::string("Mod ") + std::to_string(i % 4 + 1);
 
-            configParam<modules::DecibelModulatorParamQuantity<Mixer>>(MIXER_MOD_PARAM_0 + i, -1, 1,
-                                                                       0, name);
+            configParamNoRand<modules::DecibelModulatorParamQuantity<Mixer>>(MIXER_MOD_PARAM_0 + i,
+                                                                             -1, 1, 0, name);
         }
 
         for (int i = 0; i < n_mod_inputs; ++i)

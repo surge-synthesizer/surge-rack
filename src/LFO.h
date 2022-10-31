@@ -171,15 +171,15 @@ struct LFO : modules::XTModule
         {
             auto name =
                 std::string("Mod ") + std::to_string((p - LFO_MOD_PARAM_0) % n_mod_inputs + 1);
-            configParam<modules::SurgeParameterModulationQuantity>(p, -1, 1, 0, name);
+            configParamNoRand<modules::SurgeParameterModulationQuantity>(p, -1, 1, 0, name);
         }
 
         configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
-        configParam(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
+        configParamNoRand(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
         configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Iniital Phase");
 
-        configParam(TRIGA_TYPE, 0, 3, DEFAULT, "Trigger A");
-        configParam(TRIGB_TYPE, 0, 3, DEFAULT, "Trigger B");
+        configParamNoRand(TRIGA_TYPE, 0, 3, DEFAULT, "Trigger A");
+        configParamNoRand(TRIGB_TYPE, 0, 3, DEFAULT, "Trigger B");
 
         for (int i = 0; i < n_steps; ++i)
         {
@@ -193,7 +193,7 @@ struct LFO : modules::XTModule
             true;
         configParam(STEP_SEQUENCER_END, 1, n_steps, n_steps, "Last Loop Point")->snapEnabled = true;
 
-        configParam(SCALE_RAW_OUTPUTS, 0, 1, 1, "Scale raw outputs by amp?");
+        configParamNoRand(SCALE_RAW_OUTPUTS, 0, 1, 1, "Scale raw outputs by amp?");
 
         for (int i = 0; i < MAX_POLY; ++i)
         {

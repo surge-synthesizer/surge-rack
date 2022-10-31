@@ -244,6 +244,13 @@ struct XTModule : public rack::Module
             readModuleSpecificJson(specificJ);
     }
 
+    template<typename T=rack::ParamQuantity, typename ...Args>
+    rack::ParamQuantity *configParamNoRand(Args... args){
+        auto *res = configParam<T>(args...);
+        res->randomizeEnabled = false;
+        return res;
+    }
+
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
     style::XTStyle::LightColor localLightColor{style::XTStyle::ORANGE},
