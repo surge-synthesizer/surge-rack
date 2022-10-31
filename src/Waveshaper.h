@@ -97,7 +97,7 @@ struct Waveshaper : public modules::XTModule
         // FIXME attach formatters here
         configParam(DRIVE, -24, 24, 0, "Drive", "dB"); // UNITS
         configParam(BIAS, -1, 1, 0, "Bias", "V", 0, 5);
-        configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
+        configParamNoRand<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
         configParam<modules::MidiNoteParamQuantity<69>>(LOCUT, -60, 70, -60, "Low Cut");
         configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "High Cut");
         configParam(LOCUT_ENABLED, 0, 1, 0);
@@ -113,7 +113,7 @@ struct Waveshaper : public modules::XTModule
             auto lb = paramQuantities[tp]->getLabel();
             std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
 
-            configParam(WSHP_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+            configParamNoRand(WSHP_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
         configInput(INPUT_L, "Left");

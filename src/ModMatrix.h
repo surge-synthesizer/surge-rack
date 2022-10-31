@@ -65,7 +65,7 @@ struct ModMatrix : modules::XTModule
         for (int i = TARGET0; i <= TARGET0 + n_matrix_params; ++i)
         {
             auto name = std::string("Target ") + std::to_string(i + 1);
-            configParam(i, -10, 10, 0, name, "V");
+            configParamNoRand(i, -10, 10, 0, name, "V");
         }
         for (int i = 0; i < n_matrix_params * n_mod_inputs; ++i)
         {
@@ -73,7 +73,7 @@ struct ModMatrix : modules::XTModule
             std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to Target " +
                                std::to_string(tp - TARGET0 + 1);
 
-            configParam(MATRIX_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+            configParamNoRand(MATRIX_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
         for (int i = 0; i < n_mod_inputs; ++i)

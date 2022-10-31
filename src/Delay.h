@@ -180,7 +180,7 @@ struct Delay : modules::XTModule
             auto lb = paramQuantities[tp]->getLabel();
             std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
 
-            configParam(DELAY_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+            configParamNoRand(DELAY_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
         configInput(INPUT_L, "Left");

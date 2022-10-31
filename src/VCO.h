@@ -195,17 +195,17 @@ template <int oscType> struct VCO : public modules::XTModule
             name += std::to_string((i - OSC_MOD_PARAM_0) % 4 + 1);
             if (pidx == PITCH_0)
             {
-                configParam(i, -1, 1, 0, name + " to Pitch", " Oct/V");
+                configParamNoRand(i, -1, 1, 0, name + " to Pitch", " Oct/V");
             }
             else
             {
-                configParam<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name);
+                configParamNoRand<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name);
             }
         }
 
-        configParam(RETRIGGER_STYLE, 0, 1, 0, "Random Phase on Retrigger");
-        configParam(EXTEND_UNISON, 0, 1, 0, "Extend Unison");
-        configParam(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
+        configParamNoRand(RETRIGGER_STYLE, 0, 1, 0, "Random Phase on Retrigger");
+        configParamNoRand(EXTEND_UNISON, 0, 1, 0, "Extend Unison");
+        configParamNoRand(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
         configParam(CHARACTER, 0, 2, 1, "Character Filter");
         configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
 

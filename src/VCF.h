@@ -101,11 +101,11 @@ struct VCF : public modules::XTModule
         // FIXME attach formatters here
         configParam<modules::VOctParamQuantity<60>>(FREQUENCY, -4, 6, 0, "Frequency");
         configParam(RESONANCE, 0, 1, sqrt(2) * 0.5, "Resonance", "%", 0.f, 100.f);
-        configParam<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1, "Pre-Filter Gain");
+        configParamNoRand<modules::DecibelParamQuantity>(IN_GAIN, 0, 2, 1, "Pre-Filter Gain");
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
-        configParam<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
+        configParamNoRand<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
 
-        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types,
+        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types-1,
                                          sst::filters::fut_obxd_4pole);
 
         int mfst = 0;
@@ -121,9 +121,9 @@ struct VCF : public modules::XTModule
             std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
 
             if (tp == FREQUENCY)
-                configParam(VCF_MOD_PARAM_0 + i, -1, 1, 0, name, " Oct/V");
+                configParamNoRand(VCF_MOD_PARAM_0 + i, -1, 1, 0, name, " Oct/V");
             else
-                configParam(VCF_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+                configParamNoRand(VCF_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
         configInput(INPUT_L, "Left");
@@ -329,6 +329,12 @@ struct VCF : public modules::XTModule
             }
             lastType = ftype;
             lastSubType = fsubtype;
+            if (lastSubType > sst::filters::fut_subcount[lastType])
+            {
+                params[VCF_SUBTYPE].setValue(0.f);
+                lastSubType = sst::filters::FilterSubType::st_Standard;
+            }
+
             defaultSubtype[lastType] = lastSubType;
             filterPtr = sst::filters::GetQFPtrFilterUnit(ftype, fsubtype);
             if (!filterPtr)
