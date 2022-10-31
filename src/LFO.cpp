@@ -64,6 +64,12 @@ struct LFOWidget : widgets::XTModuleWidget
                 auto v = m->paramQuantities[LFO::RANDOM_PHASE]->getValue() > 0.5;
                 m->paramQuantities[LFO::RANDOM_PHASE]->setValue(v ? 0 : 1);
             }));
+        menu->addChild(rack::createMenuItem(
+            "Scale LFO and EG Outputs by Amp",
+            CHECKMARK(m->params[LFO::SCALE_RAW_OUTPUTS].getValue() > 0.5), [m]() {
+                auto v = m->paramQuantities[LFO::SCALE_RAW_OUTPUTS]->getValue() > 0.5;
+                m->paramQuantities[LFO::SCALE_RAW_OUTPUTS]->setValue(v ? 0 : 1);
+            }));
         menu->addChild(new rack::MenuSeparator);
         typedef modules::ClockProcessor<LFO> cp_t;
 
@@ -84,7 +90,7 @@ struct LFOWidget : widgets::XTModuleWidget
         menu->addChild(rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
                                             [m]() { m->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
-    
+
     void selectModulator(int mod) override
     {
         if (toggles[mod])
@@ -1353,9 +1359,12 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
             auto boxy0 = bl - 5;
 
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+
             auto s0 = rack::mm2px(rack::Vec(layout::LayoutConstants::lfoColumnWidth_MM, 5));
 
-            auto lab = widgets::Label::createWithBaselineBox(p0, s0, labv[col]);
+            auto lab = widgets::Label::createWithBaselineBox(
+                p0, s0, labv[col], layout::LayoutConstants::labelSize_pt,
+                style::XTStyle::Colors::TEXT_LABEL_OUTPUT);
             addChild(lab);
 
             col++;
@@ -1382,7 +1391,9 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
             auto s0 = rack::mm2px(rack::Vec(layout::LayoutConstants::lfoColumnWidth_MM, 5));
 
-            auto lab = widgets::Label::createWithBaselineBox(p0, s0, labv[col]);
+            auto lab = widgets::Label::createWithBaselineBox(
+                p0, s0, labv[col], layout::LayoutConstants::labelSize_pt,
+                style::XTStyle::Colors::TEXT_LABEL_OUTPUT);
             if (p == M::OUTPUT_TRIGA)
             {
                 lab->module = module;
