@@ -163,8 +163,13 @@ struct LFO : modules::XTModule
         for (int p = RATE; p < LFO_MOD_PARAM_0; ++p)
         {
             auto *par = &par0[paramOffsetByID[p]];
-            configParam<modules::SurgeParameterParamQuantity>(p, 0, 1, par->get_default_value_f01(),
-                                                              par->get_name());
+            float maxv = 1.f;
+            if (p == SHAPE)
+            {
+                maxv = Parameter::intScaledToFloat(lt_stepseq, par->val_max.i, par->val_min.i);
+            }
+            configParam<modules::SurgeParameterParamQuantity>(
+                p, 0, maxv, par->get_default_value_f01(), par->get_name());
         }
 
         for (int p = LFO_MOD_PARAM_0; p < LFO_TYPE; ++p)
@@ -176,7 +181,7 @@ struct LFO : modules::XTModule
 
         configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
         configParamNoRand(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
-        configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Iniital Phase");
+        configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Initial Phase");
 
         configParamNoRand(TRIGA_TYPE, 0, 3, DEFAULT, "Trigger A");
         configParamNoRand(TRIGB_TYPE, 0, 3, DEFAULT, "Trigger B");
