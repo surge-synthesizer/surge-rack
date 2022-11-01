@@ -7,7 +7,7 @@
   "authorEmail": "",
   "authorUrl": "https://surge-synth-team.org/",
   "pluginUrl": "https://surge-synthesizer.github.io/",
-  "manualUrl": "https://surge-synthesizer.github.io/rack_manual/",
+  "manualUrl": "https://surge-synthesizer.github.io/rack_xt_manual/",
   "sourceUrl": "https://github.com/surge-synthesizer/surge-rack/",
   "donateUrl": "",
   "modules": [
