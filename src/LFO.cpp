@@ -34,7 +34,24 @@ struct LFOWidget : widgets::XTModuleWidget
     rack::Widget *wavePlot{nullptr}, *stepEditor{nullptr};
     rack::Widget *stepStart{nullptr}, *stepEnd{nullptr};
     void step() override;
-    virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+
+    void polyMenu(rack::Menu *p, M *m)
+    {
+        if (!m || !m->paramQuantities[M::NO_TRIG_POLY])
+            return;
+        p->addChild(rack::createMenuLabel("Polyphony"));
+        p->addChild(rack::createMenuLabel("Same as Trig if Connected"));
+        p->addChild(new rack::ui::MenuSeparator);
+        int cp = (int)std::round(m->paramQuantities[M::NO_TRIG_POLY]->getValue());
+        for (int i = 1; i <= 16; ++i)
+        {
+            p->addChild(rack::createMenuItem(std::to_string(i), CHECKMARK(i == cp), [m, i]() {
+                m->paramQuantities[M::NO_TRIG_POLY]->setValue(i);
+            }));
+        }
+    }
+
+    void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (!module)
             return;
@@ -58,6 +75,9 @@ struct LFOWidget : widgets::XTModuleWidget
         }
 
         menu->addChild(new rack::MenuSeparator);
+        menu->addChild(
+            rack::createSubmenuItem("Polyphony", "", [this, m](auto *x) { polyMenu(x, m); }));
+
         menu->addChild(rack::createMenuItem(
             "Random Phase on Attack", CHECKMARK(m->params[LFO::RANDOM_PHASE].getValue() > 0.5),
             [m]() {

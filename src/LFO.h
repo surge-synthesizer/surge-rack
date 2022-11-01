@@ -76,6 +76,7 @@ struct LFO : modules::XTModule
         STEP_SEQUENCER_END,
 
         SCALE_RAW_OUTPUTS,
+        NO_TRIG_POLY,
         NUM_PARAMS
     };
     enum InputIds
@@ -199,6 +200,7 @@ struct LFO : modules::XTModule
         configParam(STEP_SEQUENCER_END, 1, n_steps, n_steps, "Last Loop Point")->snapEnabled = true;
 
         configParamNoRand(SCALE_RAW_OUTPUTS, 0, 1, 1, "Scale raw outputs by amp?");
+        configParamNoRand(NO_TRIG_POLY, 1, 16, 1, "Scale raw outputs by amp?")->snapEnabled = true;
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -338,7 +340,10 @@ struct LFO : modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        int nChan = std::max(1, inputs[INPUT_TRIGGER].getChannels());
+        int basePoly = inputs[INPUT_TRIGGER].isConnected()
+                           ? 1
+                           : (int)std::round(params[NO_TRIG_POLY].getValue());
+        int nChan = std::max(basePoly, inputs[INPUT_TRIGGER].getChannels());
         nChan = std::max(nChan, inputs[INPUT_TRIGGER_ENVONLY].getChannels());
         outputs[OUTPUT_MIX].setChannels(nChan);
         outputs[OUTPUT_ENV].setChannels(nChan);
