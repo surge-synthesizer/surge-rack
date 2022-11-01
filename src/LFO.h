@@ -77,6 +77,7 @@ struct LFO : modules::XTModule
 
         SCALE_RAW_OUTPUTS,
         NO_TRIG_POLY,
+        BROADCAST_TRIG_TO_POLY,
         NUM_PARAMS
     };
     enum InputIds
@@ -109,6 +110,12 @@ struct LFO : modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         setupSurge();
     }
+
+    enum TrigBroadcastMode
+    {
+        FOLLOW_TRIG_POLY,
+        TAKE_CHANNEL_0,
+    };
 
     std::string getName() override { return "LFO"; }
 
@@ -201,6 +208,8 @@ struct LFO : modules::XTModule
 
         configParamNoRand(SCALE_RAW_OUTPUTS, 0, 1, 1, "Scale raw outputs by amp?");
         configParamNoRand(NO_TRIG_POLY, 1, 16, 1, "Scale raw outputs by amp?")->snapEnabled = true;
+        configParamNoRand(BROADCAST_TRIG_TO_POLY, FOLLOW_TRIG_POLY, TAKE_CHANNEL_0,
+                          FOLLOW_TRIG_POLY, "Trigger Broadcast Mode");
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -340,11 +349,20 @@ struct LFO : modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        int basePoly = inputs[INPUT_TRIGGER].isConnected()
-                           ? 1
-                           : (int)std::round(params[NO_TRIG_POLY].getValue());
-        int nChan = std::max(basePoly, inputs[INPUT_TRIGGER].getChannels());
-        nChan = std::max(nChan, inputs[INPUT_TRIGGER_ENVONLY].getChannels());
+        int userPoly = (int)std::round(params[NO_TRIG_POLY].getValue());
+        auto tt = (LFO::TrigBroadcastMode)std::round(params[BROADCAST_TRIG_TO_POLY].getValue());
+
+        int nChan{1};
+        if (tt == FOLLOW_TRIG_POLY &&
+            (inputs[INPUT_TRIGGER].isConnected() || inputs[INPUT_TRIGGER_ENVONLY].isConnected()))
+        {
+            nChan = std::max(1, inputs[INPUT_TRIGGER].getChannels());
+            nChan = std::max(nChan, inputs[INPUT_TRIGGER_ENVONLY].getChannels());
+        }
+        else
+        {
+            nChan = userPoly;
+        }
         outputs[OUTPUT_MIX].setChannels(nChan);
         outputs[OUTPUT_ENV].setChannels(nChan);
         outputs[OUTPUT_WAVE].setChannels(nChan);
@@ -356,14 +374,33 @@ struct LFO : modules::XTModule
                 lastStep = BLOCK_SIZE;
         }
 
-        for (int c = 0; c < nChan; ++c)
+        if (tt == FOLLOW_TRIG_POLY &&
+            (inputs[INPUT_TRIGGER].isConnected() || inputs[INPUT_TRIGGER_ENVONLY].isConnected()))
         {
+            for (int c = 0; c < nChan; ++c)
+            {
+                if (inputs[INPUT_TRIGGER].isConnected() &&
+                    envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
+                    isTriggered[c] = true;
+                if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() &&
+                    envGateTriggerEnvOnly[c].process(inputs[INPUT_TRIGGER_ENVONLY].getVoltage(c)))
+                    isTriggeredEnvOnly[c] = true;
+            }
+        }
+        else
+        {
+            // broadcast 0 to the rest
             if (inputs[INPUT_TRIGGER].isConnected() &&
-                envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
-                isTriggered[c] = true;
+                envGateTrigger[0].process(inputs[INPUT_TRIGGER].getVoltage(0)))
+                isTriggered[0] = true;
             if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() &&
-                envGateTriggerEnvOnly[c].process(inputs[INPUT_TRIGGER_ENVONLY].getVoltage(c)))
-                isTriggeredEnvOnly[c] = true;
+                envGateTriggerEnvOnly[0].process(inputs[INPUT_TRIGGER_ENVONLY].getVoltage(0)))
+                isTriggeredEnvOnly[0] = true;
+            for (int c = 1; c < nChan; ++c)
+            {
+                isTriggered[c] = isTriggered[0];
+                isTriggeredEnvOnly[c] = isTriggeredEnvOnly[0];
+            }
         }
 
         if (inputs[INPUT_CLOCK_RATE].isConnected())
@@ -441,6 +478,10 @@ struct LFO : modules::XTModule
             bool scaleAmp = params[SCALE_RAW_OUTPUTS].getValue() > 0.5;
             for (int c = 0; c < nChan; ++c)
             {
+                int trigChan = c;
+                if (tt == TAKE_CHANNEL_0)
+                    trigChan = 0;
+
                 float ampScale[3];
                 ampScale[0] = 1.f;
                 ampScale[1] = scaleAmp ? modAssist.values[AMPLITUDE][c] : 1;
@@ -464,14 +505,14 @@ struct LFO : modules::XTModule
                     isGateConnected[c] = true;
                 }
                 else if (inputs[INPUT_TRIGGER].isConnected() && isGated[c] &&
-                         (inputs[INPUT_TRIGGER].getVoltage(c) < 1.f))
+                         (inputs[INPUT_TRIGGER].getVoltage(trigChan) < 1.f))
                 {
                     isGated[c] = false;
                     surge_lfo[c]->release();
                     isGateConnected[c] = true;
                 }
                 else if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() && isGated[c] &&
-                         (inputs[INPUT_TRIGGER_ENVONLY].getVoltage(c) < 1.f))
+                         (inputs[INPUT_TRIGGER_ENVONLY].getVoltage(trigChan) < 1.f))
                 {
                     isGated[c] = false;
                     surge_lfo[c]->release();

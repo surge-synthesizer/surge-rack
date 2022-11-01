@@ -40,7 +40,19 @@ struct LFOWidget : widgets::XTModuleWidget
         if (!m || !m->paramQuantities[M::NO_TRIG_POLY])
             return;
         p->addChild(rack::createMenuLabel("Polyphony"));
-        p->addChild(rack::createMenuLabel("Same as Trig if Connected"));
+        p->addChild(new rack::ui::MenuSeparator);
+
+        auto tt = (LFO::TrigBroadcastMode)std::round(
+            m->paramQuantities[M::BROADCAST_TRIG_TO_POLY]->getValue());
+
+        p->addChild(rack::createMenuItem(
+            "Trigger Sets Polyphony If Connected", CHECKMARK(tt == M::FOLLOW_TRIG_POLY), [m]() {
+                m->paramQuantities[M::BROADCAST_TRIG_TO_POLY]->setValue(M::FOLLOW_TRIG_POLY);
+            }));
+
+        p->addChild(rack::createMenuItem(
+            "No Trig or Trig Chan 1 Triggers All", CHECKMARK(tt == M::TAKE_CHANNEL_0),
+            [m]() { m->paramQuantities[M::BROADCAST_TRIG_TO_POLY]->setValue(M::TAKE_CHANNEL_0); }));
         p->addChild(new rack::ui::MenuSeparator);
         int cp = (int)std::round(m->paramQuantities[M::NO_TRIG_POLY]->getValue());
         for (int i = 1; i <= 16; ++i)
