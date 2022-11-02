@@ -30,8 +30,8 @@ template <> FXConfig<fxt_treemonster>::layout_t FXConfig<fxt_treemonster>::getLa
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
-    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - (14 - 9) * 0.5f;
-
+    const auto row1 = row2 - FXLayoutHelper::knobGap16_MM;
+    
     const auto col15 = (col[0] + col[1]) * 0.5f;
     const auto col25 = (col[2] + col[3]) * 0.5f;
 

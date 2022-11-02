@@ -47,7 +47,6 @@ struct DelayWidget : widgets::XTModuleWidget
                                  [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
 
-
     void selectModulator(int mod) override
     {
         if (toggles[mod])
@@ -131,7 +130,7 @@ DelayWidget::DelayWidget(DelayWidget::M *module) : XTModuleWidget()
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * layout::LayoutConstants::numberOfScrews,
                          rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "Delay", "fx", "BlankNoDisplay");
+    auto bg = new widgets::Background(box.size, "DELAY", "fx", "BlankNoDisplay");
     addChild(bg);
 
     auto col = std::vector<float>();

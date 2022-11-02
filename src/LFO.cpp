@@ -202,8 +202,9 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
 
             auto s = box.size.y * 0.5;
             if (uni)
+            {
                 s = box.size.y;
-
+            }
             auto e = cramY * box.size.y * v + padY;
             if (s > e)
             {
@@ -902,6 +903,16 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             nvgStroke(vg);
         }
 
+        if (isuni)
+        {
+            nvgBeginPath(vg);
+            auto y = (0.5 * scaleComp + scaleOff) * valScale;
+            nvgMoveTo(vg, sx * 0, sy * y);
+            nvgLineTo(vg, sx * valScale, sy * y);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgStrokeWidth(vg, 0.5);
+            nvgStroke(vg);
+        }
         // Now fill the actual path with gradients then stroke the line
         auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
         auto gcp = col;
@@ -950,6 +961,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 {
                     nvgLineTo(vg, box.size.x, box.size.y);
                     nvgLineTo(vg, 0, box.size.y);
+                    std::swap(gcp, gcn);
                     nvgFillPaint(
                         vg, nvgLinearGradient(vg, 0, box.size.y * 0.2, 0, box.size.y, gcn, gcp));
                     // nvgFillColor(vg, nvgRGB(255, 0, 0));
@@ -1353,7 +1365,7 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     stepEditor = ws;
 
     auto gutterX = ww->box.pos.x;
-    auto gutterY = ww->box.pos.y + ww->box.size.y + rack::mm2px(0.5);
+    auto gutterY = ww->box.pos.y + ww->box.size.y - rack::mm2px(0.5);
     auto gutterHeight = rack::mm2px(5);
     auto uni = widgets::PlotAreaSwitch::create(
         rack::Vec(gutterX, gutterY), rack::Vec(22, gutterHeight), "UNI", module, M::UNIPOLAR);
