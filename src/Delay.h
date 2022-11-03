@@ -131,7 +131,7 @@ struct Delay : modules::XTModule
                 auto tl = m->storage->note_to_pitch_ignoring_tuning(12 * v);
                 tl = std::clamp(m->storage->samplerate * tl, 0.f, delayLineLength * 1.f) *
                      m->storage->samplerate_inv;
-                return fmt::format("{:6.2f} s", tl);
+                return fmt::format("{:7.3f} s", tl);
             }
             return "ERROR";
         }
