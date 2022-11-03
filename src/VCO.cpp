@@ -429,6 +429,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     {
         oscPath.clear();
 
+        if (VCOConfig<oscType>::requiresWavetables())
+        {
+            if (module->wavetableCount == 0)
+                return;
+        }
+
         if (module && module->draw3DWavetable)
         {
             auto wtlockguard = std::lock_guard<std::mutex>(module->storage->waveTableDataMutex);
@@ -568,7 +574,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
     void drawPlotBackground(NVGcontext *vg)
     {
-        if (module && VCOConfig<oscType>::requiresWavetables() && module->draw3DWavetable)
+        if (module && VCOConfig<oscType>::requiresWavetables() &&
+            module->draw3DWavetable &&
+            module->wavetableCount > 0)
         {
             draw3DBackground(vg);
         }

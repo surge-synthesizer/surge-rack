@@ -117,6 +117,7 @@ template <int oscType> struct VCO : public modules::XTModule
     modules::ModulationAssistant<VCO<oscType>, n_osc_params + 1, PITCH_CV, n_mod_inputs,
                                  OSC_MOD_INPUT>
         modAssist;
+    int wavetableCount{0};
 
     VCO() : XTModule(), halfbandIN(6, true)
     {
@@ -128,6 +129,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
         memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
         setupSurgeCommon(NUM_PARAMS, VCOConfig<oscType>::requiresWavetables());
+
+        wavetableCount = storage->wt_list.size();
 
         oscstorage = &(storage->getPatch().scene[0].osc[0]);
         oscstorage_display = &(storage->getPatch().scene[0].osc[1]);
@@ -346,6 +349,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
     std::string getWavetableName()
     {
+        if (wavetableCount == 0)
+            return "ERROR: NO WAVETABLES";
         int idx = wavetableIndex;
         if (idx >= 0)
             return storage->wt_list[idx].name;
@@ -399,6 +404,9 @@ template <int oscType> struct VCO : public modules::XTModule
         bool reInitEveryOSC{false};
         if constexpr (VCOConfig<oscType>::requiresWavetables())
         {
+            if (wavetableCount == 0)
+                return;
+
             if (suspendForWT)
                 return;
 
