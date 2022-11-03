@@ -634,8 +634,9 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
                                         module);
     addChild(fpw);
 
-    auto subType = VCFSubtypeSelector::create(rack::Vec(plotStartX, underPlotStartY),
-                                              rack::Vec(plotW, underPlotH), module, M::VCF_SUBTYPE);
+    auto subType =
+        VCFSubtypeSelector::create(rack::Vec(plotStartX, underPlotStartY),
+                                   rack::Vec(plotW, fivemm - halfmm), module, M::VCF_SUBTYPE);
     addChild(subType);
 
     typedef layout::LayoutItem lay_t;

@@ -1831,7 +1831,7 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         auto hp = underlyerParamWidget->handle->box.pos;
         auto hs = underlyerParamWidget->handle->box.size;
 
-        for (const auto [v,h,c] :{ std::make_tuple(mp,mp-np, style::XTStyle::KNOB_MOD_PLUS),
+        for (const auto &[v,h,c] :{ std::make_tuple(mp,mp-np, style::XTStyle::KNOB_MOD_PLUS),
                         std::make_tuple(dp, np-dp,style::XTStyle::KNOB_MOD_MINUS)
             })
         {
