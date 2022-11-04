@@ -209,6 +209,16 @@ template <> VCOConfig<ot_twist>::layout_t VCOConfig<ot_twist>::getLayout()
 template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }
 template <> std::string VCOConfig<ot_twist>::retriggerLabel() { return "TRIG"; }
 
+template <> inline void VCOConfig<ot_twist>::configureVCOSpecificParameters(VCO<ot_twist> *m)
+{
+    m->configParam<modules::OnOffParamQuantity>(VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
+                                                "Enable LPG on Trigger");
+
+    for (int i = 1; i < VCO<ot_twist>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_twist>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
+    }
+}
 template <> void VCOConfig<ot_twist>::processVCOSpecificParameters(VCO<ot_twist> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);

@@ -574,6 +574,42 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     }
 };
 
+
+struct OnOffParamQuantity : rack::engine::ParamQuantity
+{
+    std::string getDisplayValueString() override
+    {
+        auto v = getValue();
+        if (v < 0.5)
+            return "Off";
+
+        return "On";
+    }
+
+    void setDisplayValueString(std::string s) override
+    {
+        auto sl = s;
+        for (auto &c : sl)
+            c = std::tolower(c);
+
+        bool val = 0;
+        if (sl == "off" )
+        {
+            val = false;
+        }
+        else if (sl == "on")
+        {
+            val = true;
+        }
+        else
+        {
+            val = (std::atof(s.c_str()) > 0.5);
+        }
+        setValue(val);
+    }
+};
+
+
 template <typename M> struct DecibelModulatorParamQuantity : rack::ParamQuantity
 {
     inline M *xtm() { return static_cast<M *>(module); }

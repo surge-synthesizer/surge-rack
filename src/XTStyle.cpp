@@ -60,7 +60,7 @@ void XTStyle::initialize()
             if (defj)
                 lightColId = json_integer_value(defj);
 
-            if (lightColId >= ORANGE && lightColId <= RED)
+            if (lightColId >= ORANGE && lightColId <= WHITE)
             {
                 setGlobalLightColor((LightColor)lightColId);
             }
@@ -76,7 +76,7 @@ void XTStyle::initialize()
             if (defj)
                 lightColId = json_integer_value(defj);
 
-            if (lightColId >= ORANGE && lightColId <= RED)
+            if (lightColId >= ORANGE && lightColId <= WHITE)
             {
                 setGlobalModLightColor((LightColor)lightColId);
             }
@@ -88,22 +88,6 @@ void XTStyle::initialize()
         json_decref(fd);
     }
 }
-
-// Font dictionary
-struct InternalFontMgr
-{
-    static std::map<std::string, int> fontMap;
-    static int get(NVGcontext *vg, std::string resName)
-    {
-        if (fontMap.find(resName) == fontMap.end())
-        {
-            std::string fontPath = rack::asset::plugin(pluginInstance, resName);
-
-            fontMap[resName] = nvgCreateFont(vg, resName.c_str(), fontPath.c_str());
-        }
-        return fontMap[resName];
-    }
-};
 
 static XTStyle::Style defaultGlobalStyle{XTStyle::MID};
 static XTStyle::LightColor defaultGlobalLightColor{XTStyle::ORANGE};
@@ -292,13 +276,14 @@ NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor 
         return nvgRGB(158, 130, 243);
     case PINK:
         return nvgRGB(255, 82, 163);
+    case WHITE:
+        return nvgRGB(250, 250, 250);
     case RED:
         return nvgRGB(240, 67, 67);
     }
 
     return nvgRGB(255, 0, 1);
 }
-std::map<std::string, int> InternalFontMgr::fontMap;
 
 std::unordered_set<StyleParticipant *> XTStyle::listeners;
 
@@ -334,6 +319,8 @@ std::string XTStyle::lightColorName(sst::surgext_rack::style::XTStyle::LightColo
         return "Purple";
     case PINK:
         return "Pink";
+    case WHITE:
+        return "White";
     case RED:
         return "Red";
     }
@@ -381,17 +368,15 @@ static const char *fontFaceBold()
 
 int XTStyle::fontId(NVGcontext *vg)
 {
-    static int fid{-1};
-    if (fid < 0)
-        fid = InternalFontMgr::get(vg, fontFace());
-    return fid;
+    auto fontPath = rack::asset::plugin(pluginInstance, fontFace());
+    auto font = APP->window->loadFont(fontPath);
+    return font->handle;
 }
 
 int XTStyle::fontIdBold(NVGcontext *vg)
 {
-    static int fid{-1};
-    if (fid < 0)
-        fid = InternalFontMgr::get(vg, fontFaceBold());
-    return fid;
+    auto fontPath = rack::asset::plugin(pluginInstance, fontFaceBold());
+    auto font = APP->window->loadFont(fontPath);
+    return font->handle;
 }
 } // namespace sst::surgext_rack::style

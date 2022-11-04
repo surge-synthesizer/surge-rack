@@ -51,7 +51,8 @@ struct XTStyle
         BLUE,
         PURPLE,
         PINK,
-        RED // must be last
+        RED,
+        WHITE // If you change this as last, change the ranges in XTMW and XGS.cpp
     };
     LightColor *activeModLight{nullptr}, *activeLight{nullptr};
 

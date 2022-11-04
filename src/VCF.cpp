@@ -229,7 +229,7 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
 
         i += dir;
         if (i < 0)
-            i = sst::filters::fut_subcount[type];
+            i = sst::filters::fut_subcount[type] - 1;
         if (i >= sst::filters::fut_subcount[type])
             i = 0;
 

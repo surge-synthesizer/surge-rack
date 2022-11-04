@@ -31,7 +31,7 @@ template <> FXConfig<fxt_treemonster>::layout_t FXConfig<fxt_treemonster>::getLa
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::knobGap16_MM;
-    
+
     const auto col15 = (col[0] + col[1]) * 0.5f;
     const auto col25 = (col[2] + col[3]) * 0.5f;
 
@@ -66,8 +66,10 @@ template <> FXConfig<fxt_treemonster>::layout_t FXConfig<fxt_treemonster>::getLa
 template <> void FXConfig<fxt_treemonster>::configSpecificParams(FX<fxt_treemonster> *m)
 {
     typedef FX<fxt_treemonster> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1, "Enable Lo Cut");
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1, "Enable Post Hi Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
+                                                "Enable Low Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
+                                                "Enable High Cut");
 
     // Default TM to polyphonic
     m->polyphonicMode = true;
