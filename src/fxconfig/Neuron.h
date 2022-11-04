@@ -73,7 +73,7 @@ template <> FXConfig<fxt_neuron>::layout_t FXConfig<fxt_neuron>::getLayout()
         {LayoutItem::KNOB9, "BIAS", n_t::neuron_bias_bf, col[3], row2},
 
         {LayoutItem::KNOB9, "FREQ", n_t::neuron_comb_freq, col[0], row3},
-        {LayoutItem::KNOB9, "SEP", n_t::neuron_comb_sep, col[1], row3},
+        {LayoutItem::KNOB9, "SPACING", n_t::neuron_comb_sep, col[1], row3},
         LayoutItem::createGrouplabel("COMB", col[0], row3, 2),
 
         {LayoutItem::KNOB9, "WIDTH", n_t::neuron_width, col[2], row3},
