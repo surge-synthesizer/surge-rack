@@ -54,13 +54,24 @@ struct XTStyle
         RED,
         WHITE // If you change this as last, change the ranges in XTMW and XGS.cpp
     };
-    LightColor *activeModLight{nullptr}, *activeLight{nullptr};
+    LightColor *activeModulationColor{nullptr}, *activeDisplayRegionColor{nullptr},
+        *activeControlValueColor{nullptr}, *activePowerButtonColor{nullptr};
+
+    static void setGlobalDisplayRegionColor(LightColor c);
+    static LightColor getGlobalDisplayRegionColor();
+
+    static void setGlobalModulationColor(LightColor c);
+    static LightColor getGlobalModulationColor();
+
+    static void setGlobalControlValueColor(LightColor c);
+    static LightColor getGlobalControlValueColor();
+    static bool getControlValueColorDistinct();
+    static void setControlValueColorDistinct(bool b);
+
+    static void setGlobalPowerButtonColor(LightColor c);
+    static LightColor getGlobalPowerButtonColor();
 
     static std::string lightColorName(LightColor c);
-    static void setGlobalLightColor(LightColor c);
-    static LightColor getGlobalLightColor();
-    static void setGlobalModLightColor(LightColor c);
-    static LightColor getGlobalModLightColor();
     static NVGcolor lightColorColor(LightColor c);
 
     enum Colors
@@ -71,11 +82,16 @@ struct XTStyle
         KNOB_MOD_MARK,
         KNOB_RING_VALUE,
 
+        PANEL_RULER,
+
         PLOT_CURVE,
         PLOT_MARKS,
 
         MOD_BUTTON_LIGHT_ON,
         MOD_BUTTON_LIGHT_OFF,
+
+        POWER_BUTTON_LIGHT_ON,
+        POWER_BUTTON_LIGHT_OFF,
 
         TEXT_LABEL,
         TEXT_LABEL_OUTPUT,
@@ -114,6 +130,7 @@ struct StyleParticipant
 
     void attachToGlobalStyle();
     void attachTo(style::XTStyle::Style *, style::XTStyle::LightColor *,
+                  style::XTStyle::LightColor *, style::XTStyle::LightColor *,
                   style::XTStyle::LightColor *);
 
     std::shared_ptr<XTStyle> stylePtr{nullptr};

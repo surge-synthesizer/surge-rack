@@ -33,8 +33,11 @@ void XTStyle::initialize()
     if (!fd)
     {
         setGlobalStyle(MID);
-        setGlobalLightColor(ORANGE);
-        setGlobalModLightColor(BLUE);
+        setGlobalDisplayRegionColor(ORANGE);
+        setGlobalModulationColor(BLUE);
+        setGlobalControlValueColor(ORANGE);
+        setControlValueColorDistinct(false);
+        setGlobalPowerButtonColor(GREEN);
     }
     else
     {
@@ -62,11 +65,11 @@ void XTStyle::initialize()
 
             if (lightColId >= ORANGE && lightColId <= WHITE)
             {
-                setGlobalLightColor((LightColor)lightColId);
+                setGlobalDisplayRegionColor((LightColor)lightColId);
             }
             else
             {
-                setGlobalLightColor(ORANGE);
+                setGlobalDisplayRegionColor(ORANGE);
             }
         }
 
@@ -78,26 +81,72 @@ void XTStyle::initialize()
 
             if (lightColId >= ORANGE && lightColId <= WHITE)
             {
-                setGlobalModLightColor((LightColor)lightColId);
+                setGlobalModulationColor((LightColor)lightColId);
             }
             else
             {
-                setGlobalModLightColor(BLUE);
+                setGlobalModulationColor(BLUE);
             }
+        }
+
+        {
+            json_t *defj = json_object_get(fd, "defaultControlValueColor");
+            int lightColId{-1};
+            if (defj)
+                lightColId = json_integer_value(defj);
+
+            if (lightColId >= ORANGE && lightColId <= WHITE)
+            {
+                setGlobalControlValueColor((LightColor)lightColId);
+            }
+            else
+            {
+                setGlobalControlValueColor(ORANGE);
+            }
+        }
+
+        {
+            json_t *defj = json_object_get(fd, "defaultPowerButtonColor");
+            int lightColId{-1};
+            if (defj)
+                lightColId = json_integer_value(defj);
+
+            if (lightColId >= ORANGE && lightColId <= WHITE)
+            {
+                setGlobalPowerButtonColor((LightColor)lightColId);
+            }
+            else
+            {
+                setGlobalPowerButtonColor(GREEN);
+            }
+        }
+
+        {
+            json_t *defj = json_object_get(fd, "controlValueColorDistinct");
+            bool cvd{false};
+            if (defj)
+                cvd = json_boolean_value(defj);
+            setControlValueColorDistinct(cvd);
         }
         json_decref(fd);
     }
 }
 
 static XTStyle::Style defaultGlobalStyle{XTStyle::MID};
-static XTStyle::LightColor defaultGlobalLightColor{XTStyle::ORANGE};
-static XTStyle::LightColor defaultGlobalModLightColor{XTStyle::BLUE};
+static XTStyle::LightColor defaultGlobalDisplayRegionColor{XTStyle::ORANGE};
+static XTStyle::LightColor defaultGlobalModulationColor{XTStyle::BLUE};
+static XTStyle::LightColor defaultGlobalControlValueColor{XTStyle::ORANGE};
+static XTStyle::LightColor defaultGlobalPowerButtonColor{XTStyle::GREEN};
+static bool controlValueColorDistinct{false};
+
 static std::shared_ptr<XTStyle> constructDefaultStyle()
 {
     auto res = std::make_shared<XTStyle>();
     res->activeStyle = &defaultGlobalStyle;
-    res->activeModLight = &defaultGlobalModLightColor;
-    res->activeLight = &defaultGlobalLightColor;
+    res->activeModulationColor = &defaultGlobalModulationColor;
+    res->activeDisplayRegionColor = &defaultGlobalDisplayRegionColor;
+    res->activeControlValueColor = &defaultGlobalControlValueColor;
+    res->activePowerButtonColor = &defaultGlobalPowerButtonColor;
     return res;
 }
 
@@ -113,30 +162,69 @@ void XTStyle::setGlobalStyle(sst::surgext_rack::style::XTStyle::Style s)
 }
 XTStyle::Style XTStyle::getGlobalStyle() { return defaultGlobalStyle; }
 
-void XTStyle::setGlobalLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
+void XTStyle::setGlobalDisplayRegionColor(sst::surgext_rack::style::XTStyle::LightColor c)
 {
-    if (c != defaultGlobalLightColor)
+    if (c != defaultGlobalDisplayRegionColor)
     {
-        defaultGlobalLightColor = c;
+        defaultGlobalDisplayRegionColor = c;
         updateJSON();
 
         notifyStyleListeners();
     }
 }
-XTStyle::LightColor XTStyle::getGlobalLightColor() { return defaultGlobalLightColor; }
-
-void XTStyle::setGlobalModLightColor(sst::surgext_rack::style::XTStyle::LightColor c)
+XTStyle::LightColor XTStyle::getGlobalDisplayRegionColor()
 {
-    if (c != defaultGlobalModLightColor)
+    return defaultGlobalDisplayRegionColor;
+}
+
+bool XTStyle::getControlValueColorDistinct() { return controlValueColorDistinct; }
+void XTStyle::setControlValueColorDistinct(bool b)
+{
+    if (b != controlValueColorDistinct)
     {
-        defaultGlobalModLightColor = c;
+        controlValueColorDistinct = b;
+        updateJSON();
+        notifyStyleListeners();
+    }
+}
+
+void XTStyle::setGlobalModulationColor(sst::surgext_rack::style::XTStyle::LightColor c)
+{
+    if (c != defaultGlobalModulationColor)
+    {
+        defaultGlobalModulationColor = c;
         updateJSON();
 
         notifyStyleListeners();
     }
 }
 
-XTStyle::LightColor XTStyle::getGlobalModLightColor() { return defaultGlobalModLightColor; }
+XTStyle::LightColor XTStyle::getGlobalModulationColor() { return defaultGlobalModulationColor; }
+
+XTStyle::LightColor XTStyle::getGlobalControlValueColor() { return defaultGlobalControlValueColor; }
+
+void XTStyle::setGlobalControlValueColor(sst::surgext_rack::style::XTStyle::LightColor c)
+{
+    if (c != defaultGlobalControlValueColor)
+    {
+        defaultGlobalControlValueColor = c;
+        updateJSON();
+
+        notifyStyleListeners();
+    }
+}
+
+XTStyle::LightColor XTStyle::getGlobalPowerButtonColor() { return defaultGlobalPowerButtonColor; }
+void XTStyle::setGlobalPowerButtonColor(sst::surgext_rack::style::XTStyle::LightColor c)
+{
+    if (c != defaultGlobalPowerButtonColor)
+    {
+        defaultGlobalPowerButtonColor = c;
+        updateJSON();
+
+        notifyStyleListeners();
+    }
+}
 
 void XTStyle::updateJSON()
 {
@@ -147,11 +235,17 @@ void XTStyle::updateJSON()
 
     json_t *rootJ = json_object();
     json_t *stJ = json_integer(defaultGlobalStyle);
-    json_t *lcJ = json_integer(defaultGlobalLightColor);
-    json_t *lcM = json_integer(defaultGlobalModLightColor);
+    json_t *lcJ = json_integer(defaultGlobalDisplayRegionColor);
+    json_t *lcM = json_integer(defaultGlobalModulationColor);
     json_object_set_new(rootJ, "defaultSkin", stJ);
     json_object_set_new(rootJ, "defaultLightColor", lcJ);
     json_object_set_new(rootJ, "defaultModLightColor", lcM);
+    json_object_set_new(rootJ, "defaultControlValueColor",
+                        json_integer(defaultGlobalControlValueColor));
+    json_object_set_new(rootJ, "defaultPowerButtonColor",
+                        json_integer(defaultGlobalPowerButtonColor));
+    json_object_set_new(rootJ, "controlValueColorDistinct",
+                        json_boolean(controlValueColorDistinct));
     FILE *f = std::fopen(defaultsFile.c_str(), "w");
     if (f)
     {
@@ -170,21 +264,29 @@ const std::shared_ptr<XTStyle> &StyleParticipant::style()
 void StyleParticipant::attachToGlobalStyle()
 {
     style()->activeStyle = &defaultGlobalStyle;
-    style()->activeModLight = &defaultGlobalModLightColor;
-    style()->activeLight = &defaultGlobalLightColor;
+    style()->activeModulationColor = &defaultGlobalModulationColor;
+    style()->activeDisplayRegionColor = &defaultGlobalDisplayRegionColor;
+    style()->activeControlValueColor = &defaultGlobalControlValueColor;
+    style()->activePowerButtonColor = &defaultGlobalPowerButtonColor;
 }
-void StyleParticipant::attachTo(style::XTStyle::Style *s, style::XTStyle::LightColor *l,
-                                style::XTStyle::LightColor *m)
+void StyleParticipant::attachTo(style::XTStyle::Style *s, style::XTStyle::LightColor *display,
+                                style::XTStyle::LightColor *modulation,
+                                style::XTStyle::LightColor *control,
+                                style::XTStyle::LightColor *power)
 {
     style()->activeStyle = s;
-    style()->activeLight = l;
-    style()->activeModLight = m;
+    style()->activeDisplayRegionColor = display;
+    style()->activeModulationColor = modulation;
+    style()->activeControlValueColor = control;
+    style()->activePowerButtonColor = power;
 }
 
 const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
 {
     switch (c)
     {
+
+    case PANEL_RULER:
     case KNOB_RING:
     {
         switch (*activeStyle)
@@ -194,12 +296,18 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         case MID:
             return nvgRGB(40, 40, 40);
         case LIGHT:
+        {
+            auto lc = *activeDisplayRegionColor;
+            if (lc == WHITE && c == KNOB_RING)
+                return nvgRGB(0x33, 0x33, 0x33);
             return nvgRGB(194, 194, 194);
         }
+        }
     }
+
     case KNOB_MOD_PLUS:
     case MOD_BUTTON_LIGHT_ON:
-        return lightColorColor(*activeModLight);
+        return lightColorColor(*activeModulationColor);
     case KNOB_MOD_MINUS:
         return nvgRGB(180, 180, 220);
     case KNOB_MOD_MARK:
@@ -225,7 +333,11 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case PLOT_MARKS:
         return nvgRGB(60, 60, 60);
 
+    case POWER_BUTTON_LIGHT_ON:
+        return lightColorColor(*activePowerButtonColor);
+
     case MOD_BUTTON_LIGHT_OFF:
+    case POWER_BUTTON_LIGHT_OFF:
         return nvgRGB(0x82, 0x82, 0x82);
 
     case TEXT_LABEL:
@@ -247,11 +359,17 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         return nvgRGB(0, 0, 0);
 
     case KNOB_RING_VALUE:
+    {
+        if (getControlValueColorDistinct())
+            return lightColorColor(*activeControlValueColor);
+        else
+            return lightColorColor(*activeDisplayRegionColor);
+    }
     case PLOT_CURVE:
     case PLOT_CONTROL_TEXT:
     case PLOT_CONTROL_VALUE_BG:
     {
-        return lightColorColor(*activeLight);
+        return lightColorColor(*activeDisplayRegionColor);
     }
     }
 
@@ -277,7 +395,7 @@ NVGcolor XTStyle::lightColorColor(sst::surgext_rack::style::XTStyle::LightColor 
     case PINK:
         return nvgRGB(255, 82, 163);
     case WHITE:
-        return nvgRGB(250, 250, 250);
+        return nvgRGB(235, 235, 235);
     case RED:
         return nvgRGB(240, 67, 67);
     }

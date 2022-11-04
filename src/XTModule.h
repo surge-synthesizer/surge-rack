@@ -193,8 +193,10 @@ struct XTModule : public rack::Module
         json_object_set_new(rootJ, "buildInfo", json_string(getBuildInfo().c_str()));
         json_object_set_new(rootJ, "isCoupledToGlobalStyle", json_boolean(isCoupledToGlobalStyle));
         json_object_set_new(rootJ, "localStyle", json_integer(localStyle));
-        json_object_set_new(rootJ, "localLightColor", json_integer(localLightColor));
-        json_object_set_new(rootJ, "localModLightColor", json_integer(localModLightColor));
+        json_object_set_new(rootJ, "localDisplayRegionColor", json_integer(localDisplayRegionColor));
+        json_object_set_new(rootJ, "localModulationColor", json_integer(localModulationColor));
+        json_object_set_new(rootJ, "localControlValueColor", json_integer(localControlValueColor));
+        json_object_set_new(rootJ, "localPowerButtonColor", json_integer(localPowerButtonColor));
         return rootJ;
     }
 
@@ -207,12 +209,18 @@ struct XTModule : public rack::Module
         auto ls = json_object_get(commonJ, "localStyle");
         if (ls)
             localStyle = (style::XTStyle::Style)json_integer_value(ls);
-        auto ll = json_object_get(commonJ, "localLightColor");
+        auto ll = json_object_get(commonJ, "localDisplayRegionColor");
         if (ll)
-            localLightColor = (style::XTStyle::LightColor)json_integer_value(ll);
-        auto lm = json_object_get(commonJ, "localModLightColor");
+            localDisplayRegionColor = (style::XTStyle::LightColor)json_integer_value(ll);
+        auto lm = json_object_get(commonJ, "localModulationColor");
         if (lm)
-            localModLightColor = (style::XTStyle::LightColor)json_integer_value(lm);
+            localModulationColor = (style::XTStyle::LightColor)json_integer_value(lm);
+        lm = json_object_get(commonJ, "localControlValueColor");
+        if (lm)
+            localControlValueColor = (style::XTStyle::LightColor)json_integer_value(lm);
+        lm = json_object_get(commonJ, "localPowerButtonColor");
+        if (lm)
+            localPowerButtonColor = (style::XTStyle::LightColor)json_integer_value(lm);
     }
 
     virtual json_t *makeModuleSpecificJson() { return nullptr; }
@@ -253,8 +261,10 @@ struct XTModule : public rack::Module
 
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
-    style::XTStyle::LightColor localLightColor{style::XTStyle::ORANGE},
-        localModLightColor{style::XTStyle::BLUE};
+    style::XTStyle::LightColor localDisplayRegionColor{style::XTStyle::ORANGE},
+        localModulationColor{style::XTStyle::BLUE},
+        localControlValueColor{style::XTStyle::ORANGE},
+        localPowerButtonColor{style::XTStyle::GREEN};
 };
 
 struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity

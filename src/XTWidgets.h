@@ -725,7 +725,7 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
         nvgArcTo(vg, x0, yline, x0 + 2, yline, 2);
         nvgLineTo(vg, textBox[0] - 2, yline);
         nvgStrokeWidth(vg, 1.2);
-        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
         nvgStroke(vg);
 
         nvgBeginPath(vg);
@@ -734,7 +734,7 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
         nvgArcTo(vg, x1, yline, x1 - 2, yline, 2);
         nvgLineTo(vg, textBox[2] + 2, yline);
         nvgStrokeWidth(vg, 1.2);
-        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
         nvgStroke(vg);
     }
 
@@ -803,7 +803,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
 
     void drawBackground(NVGcontext *vg)
     {
-        auto col = style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF);
+        auto col = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_OFF);
         if (hovered)
         {
             col.r *= 1.2;
@@ -813,7 +813,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (type == POWER)
         {
             nvgBeginPath(vg);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
             nvgFillColor(vg, col);
             nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius, radius);
             nvgFill(vg);
@@ -823,7 +823,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (type == ABSOLUTE)
         {
             nvgBeginPath(vg);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
             nvgFillColor(vg, col);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
@@ -836,7 +836,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (type == EXTENDED)
         {
             setupExtendedPath(vg);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
             nvgFillColor(vg, col);
             nvgStrokeWidth(vg, 1.2);
             nvgStroke(vg);
@@ -855,14 +855,14 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (type == POWER)
         {
             nvgBeginPath(vg);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
+            nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
             nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * 0.9, radius * 0.9);
             nvgFill(vg);
         }
         if (type == ABSOLUTE)
         {
             nvgBeginPath(vg);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
+            nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
@@ -872,7 +872,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (type == EXTENDED)
         {
             setupExtendedPath(vg);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_ON));
+            nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
             nvgFill(vg);
         }
     }
@@ -1564,7 +1564,7 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
         {
             auto y0 = i * (ringpx + padpx);
             nvgBeginPath(vg);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
             nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
             nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5);
             nvgFill(vg);
@@ -1583,7 +1583,7 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
                   Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights - 1);
         nvgBeginPath(vg);
         auto y0 = pq * (ringpx + padpx);
-        nvgStrokeColor(vg, style()->getColor(style::XTStyle::KNOB_RING));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
         nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
         nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5);
         nvgFill(vg);
