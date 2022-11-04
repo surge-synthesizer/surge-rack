@@ -58,7 +58,6 @@ struct MixerWidget : widgets::XTModuleWidget
         }
     }
 
-
     void selectModulator(int mod) override
     {
         if (toggles[mod])
@@ -128,8 +127,8 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     auto bg = new widgets::Background(box.size, "MIXER", "other", "Mixer");
     addChild(bg);
 
-    std::vector<std::string> labels{"OSC1", "OSC2", "OSC3",  "NOISE",
-                                    "R1X2", "R2X3", "COLOR", "GAIN"};
+    std::vector<std::string> labels{"IN 1",   "IN 2",   "IN 3",  "NOISE",
+                                    "RM 1x2", "RM 2x3", "COLOR", "GAIN"};
     int kr{0}, kc{0};
     for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
     {
@@ -168,7 +167,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     {
         for (int i = 0; i < 6; ++i)
         {
-            std::string lab = "O" + std::to_string(i + 1);
+            std::string lab = "IN " + std::to_string(i + 1);
             if (i == 3)
                 lab = "N";
             if (i == 4)
@@ -233,7 +232,7 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
         {
             auto bl = layout::LayoutConstants::inputLabelBaseline_MM - (1 - kr) * portSpacing;
             auto ll =
-                std::string("L - OSC") + std::to_string((i - M::INPUT_OSC1_L) / 2 + 1) + " - R";
+                std::string("L - IN ") + std::to_string((i - M::INPUT_OSC1_L) / 2 + 1) + " - R";
             auto laylab = engine_t::makeSpanLabelAt(bl, kc, ll, 2);
             this->addChild(laylab);
         }

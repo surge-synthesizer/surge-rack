@@ -112,7 +112,7 @@ struct Mixer : modules::XTModule
         // Config
         for (int i = OSC1_LEV; i <= RM2X3_LEV; ++i)
         {
-            std::string name = "Osc " + std::to_string(i - OSC1_LEV + 1) + " Level";
+            std::string name = "Input " + std::to_string(i - OSC1_LEV + 1) + " Level";
             configParam<modules::DecibelParamQuantity>(i, 0, 1, i == OSC1_LEV ? 1 : 0, name);
         }
         configParam(NOISE_COL, -1, 1, 0, "Noise Color", "%", 0, 100);
@@ -120,13 +120,13 @@ struct Mixer : modules::XTModule
 
         for (int i = OSC1_SOLO; i <= RM2x3_SOLO; ++i)
         {
-            std::string name = "Osc " + std::to_string(i - OSC1_LEV + 1) + " Solo";
+            std::string name = "Input " + std::to_string(i - OSC1_LEV + 1) + " Solo";
             configParam(i, 0, 1, 0, name);
         }
 
         for (int i = OSC1_MUTE; i <= RM2x3_MUTE; ++i)
         {
-            std::string name = "Osc " + std::to_string(i - OSC1_LEV + 1) + " Mute";
+            std::string name = "Input " + std::to_string(i - OSC1_LEV + 1) + " Mute";
             configParam(i, 0, 1, i == OSC1_MUTE ? 0 : 1, name);
         }
 
@@ -145,7 +145,7 @@ struct Mixer : modules::XTModule
 
         for (int i = INPUT_OSC1_L; i <= INPUT_OSC3_L; i += 2)
         {
-            std::string nbase = "Osc " + std::to_string(i / 2 + 1);
+            std::string nbase = "Input " + std::to_string(i / 2 + 1);
             configInput(i, nbase + " Left");
             configInput(i + 1, nbase + " Right");
         }

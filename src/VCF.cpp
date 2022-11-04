@@ -641,7 +641,7 @@ VCFWidget::VCFWidget(VCFWidget::M *module) : XTModuleWidget()
 
     typedef layout::LayoutItem lay_t;
     for (const auto &lay : {lay_t::createVCFWSBigKnob(M::FREQUENCY, "FREQUENCY"),
-                            lay_t::createVCOKnob(M::RESONANCE, "RESO", 0, 2),
+                            lay_t::createVCOKnob(M::RESONANCE, "RES", 0, 2),
                             lay_t::createVCOKnob(M::MIX, "MIX", 0, 3),
                             lay_t::createVCOKnob(M::IN_GAIN, "DRIVE", 1, 2),
                             lay_t::createVCOKnob(M::OUT_GAIN, "GAIN", 1, 3)})

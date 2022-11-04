@@ -28,11 +28,12 @@ template <> VCOConfig<ot_classic>::layout_t VCOConfig<ot_classic>::getLayout()
         // clang-format off
         LayoutItem::createVCOKnob(M::PITCH_0, "PITCH", 0, 0),
         LayoutItem::createVCOKnob(cp + 0, "SHAPE", 0, 1),
-        LayoutItem::createVCOKnob(cp + 1, "WIDTH1", 0, 2),
-        LayoutItem::createVCOKnob(cp + 2, "WIDTH2", 0, 3),
+        LayoutItem::createVCOKnob(cp + 1, "", 0, 2),
+        LayoutItem::createVCOKnob(cp + 2, "", 0, 3),
+        LayoutItem::createVCOSpanLabel("1- WIDTH - 2", 0, 2, 2),
 
         LayoutItem::createVCOKnob(cp + 5, "DETUNE", 1, 0),
-        LayoutItem::createVCOKnob(cp + 3, "SUBMIX", 1, 2),
+        LayoutItem::createVCOKnob(cp + 3, "SUB MIX", 1, 2),
         LayoutItem::createVCOKnob(cp + 4, "SYNC", 1, 3),
         // clang-format on
     };

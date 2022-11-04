@@ -54,7 +54,7 @@ template <> FXConfig<fxt_flanger>::layout_t FXConfig<fxt_flanger>::getLayout()
         LayoutItem::createGrouplabel("COMB", col[1], row2, 3),
 
         {LayoutItem::KNOB9, "DEPTH", FlangerEffect::fl_feedback, col[0], row3},
-        {LayoutItem::KNOB9, "HI CUT", FlangerEffect::fl_damping, col[1], row3},
+        {LayoutItem::KNOB9, "DAMPING", FlangerEffect::fl_damping, col[1], row3},
         LayoutItem::createGrouplabel("FEEDBACK", col[0], row3, 2),
 
         {LayoutItem::KNOB9, "WIDTH", FlangerEffect::fl_width, col[2], row3},

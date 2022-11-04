@@ -46,7 +46,7 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
         {LayoutItem::MOMENTARY_PARAM, "KNOCK", FX<fxt_spring_reverb>::FX_SPECIFIC_PARAM_0, col[1], row2},
         LayoutItem::createGrouplabel("KNOCK", col[0], row2, 2),
 
-        {LayoutItem::KNOB12, "REFL", 2, FXLayoutHelper::bigCol1, row2 - 1.0f},
+        {LayoutItem::KNOB12, "REFLECT", 2, FXLayoutHelper::bigCol1, row2 - 1.0f},
 
         {LayoutItem::KNOB9, "SPIN", 4, col[0], row3},
         {LayoutItem::KNOB9, "CHAOS", 5, col[1], row3},
