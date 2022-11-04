@@ -80,7 +80,7 @@ void lightMenuFor(rack::Menu *p, XTModuleWidget *w)
 
     auto glob = xtm->isCoupledToGlobalStyle;
     auto clight = glob ? style::XTStyle::getGlobalLightColor() : xtm->localLightColor;
-    for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::RED;
+    for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::WHITE;
          ++ski)
     {
         auto sk = (style::XTStyle::LightColor)ski;
@@ -103,7 +103,7 @@ void modLightMenuFor(rack::Menu *p, XTModuleWidget *w)
 
     auto glob = xtm->isCoupledToGlobalStyle;
     auto clight = glob ? style::XTStyle::getGlobalModLightColor() : xtm->localModLightColor;
-    for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::RED;
+    for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::WHITE;
          ++ski)
     {
         auto sk = (style::XTStyle::LightColor)ski;

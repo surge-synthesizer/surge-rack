@@ -100,8 +100,8 @@ struct Waveshaper : public modules::XTModule
         configParamNoRand<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
         configParam<modules::MidiNoteParamQuantity<69>>(LOCUT, -60, 70, -60, "Low Cut");
         configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "High Cut");
-        configParam(LOCUT_ENABLED, 0, 1, 0);
-        configParam(HICUT_ENABLED, 0, 1, 0);
+        configParam<modules::OnOffParamQuantity>(LOCUT_ENABLED, 0, 1, 0, "Enable Low Cut");
+        configParam<modules::OnOffParamQuantity>(HICUT_ENABLED, 0, 1, 0, "Enable High Cut");
 
         configParam<WaveshaperTypeParamQuanity>(WSHP_TYPE, 0,
                                                 (int)sst::waveshapers::WaveshaperType::n_ws_types,

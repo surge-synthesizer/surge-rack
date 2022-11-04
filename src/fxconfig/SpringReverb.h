@@ -62,7 +62,8 @@ template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::g
 template <> void FXConfig<fxt_spring_reverb>::configSpecificParams(FX<fxt_spring_reverb> *m)
 {
     typedef FX<fxt_spring_reverb> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0, "Interrupting Cow");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0,
+                                                "Interrupting Cow");
 }
 
 /*

@@ -53,7 +53,7 @@ template <> FXConfig<fxt_chow>::layout_t FXConfig<fxt_chow>::getLayout()
 template <> void FXConfig<fxt_chow>::configSpecificParams(FX<fxt_chow> *m)
 {
     typedef FX<fxt_chow> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0, "Flip");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0, "Flip it Good");
 }
 
 /*

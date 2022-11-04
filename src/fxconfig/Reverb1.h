@@ -30,7 +30,7 @@ template <> constexpr int FXConfig<fxt_reverb>::specificParamCount() { return 2;
 template <> FXConfig<fxt_reverb>::layout_t FXConfig<fxt_reverb>::getLayout()
 {
     const auto col = FXLayoutHelper::standardColumns_MM();
-    
+
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::knobGap16_MM;
@@ -67,8 +67,10 @@ template <> FXConfig<fxt_reverb>::layout_t FXConfig<fxt_reverb>::getLayout()
 template <> void FXConfig<fxt_reverb>::configSpecificParams(FX<fxt_reverb> *m)
 {
     typedef FX<fxt_reverb> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1, "Enable LowCut");
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1, "Enable HiCut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
+                                                "Enable Low Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
+                                                "Enable High Cut");
 }
 
 template <> void FXConfig<fxt_reverb>::processSpecificParams(FX<fxt_reverb> *m)

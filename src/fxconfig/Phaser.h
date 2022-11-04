@@ -71,7 +71,8 @@ template <> FXConfig<fxt_phaser>::layout_t FXConfig<fxt_phaser>::getLayout()
 template <> void FXConfig<fxt_phaser>::configSpecificParams(FX<fxt_phaser> *m)
 {
     typedef FX<fxt_phaser> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1, "Enable Tone");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
+                                                "Enable Tone Filter");
 }
 
 template <> void FXConfig<fxt_phaser>::processSpecificParams(FX<fxt_phaser> *m)

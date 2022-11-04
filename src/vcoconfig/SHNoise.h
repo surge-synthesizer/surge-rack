@@ -44,6 +44,19 @@ template <> VCOConfig<ot_shnoise>::layout_t VCOConfig<ot_shnoise>::getLayout()
     };
 }
 
+template <> inline void VCOConfig<ot_shnoise>::configureVCOSpecificParameters(VCO<ot_shnoise> *m)
+{
+    m->configParam<modules::OnOffParamQuantity>(VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
+                                                "Enable Low Cut");
+    m->configParam<modules::OnOffParamQuantity>(VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 1, 0, 1, 0,
+                                                "Enable High Cut");
+
+    for (int i = 2; i < VCO<ot_shnoise>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
+    }
+}
+
 template <> void VCOConfig<ot_shnoise>::processVCOSpecificParameters(VCO<ot_shnoise> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_shnoise>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);

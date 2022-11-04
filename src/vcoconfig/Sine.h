@@ -43,6 +43,18 @@ template <> VCOConfig<ot_sine>::layout_t VCOConfig<ot_sine>::getLayout()
 
 template <> int VCOConfig<ot_sine>::rightMenuParamId() { return 0; }
 
+template <> inline void VCOConfig<ot_sine>::configureVCOSpecificParameters(VCO<ot_sine> *m)
+{
+    m->configParam<modules::OnOffParamQuantity>(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
+                                                "Enable Low Cut");
+    m->configParam<modules::OnOffParamQuantity>(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1, 0, 1, 0,
+                                                "Enable High Cut");
+
+    for (int i = 2; i < VCO<ot_sine>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_sine>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
+    }
+}
 template <> void VCOConfig<ot_sine>::oscillatorSpecificSetup(VCO<ot_sine> *m)
 {
     for (auto s : {m->oscstorage, m->oscstorage_display})

@@ -766,18 +766,25 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
     }
 
     bool hovered{false};
-    void onHover(const HoverEvent &e) override { e.consume(this); }
+    void onHover(const HoverEvent &e) override {
+        e.consume(this);
+        rack::app::Switch::onHover(e);
+    }
     void onEnter(const EnterEvent &e) override
     {
         hovered = true;
         bdw->dirty = true;
         e.consume(this);
+
+        rack::app::Switch::onEnter(e);
     }
     void onLeave(const LeaveEvent &e) override
     {
         hovered = false;
         bdw->dirty = true;
         e.consume(this);
+
+        rack::app::Switch::onLeave(e);
     }
 
     void setupExtendedPath(NVGcontext *vg)
@@ -910,18 +917,23 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
     }
 
     bool hovered{false};
-    void onHover(const typename T::HoverEvent &e) override { e.consume(this); }
+    void onHover(const typename T::HoverEvent &e) override {
+        e.consume(this);
+        T::onHover(e);
+    }
     void onEnter(const typename T::EnterEvent &e) override
     {
         hovered = true;
         bw->dirty = true;
         e.consume(this);
+        T::onEnter(e);
     }
     void onLeave(const typename T::LeaveEvent &e) override
     {
         hovered = false;
         bw->dirty = true;
         e.consume(this);
+        T::onLeave(e);
     }
 
     void drawButtonGlow(NVGcontext *vg)

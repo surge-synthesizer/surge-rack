@@ -31,7 +31,7 @@ template <> constexpr int FXConfig<fxt_ringmod>::specificParamCount() { return 2
 template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
 {
     const auto col = FXLayoutHelper::standardColumns_MM();
-    
+
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - (14 - 9) * 0.5f;
@@ -71,8 +71,10 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
 template <> void FXConfig<fxt_ringmod>::configSpecificParams(FX<fxt_ringmod> *m)
 {
     typedef FX<fxt_ringmod> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1, "Enable Lo Cut");
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1, "Enable Hi Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
+                                                "Enable Low Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
+                                                "Enable High Cut");
 }
 
 template <> void FXConfig<fxt_ringmod>::processSpecificParams(FX<fxt_ringmod> *m)

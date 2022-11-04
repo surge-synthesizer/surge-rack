@@ -69,8 +69,10 @@ template <> FXConfig<fxt_distortion>::layout_t FXConfig<fxt_distortion>::getLayo
 template <> void FXConfig<fxt_distortion>::configSpecificParams(FX<fxt_distortion> *m)
 {
     typedef FX<fxt_distortion> fx_t;
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1, "Enable Pre Hi Cut");
-    m->configParam(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1, "Enable Post Hi Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
+                                                "Enable Pre High Cut");
+    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
+                                                "Enable Post High Cut");
 }
 
 template <> void FXConfig<fxt_distortion>::processSpecificParams(FX<fxt_distortion> *m)
