@@ -79,7 +79,8 @@ void lightMenuFor(rack::Menu *p, XTModuleWidget *w)
         return;
 
     auto glob = xtm->isCoupledToGlobalStyle;
-    auto clight = glob ? style::XTStyle::getGlobalLightColor() : xtm->localLightColor;
+    auto clight =
+        glob ? style::XTStyle::getGlobalDisplayRegionColor() : xtm->localDisplayRegionColor;
     for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::WHITE;
          ++ski)
     {
@@ -87,14 +88,15 @@ void lightMenuFor(rack::Menu *p, XTModuleWidget *w)
         auto m = rack::createMenuItem(style::XTStyle::lightColorName(sk), CHECKMARK(sk == clight),
                                       [xtm, glob, sk]() {
                                           if (glob)
-                                              style::XTStyle::setGlobalLightColor(sk);
+                                              style::XTStyle::setGlobalDisplayRegionColor(sk);
                                           else
-                                              xtm->localLightColor = sk;
+                                              xtm->localDisplayRegionColor = sk;
                                           style::XTStyle::notifyStyleListeners();
                                       });
         p->addChild(m);
     }
 }
+
 void modLightMenuFor(rack::Menu *p, XTModuleWidget *w)
 {
     auto *xtm = static_cast<modules::XTModule *>(w->module);
@@ -102,7 +104,7 @@ void modLightMenuFor(rack::Menu *p, XTModuleWidget *w)
         return;
 
     auto glob = xtm->isCoupledToGlobalStyle;
-    auto clight = glob ? style::XTStyle::getGlobalModLightColor() : xtm->localModLightColor;
+    auto clight = glob ? style::XTStyle::getGlobalModulationColor() : xtm->localModulationColor;
     for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::WHITE;
          ++ski)
     {
@@ -110,13 +112,85 @@ void modLightMenuFor(rack::Menu *p, XTModuleWidget *w)
         auto m = rack::createMenuItem(style::XTStyle::lightColorName(sk), CHECKMARK(sk == clight),
                                       [xtm, glob, sk]() {
                                           if (glob)
-                                              style::XTStyle::setGlobalModLightColor(sk);
+                                              style::XTStyle::setGlobalModulationColor(sk);
                                           else
-                                              xtm->localModLightColor = sk;
+                                              xtm->localModulationColor = sk;
                                           style::XTStyle::notifyStyleListeners();
                                       });
         p->addChild(m);
     }
+}
+
+void knobLightMenuFor(rack::Menu *p, XTModuleWidget *w)
+{
+    auto *xtm = static_cast<modules::XTModule *>(w->module);
+    if (!xtm)
+        return;
+
+    p->addChild(rack::createMenuItem(
+        "Same as Display Region", CHECKMARK(!style::XTStyle::getControlValueColorDistinct()), []() {
+            auto x = style::XTStyle::getControlValueColorDistinct();
+            style::XTStyle::setControlValueColorDistinct(!x);
+        }));
+
+    if (!style::XTStyle::getControlValueColorDistinct())
+    {
+        return;
+    }
+    p->addChild(new rack::ui::MenuSeparator);
+
+    auto glob = xtm->isCoupledToGlobalStyle;
+    auto clight = glob ? style::XTStyle::getGlobalControlValueColor() : xtm->localControlValueColor;
+    for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::WHITE;
+         ++ski)
+    {
+        auto sk = (style::XTStyle::LightColor)ski;
+        auto m = rack::createMenuItem(style::XTStyle::lightColorName(sk), CHECKMARK(sk == clight),
+                                      [xtm, glob, sk]() {
+                                          if (glob)
+                                              style::XTStyle::setGlobalControlValueColor(sk);
+                                          else
+                                              xtm->localControlValueColor = sk;
+                                          style::XTStyle::notifyStyleListeners();
+                                      });
+        p->addChild(m);
+    }
+}
+
+void powerLightMenuFor(rack::Menu *p, XTModuleWidget *w)
+{
+    auto *xtm = static_cast<modules::XTModule *>(w->module);
+    if (!xtm)
+        return;
+
+    auto glob = xtm->isCoupledToGlobalStyle;
+    auto clight = glob ? style::XTStyle::getGlobalPowerButtonColor() : xtm->localPowerButtonColor;
+    for (int ski = style::XTStyle::LightColor::ORANGE; ski <= style::XTStyle::LightColor::WHITE;
+         ++ski)
+    {
+        auto sk = (style::XTStyle::LightColor)ski;
+        auto m = rack::createMenuItem(style::XTStyle::lightColorName(sk), CHECKMARK(sk == clight),
+                                      [xtm, glob, sk]() {
+                                          if (glob)
+                                              style::XTStyle::setGlobalPowerButtonColor(sk);
+                                          else
+                                              xtm->localPowerButtonColor = sk;
+                                          style::XTStyle::notifyStyleListeners();
+                                      });
+        p->addChild(m);
+    }
+}
+
+void colorsMenuFor(rack::Menu *menu, XTModuleWidget *w)
+{
+    menu->addChild(
+        rack::createSubmenuItem("Display Area", "", [w](auto *x) { lightMenuFor(x, w); }));
+    menu->addChild(rack::createSubmenuItem("Knob and Slider Values", "",
+                                           [w](auto *x) { knobLightMenuFor(x, w); }));
+    menu->addChild(
+        rack::createSubmenuItem("Modulations", "", [w](auto *x) { modLightMenuFor(x, w); }));
+    menu->addChild(
+        rack::createSubmenuItem("Power Buttons", "", [w](auto *x) { powerLightMenuFor(x, w); }));
 }
 
 void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
@@ -130,9 +204,7 @@ void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
     menu->addChild(globalItem);
     menu->addChild(rack::createSubmenuItem("Skin", "", [this](auto *x) { skinMenuFor(x, this); }));
     menu->addChild(
-        rack::createSubmenuItem("LED Color", "", [this](auto *x) { lightMenuFor(x, this); }));
-    menu->addChild(rack::createSubmenuItem("Modulation Color", "",
-                                           [this](auto *x) { modLightMenuFor(x, this); }));
+        rack::createSubmenuItem("Colors", "", [this](auto *x) { colorsMenuFor(x, this); }));
 }
 
 void XTModuleWidget::resetStyleCouplingToModule()
@@ -146,8 +218,10 @@ void XTModuleWidget::resetStyleCouplingToModule()
     if (xtm && couple)
     {
         xtm->localStyle = style::XTStyle::getGlobalStyle();
-        xtm->localLightColor = style::XTStyle::getGlobalLightColor();
-        xtm->localModLightColor = style::XTStyle::getGlobalModLightColor();
+        xtm->localDisplayRegionColor = style::XTStyle::getGlobalDisplayRegionColor();
+        xtm->localModulationColor = style::XTStyle::getGlobalModulationColor();
+        xtm->localControlValueColor = style::XTStyle::getGlobalControlValueColor();
+        xtm->localPowerButtonColor = style::XTStyle::getGlobalPowerButtonColor();
     }
 
     std::function<void(rack::Widget *)> rec;
@@ -161,7 +235,9 @@ void XTModuleWidget::resetStyleCouplingToModule()
             }
             else
             {
-                sp->attachTo(&xtm->localStyle, &xtm->localLightColor, &xtm->localModLightColor);
+                sp->attachTo(&xtm->localStyle, &xtm->localDisplayRegionColor,
+                             &xtm->localModulationColor, &xtm->localControlValueColor,
+                             &xtm->localPowerButtonColor);
             }
         }
         for (auto c : w->children)
