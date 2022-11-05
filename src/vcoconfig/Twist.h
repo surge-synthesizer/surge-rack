@@ -209,11 +209,22 @@ template <> VCOConfig<ot_twist>::layout_t VCOConfig<ot_twist>::getLayout()
 template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }
 template <> std::string VCOConfig<ot_twist>::retriggerLabel() { return "TRIG"; }
 
+template <> void VCOConfig<ot_twist>::oscillatorSpecificSetup(VCO<ot_twist> *m)
+{
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        // LPG is off but set up
+        s->p[TwistOscillator::twist_lpg_response].set_value_f01(0.5);
+        s->p[TwistOscillator::twist_lpg_decay].set_value_f01(0.5);
+    }
+}
 template <> inline void VCOConfig<ot_twist>::configureVCOSpecificParameters(VCO<ot_twist> *m)
 {
     m->configParam<modules::OnOffParamQuantity>(VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
                                                 "Enable LPG on Trigger");
 
+    m->intStateForConfig[0] = m->inputs[VCO<ot_twist>::RETRIGGER].isConnected();
+    m->intStateForConfig[1] = m->oscstorage->p[TwistOscillator::twist_lpg_response].deactivated;
     for (int i = 1; i < VCO<ot_twist>::n_arbitrary_switches; ++i)
     {
         m->configParam(VCO<ot_twist>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
@@ -223,10 +234,34 @@ template <> void VCOConfig<ot_twist>::processVCOSpecificParameters(VCO<ot_twist>
 {
     auto l0 = (bool)(m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
 
+    bool wasConnected = m->intStateForConfig[0];
+    auto isCon = m->inputs[VCO<ot_twist>::RETRIGGER].isConnected();
+
+    if (!l0 && !wasConnected && isCon)
+    {
+        l0 = true;
+        m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0].setValue(1);
+    }
+    else if (l0 && wasConnected && !isCon)
+    {
+        l0 = false;
+        m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0].setValue(0);
+    }
+
+    m->intStateForConfig[0] = isCon;
+
     for (auto s : {m->oscstorage, m->oscstorage_display})
     {
         s->p[TwistOscillator::twist_lpg_response].deactivated = !l0;
     }
+}
+
+template <> bool VCOConfig<ot_twist>::getVCOSpecificReInit(VCO<ot_twist> *m)
+{
+    auto deact = m->oscstorage->p[TwistOscillator::twist_lpg_response].deactivated;
+    auto res = (deact != m->intStateForConfig[1]);
+    m->intStateForConfig[1] = deact;
+    return res;
 }
 } // namespace sst::surgext_rack::vco
 

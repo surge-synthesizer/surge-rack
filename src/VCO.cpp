@@ -104,6 +104,12 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             driftSlider->quantity = module->paramQuantities[M::DRIFT];
             driftSlider->box.size.x = 125;
             menu->addChild(driftSlider);
+
+            auto attenSlider = new rack::ui::Slider;
+            attenSlider->quantity = module->paramQuantities[M::FIXED_ATTENUATION];
+            attenSlider->box.size.x = 125;
+            menu->addChild(attenSlider);
+
             menu->addChild(rack::createSubmenuItem("Halfband Filter", "",
                                                    [this,m](auto *x) { downsampleMenu(x,m);}));
 
@@ -991,6 +997,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
                                                            rack::Vec(31, underPlotH), "UNI", module,
                                                            M::OSC_CTRL_PARAM_0 + 6);
         addChild(oct);
+        oct->minScale = 1;
+        oct->maxScale = 16;
+        oct->maxVal = 9;
         underX += 32 + 2;
     }
 

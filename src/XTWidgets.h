@@ -1190,6 +1190,44 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         bdw->dirty = true;
         Widget::onChange(e);
     }
+
+    bool parameterMenuOnClick{true};
+    int minScale{0}, maxScale{0}, maxVal{0};
+    void onAction(const ActionEvent &e) override {
+        if (parameterMenuOnClick && getParamQuantity())
+        {
+            auto pq = getParamQuantity();
+            if (pq->snapEnabled)
+            {
+                auto men = rack::createMenu();
+                men->addChild(rack::createMenuLabel(pq->getLabel()));
+                auto v = (int)std::round(pq->getValue());
+                for (int i=pq->getMaxValue(); i>=pq->getMinValue(); --i)
+                {
+                    men->addChild(rack::createMenuItem(std::to_string(i),
+                                                       CHECKMARK(i == v),
+                                                       [pq,i]() {pq->setValue(i);}));
+                }
+            }
+            else if (minScale != maxScale)
+            {
+                auto men = rack::createMenu();
+                men->addChild(rack::createMenuLabel(pq->getLabel()));
+
+                auto v = Parameter::intUnscaledFromFloat(pq->getValue(),
+                                                         maxScale,
+                                                         minScale);
+                for (int i=maxVal; i>=minScale; --i)
+                {
+                    men->addChild(rack::createMenuItem(std::to_string(i),
+                                                       CHECKMARK(i == v),
+                                                       [this,pq,i]() {pq->setValue(Parameter::intScaledToFloat(i, maxScale, minScale));}));
+
+                }
+            }
+        }
+        Knob::onAction(e);
+    }
 };
 
 struct PlotAreaSwitch : public rack::app::Switch, style::StyleParticipant
