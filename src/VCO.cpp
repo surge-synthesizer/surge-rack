@@ -251,8 +251,12 @@ template <int oscType> struct WavetableSelector : widgets::PresetJogSelector
                                             [this]() { module->storage->refresh_wtlist(); }));
 
         menu->addChild(rack::createMenuItem("Load Wavetable File", "", [this]() {
-            auto filters = osdialog_filters_parse("Wavetables:wav,.wt");
+#if MAC
+            osdialog_filters* filters{nullptr};
+#else
+            auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
             DEFER({ osdialog_filters_free(filters); });
+#endif
             char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
             if (openF)
             {
