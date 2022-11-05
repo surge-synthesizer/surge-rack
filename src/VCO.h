@@ -51,6 +51,7 @@ template <int oscType> struct VCOConfig
 
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processVCOSpecificParameters(VCO<oscType> *m) {}
+    static bool getVCOSpecificReInit(VCO<oscType> *m) { return false; }
     static void configureVCOSpecificParameters(VCO<oscType> *m);
     static constexpr int additionalVCOParameterCount() { return 0; } // really only used by alias.
 
@@ -88,7 +89,8 @@ template <int oscType> struct VCO : public modules::XTModule
         DRIFT,
 
         ADDITIONAL_VCO_PARAMS,
-        NUM_PARAMS = ADDITIONAL_VCO_PARAMS + VCOConfig<oscType>::additionalVCOParameterCount()
+        FIXED_ATTENUATION = ADDITIONAL_VCO_PARAMS + VCOConfig<oscType>::additionalVCOParameterCount(),
+        NUM_PARAMS
     };
     enum InputIds
     {
@@ -211,6 +213,7 @@ template <int oscType> struct VCO : public modules::XTModule
         configParamNoRand(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
         configParam(CHARACTER, 0, 2, 1, "Character Filter");
         configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
+        configParam(FIXED_ATTENUATION, 0, 1, 1, "Output Attenuation" );
 
         VCOConfig<oscType>::configureVCOSpecificParameters(this);
         config_osc->~Oscillator();
@@ -332,6 +335,9 @@ template <int oscType> struct VCO : public modules::XTModule
     }
 
     int processPosition = BLOCK_SIZE + 1;
+
+    static constexpr int n_state_slots{4};
+    int intStateForConfig[n_state_slots];
 
     void moduleSpecificSampleRateChange() override { forceRespawnDueToExternality = true; }
 
@@ -499,6 +505,7 @@ template <int oscType> struct VCO : public modules::XTModule
             }
 
             VCOConfig<oscType>::processVCOSpecificParameters(this);
+            reInitEveryOSC = VCOConfig<oscType>::getVCOSpecificReInit(this);
 
             if (animateDisplayFromMod)
             {
@@ -589,6 +596,13 @@ template <int oscType> struct VCO : public modules::XTModule
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
                     halfbandOUT[c]->process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
                                                     BLOCK_SIZE_OS);
+
+                    auto fa = params[FIXED_ATTENUATION].getValue();
+                    for (int i=0; i<BLOCK_SIZE; ++i)
+                    {
+                        osc_downsample[0][c][i] *= fa;
+                        osc_downsample[1][c][i] *= fa;
+                    }
                 }
             }
             // pc.update(this);
