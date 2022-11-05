@@ -347,6 +347,10 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     {
         bdw->dirty = true;
         bdwPlot->dirty = true;
+
+        auto vcm = dynamic_cast<VCO<oscType> *>(module);
+        if (vcm)
+            vcm->animateDisplayFromMod = style::XTStyle::getShowModulationAnimationOnDisplay();
     }
 
     static OSCPlotWidget<oscType> *create(rack::Vec pos, rack::Vec size,
@@ -832,6 +836,14 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         }
         else if (!oscPath.empty())
         {
+            bool is3D{false};
+            if (module && VCOConfig<oscType>::requiresWavetables() &&
+                module->draw3DWavetable &&
+                module->wavetableCount > 0)
+            {
+                is3D = true;
+            }
+
             nvgSave(vg);
             nvgScissor(vg, 0, 0.5, box.size.x, box.size.y - 1);
 
@@ -843,46 +855,51 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
             bool first{true};
 
-            nvgBeginPath(vg);
-            for (const auto &[x, y] : oscPath)
+            if (!is3D)
             {
-                auto uy = std::min(y * 1.0, box.size.y * 0.5);
-                if (first)
+                nvgBeginPath(vg);
+                for (const auto &[x, y] : oscPath)
                 {
-                    nvgMoveTo(vg, x, uy);
+                    auto uy = std::min(y * 1.0, box.size.y * 0.5);
+                    if (first)
+                    {
+                        nvgMoveTo(vg, x, uy);
+                    }
+                    else
+                    {
+                        nvgLineTo(vg, x, uy);
+                    }
+                    first = false;
                 }
-                else
-                {
-                    nvgLineTo(vg, x, uy);
-                }
-                first = false;
-            }
-            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
-            nvgLineTo(vg, 0, box.size.y * 0.5);
-            nvgFillPaint(vg,
-                         nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp, gcn));
-            nvgFill(vg);
+                nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+                nvgLineTo(vg, 0, box.size.y * 0.5);
+                nvgFillPaint(vg,
+                             nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp,
+                             gcn));
+                nvgFill(vg);
 
-            nvgBeginPath(vg);
-            first = true;
-            for (const auto &[x, y] : oscPath)
-            {
-                auto uy = std::max(y * 1.0, box.size.y * 0.5);
-                if (first)
+                nvgBeginPath(vg);
+                first = true;
+                for (const auto &[x, y] : oscPath)
                 {
-                    nvgMoveTo(vg, x, uy);
+                    auto uy = std::max(y * 1.0, box.size.y * 0.5);
+                    if (first)
+                    {
+                        nvgMoveTo(vg, x, uy);
+                    }
+                    else
+                    {
+                        nvgLineTo(vg, x, uy);
+                    }
+                    first = false;
                 }
-                else
-                {
-                    nvgLineTo(vg, x, uy);
-                }
-                first = false;
+                nvgLineTo(vg, box.size.x, box.size.y * 0.5);
+                nvgLineTo(vg, 0, box.size.y * 0.5);
+                nvgFillPaint(vg,
+                              nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn,
+                              gcp));
+                nvgFill(vg);
             }
-            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
-            nvgLineTo(vg, 0, box.size.y * 0.5);
-            nvgFillPaint(vg,
-                         nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn, gcp));
-            nvgFill(vg);
 
             nvgBeginPath(vg);
             first = true;

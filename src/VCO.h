@@ -346,6 +346,7 @@ template <int oscType> struct VCO : public modules::XTModule
     std::atomic<uint32_t> wavetableLoads{0};
     uint32_t lastWavetableLoads{0};
     std::atomic<bool> draw3DWavetable{VCOConfig<oscType>::requiresWavetables()};
+    std::atomic<bool> animateDisplayFromMod{true};
 
     std::string getWavetableName()
     {
@@ -499,11 +500,19 @@ template <int oscType> struct VCO : public modules::XTModule
 
             VCOConfig<oscType>::processVCOSpecificParameters(this);
 
-            for (int i = 0; i < n_osc_params; ++i)
+            if (animateDisplayFromMod)
             {
-                // This is the non-modulated version
-                // oscstorage_display->p[i].set_value_f01(params[OSC_CTRL_PARAM_0 + i].getValue());
-                oscstorage_display->p[i].set_value_f01(modAssist.values[i + 1][0]);
+                for (int i = 0; i < n_osc_params; ++i)
+                {
+                    oscstorage_display->p[i].set_value_f01(modAssist.values[i + 1][0]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < n_osc_params; ++i)
+                {
+                    oscstorage_display->p[i].set_value_f01(modAssist.basevalues[i + 1]);
+                }
             }
 
             // This is super gross and inefficient. Think about all of this

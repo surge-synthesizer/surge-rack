@@ -297,6 +297,9 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     float modDepthForAnimation()
     {
         auto xtm = dynamic_cast<modules::XTModule *>(module);
+        if (!style::XTStyle::getShowModulationAnimationOnKnobs())
+            return 0;
+
         if (xtm)
             return xtm->modulationDisplayValue(paramId);
         return 0;

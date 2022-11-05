@@ -37,6 +37,9 @@ void XTStyle::initialize()
         setGlobalModulationColor(BLUE);
         setGlobalControlValueColor(ORANGE);
         setControlValueColorDistinct(false);
+        setShowKnobValuesAtRest(true);
+        setShowModulationAnimationOnDisplay(true);
+        setShowModulationAnimationOnKnobs(true);
         setGlobalPowerButtonColor(GREEN);
     }
     else
@@ -121,13 +124,18 @@ void XTStyle::initialize()
             }
         }
 
-        {
-            json_t *defj = json_object_get(fd, "controlValueColorDistinct");
-            bool cvd{false};
+        auto handleBool = [&](auto name, auto op, auto def) {
+            json_t *defj = json_object_get(fd, name);
+            bool cvd{def};
             if (defj)
                 cvd = json_boolean_value(defj);
-            setControlValueColorDistinct(cvd);
-        }
+            op(cvd);
+        };
+        handleBool("controlValueColorDistinct", setControlValueColorDistinct, false);
+        handleBool("showKnobValuesAtRest", setShowKnobValuesAtRest, true);
+        handleBool("showModulationAnimationOnKnobs", setShowModulationAnimationOnKnobs, true);
+        handleBool("showModulationAnimationOnDisplay", setShowModulationAnimationOnDisplay, true);
+
         json_decref(fd);
     }
 }
@@ -138,6 +146,9 @@ static XTStyle::LightColor defaultGlobalModulationColor{XTStyle::BLUE};
 static XTStyle::LightColor defaultGlobalControlValueColor{XTStyle::ORANGE};
 static XTStyle::LightColor defaultGlobalPowerButtonColor{XTStyle::GREEN};
 static bool controlValueColorDistinct{false};
+static bool showKnobValuesAtRest{true};
+static bool showModulationAnimationOnKnobs{true};
+static bool showModulationAnimationOnDisplay{true};
 
 static std::shared_ptr<XTStyle> constructDefaultStyle()
 {
@@ -183,6 +194,39 @@ void XTStyle::setControlValueColorDistinct(bool b)
     if (b != controlValueColorDistinct)
     {
         controlValueColorDistinct = b;
+        updateJSON();
+        notifyStyleListeners();
+    }
+}
+
+bool XTStyle::getShowKnobValuesAtRest() { return showKnobValuesAtRest; }
+void XTStyle::setShowKnobValuesAtRest(bool b)
+{
+    if (b != showKnobValuesAtRest)
+    {
+        showKnobValuesAtRest = b;
+        updateJSON();
+        notifyStyleListeners();
+    }
+}
+
+bool XTStyle::getShowModulationAnimationOnKnobs() { return showModulationAnimationOnKnobs; }
+void XTStyle::setShowModulationAnimationOnKnobs(bool b)
+{
+    if (b != showModulationAnimationOnKnobs)
+    {
+        showModulationAnimationOnKnobs = b;
+        updateJSON();
+        notifyStyleListeners();
+    }
+}
+
+bool XTStyle::getShowModulationAnimationOnDisplay() { return showModulationAnimationOnDisplay; }
+void XTStyle::setShowModulationAnimationOnDisplay(bool b)
+{
+    if (b != showModulationAnimationOnDisplay)
+    {
+        showModulationAnimationOnDisplay = b;
         updateJSON();
         notifyStyleListeners();
     }
@@ -246,6 +290,11 @@ void XTStyle::updateJSON()
                         json_integer(defaultGlobalPowerButtonColor));
     json_object_set_new(rootJ, "controlValueColorDistinct",
                         json_boolean(controlValueColorDistinct));
+    json_object_set_new(rootJ, "showKnobValuesAtRest", json_boolean(showKnobValuesAtRest));
+    json_object_set_new(rootJ, "showModulationAnimationOnKnobs",
+                        json_boolean(showModulationAnimationOnKnobs));
+    json_object_set_new(rootJ, "showModulationAnimationOnDisplay",
+                        json_boolean(showModulationAnimationOnDisplay));
     FILE *f = std::fopen(defaultsFile.c_str(), "w");
     if (f)
     {
@@ -355,6 +404,9 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
 
     case KNOB_RING_VALUE:
     {
+        if (!getShowKnobValuesAtRest())
+            return nvgRGBA(0, 0, 0, 0);
+
         auto col = *activeDisplayRegionColor;
         if (getControlValueColorDistinct())
             col = *activeControlValueColor;

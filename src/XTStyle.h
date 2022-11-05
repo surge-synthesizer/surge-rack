@@ -71,6 +71,16 @@ struct XTStyle
     static void setGlobalPowerButtonColor(LightColor c);
     static LightColor getGlobalPowerButtonColor();
 
+    static bool getShowKnobValuesAtRest();
+    static void setShowKnobValuesAtRest(bool b);
+
+    static bool getShowModulationAnimationOnKnobs();
+    static void setShowModulationAnimationOnKnobs(bool b);
+
+    static bool getShowModulationAnimationOnDisplay();
+    static void setShowModulationAnimationOnDisplay(bool b);
+
+
     static std::string lightColorName(LightColor c);
     static NVGcolor lightColorColor(LightColor c);
 
