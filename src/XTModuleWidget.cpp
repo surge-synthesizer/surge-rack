@@ -199,11 +199,11 @@ void valueDisplayMenuFor(rack::Menu *menu, XTModuleWidget *w)
         auto v = g();
         menu->addChild(rack::createMenuItem(name, CHECKMARK(v), [=]() { s(!v); }));
     };
-    addBoolTog("Show Knob Value Rings", style::XTStyle::getShowKnobValuesAtRest,
+    addBoolTog("Knob Value Rings", style::XTStyle::getShowKnobValuesAtRest,
                style::XTStyle::setShowKnobValuesAtRest);
-    addBoolTog("Modulation Animates Knob Rings", style::XTStyle::getShowModulationAnimationOnKnobs,
+    addBoolTog("Knob Modulation Animations", style::XTStyle::getShowModulationAnimationOnKnobs,
                style::XTStyle::setShowModulationAnimationOnKnobs);
-    addBoolTog("Modulation Animates Displays", style::XTStyle::getShowModulationAnimationOnDisplay,
+    addBoolTog("Display Modulation Animations", style::XTStyle::getShowModulationAnimationOnDisplay,
                style::XTStyle::setShowModulationAnimationOnDisplay);
 }
 

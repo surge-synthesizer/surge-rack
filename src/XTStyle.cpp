@@ -491,7 +491,7 @@ std::string XTStyle::lightColorName(sst::surgext_rack::style::XTStyle::LightColo
     case PINK:
         return "Pink";
     case WHITE:
-        return "White";
+        return "High Contrast";
     case RED:
         return "Red";
     }
