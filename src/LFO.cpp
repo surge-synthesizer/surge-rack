@@ -90,6 +90,10 @@ struct LFOWidget : widgets::XTModuleWidget
         menu->addChild(
             rack::createSubmenuItem("Polyphony", "", [this, m](auto *x) { polyMenu(x, m); }));
 
+        menu->addChild(
+            rack::createMenuItem("Envelope Triggers from Zero", CHECKMARK(m->retriggerFromZero),
+                                 [m]() { m->retriggerFromZero = !m->retriggerFromZero; }));
+
         menu->addChild(rack::createMenuItem(
             "Random Phase on Attack", CHECKMARK(m->params[LFO::RANDOM_PHASE].getValue() > 0.5),
             [m]() {

@@ -125,6 +125,7 @@ struct LFO : modules::XTModule
     std::unique_ptr<FormulaModulatorStorage> surge_fs;
     LFOStorage *lfostorage;
     LFOStorage *lfostorageDisplay;
+    std::atomic<bool> retriggerFromZero{false};
 
     modules::ModulationAssistant<LFO, n_lfo_params, RATE, n_mod_inputs, LFO_MOD_INPUT> modAssist;
 
@@ -223,6 +224,8 @@ struct LFO : modules::XTModule
             endPhaseCountdown[i] = 0;
             trigABCountdown[0][i] = 0;
             trigABCountdown[1][i] = 0;
+
+            surge_lfo[i]->envRetrigMode = LFOModulationSource::FROM_LAST;
         }
         setupStorageRanges(&(lfostorage->rate), &(lfostorage->release));
 
@@ -555,7 +558,7 @@ struct LFO : modules::XTModule
 
                 if (inNewAttack)
                 {
-                    surge_lfo[c]->attack();
+                    surge_lfo[c]->attackFrom(retriggerFromZero ? 0 : surge_lfo[c]->get_output(2));
                     priorIntPhase[c] = -1;
                     priorEnvStage[c] = -1;
                 }
@@ -570,9 +573,10 @@ struct LFO : modules::XTModule
                 }
                 else if (inNewEnvAttack)
                 {
-                    surge_lfo[c]->retriggerEnvelope();
+                    surge_lfo[c]->retriggerEnvelopeFrom(
+                        retriggerFromZero ? 0 : surge_lfo[c]->get_output(2));
                 }
-                // repeat for env stage also
+                // repeat for env stage also here
                 if (surge_lfo[c]->getIntPhase() != priorIntPhase[c])
                 {
                     priorIntPhase[c] = surge_lfo[c]->getIntPhase();
@@ -679,17 +683,31 @@ struct LFO : modules::XTModule
     {
         auto fx = json_object();
         json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+        json_object_set(fx, "retriggerFromZero", json_boolean(retriggerFromZero));
         return fx;
     }
 
     void readModuleSpecificJson(json_t *modJ) override
     {
-        auto cs = json_object_get(modJ, "clockStyle");
-        if (cs)
         {
-            auto csv = json_integer_value(cs);
-            clockProc.clockStyle =
-                static_cast<typename modules::ClockProcessor<LFO>::ClockStyle>(csv);
+            auto cs = json_object_get(modJ, "clockStyle");
+            if (cs)
+            {
+                auto csv = json_integer_value(cs);
+                clockProc.clockStyle =
+                    static_cast<typename modules::ClockProcessor<LFO>::ClockStyle>(csv);
+            }
+        }
+        {
+            auto rt = json_object_get(modJ, "retriggerFromZero");
+            if (rt)
+            {
+                retriggerFromZero = json_boolean_value(rt);
+            }
+            else
+            {
+                retriggerFromZero = false;
+            }
         }
     }
 
