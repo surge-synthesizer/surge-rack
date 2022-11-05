@@ -852,6 +852,24 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         if (q < 0.5)
             return;
 
+        const float halo = rack::settings::haloBrightness;
+
+        if (halo > 0.f)
+        {
+            auto dr = 1.6f;
+            nvgBeginPath(vg);
+            nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * dr, radius * dr);
+
+            NVGcolor icol =
+                rack::color::mult(style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON), halo);
+            NVGcolor ocol = nvgRGBA(0, 0, 0, 0);
+            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, box.size.y * 0.5, radius, radius*dr, icol, ocol);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+
+            drawBackground(vg);
+        }
+
         if (type == POWER)
         {
             nvgBeginPath(vg);
@@ -882,6 +900,20 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         bdw->dirty = true;
         bdwLight->dirty = true;
         Widget::onChange(e);
+    }
+
+
+    float phalo{0.f};
+    void step() override
+    {
+        const float halo = rack::settings::haloBrightness;
+        if (phalo != halo)
+        {
+            phalo = halo;
+            bdw->dirty = true;
+            bdwLight->dirty = true;
+        }
+        Switch::step();
     }
     void onStyleChanged() override {}
 };
@@ -982,6 +1014,19 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
                        light_pixelRadius);
             nvgFill(vg);
         }
+    }
+
+    float phalo{0.f};
+    void step() override
+    {
+        const float halo = rack::settings::haloBrightness;
+        if (phalo != halo)
+        {
+            phalo = halo;
+            bw->dirty = true;
+            bwGlow->dirty = true;
+        }
+        T::step();
     }
 
     void setState(bool b)

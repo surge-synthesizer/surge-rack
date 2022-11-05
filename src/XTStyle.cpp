@@ -296,12 +296,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         case MID:
             return nvgRGB(40, 40, 40);
         case LIGHT:
-        {
-            auto lc = *activeDisplayRegionColor;
-            if (lc == WHITE && c == KNOB_RING)
-                return nvgRGB(0x33, 0x33, 0x33);
             return nvgRGB(194, 194, 194);
-        }
         }
     }
 
@@ -360,10 +355,16 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
 
     case KNOB_RING_VALUE:
     {
+        auto col = *activeDisplayRegionColor;
         if (getControlValueColorDistinct())
-            return lightColorColor(*activeControlValueColor);
-        else
-            return lightColorColor(*activeDisplayRegionColor);
+            col = *activeControlValueColor;
+        if (col == WHITE && *activeStyle == LIGHT)
+        {
+            // Special case - white ring on light background
+            return nvgRGB(0x33, 0x33, 0x33);
+        }
+
+        return lightColorColor(col);
     }
     case PLOT_CURVE:
     case PLOT_CONTROL_TEXT:

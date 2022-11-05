@@ -190,6 +190,8 @@ struct XTModule : public rack::Module
     json_t *makeCommonDataJson()
     {
         json_t *rootJ = json_object();
+        // For future use
+        json_object_set_new(rootJ, "streamingVersion", json_integer(1));
         json_object_set_new(rootJ, "buildInfo", json_string(getBuildInfo().c_str()));
         json_object_set_new(rootJ, "isCoupledToGlobalStyle", json_boolean(isCoupledToGlobalStyle));
         json_object_set_new(rootJ, "localStyle", json_integer(localStyle));

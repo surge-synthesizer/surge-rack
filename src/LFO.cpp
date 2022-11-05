@@ -284,6 +284,34 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             bdw->dirty = true;
             bdwLight->dirty = true;
         }
+
+        rack::Vec buttonPos;
+        void onButton(const ButtonEvent &e) override
+        {
+            if (e.action == GLFW_PRESS)
+                buttonPos = e.pos;
+
+            if (e.action == GLFW_RELEASE)
+            {
+                auto diff = buttonPos - e.pos;
+                if (diff.norm() < 0.05)
+                {
+                    // auto e = cramY * box.size.y * v + padY;
+                    // e - padY = cY * bsy * v
+                    // v = ( e- padY)/(cY * bsy);
+                    auto val = (buttonPos.y - padY) / (cramY * box.size.y);
+                    if (uni)
+                        val = 1 - val;
+                    else
+                        val = (1 - val) * 2 - 1;
+                    if (getParamQuantity())
+                        getParamQuantity()->setValue(val);
+                }
+                buttonPos = rack::Vec(-1, -1);
+            }
+
+            SliderKnob::onButton(e);
+        }
     };
 
     struct TriggerSwitch : rack::app::Switch, style::StyleParticipant
