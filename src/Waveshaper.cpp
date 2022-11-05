@@ -131,8 +131,17 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             auto wstype = (sst::waveshapers::WaveshaperType)std::round(
                 module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
 
-            auto ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
-            auto bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+            float ddb{0.f}, bias{0.f};
+            if (style::XTStyle::getShowModulationAnimationOnDisplay())
+            {
+                ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
+                bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+            }
+            else
+            {
+                ddb = module->modulationAssistant.basevalues[Waveshaper::DRIVE];
+                bias = module->modulationAssistant.basevalues[Waveshaper::BIAS];
+            }
 
             dval = wstype != lastType || ddb != lastDrive || bias != lastBias;
         }
@@ -162,8 +171,17 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
 
         wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
 
-        auto ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
-        auto bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+        float ddb{0.f}, bias{0.f};
+        if (style::XTStyle::getShowModulationAnimationOnDisplay())
+        {
+            ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
+            bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+        }
+        else
+        {
+            ddb = module->modulationAssistant.basevalues[Waveshaper::DRIVE];
+            bias = module->modulationAssistant.basevalues[Waveshaper::BIAS];
+        }
 
         auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
         auto damp = pow(10, 0.05 * ddb);

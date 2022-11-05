@@ -460,12 +460,23 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
         // This is how we do the 'unanimated' version
         // auto fr = module->params[VCF::FREQUENCY].getValue();
         // auto re = module->params[VCF::RESONANCE].getValue();
-        auto fr = module->modulationAssistant.values[VCF::FREQUENCY][0];
-        auto re = module->modulationAssistant.values[VCF::RESONANCE][0];
+        float fr{0.f}, re{0.f}, gn{0.f};
+
+        if (style::XTStyle::getShowModulationAnimationOnDisplay())
+        {
+            fr = module->modulationAssistant.values[VCF::FREQUENCY][0];
+            re = module->modulationAssistant.values[VCF::RESONANCE][0];
+            gn = module->modulationAssistant.values[VCF::IN_GAIN][0];
+        }
+        else
+        {
+            fr = module->modulationAssistant.basevalues[VCF::FREQUENCY];
+            re = module->modulationAssistant.basevalues[VCF::RESONANCE];
+            gn = module->modulationAssistant.basevalues[VCF::IN_GAIN];
+        }
 
         auto ty = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
         auto sty = (int)std::round(module->params[VCF::VCF_SUBTYPE].getValue());
-        auto gn = (int)std::round(module->params[VCF::IN_GAIN].getValue());
 
         if (fr != lastFreq || re != lastReso || ty != lastTy || sty != lastSub || gn != lastGn)
         {

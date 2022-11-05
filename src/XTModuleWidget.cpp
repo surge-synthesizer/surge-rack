@@ -193,6 +193,20 @@ void colorsMenuFor(rack::Menu *menu, XTModuleWidget *w)
         rack::createSubmenuItem("Power Buttons", "", [w](auto *x) { powerLightMenuFor(x, w); }));
 }
 
+void valueDisplayMenuFor(rack::Menu *menu, XTModuleWidget *w)
+{
+    auto addBoolTog = [&](auto name, auto g, auto s) {
+        auto v = g();
+        menu->addChild(rack::createMenuItem(name, CHECKMARK(v), [=]() { s(!v); }));
+    };
+    addBoolTog("Show Knob Value Rings", style::XTStyle::getShowKnobValuesAtRest,
+               style::XTStyle::setShowKnobValuesAtRest);
+    addBoolTog("Modulation Animates Knob Rings", style::XTStyle::getShowModulationAnimationOnKnobs,
+               style::XTStyle::setShowModulationAnimationOnKnobs);
+    addBoolTog("Modulation Animates Displays", style::XTStyle::getShowModulationAnimationOnDisplay,
+               style::XTStyle::setShowModulationAnimationOnDisplay);
+}
+
 void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
 {
     auto xtm = static_cast<modules::XTModule *>(module);
@@ -205,6 +219,8 @@ void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
     menu->addChild(rack::createSubmenuItem("Skin", "", [this](auto *x) { skinMenuFor(x, this); }));
     menu->addChild(
         rack::createSubmenuItem("Colors", "", [this](auto *x) { colorsMenuFor(x, this); }));
+    menu->addChild(rack::createSubmenuItem("Value Displays", "",
+                                           [this](auto *x) { valueDisplayMenuFor(x, this); }));
 }
 
 void XTModuleWidget::resetStyleCouplingToModule()
