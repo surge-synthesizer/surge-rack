@@ -741,6 +741,16 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         {
             bdwLight->dirty = true;
             bdwBG->dirty = true;
+
+            auto isUni = module->params[LFO::UNIPOLAR].getValue() > 0.5;
+            float minStepSlider{-1};
+            if (isUni)
+            {
+                minStepSlider = 0;
+            }
+
+            for (int i = 0; i < 16; ++i)
+                module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->minValue = minStepSlider;
         }
     }
     void drawWaveform(NVGcontext *vg)

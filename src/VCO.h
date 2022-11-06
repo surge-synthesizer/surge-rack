@@ -204,7 +204,7 @@ template <int oscType> struct VCO : public modules::XTModule
             }
             else
             {
-                configParamNoRand<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name);
+                configParamNoRand<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name)->baseName = name;
             }
         }
 

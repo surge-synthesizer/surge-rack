@@ -185,7 +185,8 @@ struct LFO : modules::XTModule
         {
             auto name =
                 std::string("Mod ") + std::to_string((p - LFO_MOD_PARAM_0) % n_mod_inputs + 1);
-            configParamNoRand<modules::SurgeParameterModulationQuantity>(p, -1, 1, 0, name);
+            configParamNoRand<modules::SurgeParameterModulationQuantity>(p, -1, 1, 0, name)
+                ->baseName = name;
         }
 
         configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");

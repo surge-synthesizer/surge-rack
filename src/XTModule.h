@@ -255,7 +255,7 @@ struct XTModule : public rack::Module
     }
 
     template<typename T=rack::ParamQuantity, typename ...Args>
-    rack::ParamQuantity *configParamNoRand(Args... args){
+    T *configParamNoRand(Args... args){
         auto *res = configParam<T>(args...);
         res->randomizeEnabled = false;
         return res;
@@ -269,7 +269,14 @@ struct XTModule : public rack::Module
         localPowerButtonColor{style::XTStyle::GREEN};
 };
 
-struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
+struct CalculatedName
+{
+    virtual ~CalculatedName() = default;
+    virtual std::string getCalculatedName() = 0;
+};
+
+struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
+                                     CalculatedName
 {
     inline XTModule *xtm() { return static_cast<XTModule *>(module); }
     inline Parameter *surgepar()
@@ -307,6 +314,18 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
 
         return par->get_name();
     }
+
+    std::string getCalculatedName() override
+    {
+        auto par = surgepar();
+        if (!par)
+        {
+            return "Surge Parameter";
+        }
+
+        return par->get_name();
+    }
+
     virtual std::string getDisplayValueString() override
     {
         auto par = surgepar();
@@ -335,7 +354,7 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity
     }
 };
 
-struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
+struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, CalculatedName
 {
     inline XTModule *xtm() { return static_cast<XTModule *>(module); }
     inline Parameter *surgepar()
@@ -365,6 +384,8 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
             setValue(v * (par->val_max.f - par->val_min.f) );
     }
 
+    std::string baseName{"MOD_ERROR"};
+
     virtual std::string getLabel() override
     {
         auto par = surgepar();
@@ -373,7 +394,18 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity
             return ParamQuantity::getLabel() + " SOFTWARE ERROR";
         }
 
-        return ParamQuantity::getLabel() + " to " + std::string(par->get_name());
+        return getCalculatedName();
+    }
+
+    std::string getCalculatedName() override
+    {
+        auto par = surgepar();
+        if (!par)
+        {
+            return baseName + " to Unkown Surge Parameter";
+        }
+
+        return baseName + " to " + par->get_name();
     }
 
     virtual std::string getDisplayValueString() override
