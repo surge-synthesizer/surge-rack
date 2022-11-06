@@ -121,7 +121,8 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
 
-
+# Adjust CMAKE to work in the RACK build environment,
+# per @vortico and @cschol
 ifdef ARCH_WIN
     CMAKE += -DCMAKE_SYSTEM_NAME=Windows
 endif
@@ -132,6 +133,7 @@ ifdef ARCH_MAC
     CMAKE += -DCMAKE_SYSTEM_NAME=Darwin # -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
 endif
 ifdef ARCH_LIN
+    CMAKE += -DCMAKE_TOOLCHAIN_FILE=
     CMAKE += -DCMAKE_SYSTEM_NAME=Linux
 endif
 
