@@ -353,6 +353,8 @@ template <int oscType> struct VCO : public modules::XTModule
     uint32_t lastWavetableLoads{0};
     std::atomic<bool> draw3DWavetable{VCOConfig<oscType>::requiresWavetables()};
     std::atomic<bool> animateDisplayFromMod{true};
+    std::atomic<bool> doDCBlock{false};
+    bool wasDoDCBlock{false};
 
     std::string getWavetableName()
     {
@@ -490,6 +492,16 @@ template <int oscType> struct VCO : public modules::XTModule
             // values when you need them".
             processPosition = 0;
 
+            if (doDCBlock && !wasDoDCBlock)
+            {
+                for (int i=0; i<MAX_POLY; ++i)
+                {
+                    blockers[0][i].reset();
+                    blockers[1][i].reset();
+                }
+            }
+            wasDoDCBlock = doDCBlock;
+
             if constexpr (VCOConfig<oscType>::supportsAudioIn())
             {
                 if (inputs[AUDIO_INPUT].isConnected())
@@ -603,6 +615,12 @@ template <int oscType> struct VCO : public modules::XTModule
                         osc_downsample[0][c][i] *= fa;
                         osc_downsample[1][c][i] *= fa;
                     }
+                    if (doDCBlock)
+                    {
+                        // DC BLOCK HERE
+                        blockers[0][c].filter(osc_downsample[0][c]);
+                        blockers[1][c].filter(osc_downsample[1][c]);
+                    }
                 }
             }
             // pc.update(this);
@@ -652,6 +670,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     OscillatorStorage *oscstorage, *oscstorage_display;
     float osc_downsample alignas(16)[2][MAX_POLY][BLOCK_SIZE_OS];
+    modules::DCBlocker blockers[2][MAX_POLY];
     int halfbandM{6};
     bool halfbandSteep{true};
     std::array<std::unique_ptr<sst::filters::HalfRate::HalfRateFilter>, MAX_POLY> halfbandOUT;
@@ -702,7 +721,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         json_object_set(vco, "halfbandM", json_integer(halfbandM));
         json_object_set(vco, "halfbandSteep", json_boolean(halfbandSteep));
-
+        json_object_set(vco, "doDCBlock", json_boolean(doDCBlock));
         return vco;
     }
     void readModuleSpecificJson(json_t *modJ) override
@@ -770,6 +789,10 @@ template <int oscType> struct VCO : public modules::XTModule
             auto hbsv = json_boolean_value(hbs);
             setHalfbandCharacteristics(hbmv, hbsv);
         }
+
+        auto ddb = json_object_get(modJ, "doDCBlock");
+        if (ddb)
+            doDCBlock = json_boolean_value(ddb);
     }
 };
 
