@@ -51,6 +51,28 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
         ModuleWidget::onHoverKey(e);
     }
 
+    int snapNamesEvery{0};
+    void step() override
+    {
+        if (snapNamesEvery == 0)
+        {
+            snapNamesEvery =
+                2 * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
+            if (module)
+            {
+                for (auto *pq : module->paramQuantities)
+                {
+                    if (auto *s = dynamic_cast<modules::CalculatedName *>(pq))
+                    {
+                        pq->name = s->getCalculatedName();
+                    }
+                }
+            }
+        }
+        snapNamesEvery--;
+        ModuleWidget::step();
+    }
+
     virtual void selectModulator(int whichMod) {}
 
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) {}
