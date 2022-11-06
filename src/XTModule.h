@@ -954,4 +954,31 @@ template <typename T> struct ClockProcessor
         sampleRateInv = 1.f / sr;
     }
 };
+
+struct DCBlocker {
+    float xN1{0}, yN1{0};
+    float fac{0.9995};
+    DCBlocker() {
+        reset();
+    }
+    void reset()
+    {
+        xN1 = 0.f;
+        yN1 = 0.f;
+    }
+
+    inline void filter(float *x) // BLOCK_SIZE
+    {
+        for (int i=0; i<BLOCK_SIZE; ++i)
+        {
+            auto dx = x[i] - xN1;
+            auto fv = dx + fac * yN1;
+
+            xN1 = x[i];
+            yN1 = fv;
+
+            x[i] = fv;
+        }
+    }
+};
 } // namespace sst::surgext_rack::modules

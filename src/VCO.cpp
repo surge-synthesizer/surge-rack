@@ -113,6 +113,9 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             menu->addChild(rack::createSubmenuItem("Halfband Filter", "",
                                                    [this,m](auto *x) { downsampleMenu(x,m);}));
 
+            menu->addChild(rack::createMenuItem("Apply DC Blocker",
+                                                CHECKMARK(m->doDCBlock),
+                                                [m]() { m->doDCBlock = !m->doDCBlock;}));
             VCOConfig<oscType>::addMenuItems(m, menu);
         }
     }
