@@ -353,8 +353,8 @@ template <int oscType> struct VCO : public modules::XTModule
     uint32_t lastWavetableLoads{0};
     std::atomic<bool> draw3DWavetable{VCOConfig<oscType>::requiresWavetables()};
     std::atomic<bool> animateDisplayFromMod{true};
-    std::atomic<bool> doDCBlock{false};
-    bool wasDoDCBlock{false};
+    std::atomic<bool> doDCBlock{true};
+    bool wasDoDCBlock{true};
 
     std::string getWavetableName()
     {
@@ -793,6 +793,8 @@ template <int oscType> struct VCO : public modules::XTModule
         auto ddb = json_object_get(modJ, "doDCBlock");
         if (ddb)
             doDCBlock = json_boolean_value(ddb);
+        else
+            doDCBlock = true;
     }
 };
 
