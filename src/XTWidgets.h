@@ -1193,7 +1193,45 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
 
     bool parameterMenuOnClick{true};
     int minScale{0}, maxScale{0}, maxVal{0};
+    int stepsUntilOpen{-1}, stepsSinceDoubleClick{-1};
+
+    int secToFrame(float sec)
+    {
+        auto stepHz = 1.f * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
+        auto frm = sec * stepHz;
+        return (int)std::ceil(frm);
+    }
     void onAction(const ActionEvent &e) override {
+        if (stepsSinceDoubleClick < 0)
+        {
+            // The item is
+            stepsUntilOpen = secToFrame(0.15);
+        }
+        Knob::onAction(e);
+    }
+    void onDoubleClick(const DoubleClickEvent &e) override {
+        stepsUntilOpen = -1;
+        stepsSinceDoubleClick = secToFrame(0.3);
+        ParamWidget::onDoubleClick(e);
+    }
+    void step() override
+    {
+        if (stepsUntilOpen >= 0)
+        {
+            stepsUntilOpen --;
+            if (stepsUntilOpen == 0)
+            {
+                showQuantityMenu();
+            }
+        }
+        if (stepsSinceDoubleClick >= 0)
+        {
+            stepsSinceDoubleClick --;
+        }
+        rack::Knob::step();
+    }
+    void showQuantityMenu()
+    {
         if (parameterMenuOnClick && getParamQuantity())
         {
             auto pq = getParamQuantity();
@@ -1226,7 +1264,6 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
                 }
             }
         }
-        Knob::onAction(e);
     }
 };
 
