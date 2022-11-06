@@ -740,7 +740,7 @@ struct ModulationAssistant
             if (connected[i])
             {
                 auto ch = m->inputs[i + input0].getChannels();
-                broadcast[i] = ch != chans;
+                broadcast[i] = ch == 1 && chans != 1;
             }
             else
             {
