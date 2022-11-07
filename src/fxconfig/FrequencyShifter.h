@@ -53,8 +53,7 @@ template <> constexpr bool FXConfig<fxt_freqshift>::usesClock() { return true; }
 template <> void FXConfig<fxt_freqshift>::configSpecificParams(FX<fxt_freqshift> *m)
 {
     typedef FX<fxt_freqshift> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 0,
-                                                "Extend Frequency");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 0, "Extend Frequency");
 
     // Limit max delay to 1second by setting the upper bound to '0' in 2^x land
     auto &p = m->fxstorage->p[FrequencyShifterEffect::freq_delay];

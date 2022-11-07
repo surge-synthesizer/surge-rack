@@ -67,10 +67,8 @@ template <> FXConfig<fxt_reverb>::layout_t FXConfig<fxt_reverb>::getLayout()
 template <> void FXConfig<fxt_reverb>::configSpecificParams(FX<fxt_reverb> *m)
 {
     typedef FX<fxt_reverb> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
-                                                "Enable Low Cut");
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
-                                                "Enable High Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 1, "Enable Low Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 1, 1, "Enable High Cut");
 }
 
 template <> void FXConfig<fxt_reverb>::processSpecificParams(FX<fxt_reverb> *m)

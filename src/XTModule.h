@@ -261,6 +261,12 @@ struct XTModule : public rack::Module
         return res;
     }
 
+    template<typename T=rack::SwitchQuantity>
+    T *configOnOff(int paramId, float defaultValue, const std::string &name)
+    {
+        return configSwitch<T>(paramId, 0, 1, defaultValue, name, {"Off", "On"});
+    }
+
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
     style::XTStyle::LightColor localDisplayRegionColor{style::XTStyle::ORANGE},
@@ -617,42 +623,6 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
         setValue(1.f);
     }
 };
-
-
-struct OnOffParamQuantity : rack::engine::ParamQuantity
-{
-    std::string getDisplayValueString() override
-    {
-        auto v = getValue();
-        if (v < 0.5)
-            return "Off";
-
-        return "On";
-    }
-
-    void setDisplayValueString(std::string s) override
-    {
-        auto sl = s;
-        for (auto &c : sl)
-            c = std::tolower(c);
-
-        bool val = 0;
-        if (sl == "off" )
-        {
-            val = false;
-        }
-        else if (sl == "on")
-        {
-            val = true;
-        }
-        else
-        {
-            val = (std::atof(s.c_str()) > 0.5);
-        }
-        setValue(val);
-    }
-};
-
 
 template <typename M> struct DecibelModulatorParamQuantity : rack::ParamQuantity
 {

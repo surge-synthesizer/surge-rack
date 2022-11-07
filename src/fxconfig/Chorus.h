@@ -76,10 +76,8 @@ template <> FXConfig<fxt_chorus4>::layout_t FXConfig<fxt_chorus4>::getLayout()
 template <> void FXConfig<fxt_chorus4>::configSpecificParams(FX<fxt_chorus4> *m)
 {
     typedef FX<fxt_chorus4> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
-                                                "Enable Low Cut");
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
-                                                "Enable High Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 1, "Enable Low Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 1, 1, "Enable High Cut");
 }
 
 template <> void FXConfig<fxt_chorus4>::processSpecificParams(FX<fxt_chorus4> *m)

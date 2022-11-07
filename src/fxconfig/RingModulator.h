@@ -71,10 +71,8 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
 template <> void FXConfig<fxt_ringmod>::configSpecificParams(FX<fxt_ringmod> *m)
 {
     typedef FX<fxt_ringmod> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
-                                                "Enable Low Cut");
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
-                                                "Enable High Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 1, "Enable Low Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 1, 1, "Enable High Cut");
 }
 
 template <> void FXConfig<fxt_ringmod>::processSpecificParams(FX<fxt_ringmod> *m)
