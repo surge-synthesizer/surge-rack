@@ -753,6 +753,7 @@ template <int oscType> struct VCO : public modules::XTModule
             storage->waveTableDataMutex.lock();
             oscstorage->wt.BuildWT(data, wth, false);
             oscstorage_display->wt.BuildWT(data, wth, false);
+            wavetableLoads ++;
             storage->waveTableDataMutex.unlock();
 
             auto nm = json_object_get(wtJ, "display_name");

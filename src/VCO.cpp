@@ -252,19 +252,12 @@ template <int oscType> struct WavetableSelector : widgets::PresetJogSelector
             }
         }
         menu->addChild(new rack::ui::MenuSeparator);
-        menu->addChild(rack::createMenuItem("Open User Wavetables", "", [this]() {
-            rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
-        }));
-
-        menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
-                                            [this]() { module->storage->refresh_wtlist(); }));
-
         menu->addChild(rack::createMenuItem("Load Wavetable File", "", [this]() {
 #if MAC
             osdialog_filters* filters{nullptr};
 #else
-            auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
-            DEFER({ osdialog_filters_free(filters); });
+                auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
+                DEFER({ osdialog_filters_free(filters); });
 #endif
             char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
             if (openF)
@@ -273,6 +266,12 @@ template <int oscType> struct WavetableSelector : widgets::PresetJogSelector
                 sendLoadForPath(openF);
             }
         }));
+        menu->addChild(rack::createMenuItem("Reveal User Wavetables Directory", "", [this]() {
+            rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
+        }));
+        menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
+                                    [this]() { module->storage->refresh_wtlist(); }));
+
     }
 
     std::string getPresetName() override

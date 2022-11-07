@@ -45,10 +45,8 @@ template <> int VCOConfig<ot_sine>::rightMenuParamId() { return 0; }
 
 template <> inline void VCOConfig<ot_sine>::configureVCOSpecificParameters(VCO<ot_sine> *m)
 {
-    m->configParam<modules::OnOffParamQuantity>(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
-                                                "Enable Low Cut");
-    m->configParam<modules::OnOffParamQuantity>(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1, 0, 1, 0,
-                                                "Enable High Cut");
+    m->configOnOff(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0, 0, "Enable Low Cut");
+    m->configOnOff(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1, 0, "Enable High Cut");
 
     for (int i = 2; i < VCO<ot_sine>::n_arbitrary_switches; ++i)
     {
