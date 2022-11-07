@@ -23,6 +23,136 @@
 
 namespace sst::surgext_rack::vco::ui
 {
+
+template<int oscType>
+struct WavetableMenuBuilder
+{
+    static void sendLoadFor(VCO<oscType> *module, int nt)
+    {
+        auto msg = typename vco::VCO<oscType>::WavetableMessage();
+        msg.index = nt;
+        module->wavetableQueue.push(msg);
+    }
+
+    static void sendLoadForPath(VCO<oscType> *module, const char *fn)
+    {
+        auto msg = typename vco::VCO<oscType>::WavetableMessage();
+        strncpy(msg.filename, fn, 256);
+        msg.filename[255] = 0;
+        msg.index = -1;
+        module->wavetableQueue.push(msg);
+    }
+
+    static rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, VCO<oscType> *module, int categoryId)
+    {
+        if (!module)
+            return nullptr;
+        auto storage = module->storage.get();
+        auto &cat = storage->wt_category[categoryId];
+
+        for (auto p : storage->wtOrdering)
+        {
+            if (storage->wt_list[p].category == categoryId)
+            {
+                menu->addChild(rack::createMenuItem(storage->wt_list[p].name, "",
+                                                    [module, p]() { sendLoadFor(module, p); }));
+            }
+        }
+        // menu->addChild(rack::createMenuItem(name));
+        for (auto child : cat.children)
+        {
+            if (child.numberOfPatchesInCategoryAndChildren > 0)
+            {
+                // this isn't the best approach but it works
+                int cidx = 0;
+
+                for (auto &cc : storage->wt_category)
+                {
+                    if (cc.name == child.name)
+                    {
+                        break;
+                    }
+
+                    cidx++;
+                }
+                auto &kidcat = storage->wt_category[cidx];
+
+                std::string catName = kidcat.name;
+                std::size_t sepPos = catName.find_last_of(PATH_SEPARATOR);
+                if (sepPos != std::string::npos)
+                {
+                    catName = catName.substr(sepPos + 1);
+                }
+
+                menu->addChild(rack::createSubmenuItem(
+                    catName, "", [cidx, module](auto *x) { menuForCategory(x, module, cidx); }));
+            }
+        }
+
+        return menu;
+    }
+
+    static void buildMenuOnto(rack::ui::Menu *menu, VCO<oscType> *module)
+    {
+        if (!module)
+            return;
+        menu->addChild(rack::createMenuLabel("WaveTables"));
+        auto storage = module->storage.get();
+        int idx{0};
+        bool addSepIfMaking{false};
+        for (auto c : storage->wtCategoryOrdering)
+        {
+            PatchCategory cat = storage->wt_category[c];
+
+            if (idx == storage->firstThirdPartyWTCategory ||
+                (idx == storage->firstUserWTCategory &&
+                 storage->firstUserWTCategory != storage->wt_category.size()))
+            {
+                addSepIfMaking = true;
+            }
+
+            idx++;
+
+            if (cat.numberOfPatchesInCategoryAndChildren == 0)
+            {
+                continue;
+            }
+
+            if (cat.isRoot)
+            {
+                if (addSepIfMaking)
+                {
+                    menu->addChild(new rack::ui::MenuSeparator);
+                    addSepIfMaking = false;
+                }
+                menu->addChild(rack::createSubmenuItem(
+                    cat.name, "", [c, module](auto *x) { return menuForCategory(x, module, c); }));
+            }
+        }
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createMenuItem("Load Wavetable File", "", [module]() {
+#if MAC
+            osdialog_filters* filters{nullptr};
+#else
+                auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
+                DEFER({ osdialog_filters_free(filters); });
+#endif
+            char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
+            if (openF)
+            {
+                DEFER({ std::free(openF); });
+                sendLoadForPath(module, openF);
+            }
+        }));
+        menu->addChild(rack::createMenuItem("Reveal User Wavetables Directory", "", [module]() {
+            rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
+        }));
+        menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
+                                            [module]() { module->storage->refresh_wtlist(); }));
+
+    }
+
+};
 template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
 {
     typedef VCO<oscType> M;
@@ -96,6 +226,13 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
                 addBoolMenu("Extend Unison Detune", M::EXTEND_UNISON);
                 addBoolMenu("Absolute Unison Detune", M::ABSOLUTE_UNISON);
             }
+
+            if (VCOConfig<oscType>::requiresWavetables())
+            {
+                menu->addChild(new rack::MenuSeparator);
+                menu->addChild(rack::createSubmenuItem("Wavetables", "",
+                                                       [this,m](auto *x) { WavetableMenuBuilder<oscType>::buildMenuOnto(x, m);}));
+            }
             menu->addChild(new rack::MenuSeparator);
             menu->addChild(rack::createSubmenuItem("Character", "",
                                                    [this, m](auto *x) { characterMenu(x, m); }));
@@ -145,133 +282,16 @@ template <int oscType> struct WavetableSelector : widgets::PresetJogSelector
         // FIX ME - ordering aware jog pls
         bool wantNext = dir > 0;
         auto nt = module->storage->getAdjacentWaveTable(module->wavetableIndex, wantNext);
-        sendLoadFor(nt);
-    }
-
-    void sendLoadFor(int nt)
-    {
-        auto msg = typename vco::VCO<oscType>::WavetableMessage();
-        msg.index = nt;
-        module->wavetableQueue.push(msg);
-    }
-
-    void sendLoadForPath(const char *fn)
-    {
-        auto msg = typename vco::VCO<oscType>::WavetableMessage();
-        strncpy(msg.filename, fn, 256);
-        msg.filename[255] = 0;
-        msg.index = -1;
-        module->wavetableQueue.push(msg);
-    }
-
-    rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, int categoryId)
-    {
-        if (!module)
-            return nullptr;
-        auto storage = module->storage.get();
-        auto &cat = storage->wt_category[categoryId];
-
-        for (auto p : storage->wtOrdering)
-        {
-            if (storage->wt_list[p].category == categoryId)
-            {
-                menu->addChild(rack::createMenuItem(storage->wt_list[p].name, "",
-                                                    [this, p]() { this->sendLoadFor(p); }));
-            }
-        }
-        // menu->addChild(rack::createMenuItem(name));
-        for (auto child : cat.children)
-        {
-            if (child.numberOfPatchesInCategoryAndChildren > 0)
-            {
-                // this isn't the best approach but it works
-                int cidx = 0;
-
-                for (auto &cc : storage->wt_category)
-                {
-                    if (cc.name == child.name)
-                    {
-                        break;
-                    }
-
-                    cidx++;
-                }
-                auto &kidcat = storage->wt_category[cidx];
-
-                std::string catName = kidcat.name;
-                std::size_t sepPos = catName.find_last_of(PATH_SEPARATOR);
-                if (sepPos != std::string::npos)
-                {
-                    catName = catName.substr(sepPos + 1);
-                }
-
-                menu->addChild(rack::createSubmenuItem(
-                    catName, "", [cidx, this](auto *x) { this->menuForCategory(x, cidx); }));
-            }
-        }
-
-        return menu;
+        WavetableMenuBuilder<oscType>::sendLoadFor(module, nt);
     }
 
     void onShowMenu() override
     {
         if (!module)
             return;
+
         auto menu = rack::createMenu();
-        menu->addChild(rack::createMenuLabel("WaveTables"));
-        auto storage = module->storage.get();
-        int idx{0};
-        bool addSepIfMaking{false};
-        for (auto c : storage->wtCategoryOrdering)
-        {
-            PatchCategory cat = storage->wt_category[c];
-
-            if (idx == storage->firstThirdPartyWTCategory ||
-                (idx == storage->firstUserWTCategory &&
-                 storage->firstUserWTCategory != storage->wt_category.size()))
-            {
-                addSepIfMaking = true;
-            }
-
-            idx++;
-
-            if (cat.numberOfPatchesInCategoryAndChildren == 0)
-            {
-                continue;
-            }
-
-            if (cat.isRoot)
-            {
-                if (addSepIfMaking)
-                {
-                    menu->addChild(new rack::ui::MenuSeparator);
-                    addSepIfMaking = false;
-                }
-                menu->addChild(rack::createSubmenuItem(
-                    cat.name, "", [c, this](auto *x) { return menuForCategory(x, c); }));
-            }
-        }
-        menu->addChild(new rack::ui::MenuSeparator);
-        menu->addChild(rack::createMenuItem("Load Wavetable File", "", [this]() {
-#if MAC
-            osdialog_filters* filters{nullptr};
-#else
-                auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
-                DEFER({ osdialog_filters_free(filters); });
-#endif
-            char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
-            if (openF)
-            {
-                DEFER({ std::free(openF); });
-                sendLoadForPath(openF);
-            }
-        }));
-        menu->addChild(rack::createMenuItem("Reveal User Wavetables Directory", "", [this]() {
-            rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
-        }));
-        menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
-                                    [this]() { module->storage->refresh_wtlist(); }));
-
+        WavetableMenuBuilder<oscType>::buildMenuOnto(menu, module);
     }
 
     std::string getPresetName() override

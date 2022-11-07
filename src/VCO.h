@@ -517,7 +517,7 @@ template <int oscType> struct VCO : public modules::XTModule
             }
 
             VCOConfig<oscType>::processVCOSpecificParameters(this);
-            reInitEveryOSC = VCOConfig<oscType>::getVCOSpecificReInit(this);
+            reInitEveryOSC = reInitEveryOSC || VCOConfig<oscType>::getVCOSpecificReInit(this);
 
             if (animateDisplayFromMod)
             {

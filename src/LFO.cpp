@@ -1338,9 +1338,9 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
 
     {
         int col = 0;
-        std::vector<std::string> labv{"TRIG", "TRIGENV", "CLOCK", "PHASE"};
-        for (auto p : {M::INPUT_TRIGGER, M::INPUT_TRIGGER_ENVONLY, M::INPUT_CLOCK_RATE,
-                       M::INPUT_PHASE_DIRECT})
+        std::vector<std::string> labv{"GATE", "GATEENV", "CLOCK", "PHASE"};
+        for (auto p :
+             {M::INPUT_GATE, M::INPUT_GATE_ENVONLY, M::INPUT_CLOCK_RATE, M::INPUT_PHASE_DIRECT})
         {
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
             auto xp = layout::LayoutConstants::firstColumnCenter_MM +
