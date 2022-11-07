@@ -42,7 +42,6 @@ struct LayoutItem
         LCD_MENU_ITEM_SURGE_PARAM,
         POWER_LIGHT,
         EXTEND_LIGHT,
-        ABSOLUTE_LIGHT,
         ERROR
     } type{ERROR};
     std::string label{"ERR"};
@@ -417,7 +416,6 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         break;
         case LayoutItem::POWER_LIGHT:
         case LayoutItem::EXTEND_LIGHT:
-        case LayoutItem::ABSOLUTE_LIGHT:
         {
             auto dir = lay.spanmm < 0 ? -1 : 1;
             auto as = abs(lay.spanmm);
@@ -426,10 +424,6 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
 
             auto light = rack::createParamCentered<widgets::ActivateKnobSwitch>(rack::Vec(x, y),
                                                                                 module, lay.parId);
-            if (lay.type == LayoutItem::ABSOLUTE_LIGHT)
-            {
-                light->type = widgets::ActivateKnobSwitch::ABSOLUTE;
-            }
 
             if (lay.type == LayoutItem::EXTEND_LIGHT)
             {

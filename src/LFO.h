@@ -82,8 +82,8 @@ struct LFO : modules::XTModule
     };
     enum InputIds
     {
-        INPUT_TRIGGER,
-        INPUT_TRIGGER_ENVONLY,
+        INPUT_GATE,
+        INPUT_GATE_ENVONLY,
         INPUT_CLOCK_RATE,
         INPUT_PHASE_DIRECT,
         LFO_MOD_INPUT,
@@ -239,8 +239,8 @@ struct LFO : modules::XTModule
             }
         }
 
-        configInput(INPUT_TRIGGER, "Retrigger Full LFO");
-        configInput(INPUT_TRIGGER_ENVONLY, "Retrigger Envelope Only");
+        configInput(INPUT_GATE, "Gate for Full LFO (env + wave)");
+        configInput(INPUT_GATE_ENVONLY, "Gate for Envelope Only");
         configInput(INPUT_CLOCK_RATE, "Clock");
         configInput(INPUT_PHASE_DIRECT, "Direct Phase (0-10v for 0-1 Phase)");
         for (int i = 0; i < n_mod_inputs; ++i)
@@ -358,10 +358,10 @@ struct LFO : modules::XTModule
 
         int nChan{1};
         if (tt == FOLLOW_TRIG_POLY &&
-            (inputs[INPUT_TRIGGER].isConnected() || inputs[INPUT_TRIGGER_ENVONLY].isConnected()))
+            (inputs[INPUT_GATE].isConnected() || inputs[INPUT_GATE_ENVONLY].isConnected()))
         {
-            nChan = std::max(1, inputs[INPUT_TRIGGER].getChannels());
-            nChan = std::max(nChan, inputs[INPUT_TRIGGER_ENVONLY].getChannels());
+            nChan = std::max(1, inputs[INPUT_GATE].getChannels());
+            nChan = std::max(nChan, inputs[INPUT_GATE_ENVONLY].getChannels());
         }
         else
         {
@@ -379,26 +379,26 @@ struct LFO : modules::XTModule
         }
 
         if (tt == FOLLOW_TRIG_POLY &&
-            (inputs[INPUT_TRIGGER].isConnected() || inputs[INPUT_TRIGGER_ENVONLY].isConnected()))
+            (inputs[INPUT_GATE].isConnected() || inputs[INPUT_GATE_ENVONLY].isConnected()))
         {
             for (int c = 0; c < nChan; ++c)
             {
-                if (inputs[INPUT_TRIGGER].isConnected() &&
-                    envGateTrigger[c].process(inputs[INPUT_TRIGGER].getVoltage(c)))
+                if (inputs[INPUT_GATE].isConnected() &&
+                    envGateTrigger[c].process(inputs[INPUT_GATE].getVoltage(c)))
                     isTriggered[c] = true;
-                if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() &&
-                    envGateTriggerEnvOnly[c].process(inputs[INPUT_TRIGGER_ENVONLY].getVoltage(c)))
+                if (inputs[INPUT_GATE_ENVONLY].isConnected() &&
+                    envGateTriggerEnvOnly[c].process(inputs[INPUT_GATE_ENVONLY].getVoltage(c)))
                     isTriggeredEnvOnly[c] = true;
             }
         }
         else
         {
             // broadcast 0 to the rest
-            if (inputs[INPUT_TRIGGER].isConnected() &&
-                envGateTrigger[0].process(inputs[INPUT_TRIGGER].getVoltage(0)))
+            if (inputs[INPUT_GATE].isConnected() &&
+                envGateTrigger[0].process(inputs[INPUT_GATE].getVoltage(0)))
                 isTriggered[0] = true;
-            if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() &&
-                envGateTriggerEnvOnly[0].process(inputs[INPUT_TRIGGER_ENVONLY].getVoltage(0)))
+            if (inputs[INPUT_GATE_ENVONLY].isConnected() &&
+                envGateTriggerEnvOnly[0].process(inputs[INPUT_GATE_ENVONLY].getVoltage(0)))
                 isTriggeredEnvOnly[0] = true;
             for (int c = 1; c < nChan; ++c)
             {
@@ -508,23 +508,23 @@ struct LFO : modules::XTModule
                     isGated[c] = true;
                     isGateConnected[c] = true;
                 }
-                else if (inputs[INPUT_TRIGGER].isConnected() && isGated[c] &&
-                         (inputs[INPUT_TRIGGER].getVoltage(trigChan) < 1.f))
+                else if (inputs[INPUT_GATE].isConnected() && isGated[c] &&
+                         (inputs[INPUT_GATE].getVoltage(trigChan) < 1.f))
                 {
                     isGated[c] = false;
                     surge_lfo[c]->release();
                     isGateConnected[c] = true;
                 }
-                else if (inputs[INPUT_TRIGGER_ENVONLY].isConnected() && isGated[c] &&
-                         (inputs[INPUT_TRIGGER_ENVONLY].getVoltage(trigChan) < 1.f))
+                else if (inputs[INPUT_GATE_ENVONLY].isConnected() && isGated[c] &&
+                         (inputs[INPUT_GATE_ENVONLY].getVoltage(trigChan) < 1.f))
                 {
                     isGated[c] = false;
                     surge_lfo[c]->release();
 
                     isGateConnected[c] = true;
                 }
-                else if (!inputs[INPUT_TRIGGER].isConnected() &&
-                         !inputs[INPUT_TRIGGER_ENVONLY].isConnected())
+                else if (!inputs[INPUT_GATE].isConnected() &&
+                         !inputs[INPUT_GATE_ENVONLY].isConnected())
                 {
                     if (isGateConnected[c])
                         inNewAttack = true;
