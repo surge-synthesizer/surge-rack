@@ -60,13 +60,9 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
                 2 * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
             if (module)
             {
-                for (auto *pq : module->paramQuantities)
-                {
-                    if (auto *s = dynamic_cast<modules::CalculatedName *>(pq))
-                    {
-                        pq->name = s->getCalculatedName();
-                    }
-                }
+                auto xtm = dynamic_cast<modules::XTModule *>(module);
+                if (xtm)
+                    xtm->snapCalculatedNames();
             }
         }
         snapNamesEvery--;

@@ -163,6 +163,7 @@ template <int fxType> struct FX : modules::XTModule
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
+        snapCalculatedNames();
     }
 
     void moduleSpecificSampleRateChange() override

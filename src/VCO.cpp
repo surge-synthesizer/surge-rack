@@ -400,6 +400,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     int sumAbs{-1};
     int priorDeform[n_osc_params]{};
     int charF{-1};
+    bool isOneShot{false};
 
     uint32_t wtloadCompare{842932918};
 
@@ -436,6 +437,16 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             {
                 charF = storage->getPatch().character.val.i;
                 dval = true;
+            }
+
+            if (VCOConfig<oscType>::requiresWavetables())
+            {
+                auto wos = module->isWTOneShot();
+                if (wos != isOneShot)
+                {
+                    dval = true;
+                }
+                isOneShot = wos;
             }
         }
         return dval;
@@ -638,6 +649,17 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgText(vg, xs3d * 0.5, ys3d * 0.5, "3D", nullptr);
+
+            if (isOneShot)
+            {
+                nvgBeginPath(vg);
+                nvgFontFaceId(vg, style()->fontIdBold(vg));
+                nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+                nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+                nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+                nvgText(vg, box.size.x - rack::mm2px(0.5), ys3d * 0.5, "OneShot", nullptr);
+
+            }
         }
     }
 
@@ -1093,8 +1115,26 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
 
     engine_t::createInputOutputPorts(this, M::PITCH_CV, M::RETRIGGER, M::OUTPUT_L, M::OUTPUT_R);
 
-    engine_t ::createLeftRightInputLabels(this, "V/OCT", VCOConfig<oscType>::retriggerLabel());
-
+    engine_t ::createLeftRightInputLabels(this, "V/OCT", "");
+    // Special input 2 label is dynamic for WT. This is a wee bit of a generatlization
+    // breakage but not too bad.
+    {
+        auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
+        auto lab = engine_t::makeLabelAt(
+            bl, 1, "", style::XTStyle::TEXT_LABEL);
+        lab->hasDynamicLabel = true;
+        lab->module = module;
+        lab->dynamicLabel = [](auto m) -> std::string {
+            if (VCOConfig<oscType>::requiresWavetables() && m)
+            {
+                auto vm = dynamic_cast<VCO<oscType>*>(m);
+                if (vm && vm->isWTOneShot())
+                    return "TRIG";
+            }
+            return VCOConfig<oscType>::retriggerLabel();;
+        };
+        addChild(lab);
+    }
     resetStyleCouplingToModule();
 }
 
