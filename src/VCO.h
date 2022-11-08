@@ -225,6 +225,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         configInput(PITCH_CV, "V/Oct");
         configInput(RETRIGGER, "Reset/Retrigger");
+        configInput(AUDIO_INPUT, "Audio Input");
         for (int m = 0; m < n_mod_inputs; ++m)
         {
             auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
@@ -235,6 +236,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
         modAssist.initialize(this);
+        snapCalculatedNames();
     }
 
     void setHalfbandCharacteristics(int M, bool steep)
@@ -308,6 +310,14 @@ template <int oscType> struct VCO : public modules::XTModule
         }
         return false;
     }
+
+    bool isWTOneShot()
+    {
+        if (!VCOConfig<oscType>::requiresWavetables())
+            return false;
+        return (oscstorage->wt.flags & wtf_is_sample);
+    }
+
     float modulationDisplayValues[n_osc_params + 1];
     float modulationDisplayValue(int paramId) override
     {

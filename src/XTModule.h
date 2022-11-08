@@ -267,6 +267,8 @@ struct XTModule : public rack::Module
         return configSwitch<T>(paramId, 0, 1, defaultValue, name, {"Off", "On"});
     }
 
+    void snapCalculatedNames();
+
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
     style::XTStyle::LightColor localDisplayRegionColor{style::XTStyle::ORANGE},
@@ -332,7 +334,10 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
         return par->get_name();
     }
 
-    virtual std::string getDisplayValueString() override
+    virtual std::string getDisplayValueString() override {
+        return getDisplayValueStringForValue(getValue());
+    }
+    virtual std::string getDisplayValueStringForValue(float f)
     {
         auto par = surgepar();
         if (!par)
@@ -341,9 +346,9 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
         }
 
         char txt[256];
-        par->get_display(txt, true, getValue());
+        par->get_display(txt, true, f);
         char talt[256];
-        par->get_display_alt(talt, true, getValue());
+        par->get_display_alt(talt, true, f);
         if (strlen(talt))
         {
             if (std::string(talt) == " ")
@@ -983,4 +988,15 @@ struct DCBlocker {
         }
     }
 };
+
+inline void XTModule::snapCalculatedNames()
+{
+    for (auto *pq : paramQuantities)
+    {
+        if (auto *s = dynamic_cast<modules::CalculatedName *>(pq))
+        {
+            pq->name = s->getCalculatedName();
+        }
+    }
+}
 } // namespace sst::surgext_rack::modules

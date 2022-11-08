@@ -1746,17 +1746,16 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
     void onButton(const ButtonEvent &e) override
     {
         buttonY = e.pos.y;
-        if (e.action == GLFW_RELEASE)
-            buttonY = -1;
         SliderKnob::onButton(e);
     }
     void onAction(const ActionEvent &e) override
     {
         auto ringpx = rack::mm2px(ring_MM);
         auto padpx = rack::mm2px(pad_MM);
+        auto halopx = rack::mm2px(halo_MM);
         for (int i = 0; i < nLights; ++i)
         {
-            auto y0 = i * (ringpx + padpx);
+            auto y0 = i * (ringpx + padpx) + halopx;
 
             if (buttonY >= y0 && buttonY <= y0 + ringpx)
             {
@@ -1768,6 +1767,36 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
             }
         }
         Knob::onAction(e);
+    }
+
+    void appendContextMenu(rack::Menu *menu) override {
+        auto pq = getParamQuantity();
+        auto spq = dynamic_cast<modules::SurgeParameterParamQuantity *>(pq);
+
+        if (!spq)
+            return;
+
+        while (menu->children.size() > 1)
+        {
+            auto back = menu->children.back();
+            menu->removeChild(back);
+            delete back;
+        }
+
+        auto pqv = Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights - 1);
+
+        for (int i = 0; i < nLights; ++i)
+        {
+            auto fval = Parameter::intScaledToFloat(i, nLights - 1);
+            auto sval = spq->getDisplayValueStringForValue(fval);
+            menu->addChild(rack::createMenuItem(sval, CHECKMARK(i==pqv),
+                                                [pq, fval](){pq->setValue(fval);}));
+        }
+
+        menu->addChild(new rack::MenuSeparator);
+        menu->addChild(rack::createMenuItem("Initialize", "Double-click", [=]() {
+            this->resetAction();
+        }));
     }
 };
 

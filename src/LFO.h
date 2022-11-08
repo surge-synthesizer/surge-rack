@@ -254,6 +254,7 @@ struct LFO : modules::XTModule
         configOutput(OUTPUT_TRIGB, "Trigger on end of Envelope or Step Trigger B");
 
         modAssist.initialize(this);
+        snapCalculatedNames();
     }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
