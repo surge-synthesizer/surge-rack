@@ -600,12 +600,28 @@ template <int centerOffset> struct MidiNoteParamQuantity : public rack::engine::
 
 struct DecibelParamQuantity : rack::engine::ParamQuantity
 {
+    static float ampToLinear(float xin)
+    {
+        auto x = std::max(0.f, xin);
+        return x * x * x;
+    }
+    static __m128 ampToLinearSSE(__m128 xin)
+    {
+        auto x = _mm_max_ss(xin, _mm_setzero_ps());
+        return _mm_mul_ps(x, _mm_mul_ps(x,x));
+    }
+    static float linearToAmp(float x)
+    {
+        // display only so don't need an SSE version of this
+        return powf(std::max(x, 0.f), 1.f / 3.f);
+    }
+
     std::string getDisplayValueString() override
     {
         auto v = getValue();
         if (v < 0.0001)
             return "-inf dB";
-        auto dbv = 18.0 * std::log2(v);
+        auto dbv = 6.0 * std::log2(ampToLinear(v));
         return fmt::format("{:.4} dB", dbv);
     }
 
@@ -618,7 +634,7 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
         }
 
         auto q = std::atof(s.c_str());
-        auto v = pow(2.f, q / 18.0);
+        auto v = linearToAmp(pow(2.f, q / 6.0));
         if (v >= 0 && v <= 2)
         {
             setValue(v);
