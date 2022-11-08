@@ -355,6 +355,7 @@ template <int oscType> struct VCO : public modules::XTModule
     {
         int index{-1};
         char filename[256];
+        int defaultSize{-1};
     };
     rack::dsp::RingBuffer<WavetableMessage, VCOConfig<oscType>::wavetableQueueSize()>
         wavetableQueue;
@@ -392,7 +393,6 @@ template <int oscType> struct VCO : public modules::XTModule
     {
         if (msg.index >= 0)
         {
-            // We really should do this off audio thread but for now
             auto nid = std::clamp((int)msg.index, (int)0, (int)storage->wt_list.size());
             oscstorage->wt.queue_id = nid;
             oscstorage_display->wt.queue_id = nid;
@@ -404,6 +404,9 @@ template <int oscType> struct VCO : public modules::XTModule
         {
             strncpy(oscstorage->wt.queue_filename, msg.filename, 256);
             strncpy(oscstorage_display->wt.queue_filename, msg.filename, 256);
+            oscstorage->wt.frame_size_if_absent = msg.defaultSize;
+            oscstorage_display->wt.frame_size_if_absent = msg.defaultSize;
+
             storage->perform_queued_wtloads();
 
             wavetableIndex = -1;
@@ -453,12 +456,6 @@ template <int oscType> struct VCO : public modules::XTModule
                     return;
                 }
             }
-
-            if (wavetableLoads != lastWavetableLoads)
-            {
-                reInitEveryOSC = true;
-                lastWavetableLoads = wavetableLoads;
-            }
         }
 
         if (nChan != lastNChan || forceRespawnDueToExternality)
@@ -496,6 +493,12 @@ template <int oscType> struct VCO : public modules::XTModule
 
         if (processPosition >= BLOCK_SIZE)
         {
+            if (wavetableLoads != lastWavetableLoads)
+            {
+                reInitEveryOSC = true;
+                lastWavetableLoads = wavetableLoads;
+            }
+
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
             // As @Vortico says "think like a hardware engineer; only snap
@@ -708,7 +711,7 @@ template <int oscType> struct VCO : public modules::XTModule
             memset(wth.tag, 0, 4);
             wth.n_samples = wt.size;
             wth.n_tables = wt.n_tables;
-            wth.flags = wt.flags | wtf_int16;
+            wth.flags = (wt.flags | wtf_int16) & ~wtf_int16_is_16;
             unsigned int wtsize =
                 wth.n_samples * wt.n_tables * sizeof(uint16_t) + sizeof(wt_header);
 
