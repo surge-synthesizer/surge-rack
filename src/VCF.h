@@ -393,10 +393,10 @@ struct VCF : public modules::XTModule
 
             for (int i = 0; i < MAX_POLY >> 2; ++i)
             {
-                auto tig = modulationAssistant.valuesSSE[IN_GAIN][i];
+                auto tig = modules::DecibelParamQuantity::ampToLinearSSE(modulationAssistant.valuesSSE[IN_GAIN][i]);
                 dInGain[i] = _mm_mul_ps(_mm_sub_ps(tig, currentInGain[i]), oneOverBlock);
 
-                auto tog = modulationAssistant.valuesSSE[OUT_GAIN][i];
+                auto tog = modules::DecibelParamQuantity::ampToLinearSSE(modulationAssistant.valuesSSE[OUT_GAIN][i]);
                 dOutGain[i] = _mm_mul_ps(_mm_sub_ps(tog, currentOutGain[i]), oneOverBlock);
 
                 auto tmix = modulationAssistant.valuesSSE[MIX][i];
