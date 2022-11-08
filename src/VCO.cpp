@@ -34,12 +34,13 @@ struct WavetableMenuBuilder
         module->wavetableQueue.push(msg);
     }
 
-    static void sendLoadForPath(VCO<oscType> *module, const char *fn)
+    static void sendLoadForPath(VCO<oscType> *module, const char *fn, int sz = -1)
     {
         auto msg = typename vco::VCO<oscType>::WavetableMessage();
         strncpy(msg.filename, fn, 256);
         msg.filename[255] = 0;
         msg.index = -1;
+        msg.defaultSize = sz;
         module->wavetableQueue.push(msg);
     }
 
@@ -132,7 +133,7 @@ struct WavetableMenuBuilder
         menu->addChild(new rack::ui::MenuSeparator);
         menu->addChild(rack::createMenuItem("Load Wavetable File", "", [module]() {
 #if MAC
-            osdialog_filters* filters{nullptr};
+            osdialog_filters *filters{nullptr};
 #else
                 auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
                 DEFER({ osdialog_filters_free(filters); });
@@ -144,14 +145,39 @@ struct WavetableMenuBuilder
                 sendLoadForPath(module, openF);
             }
         }));
+        menu->addChild(rack::createMenuItem("Load WaveEdit Wavetable", "", [module]() {
+            auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav");
+            DEFER({ osdialog_filters_free(filters); });
+            char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
+            if (openF)
+            {
+                DEFER({ std::free(openF); });
+                sendLoadForPath(module, openF, 256);
+            }
+        }));
+        menu->addChild(rack::createSubmenuItem("Load Untagged Wav as", "", [module](auto *pm) {
+            for (int i = 6; i < 13; ++i)
+            {
+                auto label = std::to_string(1 << i) + " Sample Frame WaveTable";
+                pm->addChild(rack::createMenuItem(label, "", [module, i]() {
+                    auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav");
+                    DEFER({ osdialog_filters_free(filters); });
+                    char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
+                    if (openF)
+                    {
+                        DEFER({ std::free(openF); });
+                        sendLoadForPath(module, openF, 1 << i);
+                    }
+                }));
+            }
+        }));
+        menu->addChild(new rack::MenuSeparator);
         menu->addChild(rack::createMenuItem("Reveal User Wavetables Directory", "", [module]() {
             rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
         }));
         menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
                                             [module]() { module->storage->refresh_wtlist(); }));
-
     }
-
 };
 template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
 {
