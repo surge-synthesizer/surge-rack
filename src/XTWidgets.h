@@ -672,10 +672,10 @@ struct GroupLabel : rack::widget::TransparentWidget, style::StyleParticipant
     std::string label;
     bool shortLeft{false}, shortRight{false};
 
-    static GroupLabel *createAboveCenterWithColSpan(const std::string &label,
-                                                    const rack::Vec &ctrInMM,
-                                                    float spanInColumns,
-                                                    float colWidthMM = layout::LayoutConstants::columnWidth_MM)
+    static GroupLabel *
+    createAboveCenterWithColSpan(const std::string &label, const rack::Vec &ctrInMM,
+                                 float spanInColumns,
+                                 float colWidthMM = layout::LayoutConstants::columnWidth_MM)
     {
         // If you change this remember to fix the LFO also
         float ht = rack::mm2px(4.5);
@@ -752,13 +752,12 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
     enum RenderType
     {
         POWER,
-        ABSOLUTE,
         EXTENDED
     } type{POWER};
 
     ActivateKnobSwitch()
     {
-        box.size = rack::mm2px(rack::Vec(3, 3));
+        box.size = rack::mm2px(rack::Vec(3.5, 3.5));
         radius = rack::mm2px(1.1);
         bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
                                              [this](auto v) { this->drawBackground(v); });
@@ -769,7 +768,8 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
     }
 
     bool hovered{false};
-    void onHover(const HoverEvent &e) override {
+    void onHover(const HoverEvent &e) override
+    {
         e.consume(this);
         rack::app::Switch::onHover(e);
     }
@@ -794,7 +794,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
     {
         const float crossWidth = rack::mm2px(0.6);
         const float crossRadius = crossWidth / 2;
-        const float shrinkBy = rack::mm2px(0.1);
+        const float shrinkBy = rack::mm2px(0.6);
         auto ctrx = box.size.x * 0.5;
         auto ctry = box.size.y * 0.5;
         nvgBeginPath(vg);
@@ -823,19 +823,6 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgStrokeWidth(vg, 0.75);
             nvgStroke(vg);
         }
-        if (type == ABSOLUTE)
-        {
-            nvgBeginPath(vg);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
-            nvgFillColor(vg, col);
-            nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, type == ABSOLUTE ? "A" : "X", nullptr);
-            nvgFill(vg);
-            nvgStrokeWidth(vg, 0.75);
-            nvgStroke(vg);
-        }
         if (type == EXTENDED)
         {
             setupExtendedPath(vg);
@@ -859,14 +846,16 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
 
         if (halo > 0.f)
         {
-            auto dr = 1.6f;
             nvgBeginPath(vg);
-            nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * dr, radius * dr);
+            nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, box.size.x * 0.5, box.size.x * 0.5);
 
-            NVGcolor icol =
-                rack::color::mult(style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON), halo);
-            NVGcolor ocol = nvgRGBA(0, 0, 0, 0);
-            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, box.size.y * 0.5, radius, radius*dr, icol, ocol);
+            auto pcol = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
+            NVGcolor icol = pcol;
+            icol.a = halo;
+            NVGcolor ocol = pcol;
+            ocol.a = 0.f;
+            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, box.size.y * 0.5, radius,
+                                               box.size.x * 0.5, icol, ocol);
             nvgFillPaint(vg, paint);
             nvgFill(vg);
 
@@ -878,16 +867,6 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgBeginPath(vg);
             nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
             nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * 0.9, radius * 0.9);
-            nvgFill(vg);
-        }
-        if (type == ABSOLUTE)
-        {
-            nvgBeginPath(vg);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
-            nvgFontFaceId(vg, style()->fontIdBold(vg));
-            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, type == ABSOLUTE ? "A" : "X", nullptr);
             nvgFill(vg);
         }
         if (type == EXTENDED)
@@ -904,7 +883,6 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
         bdwLight->dirty = true;
         Widget::onChange(e);
     }
-
 
     float phalo{0.f};
     void step() override
@@ -952,7 +930,8 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
     }
 
     bool hovered{false};
-    void onHover(const typename T::HoverEvent &e) override {
+    void onHover(const typename T::HoverEvent &e) override
+    {
         e.consume(this);
         T::onHover(e);
     }
@@ -1197,11 +1176,13 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
 
     int secToFrame(float sec)
     {
-        auto stepHz = 1.f * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
+        auto stepHz =
+            1.f * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
         auto frm = sec * stepHz;
         return (int)std::ceil(frm);
     }
-    void onAction(const ActionEvent &e) override {
+    void onAction(const ActionEvent &e) override
+    {
         if (stepsSinceDoubleClick < 0)
         {
             // The item is
@@ -1209,7 +1190,8 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         }
         Knob::onAction(e);
     }
-    void onDoubleClick(const DoubleClickEvent &e) override {
+    void onDoubleClick(const DoubleClickEvent &e) override
+    {
         stepsUntilOpen = -1;
         stepsSinceDoubleClick = secToFrame(0.3);
         ParamWidget::onDoubleClick(e);
@@ -1218,7 +1200,7 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
     {
         if (stepsUntilOpen >= 0)
         {
-            stepsUntilOpen --;
+            stepsUntilOpen--;
             if (stepsUntilOpen == 0)
             {
                 showQuantityMenu();
@@ -1226,7 +1208,7 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
         }
         if (stepsSinceDoubleClick >= 0)
         {
-            stepsSinceDoubleClick --;
+            stepsSinceDoubleClick--;
         }
         rack::Knob::step();
     }
@@ -1240,11 +1222,10 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
                 auto men = rack::createMenu();
                 men->addChild(rack::createMenuLabel(pq->getLabel()));
                 auto v = (int)std::round(pq->getValue());
-                for (int i=pq->getMaxValue(); i>=pq->getMinValue(); --i)
+                for (int i = pq->getMaxValue(); i >= pq->getMinValue(); --i)
                 {
-                    men->addChild(rack::createMenuItem(std::to_string(i),
-                                                       CHECKMARK(i == v),
-                                                       [pq,i]() {pq->setValue(i);}));
+                    men->addChild(rack::createMenuItem(std::to_string(i), CHECKMARK(i == v),
+                                                       [pq, i]() { pq->setValue(i); }));
                 }
             }
             else if (minScale != maxScale)
@@ -1252,15 +1233,13 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
                 auto men = rack::createMenu();
                 men->addChild(rack::createMenuLabel(pq->getLabel()));
 
-                auto v = Parameter::intUnscaledFromFloat(pq->getValue(),
-                                                         maxScale,
-                                                         minScale);
-                for (int i=maxVal; i>=minScale; --i)
+                auto v = Parameter::intUnscaledFromFloat(pq->getValue(), maxScale, minScale);
+                for (int i = maxVal; i >= minScale; --i)
                 {
-                    men->addChild(rack::createMenuItem(std::to_string(i),
-                                                       CHECKMARK(i == v),
-                                                       [this,pq,i]() {pq->setValue(Parameter::intScaledToFloat(i, maxScale, minScale));}));
-
+                    men->addChild(
+                        rack::createMenuItem(std::to_string(i), CHECKMARK(i == v), [this, pq, i]() {
+                            pq->setValue(Parameter::intScaledToFloat(i, maxScale, minScale));
+                        }));
                 }
             }
         }
@@ -1654,15 +1633,16 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
 {
     BufferedDrawFunctionWidget *bdwRings{nullptr}, *bdwLight{nullptr};
 
-    static constexpr float ring_MM{2.6}, pad_MM{1.3};
+    static constexpr float ring_MM{2.6}, pad_MM{1.3}, halo_MM{0.75};
 
     static ThereAreFourLights<nLights> *createCentered(rack::Vec pos, rack::Module *module,
                                                        int paramId)
     {
         auto *res = rack::createWidget<ThereAreFourLights<nLights>>(pos);
 
-        res->box.size.x = rack::mm2px(ring_MM);
-        res->box.size.y = rack::mm2px(ring_MM) * nLights + rack::mm2px(pad_MM) * (nLights - 1);
+        res->box.size.x = rack::mm2px(ring_MM + 2 * halo_MM);
+        res->box.size.y = rack::mm2px(ring_MM) * nLights + rack::mm2px(pad_MM) * (nLights - 1) +
+                          2 * rack::mm2px(halo_MM);
         res->box.pos.x = pos.x - res->box.size.x / 2.f;
         res->box.pos.y = pos.y - res->box.size.y / 2.f;
         res->module = module;
@@ -1683,12 +1663,13 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
     {
         auto ringpx = rack::mm2px(ring_MM);
         auto padpx = rack::mm2px(pad_MM);
+        auto halopx = rack::mm2px(halo_MM);
         for (int i = 0; i < nLights; ++i)
         {
-            auto y0 = i * (ringpx + padpx);
+            auto y0 = i * (ringpx + padpx) + halopx;
             nvgBeginPath(vg);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
-            nvgFillColor(vg, style()->getColor(style::XTStyle::MOD_BUTTON_LIGHT_OFF));
+            nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_OFF));
             nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5);
             nvgFill(vg);
             nvgStrokeWidth(vg, 1);
@@ -1701,12 +1682,33 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
             return;
         auto ringpx = rack::mm2px(ring_MM);
         auto padpx = rack::mm2px(pad_MM);
+        auto halopx = rack::mm2px(halo_MM);
+
+        const float halo = rack::settings::haloBrightness;
 
         auto pq = nLights - 1 -
                   Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights - 1);
+        auto y0 = pq * (ringpx + padpx) + halopx;
+
+        if (halo > 0.f)
+        {
+            nvgBeginPath(vg);
+            nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5 + halopx,
+                       ringpx * 0.5 + halopx);
+
+            auto pcol = style()->getColor(style::XTStyle::KNOB_RING_VALUE);
+            NVGcolor icol = pcol;
+            icol.a = halo;
+            NVGcolor ocol = pcol;
+            ocol.a = 0.f;
+            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5 + halopx, icol, ocol);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+        }
+
         nvgBeginPath(vg);
-        auto y0 = pq * (ringpx + padpx);
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
+        // This is a value slider not a power button
         nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
         nvgEllipse(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5);
         nvgFill(vg);
@@ -1727,21 +1729,33 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
         bdwRings->dirty = true;
     }
 
+    float phalo{0.f};
+    void step() override
+    {
+        const float halo = rack::settings::haloBrightness;
+        if (phalo != halo)
+        {
+            phalo = halo;
+            bdwRings->dirty = true;
+            bdwLight->dirty = true;
+        }
+        SliderKnob::step();
+    }
+
     float buttonY{-1};
     void onButton(const ButtonEvent &e) override
     {
         buttonY = e.pos.y;
-        if (e.action == GLFW_RELEASE)
-            buttonY = -1;
         SliderKnob::onButton(e);
     }
     void onAction(const ActionEvent &e) override
     {
         auto ringpx = rack::mm2px(ring_MM);
         auto padpx = rack::mm2px(pad_MM);
+        auto halopx = rack::mm2px(halo_MM);
         for (int i = 0; i < nLights; ++i)
         {
-            auto y0 = i * (ringpx + padpx);
+            auto y0 = i * (ringpx + padpx) + halopx;
 
             if (buttonY >= y0 && buttonY <= y0 + ringpx)
             {
@@ -1753,6 +1767,36 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
             }
         }
         Knob::onAction(e);
+    }
+
+    void appendContextMenu(rack::Menu *menu) override {
+        auto pq = getParamQuantity();
+        auto spq = dynamic_cast<modules::SurgeParameterParamQuantity *>(pq);
+
+        if (!spq)
+            return;
+
+        while (menu->children.size() > 1)
+        {
+            auto back = menu->children.back();
+            menu->removeChild(back);
+            delete back;
+        }
+
+        auto pqv = Parameter::intUnscaledFromFloat(getParamQuantity()->getValue(), nLights - 1);
+
+        for (int i = 0; i < nLights; ++i)
+        {
+            auto fval = Parameter::intScaledToFloat(i, nLights - 1);
+            auto sval = spq->getDisplayValueStringForValue(fval);
+            menu->addChild(rack::createMenuItem(sval, CHECKMARK(i==pqv),
+                                                [pq, fval](){pq->setValue(fval);}));
+        }
+
+        menu->addChild(new rack::MenuSeparator);
+        menu->addChild(rack::createMenuItem("Initialize", "Double-click", [=]() {
+            this->resetAction();
+        }));
     }
 };
 
@@ -1774,7 +1818,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto compDir = res->style()->skinAssetDir() + "/components";
         auto bg = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
 
-        auto sz = rack::Vec(5,20);
+        auto sz = rack::Vec(5, 20);
         if (bg)
             sz = bg->getSize();
         res->box.pos = pos;
@@ -1794,11 +1838,11 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     {
         baseFB = new rack::widget::FramebufferWidget();
         baseFB->box.size = box.size;
-        baseFB->box.pos = rack::Vec(0,0);
+        baseFB->box.pos = rack::Vec(0, 0);
 
         handleFB = new rack::widget::FramebufferWidget();
         handleFB->box.size = box.size;
-        handleFB->box.pos = rack::Vec(0,0);
+        handleFB->box.pos = rack::Vec(0, 0);
 
         tray = new rack::SvgWidget();
         handle = new rack::SvgWidget();
@@ -1815,10 +1859,9 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         handleFB->addChild(handle);
 
         bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
-                                                  [this](auto *vg) { this->drawSlider(vg); });
+                                             [this](auto *vg) { this->drawSlider(vg); });
         bdwLight = new BufferedDrawFunctionWidgetOnLayer(rack::Vec(0, 0), box.size,
-                                             [this](auto *vg) { this->drawLight(vg); });
-
+                                                         [this](auto *vg) { this->drawLight(vg); });
 
         addChild(baseFB);
         addChild(bdw);
@@ -1837,10 +1880,10 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     void positionHandleByQuantity()
     {
         auto pq = getParamQuantity();
-        if (!pq || ! handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
+        if (!pq || !handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
             return;
 
-        auto npos = (pq->getValue() - pq->getMinValue())/(pq->getMaxValue()-pq->getMinValue());
+        auto npos = (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
         npos = 1.0 - npos;
         auto hsize = handle->box.size.y;
         auto tsize = tray->box.size.y;
@@ -1867,8 +1910,8 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         rack::app::SliderKnob::step();
     }
 
-
-    void drawSlider(NVGcontext *vg) {
+    void drawSlider(NVGcontext *vg)
+    {
         auto rwidth = rack::mm2px(0.88);
         auto hsize = handle->box.size.y;
         auto tsize = tray->box.size.y;
@@ -1884,7 +1927,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     void drawLight(NVGcontext *vg)
     {
         auto pq = getParamQuantity();
-        if (!pq || ! handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
+        if (!pq || !handle || handle->box.size.y < 1 || !tray || tray->box.size.y < 1)
             return;
 
         if (isModEdit)
@@ -1907,21 +1950,22 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
 
         nvgBeginPath(vg);
-        nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth,
-                           span - np);
+        nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth, span - np);
         nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
         nvgFill(vg);
         nvgStrokeWidth(vg, 0.5);
         nvgStroke(vg);
     }
-    void onStyleChanged() override {
+    void onStyleChanged() override
+    {
         bdw->dirty = true;
         bdwLight->dirty = true;
 
         auto compDir = style()->skinAssetDir() + "/components";
 
         auto ts = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
-        auto hs = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_handle.svg"));
+        auto hs =
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_handle.svg"));
 
         tray->setSvg(ts);
         handle->setSvg(hs);
@@ -1966,9 +2010,8 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         auto hp = underlyerParamWidget->handle->box.pos;
         auto hs = underlyerParamWidget->handle->box.size;
 
-        for (const auto &[v,h,c] :{ std::make_tuple(mp,mp-np, style::XTStyle::KNOB_MOD_PLUS),
-                        std::make_tuple(dp, np-dp,style::XTStyle::KNOB_MOD_MINUS)
-            })
+        for (const auto &[v, h, c] : {std::make_tuple(mp, mp - np, style::XTStyle::KNOB_MOD_PLUS),
+                                      std::make_tuple(dp, np - dp, style::XTStyle::KNOB_MOD_MINUS)})
         {
             auto start = std::min(v, np);
             auto height = fabs(h);
@@ -2006,7 +2049,7 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
 
         if (0)
         {
-            auto start  = std::min(np, dp);
+            auto start = std::min(np, dp);
             auto height = fabs(np - dp);
             auto inset = rack::mm2px(1.5f);
 
@@ -2029,7 +2072,7 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         res->box.pos.y -= height / 2;
         res->box.size = rack::Vec(width, height);
         res->bdw = new BufferedDrawFunctionWidgetOnLayer(rack::Vec(0, 0), res->box.size,
-                                                  [res](auto *vg) { res->drawWidget(vg); });
+                                                         [res](auto *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
 
         res->module = module;

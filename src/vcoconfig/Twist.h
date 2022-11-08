@@ -220,8 +220,7 @@ template <> void VCOConfig<ot_twist>::oscillatorSpecificSetup(VCO<ot_twist> *m)
 }
 template <> inline void VCOConfig<ot_twist>::configureVCOSpecificParameters(VCO<ot_twist> *m)
 {
-    m->configParam<modules::OnOffParamQuantity>(VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
-                                                "Enable LPG on Trigger");
+    m->configOnOff(VCO<ot_twist>::ARBITRARY_SWITCH_0 + 0, 0, "Enable LPG on Trigger");
 
     m->intStateForConfig[0] = m->inputs[VCO<ot_twist>::RETRIGGER].isConnected();
     m->intStateForConfig[1] = m->oscstorage->p[TwistOscillator::twist_lpg_response].deactivated;

@@ -66,8 +66,7 @@ template <> FXConfig<fxt_combulator>::layout_t FXConfig<fxt_combulator>::getLayo
 template <> void FXConfig<fxt_combulator>::configSpecificParams(FX<fxt_combulator> *m)
 {
     typedef FX<fxt_combulator> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
-                                                "Enable Tone Filter");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 1, "Enable Tone Filter");
 }
 
 template <> void FXConfig<fxt_combulator>::processSpecificParams(FX<fxt_combulator> *m)

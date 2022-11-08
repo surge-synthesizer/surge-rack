@@ -66,10 +66,8 @@ template <> FXConfig<fxt_treemonster>::layout_t FXConfig<fxt_treemonster>::getLa
 template <> void FXConfig<fxt_treemonster>::configSpecificParams(FX<fxt_treemonster> *m)
 {
     typedef FX<fxt_treemonster> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0, 0, 1, 1,
-                                                "Enable Low Cut");
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 1,
-                                                "Enable High Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 1, "Enable Low Cut");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 1, 1, "Enable High Cut");
 
     // Default TM to polyphonic
     m->polyphonicMode = true;

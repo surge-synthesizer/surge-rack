@@ -261,6 +261,14 @@ struct XTModule : public rack::Module
         return res;
     }
 
+    template<typename T=rack::SwitchQuantity>
+    T *configOnOff(int paramId, float defaultValue, const std::string &name)
+    {
+        return configSwitch<T>(paramId, 0, 1, defaultValue, name, {"Off", "On"});
+    }
+
+    void snapCalculatedNames();
+
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
     style::XTStyle::LightColor localDisplayRegionColor{style::XTStyle::ORANGE},
@@ -326,7 +334,10 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
         return par->get_name();
     }
 
-    virtual std::string getDisplayValueString() override
+    virtual std::string getDisplayValueString() override {
+        return getDisplayValueStringForValue(getValue());
+    }
+    virtual std::string getDisplayValueStringForValue(float f)
     {
         auto par = surgepar();
         if (!par)
@@ -335,9 +346,9 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
         }
 
         char txt[256];
-        par->get_display(txt, true, getValue());
+        par->get_display(txt, true, f);
         char talt[256];
-        par->get_display_alt(talt, true, getValue());
+        par->get_display_alt(talt, true, f);
         if (strlen(talt))
         {
             if (std::string(talt) == " ")
@@ -589,12 +600,28 @@ template <int centerOffset> struct MidiNoteParamQuantity : public rack::engine::
 
 struct DecibelParamQuantity : rack::engine::ParamQuantity
 {
+    static float ampToLinear(float xin)
+    {
+        auto x = std::max(0.f, xin);
+        return x * x * x;
+    }
+    static __m128 ampToLinearSSE(__m128 xin)
+    {
+        auto x = _mm_max_ss(xin, _mm_setzero_ps());
+        return _mm_mul_ps(x, _mm_mul_ps(x,x));
+    }
+    static float linearToAmp(float x)
+    {
+        // display only so don't need an SSE version of this
+        return powf(std::max(x, 0.f), 1.f / 3.f);
+    }
+
     std::string getDisplayValueString() override
     {
         auto v = getValue();
         if (v < 0.0001)
             return "-inf dB";
-        auto dbv = 18.0 * std::log2(v);
+        auto dbv = 6.0 * std::log2(ampToLinear(v));
         return fmt::format("{:.4} dB", dbv);
     }
 
@@ -607,7 +634,7 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
         }
 
         auto q = std::atof(s.c_str());
-        auto v = pow(2.f, q / 18.0);
+        auto v = linearToAmp(pow(2.f, q / 6.0));
         if (v >= 0 && v <= 2)
         {
             setValue(v);
@@ -617,42 +644,6 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
         setValue(1.f);
     }
 };
-
-
-struct OnOffParamQuantity : rack::engine::ParamQuantity
-{
-    std::string getDisplayValueString() override
-    {
-        auto v = getValue();
-        if (v < 0.5)
-            return "Off";
-
-        return "On";
-    }
-
-    void setDisplayValueString(std::string s) override
-    {
-        auto sl = s;
-        for (auto &c : sl)
-            c = std::tolower(c);
-
-        bool val = 0;
-        if (sl == "off" )
-        {
-            val = false;
-        }
-        else if (sl == "on")
-        {
-            val = true;
-        }
-        else
-        {
-            val = (std::atof(s.c_str()) > 0.5);
-        }
-        setValue(val);
-    }
-};
-
 
 template <typename M> struct DecibelModulatorParamQuantity : rack::ParamQuantity
 {
@@ -1013,4 +1004,15 @@ struct DCBlocker {
         }
     }
 };
+
+inline void XTModule::snapCalculatedNames()
+{
+    for (auto *pq : paramQuantities)
+    {
+        if (auto *s = dynamic_cast<modules::CalculatedName *>(pq))
+        {
+            pq->name = s->getCalculatedName();
+        }
+    }
+}
 } // namespace sst::surgext_rack::modules

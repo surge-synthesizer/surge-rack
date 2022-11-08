@@ -56,10 +56,8 @@ template <> void VCOConfig<ot_window>::oscillatorSpecificSetup(VCO<ot_window> *m
 
 template <> inline void VCOConfig<ot_window>::configureVCOSpecificParameters(VCO<ot_window> *m)
 {
-    m->configParam<modules::OnOffParamQuantity>(VCO<ot_window>::ARBITRARY_SWITCH_0 + 0, 0, 1, 0,
-                                                "Enable Low Cut");
-    m->configParam<modules::OnOffParamQuantity>(VCO<ot_window>::ARBITRARY_SWITCH_0 + 1, 0, 1, 0,
-                                                "Enable High Cut");
+    m->configOnOff(VCO<ot_window>::ARBITRARY_SWITCH_0 + 0, 0, "Enable Low Cut");
+    m->configOnOff(VCO<ot_window>::ARBITRARY_SWITCH_0 + 1, 0, "Enable High Cut");
 
     for (int i = 2; i < VCO<ot_window>::n_arbitrary_switches; ++i)
     {

@@ -75,12 +75,9 @@ template <> FXConfig<fxt_resonator>::layout_t FXConfig<fxt_resonator>::getLayout
 template <> void FXConfig<fxt_resonator>::configSpecificParams(FX<fxt_resonator> *m)
 {
     typedef FX<fxt_resonator> fx_t;
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 0, 0, 1, 0,
-                                                "Extend Band 1 Frequency");
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, 1, 0,
-                                                "Extend Band 2 Frequency");
-    m->configParam<modules::OnOffParamQuantity>(fx_t::FX_SPECIFIC_PARAM_0 + 2, 0, 1, 0,
-                                                "Extend Band 3 Frequency");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 0, 0, "Extend Band 1 Frequency");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, "Extend Band 2 Frequency");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0 + 2, 0, "Extend Band 3 Frequency");
 }
 template <> void FXConfig<fxt_resonator>::processSpecificParams(FX<fxt_resonator> *m)
 {

@@ -100,8 +100,8 @@ struct Waveshaper : public modules::XTModule
         configParamNoRand<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
         configParam<modules::MidiNoteParamQuantity<69>>(LOCUT, -60, 70, -60, "Low Cut");
         configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "High Cut");
-        configParam<modules::OnOffParamQuantity>(LOCUT_ENABLED, 0, 1, 0, "Enable Low Cut");
-        configParam<modules::OnOffParamQuantity>(HICUT_ENABLED, 0, 1, 0, "Enable High Cut");
+        configOnOff(LOCUT_ENABLED, 0, "Enable Low Cut");
+        configOnOff(HICUT_ENABLED, 0, "Enable High Cut");
 
         configParam<WaveshaperTypeParamQuanity>(WSHP_TYPE, 0,
                                                 (int)sst::waveshapers::WaveshaperType::n_ws_types,
@@ -379,14 +379,14 @@ struct Waveshaper : public modules::XTModule
             auto in = _mm_mul_ps(_mm_load_ps(iv), rackToSurgeOsc);
             in = _mm_add_ps(in, _mm_set1_ps(mv[BIAS - DRIVE][0]));
             auto fin = wsPtr(&wss[0], in, drive);
-            fin = _mm_mul_ps(fin, _mm_set1_ps(mv[OUT_GAIN - DRIVE][0]));
+            fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(_mm_set1_ps(mv[OUT_GAIN - DRIVE][0])));
             fin = _mm_mul_ps(fin, surgeToRackOsc);
             _mm_store_ps(ov, fin);
 
             outputs[OUTPUT_L].setVoltage(ov[0]);
             outputs[OUTPUT_R].setVoltage(ov[1]);
         }
-        if (stereoStack)
+        else if (stereoStack)
         {
             // We can make this more efficient with smarter SIMD loads later
             float tmpVal alignas(16)[MAX_POLY << 2];
@@ -431,7 +431,7 @@ struct Waveshaper : public modules::XTModule
                 auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mods[BIAS - DRIVE]);
                 auto fin = wsPtr(&wss[i], in, mods[0 /* DRIVE - DRIVE */]);
-                fin = _mm_mul_ps(fin, mods[OUT_GAIN - DRIVE]);
+                fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(mods[OUT_GAIN - DRIVE]));
                 fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(tmpValOut + (i << 2), fin);
             }
@@ -469,7 +469,7 @@ struct Waveshaper : public modules::XTModule
                 auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
                 auto fin = wsPtr(&wss[i], in, drive);
-                fin = _mm_mul_ps(fin, mvsse[OUT_GAIN - DRIVE][i]);
+                fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(mvsse[OUT_GAIN - DRIVE][i]));
                 fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(ov + (i << 2), fin);
             }

@@ -225,6 +225,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         configInput(PITCH_CV, "V/Oct");
         configInput(RETRIGGER, "Reset/Retrigger");
+        configInput(AUDIO_INPUT, "Audio Input");
         for (int m = 0; m < n_mod_inputs; ++m)
         {
             auto s = std::string("Modulation Signal ") + std::to_string(m + 1);
@@ -235,6 +236,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         memset(modulationDisplayValues, 0, (n_osc_params + 1) * sizeof(float));
         modAssist.initialize(this);
+        snapCalculatedNames();
     }
 
     void setHalfbandCharacteristics(int M, bool steep)
@@ -308,6 +310,14 @@ template <int oscType> struct VCO : public modules::XTModule
         }
         return false;
     }
+
+    bool isWTOneShot()
+    {
+        if (!VCOConfig<oscType>::requiresWavetables())
+            return false;
+        return (oscstorage->wt.flags & wtf_is_sample);
+    }
+
     float modulationDisplayValues[n_osc_params + 1];
     float modulationDisplayValue(int paramId) override
     {
@@ -517,7 +527,7 @@ template <int oscType> struct VCO : public modules::XTModule
             }
 
             VCOConfig<oscType>::processVCOSpecificParameters(this);
-            reInitEveryOSC = VCOConfig<oscType>::getVCOSpecificReInit(this);
+            reInitEveryOSC = reInitEveryOSC || VCOConfig<oscType>::getVCOSpecificReInit(this);
 
             if (animateDisplayFromMod)
             {
@@ -753,6 +763,7 @@ template <int oscType> struct VCO : public modules::XTModule
             storage->waveTableDataMutex.lock();
             oscstorage->wt.BuildWT(data, wth, false);
             oscstorage_display->wt.BuildWT(data, wth, false);
+            wavetableLoads ++;
             storage->waveTableDataMutex.unlock();
 
             auto nm = json_object_get(wtJ, "display_name");

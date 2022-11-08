@@ -313,8 +313,10 @@ struct Mixer : modules::XTModule
 
             for (int p = 0; p < polyDepthBy4; ++p)
             {
-                oL[p] += osc[i][0][p] * modulationAssistant.valuesSSE[OSC1_LEV + i][p];
-                oR[p] += osc[i][1][p] * modulationAssistant.valuesSSE[OSC1_LEV + i][p];
+                oL[p] += osc[i][0][p] * modules::DecibelParamQuantity::ampToLinearSSE(
+                                            modulationAssistant.valuesSSE[OSC1_LEV + i][p]);
+                oR[p] += osc[i][1][p] * modules::DecibelParamQuantity::ampToLinearSSE(
+                                            modulationAssistant.valuesSSE[OSC1_LEV + i][p]);
             }
         }
 
@@ -325,10 +327,12 @@ struct Mixer : modules::XTModule
                 auto col = std::clamp(modulationAssistant.values[NOISE_COL][p], -1.f, 1.f);
                 oL[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
                                          noisegen[p][0][0], noisegen[p][0][1], col, storage.get()) *
-                                     modulationAssistant.values[NOISE_LEV][p];
+                                     modules::DecibelParamQuantity::ampToLinear(
+                                         modulationAssistant.values[NOISE_LEV][p]);
                 oR[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
                                          noisegen[p][1][0], noisegen[p][1][1], col, storage.get()) *
-                                     modulationAssistant.values[NOISE_LEV][p];
+                                     modules::DecibelParamQuantity::ampToLinear(
+                                         modulationAssistant.values[NOISE_LEV][p]);
             }
         }
 
@@ -336,10 +340,12 @@ struct Mixer : modules::XTModule
         {
             for (int p = 0; p < polyDepthBy4; ++p)
             {
-                oL[p] +=
-                    osc[osc1][0][p] * osc[osc2][0][p] * modulationAssistant.valuesSSE[RM1X2_LEV][p];
-                oR[p] +=
-                    osc[osc1][1][p] * osc[osc2][1][p] * modulationAssistant.valuesSSE[RM1X2_LEV][p];
+                oL[p] += osc[osc1][0][p] * osc[osc2][0][p] *
+                         modules::DecibelParamQuantity::ampToLinearSSE(
+                             modulationAssistant.valuesSSE[RM1X2_LEV][p]);
+                oR[p] += osc[osc1][1][p] * osc[osc2][1][p] *
+                         modules::DecibelParamQuantity::ampToLinearSSE(
+                             modulationAssistant.valuesSSE[RM1X2_LEV][p]);
             }
         }
 
@@ -347,17 +353,21 @@ struct Mixer : modules::XTModule
         {
             for (int p = 0; p < polyDepthBy4; ++p)
             {
-                oL[p] +=
-                    osc[osc3][0][p] * osc[osc2][0][p] * modulationAssistant.valuesSSE[RM2X3_LEV][p];
-                oR[p] +=
-                    osc[osc3][1][p] * osc[osc2][1][p] * modulationAssistant.valuesSSE[RM2X3_LEV][p];
+                oL[p] += osc[osc3][0][p] * osc[osc2][0][p] *
+                         modules::DecibelParamQuantity::ampToLinearSSE(
+                             modulationAssistant.valuesSSE[RM2X3_LEV][p]);
+                oR[p] += osc[osc3][1][p] * osc[osc2][1][p] *
+                         modules::DecibelParamQuantity::ampToLinearSSE(
+                             modulationAssistant.valuesSSE[RM2X3_LEV][p]);
             }
         }
 
         for (int p = 0; p < polyDepthBy4; ++p)
         {
-            oL[p] *= modulationAssistant.valuesSSE[GAIN][p];
-            oR[p] *= modulationAssistant.valuesSSE[GAIN][p];
+            oL[p] *= modules::DecibelParamQuantity::ampToLinearSSE(
+                modulationAssistant.valuesSSE[GAIN][p]);
+            oR[p] *= modules::DecibelParamQuantity::ampToLinearSSE(
+                modulationAssistant.valuesSSE[GAIN][p]);
             oL[p] *= SURGE_TO_RACK_OSC_MUL;
             oR[p] *= SURGE_TO_RACK_OSC_MUL;
 
