@@ -26,7 +26,7 @@ namespace sst::surgext_rack::fx
  * - two specific params for pre and post
  */
 
-template <> constexpr int FXConfig<fxt_ringmod>::numParams() { return 11; }
+template <> constexpr int FXConfig<fxt_ringmod>::numParams() { return 9; }
 template <> constexpr int FXConfig<fxt_ringmod>::specificParamCount() { return 2; }
 template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
 {

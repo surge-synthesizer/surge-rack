@@ -73,8 +73,8 @@ struct DelayLineByFreq : modules::XTModule
         configInput(INPUT_L, "In Left");
         configInput(INPUT_R, "In Right");
         configInput(INPUT_VOCT, "Delay Time as Frequency in v/oct");
-        configInput(OUTPUT_L, "Out Left");
-        configInput(OUTPUT_R, "Out Right");
+        configOutput(OUTPUT_L, "Out Left");
+        configOutput(OUTPUT_R, "Out Right");
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);

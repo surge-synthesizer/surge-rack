@@ -64,7 +64,7 @@ struct LFO : modules::XTModule
 
         LFO_MOD_PARAM_0,
 
-        LFO_TYPE = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
+        UNUSED_PARAM_DEPRECATED = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
         DEFORM_TYPE,
         WHICH_TEMPOSYNC,
         RANDOM_PHASE,
@@ -182,7 +182,7 @@ struct LFO : modules::XTModule
                 p, 0, maxv, par->get_default_value_f01(), par->get_name());
         }
 
-        for (int p = LFO_MOD_PARAM_0; p < LFO_TYPE; ++p)
+        for (int p = LFO_MOD_PARAM_0; p < UNUSED_PARAM_DEPRECATED; ++p)
         {
             auto name =
                 std::string("Mod ") + std::to_string((p - LFO_MOD_PARAM_0) % n_mod_inputs + 1);
@@ -190,6 +190,7 @@ struct LFO : modules::XTModule
                 ->baseName = name;
         }
 
+        configParamNoRand(UNUSED_PARAM_DEPRECATED, 0, 1, 0, "Unused/Deprecated");
         configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
         configParamNoRand(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
         configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Initial Phase");
