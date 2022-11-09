@@ -78,6 +78,7 @@ struct LFO : modules::XTModule
         SCALE_RAW_OUTPUTS,
         NO_TRIG_POLY,
         BROADCAST_TRIG_TO_POLY,
+        UNTRIGGERED_ENV_NONZERO,
         NUM_PARAMS
     };
     enum InputIds
@@ -212,6 +213,7 @@ struct LFO : modules::XTModule
         configParamNoRand(NO_TRIG_POLY, 1, 16, 1, "Scale raw outputs by amp?")->snapEnabled = true;
         configParamNoRand(BROADCAST_TRIG_TO_POLY, FOLLOW_TRIG_POLY, TAKE_CHANNEL_0,
                           FOLLOW_TRIG_POLY, "Trigger Broadcast Mode");
+        configOnOff(UNTRIGGERED_ENV_NONZERO, 0, "Without connected trigger, output Envelope?");
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -356,6 +358,7 @@ struct LFO : modules::XTModule
     {
         int userPoly = (int)std::round(params[NO_TRIG_POLY].getValue());
         auto tt = (LFO::TrigBroadcastMode)std::round(params[BROADCAST_TRIG_TO_POLY].getValue());
+        auto untrigEnvMult = params[UNTRIGGERED_ENV_NONZERO].getValue() > 0.5 ? 1.f : 0.f;
 
         int nChan{1};
         if (tt == FOLLOW_TRIG_POLY &&
@@ -625,6 +628,7 @@ struct LFO : modules::XTModule
 
                 for (int p = 0; p < 3; ++p)
                     ts[p][c] = surge_lfo[c]->get_output(p) * ampScale[p];
+                ts[2][c] *= isGateConnected[c] ? 1.f : untrigEnvMult;
             }
             for (int p = 0; p < 3; ++p)
                 for (int i = 0; i < 4; ++i)
