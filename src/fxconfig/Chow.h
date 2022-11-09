@@ -53,7 +53,12 @@ template <> FXConfig<fxt_chow>::layout_t FXConfig<fxt_chow>::getLayout()
 template <> void FXConfig<fxt_chow>::configSpecificParams(FX<fxt_chow> *m)
 {
     typedef FX<fxt_chow> fx_t;
-    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 0, "Flip it Good");
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 0, "Flip It Good");
+}
+
+template <> void FXConfig<fxt_chow>::configExtraInputs(FX<fxt_chow> *m)
+{
+    m->configInput(FX<fxt_chow>::INPUT_SPECIFIC_0, "Gate to Flip It!");
 }
 
 /*

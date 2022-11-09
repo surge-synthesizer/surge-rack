@@ -49,6 +49,12 @@ template <> void VCOConfig<ot_alias>::configureVCOSpecificParameters(VCO<ot_alia
         m->configParam(VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i, -1, 1, 1.0 / (i + 1),
                        std::string("Additive Harmonic ") + std::to_string(i + 1));
     }
+
+    for (int i = 0; i < VCO<ot_alias>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_alias>::ARBITRARY_SWITCH_0 + i, 0, 1, 0,
+                       std::string("Unused Param ") + std::to_string(i + 1));
+    }
 }
 
 } // namespace sst::surgext_rack::vco

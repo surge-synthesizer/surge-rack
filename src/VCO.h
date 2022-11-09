@@ -816,7 +816,7 @@ template <int oscType> inline void VCOConfig<oscType>::configureVCOSpecificParam
 {
     for (int i = 0; i < VCO<oscType>::n_arbitrary_switches; ++i)
     {
-        m->configParam(VCO<oscType>::ARBITRARY_SWITCH_0 + i, 0, 1, 0);
+        m->configParam(VCO<oscType>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, std::string("Unused Param ") + std::to_string(i+1) );
     }
 }
 } // namespace sst::surgext_rack::vco

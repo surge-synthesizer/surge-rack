@@ -106,13 +106,13 @@ struct VCF : public modules::XTModule
         configParamNoRand<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
 
         configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types-1,
-                                         sst::filters::fut_obxd_4pole);
+                                         sst::filters::fut_obxd_4pole, "Filter Model Type");
 
         int mfst = 0;
         for (auto fc : sst::filters::fut_subcount)
             mfst = std::max(mfst, fc);
 
-        configParam<VCFSubTypeParamQuanity>(VCF_SUBTYPE, 0, mfst, 3);
+        configParam<VCFSubTypeParamQuanity>(VCF_SUBTYPE, 0, mfst, 3, "Filter Model SubType");
 
         for (int i = 0; i < n_vcf_params * n_mod_inputs; ++i)
         {

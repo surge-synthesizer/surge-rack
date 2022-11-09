@@ -63,6 +63,16 @@ template <> constexpr bool VCOConfig<ot_string>::supportsAudioIn() { return true
 template <> std::string VCOConfig<ot_string>::retriggerLabel() { return "TRIG"; }
 template <> int VCOConfig<ot_string>::getMenuLightID() { return 0; }
 template <> std::string VCOConfig<ot_string>::getMenuLightString() { return "2X"; }
+template <> inline void VCOConfig<ot_string>::configureVCOSpecificParameters(VCO<ot_string> *m)
+{
+    m->configOnOff(VCO<ot_string>::ARBITRARY_SWITCH_0 + 0, 0, "Enable 2X Internal Oversampling");
+
+    for (int i = 1; i < VCO<ot_string>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_string>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
+    }
+}
+
 template <> void VCOConfig<ot_string>::processVCOSpecificParameters(VCO<ot_string> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_string>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
