@@ -575,6 +575,10 @@ struct LFO : modules::XTModule
 
                 if (inNewAttack)
                 {
+                    if (retriggerFromZero)
+                        surge_lfo[c]->envRetrigMode = LFOModulationSource::FROM_ZERO;
+                    else
+                        surge_lfo[c]->envRetrigMode = LFOModulationSource::FROM_LAST;
                     surge_lfo[c]->attackFrom(retriggerFromZero ? 0 : surge_lfo[c]->get_output(2));
                     priorIntPhase[c] = -1;
                     priorEnvStage[c] = -1;
@@ -590,6 +594,10 @@ struct LFO : modules::XTModule
                 }
                 else if (inNewEnvAttack)
                 {
+                    if (retriggerFromZero)
+                        surge_lfo[c]->envRetrigMode = LFOModulationSource::FROM_ZERO;
+                    else
+                        surge_lfo[c]->envRetrigMode = LFOModulationSource::FROM_LAST;
                     surge_lfo[c]->retriggerEnvelopeFrom(
                         retriggerFromZero ? 0 : surge_lfo[c]->get_output(2));
                 }
