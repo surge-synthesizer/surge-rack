@@ -188,6 +188,10 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
     std::array<widgets::ModulatableKnob *, 8> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
+    void childrenChanged()
+    {
+        resetStyleCouplingToModule();
+    }
     void selectModulator(int mod) override
     {
         if (toggles[mod])
@@ -368,8 +372,27 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             priorDeform[i] = 0;
     }
 
+    std::set<rack::Widget *> deleteOnNextStep;
     void step() override
     {
+        for (auto d : deleteOnNextStep)
+        {
+            getParent()->removeChild(d);
+            delete d;
+        }
+        if (deleteOnNextStep.size())
+        {
+            auto p = getParent();
+            auto dp = dynamic_cast<VCOWidget<oscType> *>(p);
+            if (dp)
+                dp->childrenChanged();
+
+            recalcPath();
+            bdwPlot->dirty = true;
+            bdw->dirty = true;
+        }
+        deleteOnNextStep.clear();
+
         if (!module)
             return;
 
@@ -392,6 +415,21 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 bdw->dirty = true;
                 bdwPlot->dirty = true;
             }
+        }
+
+        if constexpr (VCOConfig<oscType>::supportsCustomEditor())
+        {
+            auto sce = VCOConfig<oscType>::isCustomEditorActivatable(module);
+            if (sce != showCustomEditorOpen)
+            {
+                bdw->dirty = true;
+                bdwPlot->dirty = true;
+            }
+            showCustomEditorOpen = sce;
+        }
+        else
+        {
+            showCustomEditorOpen = false;
         }
 
         rack::widget::Widget::step();
@@ -427,6 +465,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     int priorDeform[n_osc_params]{};
     int charF{-1};
     bool isOneShot{false};
+    bool showCustomEditorOpen{false};
 
     uint32_t wtloadCompare{842932918};
 
@@ -644,6 +683,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
     const float xs3d{rack::mm2px(5)};
     const float ys3d{rack::mm2px(3.5)};
+    const float xsedit{rack::mm2px(12)};
+    const float ysedit{ys3d};
 
     void drawPlotBackground(NVGcontext *vg)
     {
@@ -656,6 +697,21 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         else
         {
             draw2DBackground(vg);
+        }
+
+        if (showCustomEditorOpen)
+        {
+            nvgBeginPath(vg);
+            nvgRect(vg, box.size.x - xsedit, 0, xsedit, ysedit);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_BG));
+            nvgFill(vg);
+
+            nvgBeginPath(vg);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_VALUE_FG));
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgText(vg, box.size.x - xsedit * 0.5, ys3d * 0.5, "EDIT", nullptr);
         }
 
         if (module && VCOConfig<oscType>::requiresWavetables())
@@ -689,6 +745,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         }
     }
 
+    bool editPressed{false};
     void onButton(const ButtonEvent &e) override
     {
         if (!module)
@@ -701,6 +758,36 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             recalcPath();
             e.consume(this);
             return;
+        }
+
+        if (showCustomEditorOpen && e.pos.x > box.size.x - xsedit && e.pos.y < ys3d)
+        {
+            // don't capture the release on dismiss to re-arm the edit basically
+            if (e.action == GLFW_PRESS)
+            {
+                editPressed = true;
+            }
+            if (e.action == GLFW_RELEASE && editPressed)
+            {
+                auto ce = VCOConfig<oscType>::createCustomEditorAt(box.pos, box.size, module,
+                                                                   [this](auto *w) {
+                                                                       // getParent()->removeChild(w);
+                                                                       deleteOnNextStep.insert(w);
+                                                                       show();
+                                                                   });
+                if (ce)
+                {
+                    hide();
+                    getParent()->addChild(ce);
+                    auto p = getParent();
+                    auto dp = dynamic_cast<VCOWidget<oscType> *>(p);
+                    if (dp)
+                        dp->childrenChanged();
+                }
+                editPressed = false;
+                e.consume(this);
+                return;
+            }
         }
 
         TransparentWidget::onButton(e);

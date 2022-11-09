@@ -63,6 +63,16 @@ template <int oscType> struct VCOConfig
      * load em really
      */
     static constexpr int wavetableQueueSize() { return requiresWavetables() ? 32 : 1; }
+
+    /*
+     * Custom editor
+     */
+    static constexpr int supportsCustomEditor() { return false; }
+    static bool isCustomEditorActivatable(VCO<oscType> *m) { return false; }
+    static rack::Widget *createCustomEditorAt(const rack::Vec &pos, const rack::Vec &size,
+                                   VCO<oscType> *m, std::function<void(rack::Widget *)> onClose) {
+        return nullptr;
+    }
 };
 
 template <int oscType> struct VCO : public modules::XTModule
