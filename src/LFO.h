@@ -537,6 +537,17 @@ struct LFO : modules::XTModule
                     isGated[c] = true;
                     isGateConnected[c] = false;
                 }
+                else if ((inputs[INPUT_GATE].isConnected() ||
+                          inputs[INPUT_GATE_ENVONLY].isConnected()) &&
+                         !isGateConnected[c])
+                {
+                    // Handle the at-startup case where we load a connected thing
+                    // from construction. Make us connected, but not gated, and don't
+                    // attack (since we won't release later since we aren't getaed yet)
+                    isGateConnected[c] = true;
+                    isGated[c] = false;
+                    inNewAttack = false;
+                }
 
                 if (direct)
                 {
