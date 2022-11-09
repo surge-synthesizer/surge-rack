@@ -65,6 +65,11 @@ template <> void FXConfig<fxt_spring_reverb>::configSpecificParams(FX<fxt_spring
     m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 0, "Interrupting Cow");
 }
 
+template <> void FXConfig<fxt_spring_reverb>::configExtraInputs(FX<fxt_spring_reverb> *m)
+{
+    m->configInput(FX<fxt_spring_reverb>::INPUT_SPECIFIC_0, "Trigger to Knock Spring");
+}
+
 /*
  * We don't actually process the param separately since the extra inputs check looks at both
  * template <> void FXConfig<fxt_spring_reverb>::processSpecificParams(FX<fxt_spring_reverb> *m)

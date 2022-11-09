@@ -151,7 +151,7 @@ struct Mixer : modules::XTModule
         }
 
         configOutput(OUTPUT_L, "Left");
-        configOutput(OUTPUT_L, "Right");
+        configOutput(OUTPUT_R, "Right");
         for (int i = 0; i < MAX_POLY; ++i)
         {
             for (int c = 0; c < 2; ++c)

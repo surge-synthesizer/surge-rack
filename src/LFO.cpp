@@ -106,6 +106,12 @@ struct LFOWidget : widgets::XTModuleWidget
                 auto v = m->paramQuantities[LFO::SCALE_RAW_OUTPUTS]->getValue() > 0.5;
                 m->paramQuantities[LFO::SCALE_RAW_OUTPUTS]->setValue(v ? 0 : 1);
             }));
+        menu->addChild(rack::createMenuItem(
+            "Set EG to Zero when No Trigger Connected",
+            CHECKMARK(m->params[LFO::UNTRIGGERED_ENV_NONZERO].getValue() < 0.5), [m]() {
+                auto v = m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->getValue() > 0.5;
+                m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->setValue(v ? 0 : 1);
+            }));
         menu->addChild(new rack::MenuSeparator);
         typedef modules::ClockProcessor<LFO> cp_t;
 

@@ -105,7 +105,8 @@ struct Waveshaper : public modules::XTModule
 
         configParam<WaveshaperTypeParamQuanity>(WSHP_TYPE, 0,
                                                 (int)sst::waveshapers::WaveshaperType::n_ws_types,
-                                                (int)sst::waveshapers::WaveshaperType::wst_ojd);
+                                                (int)sst::waveshapers::WaveshaperType::wst_ojd,
+                                                "Waveshaper Function");
 
         for (int i = 0; i < n_wshp_params * n_mod_inputs; ++i)
         {

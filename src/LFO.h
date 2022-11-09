@@ -64,7 +64,7 @@ struct LFO : modules::XTModule
 
         LFO_MOD_PARAM_0,
 
-        LFO_TYPE = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
+        UNUSED_PARAM_DEPRECATED = LFO_MOD_PARAM_0 + n_lfo_params * n_mod_inputs,
         DEFORM_TYPE,
         WHICH_TEMPOSYNC,
         RANDOM_PHASE,
@@ -78,6 +78,7 @@ struct LFO : modules::XTModule
         SCALE_RAW_OUTPUTS,
         NO_TRIG_POLY,
         BROADCAST_TRIG_TO_POLY,
+        UNTRIGGERED_ENV_NONZERO,
         NUM_PARAMS
     };
     enum InputIds
@@ -181,7 +182,7 @@ struct LFO : modules::XTModule
                 p, 0, maxv, par->get_default_value_f01(), par->get_name());
         }
 
-        for (int p = LFO_MOD_PARAM_0; p < LFO_TYPE; ++p)
+        for (int p = LFO_MOD_PARAM_0; p < UNUSED_PARAM_DEPRECATED; ++p)
         {
             auto name =
                 std::string("Mod ") + std::to_string((p - LFO_MOD_PARAM_0) % n_mod_inputs + 1);
@@ -189,6 +190,7 @@ struct LFO : modules::XTModule
                 ->baseName = name;
         }
 
+        configParamNoRand(UNUSED_PARAM_DEPRECATED, 0, 1, 0, "Unused/Deprecated");
         configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
         configParamNoRand(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
         configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Initial Phase");
@@ -212,6 +214,7 @@ struct LFO : modules::XTModule
         configParamNoRand(NO_TRIG_POLY, 1, 16, 1, "Scale raw outputs by amp?")->snapEnabled = true;
         configParamNoRand(BROADCAST_TRIG_TO_POLY, FOLLOW_TRIG_POLY, TAKE_CHANNEL_0,
                           FOLLOW_TRIG_POLY, "Trigger Broadcast Mode");
+        configOnOff(UNTRIGGERED_ENV_NONZERO, 0, "Without connected trigger, output Envelope?");
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
@@ -356,6 +359,7 @@ struct LFO : modules::XTModule
     {
         int userPoly = (int)std::round(params[NO_TRIG_POLY].getValue());
         auto tt = (LFO::TrigBroadcastMode)std::round(params[BROADCAST_TRIG_TO_POLY].getValue());
+        auto untrigEnvMult = params[UNTRIGGERED_ENV_NONZERO].getValue() > 0.5 ? 1.f : 0.f;
 
         int nChan{1};
         if (tt == FOLLOW_TRIG_POLY &&
@@ -534,6 +538,17 @@ struct LFO : modules::XTModule
                     isGated[c] = true;
                     isGateConnected[c] = false;
                 }
+                else if ((inputs[INPUT_GATE].isConnected() ||
+                          inputs[INPUT_GATE_ENVONLY].isConnected()) &&
+                         !isGateConnected[c])
+                {
+                    // Handle the at-startup case where we load a connected thing
+                    // from construction. Make us connected, but not gated, and don't
+                    // attack (since we won't release later since we aren't getaed yet)
+                    isGateConnected[c] = true;
+                    isGated[c] = false;
+                    inNewAttack = false;
+                }
 
                 if (direct)
                 {
@@ -625,6 +640,7 @@ struct LFO : modules::XTModule
 
                 for (int p = 0; p < 3; ++p)
                     ts[p][c] = surge_lfo[c]->get_output(p) * ampScale[p];
+                ts[2][c] *= isGateConnected[c] ? 1.f : untrigEnvMult;
             }
             for (int p = 0; p < 3; ++p)
                 for (int i = 0; i < 4; ++i)
