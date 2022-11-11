@@ -364,11 +364,13 @@ struct WaveshaperSelector : widgets::ParamJogSelector
 
     rack::ui::Menu *menuForGroup(rack::ui::Menu *menu, const std::string &group)
     {
+        int type = (int)std::round(getParamQuantity()->getValue());
+
         for (const auto &[id, gn] : wsm.mapping)
         {
             if (gn == group)
             {
-                menu->addChild(rack::createMenuItem(sst::waveshapers::wst_names[id], "",
+                menu->addChild(rack::createMenuItem(sst::waveshapers::wst_names[id], CHECKMARK(id == type),
                                                     [this, cid = id]() { setType(cid); }));
             }
         }
@@ -384,17 +386,27 @@ struct WaveshaperSelector : widgets::ParamJogSelector
 
         std::string currentGroup{"-not-a-ws-group-"};
 
+        int type = (int)std::round(getParamQuantity()->getValue());
+
         for (const auto &[id, gn] : wsm.mapping)
         {
             if (gn == "")
             {
-                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], "",
+                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], CHECKMARK(id==type),
                                                     [this, cid = id]() { setType(cid); }));
             }
             else if (gn != currentGroup)
             {
+                bool check{false};
+                for (const auto &[ird, gnr] : wsm.mapping)
+                {
+                    if (gnr == gn && ird == type)
+                    {
+                        check = true;;
+                    }
+                }
                 menu->addChild(rack::createSubmenuItem(
-                    gn, "", [this, cgn = gn](auto *x) { menuForGroup(x, cgn); }));
+                    gn, CHECKMARK(check), [this, cgn = gn](auto *x) { menuForGroup(x, cgn); }));
                 currentGroup = gn;
             }
         }
