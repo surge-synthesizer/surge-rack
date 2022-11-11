@@ -107,13 +107,23 @@ struct VCFSelector : widgets::ParamJogSelector
         setType(fsmOrdering[di]);
     }
 
+    int filterType()
+    {
+        if (!module)
+            return 0;
+        int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+        return type;
+    }
+
     rack::ui::Menu *menuForGroup(rack::ui::Menu *menu, const std::string &group)
     {
+        auto t = filterType();
         for (const auto &[id, gn] : fsm.mapping)
         {
             if (gn == group)
             {
-                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], "",
+                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id],
+                                                    CHECKMARK(id == t),
                                                     [this, cid = id]() { setType(cid); }));
             }
         }
@@ -129,17 +139,30 @@ struct VCFSelector : widgets::ParamJogSelector
 
         std::string currentGroup{"-not-a-filter-group-"};
 
+        auto t = filterType();
         for (const auto &[id, gn] : fsm.mapping)
         {
             if (gn == "")
             {
-                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], "",
+                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id],
+                                                    CHECKMARK(id == t),
                                                     [this, cid = id]() { setType(cid); }));
             }
             else if (gn != currentGroup)
             {
+                bool check{false};
+                // This is a little silly to iterate again to find this but this list is small and
+                // the group count is low and it's only at change so it's not problematically
+                // quadratic
+                for (const auto &[idr, gnr] : fsm.mapping)
+                {
+                    if (gn == gnr && idr == t)
+                    {
+                        check = true;
+                    }
+                }
                 menu->addChild(rack::createSubmenuItem(
-                    gn, "", [this, cgn = gn](auto *x) { menuForGroup(x, cgn); }));
+                    gn, CHECKMARK(check), [this, cgn = gn](auto *x) { menuForGroup(x, cgn); }));
                 currentGroup = gn;
             }
         }
@@ -213,8 +236,15 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
     {
         if (!module)
             return 0;
-        auto vcfm = static_cast<VCF *>(module);
         int type = (int)std::round(module->params[VCF::VCF_TYPE].getValue());
+        return type;
+    }
+
+    int filterSubType()
+    {
+        if (!module)
+            return 0;
+        int type = (int)std::round(module->params[VCF::VCF_SUBTYPE].getValue());
         return type;
     }
     void onPresetJog(int dir) override
@@ -249,6 +279,7 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
             return;
 
         int type = filterType();
+        int subt = filterSubType();
         int ct = sst::filters::fut_subcount[type];
         if (ct == 0)
             return;
@@ -257,10 +288,11 @@ struct VCFSubtypeSelector : widgets::ParamJogSelector
         menu->addChild(rack::createMenuLabel("Filter SubTypes"));
         for (int i = 0; i < ct; ++i)
         {
-            menu->addChild(rack::createMenuItem(VCF::subtypeLabel(type, i), "", [this, i]() {
-                setSubType(i);
-                forceDirty = true;
-            }));
+            menu->addChild(
+                rack::createMenuItem(VCF::subtypeLabel(type, i), CHECKMARK(i == subt), [this, i]() {
+                    setSubType(i);
+                    forceDirty = true;
+                }));
         }
     }
     bool forceDirty{false};
