@@ -36,6 +36,8 @@ void init(rack::Plugin *p) {
 
     // p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeBiquad);
+
+    p->addModel(modelSurgeUpgrade);
     
     if( fxModels != nullptr )
         for( auto i=0; i<num_fxtypes; ++i )
