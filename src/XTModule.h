@@ -345,6 +345,13 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
             return ParamQuantity::getDisplayValueString();
         }
 
+        /* So the param quantity has the value of the knob but that gets rounded
+         * to the nearest temposync in setval_f01. Fine whatever except when stringifying
+         * then we need to use the rounded value to match.
+         */
+        if (par->temposync)
+            f = par->get_value_f01();
+
         char txt[256];
         par->get_display(txt, true, f);
         char talt[256];
