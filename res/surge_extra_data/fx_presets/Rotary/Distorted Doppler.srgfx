@@ -1,0 +1,14 @@
+<single-fx streaming_version="20">
+  <snapshot name="Distorted Doppler" 
+     type="4"
+
+p0 = "0.364999145"
+p1 = "0.508999944"
+p2 = "0.862499595"
+p3 = "0.318500668"
+p4 = "0.523000062"
+p5 = "0.771500707"
+p6 = "0.643833578"
+p7 = "1"
+/>
+</single-fx>
