@@ -135,6 +135,7 @@ void XTStyle::initialize()
         handleBool("showKnobValuesAtRest", setShowKnobValuesAtRest, true);
         handleBool("showModulationAnimationOnKnobs", setShowModulationAnimationOnKnobs, true);
         handleBool("showModulationAnimationOnDisplay", setShowModulationAnimationOnDisplay, true);
+        handleBool("showShadows", setShowShadows, true);
 
         json_decref(fd);
     }
@@ -149,6 +150,7 @@ static bool controlValueColorDistinct{false};
 static bool showKnobValuesAtRest{true};
 static bool showModulationAnimationOnKnobs{true};
 static bool showModulationAnimationOnDisplay{true};
+static bool showShadows{true};
 
 static std::shared_ptr<XTStyle> constructDefaultStyle()
 {
@@ -232,6 +234,17 @@ void XTStyle::setShowModulationAnimationOnDisplay(bool b)
     }
 }
 
+bool XTStyle::getShowShadows() { return showShadows; }
+void XTStyle::setShowShadows(bool b)
+{
+    if (b != showShadows)
+    {
+        showShadows = b;
+        updateJSON();
+        notifyStyleListeners();
+    }
+}
+
 void XTStyle::setGlobalModulationColor(sst::surgext_rack::style::XTStyle::LightColor c)
 {
     if (c != defaultGlobalModulationColor)
@@ -295,6 +308,7 @@ void XTStyle::updateJSON()
                         json_boolean(showModulationAnimationOnKnobs));
     json_object_set_new(rootJ, "showModulationAnimationOnDisplay",
                         json_boolean(showModulationAnimationOnDisplay));
+    json_object_set_new(rootJ, "showShadows", json_boolean(showShadows));
     FILE *f = std::fopen(defaultsFile.c_str(), "w");
     if (f)
     {
@@ -423,6 +437,34 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
     case PLOT_CONTROL_VALUE_BG:
     {
         return lightColorColor(*activeDisplayRegionColor);
+    }
+
+    case SHADOW_BASE:
+    {
+        switch (*activeStyle)
+        {
+        case DARK:
+            return nvgRGBAf(0.f, 0.f, 0.f, 0.25f);
+        case MID:
+            return nvgRGBAf(0.f, 0.f, 0.f, 0.15f);
+        case LIGHT:
+            return nvgRGBAf(0.f, 0.f, 0.f, 0.10f);
+        }
+    }
+
+    case SHADOW_OVER_GRADEND:
+        return nvgRGBA(0, 0, 0, 0);
+    case SHADOW_OVER_GRADSTART:
+    {
+        switch (*activeStyle)
+        {
+        case DARK:
+            return nvgRGBAf(0.f, 0.f, 0.f, 0.60f);
+        case MID:
+            return nvgRGBAf(0.f, 0.f, 0.f, 0.45f);
+        case LIGHT:
+            return nvgRGBAf(0.f, 0.f, 0.f, 0.20f);
+        }
     }
     }
 

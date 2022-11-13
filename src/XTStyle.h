@@ -80,6 +80,8 @@ struct XTStyle
     static bool getShowModulationAnimationOnDisplay();
     static void setShowModulationAnimationOnDisplay(bool b);
 
+    static bool getShowShadows();
+    static void setShowShadows(bool b);
 
     static std::string lightColorName(LightColor c);
     static NVGcolor lightColorColor(LightColor c);
@@ -112,7 +114,11 @@ struct XTStyle
 
         LED_PANEL,
         LED_BORDER,
-        LED_HIGHLIGHT
+        LED_HIGHLIGHT,
+
+        SHADOW_BASE,
+        SHADOW_OVER_GRADSTART,
+        SHADOW_OVER_GRADEND
     };
     const NVGcolor getColor(Colors c);
 

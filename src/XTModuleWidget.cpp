@@ -191,6 +191,10 @@ void colorsMenuFor(rack::Menu *menu, XTModuleWidget *w)
         rack::createSubmenuItem("Modulations", "", [w](auto *x) { modLightMenuFor(x, w); }));
     menu->addChild(
         rack::createSubmenuItem("Power Buttons", "", [w](auto *x) { powerLightMenuFor(x, w); }));
+
+    auto shad = style::XTStyle::getShowShadows();
+    menu->addChild(rack::createMenuItem("Show Knob Shadows", CHECKMARK(shad),
+                                        [shad]() { style::XTStyle::setShowShadows(!shad); }));
 }
 
 void valueDisplayMenuFor(rack::Menu *menu, XTModuleWidget *w)
