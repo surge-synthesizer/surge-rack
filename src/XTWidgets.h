@@ -961,7 +961,7 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
 
 template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
 {
-    BufferedDrawFunctionWidget *bw{nullptr}, *bwGlow{nullptr};
+    BufferedDrawFunctionWidget *bw{nullptr}, *bwGlow{nullptr}, *bwShadow{nullptr};
 
     bool pressedState{false};
     rack::SvgWidget *svg{nullptr};
@@ -987,6 +987,53 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
         T::addChild(svg);
         T::addChild(bw);
         T::addChild(bwGlow);
+
+        auto shadowSize = this->box;
+        shadowSize.pos.y += rack::mm2px(0.5);
+        shadowSize = shadowSize.grow(2);
+
+        bwShadow = new BufferedDrawFunctionWidget(shadowSize.pos,
+                                                  shadowSize.size, [this](auto vg)
+                                                  { this->drawShadow(vg); });
+        T::addChildBottom(bwShadow);
+    }
+
+    void drawShadow(NVGcontext *vg)
+    {
+        if (!style::XTStyle::getShowShadows())
+            return;
+
+        auto knobSize_MM = button_MM;
+        auto shadowOneH_MM = knobSize_MM * 0.9911;
+        auto shadowOneW_MM = knobSize_MM - 0.5;
+        auto shadowTwoH_MM = knobSize_MM * 1.0222;
+        auto shadowTwoW_MM = shadowOneW_MM;
+        auto shadowTwoOffset_MM{0.375f};
+        auto shadowSize = this->box;
+        shadowSize = shadowSize.grow(2);
+        auto box = shadowSize;
+
+        nvgBeginPath(vg);
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5,
+                   rack::mm2px(shadowOneW_MM) * 0.5, rack::mm2px(shadowOneH_MM) * 0.5);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::SHADOW_BASE));
+        nvgFill(vg);
+
+        auto s2 = rack::mm2px(shadowTwoOffset_MM);
+        nvgSave(vg);
+        nvgScissor(vg, 0, box.size.y*0.5, box.size.x, box.size.y * 0.5);
+        nvgBeginPath(vg);
+        auto start = box.size.y * 0.5 + s2 + rack::mm2px(shadowTwoH_MM) * 0.25;
+        auto end = box.size.y * 0.5 + s2 + rack::mm2px(shadowTwoH_MM) * 0.5;
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5 + s2,
+                   rack::mm2px(shadowTwoW_MM) * 0.5, rack::mm2px(shadowTwoH_MM) * 0.5);
+        nvgFillPaint(vg, nvgLinearGradient(vg, 0, start, 0, end,
+                                           style()->getColor(style::XTStyle::SHADOW_OVER_GRADSTART),
+                                           style()->getColor(style::XTStyle::SHADOW_OVER_GRADEND)
+                                               ));
+        nvgFill(vg);
+
+        nvgRestore(vg);
     }
 
     bool hovered{false};
@@ -1086,6 +1133,8 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
             bw->dirty = true;
         if (bwGlow)
             bwGlow->dirty = true;
+        if (bwShadow)
+            bwShadow->dirty = true;
     }
 };
 
