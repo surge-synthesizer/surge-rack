@@ -2011,7 +2011,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
 
         nvgBeginPath(vg);
         nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth, span - np);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::KNOB_RING_VALUE));
+        nvgFillColor(vg, style()->getColor(style::XTStyle::SLIDER_RING_VALUE));
         nvgFill(vg);
         nvgStrokeWidth(vg, 0.5);
         nvgStroke(vg);

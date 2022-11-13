@@ -417,6 +417,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         return nvgRGB(0, 0, 0);
 
     case KNOB_RING_VALUE:
+    case SLIDER_RING_VALUE:
     {
         if (!getShowKnobValuesAtRest())
             return nvgRGBA(0, 0, 0, 0);
@@ -427,11 +428,14 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         if (col == WHITE && *activeStyle == LIGHT)
         {
             // Special case - white ring on light background
+            if (c == SLIDER_RING_VALUE)
+                return nvgRGB(150,150,150);
             return nvgRGB(0x33, 0x33, 0x33);
         }
 
         return lightColorColor(col);
     }
+
     case PLOT_CURVE:
     case PLOT_CONTROL_TEXT:
     case PLOT_CONTROL_VALUE_BG:
