@@ -261,7 +261,7 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             {
                 menu->addChild(new rack::MenuSeparator);
                 menu->addChild(rack::createSubmenuItem("Wavetables", "",
-                                                       [this,m](auto *x) { WavetableMenuBuilder<oscType>::buildMenuOnto(x, m);}));
+                                                       [m](auto *x) { WavetableMenuBuilder<oscType>::buildMenuOnto(x, m);}));
             }
             menu->addChild(new rack::MenuSeparator);
             menu->addChild(rack::createSubmenuItem("Character", "",
