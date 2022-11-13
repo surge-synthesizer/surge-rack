@@ -46,8 +46,9 @@ struct LFOWidget : widgets::XTModuleWidget
             m->paramQuantities[M::BROADCAST_TRIG_TO_POLY]->getValue());
 
         p->addChild(rack::createMenuItem(
-            "Trigger Sets Polyphony If Connected", CHECKMARK(tt == M::FOLLOW_TRIG_POLY), [m]() {
-                m->paramQuantities[M::BROADCAST_TRIG_TO_POLY]->setValue(M::FOLLOW_TRIG_POLY);
+            "Trigger Sets Polyphony If Connected", CHECKMARK(tt == M::FOLLOW_TRIG_POLY), [m, tt]() {
+                m->paramQuantities[M::BROADCAST_TRIG_TO_POLY]->setValue(
+                    tt == M::FOLLOW_TRIG_POLY ? M::TAKE_CHANNEL_0 : M::FOLLOW_TRIG_POLY);
             }));
 
         p->addChild(rack::createMenuItem(

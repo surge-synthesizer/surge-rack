@@ -284,6 +284,15 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     std::string knobPointerAsset, knobBackgroundAsset;
 
     KnobN() {}
+    ~KnobN() {
+        // we removed shadow so it won't be deleted by the sweep
+        if (shadow)
+        {
+            delete shadow;
+            shadow = nullptr;
+        }
+    }
+
     Widget *asWidget() override { return this; }
 
     bool isBipolar()
@@ -321,7 +330,10 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
         maxAngle = M_PI * (180 - angleSpreadDegrees) / 180;
 
         setupWidgets();
-        fb->removeChild(shadow);
+        if (shadow)
+        {
+            fb->removeChild(shadow);
+        }
     }
 
     virtual void setupProperties() {}
