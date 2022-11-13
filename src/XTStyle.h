@@ -93,6 +93,7 @@ struct XTStyle
         KNOB_MOD_MINUS,
         KNOB_MOD_MARK,
         KNOB_RING_VALUE,
+        SLIDER_RING_VALUE,
 
         PANEL_RULER,
 
