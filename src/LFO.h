@@ -127,6 +127,7 @@ struct LFO : modules::XTModule
     LFOStorage *lfostorage;
     LFOStorage *lfostorageDisplay;
     std::atomic<bool> retriggerFromZero{false};
+    std::atomic<float> onepoleFactor{0.75f};
 
     modules::ModulationAssistant<LFO, n_lfo_params, RATE, n_mod_inputs, LFO_MOD_INPUT> modAssist;
 
@@ -573,6 +574,8 @@ struct LFO : modules::XTModule
                     }
                 }
 
+                surge_lfo[c]->onepoleFactor = onepoleFactor;
+
                 if (inNewAttack)
                 {
                     if (retriggerFromZero)
@@ -710,6 +713,7 @@ struct LFO : modules::XTModule
         auto fx = json_object();
         json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
         json_object_set(fx, "retriggerFromZero", json_boolean(retriggerFromZero));
+        json_object_set(fx, "onepoleFactor", json_real(onepoleFactor));
         return fx;
     }
 
@@ -733,6 +737,17 @@ struct LFO : modules::XTModule
             else
             {
                 retriggerFromZero = false;
+            }
+        }
+        {
+            auto rt = json_object_get(modJ, "onepoleFactor");
+            if (rt)
+            {
+                onepoleFactor = json_real_value(rt);
+            }
+            else
+            {
+                onepoleFactor = 0.75;
             }
         }
     }

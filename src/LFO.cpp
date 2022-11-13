@@ -64,6 +64,20 @@ struct LFOWidget : widgets::XTModuleWidget
         }
     }
 
+    void smoothingMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+
+        std::vector<std::pair<std::string, float>> smoothChoices{
+            {"None", 0}, {"Low", 0.75}, {"Medium", 0.85}, {"High", 0.95}};
+        float sv = m->onepoleFactor;
+        for (const auto &[l, v] : smoothChoices)
+        {
+            p->addChild(rack::createMenuItem(l, CHECKMARK(fabs(v - sv) < 0.01),
+                                             [m, val = v]() { m->onepoleFactor = val; }));
+        }
+    }
     void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (!module)
@@ -94,6 +108,11 @@ struct LFOWidget : widgets::XTModuleWidget
         menu->addChild(
             rack::createMenuItem("Envelope Triggers from Zero", CHECKMARK(m->retriggerFromZero),
                                  [m]() { m->retriggerFromZero = !m->retriggerFromZero; }));
+
+        auto smoothM = rack::createSubmenuItem("Envelope Smoothing", "",
+                                               [m, this](auto p) { smoothingMenu(p, m); });
+        smoothM->disabled = m->retriggerFromZero;
+        menu->addChild(smoothM);
 
         menu->addChild(rack::createMenuItem(
             "Random Phase on Attack", CHECKMARK(m->params[LFO::RANDOM_PHASE].getValue() > 0.5),
@@ -811,7 +830,10 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         std::unique_ptr<LFOModulationSource> tlfo = std::make_unique<LFOModulationSource>();
         tlfo->assign(storage, lfodata, tp, nullptr, module->surge_ss.get(), module->surge_ms.get(),
                      module->surge_fs.get(), true);
-        tlfo->attack();
+        tlfo->envRetrigMode = module->retriggerFromZero ? LFOModulationSource::FROM_ZERO
+                                                        : LFOModulationSource::FROM_LAST;
+        tlfo->onepoleFactor = module->onepoleFactor;
+        tlfo->attack(); // hmmgdf
 
         bool hasFullWave = false, waveIsAmpWave = false;
 
@@ -828,7 +850,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         float valScale = 100.0;
         int susCountdown = -1;
 
-        float priorval = 0.f, priorwval = 0.f;
+        float priorval = 0.f;
 
         std::string invalidMessage;
 
@@ -844,8 +866,6 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             float eval = 0;
             float minval = 1000000, minwval = 1000000;
             float maxval = -1000000, maxwval = -1000000;
-            float firstval;
-            float lastval;
 
             for (int s = 0; s < averagingWindow; s++)
             {
@@ -865,16 +885,6 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 }
 
                 val += tlfo->get_output(0);
-
-                if (s == 0)
-                {
-                    firstval = tlfo->get_output(0);
-                }
-
-                if (s == averagingWindow - 1)
-                {
-                    lastval = tlfo->get_output(0);
-                }
 
                 minval = std::min(tlfo->get_output(0), minval);
                 maxval = std::max(tlfo->get_output(0), maxval);
@@ -900,7 +910,6 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 edpathV.emplace_back(xc, edval);
 
                 priorval = val;
-                priorwval = wval;
             }
             else
             {
