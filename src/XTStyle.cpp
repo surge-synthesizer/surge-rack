@@ -432,6 +432,18 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
 
         return lightColorColor(col);
     }
+
+    case SLIDER_RING_VALUE:
+    {
+        if (!getShowKnobValuesAtRest())
+            return nvgRGBA(0, 0, 0, 0);
+
+        auto col = *activeDisplayRegionColor;
+        if (getControlValueColorDistinct())
+            col = *activeControlValueColor;
+        // Skip the special case here
+        return lightColorColor(col);
+    }
     case PLOT_CURVE:
     case PLOT_CONTROL_TEXT:
     case PLOT_CONTROL_VALUE_BG:
