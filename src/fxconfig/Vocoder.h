@@ -46,7 +46,7 @@ template <> FXConfig<fxt_vocoder>::layout_t FXConfig<fxt_vocoder>::getLayout()
 
         {LayoutItem::KNOB9, "", v_t::voc_minfreq, col[2], row1},
         {LayoutItem::KNOB9, "", v_t::voc_maxfreq, col[3], row1},
-        LayoutItem::createGrouplabel("CARRIER", col[2], row1, 2),
+        LayoutItem::createGrouplabel("BAND RANGE", col[2], row1, 2),
         LayoutItem::createKnobSpanLabel("MIN - FREQ - MAX", col[2], row1, 2),
         // Label Carrier
 
@@ -54,12 +54,11 @@ template <> FXConfig<fxt_vocoder>::layout_t FXConfig<fxt_vocoder>::getLayout()
         {LayoutItem::KNOB9, "CENTER", v_t::voc_mod_center, col[1], row2},
         {LayoutItem::PORT, "L/MON", fx_t::SIDEBAND_L, col[2], row2},
         {LayoutItem::PORT, "RIGHT", fx_t::SIDEBAND_R, col[3], row2},
-        LayoutItem::createGrouplabel("CARRIER", col[0], row2, 4),
+        LayoutItem::createGrouplabel("MODULATOR", col[0], row2, 4),
 
         {LayoutItem::KNOB9, "FOLLOW", v_t::voc_envfollow, col[0], row3},
         {LayoutItem::KNOB9, "RES", v_t::voc_q, col[1], row3},
-        {LayoutItem::KNOB9, "SHIFT", v_t::voc_shift, col[2], row3},
-        LayoutItem::createGrouplabel("FILTER BANK", col[0], row3, 3),
+        LayoutItem::createGrouplabel("FILTER BANK", col[0], row3, 2),
 
         {LayoutItem::KNOB9, "MIX", v_t::voc_mix, col[3], row3},
 
