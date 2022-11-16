@@ -180,7 +180,7 @@ FLAGS += -DSURGE_RACK_SURGE_VERSION=$(SURGE_RACK_SURGE_VERSION)
 
 CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
 
-COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/565
+COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/745
 
 community:
 	open $(COMMUNITY_ISSUE)
