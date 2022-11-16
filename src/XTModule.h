@@ -375,6 +375,7 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
 
 struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, CalculatedName
 {
+    bool abbreviate = false;
     inline XTModule *xtm() { return static_cast<XTModule *>(module); }
     inline Parameter *surgepar()
     {
@@ -472,8 +473,11 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
             return txt2;
 
         std::ostringstream oss;
-        oss << iw.dvalplus << " (" << iw.val << " to " << iw.valplus << " @10v; "
-                          << iw.valminus << " @-10v)";
+        oss << iw.dvalplus << "\n" << iw.val << " @ 0v\n"
+                            << iw.valplus << " @ 10v\n"
+                          << iw.valminus << " @ -10v";
+        if (abbreviate)
+            return iw.dvalplus;
         return oss.str();
     }
 };
