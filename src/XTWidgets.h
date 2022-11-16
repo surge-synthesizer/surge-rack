@@ -576,6 +576,27 @@ struct HasBDW
     BufferedDrawFunctionWidget *bdw{nullptr};
 };
 
+struct SQPParamLabel : rack::ui::MenuLabel {
+    modules::SurgeParameterModulationQuantity *spq{nullptr};
+    void step() override {
+        if (spq)
+        {
+            auto ntext = spq->getLabel() + ": ";
+            auto r = spq->getDisplayValueString();
+            auto p = r.find("\n");
+            if (p != std::string::npos)
+                r = r.substr(0,p);
+            ntext += r;
+            text = ntext;
+        }
+        else
+        {
+            text = "SOFTWARE ERROR - null spq";
+        }
+        MenuLabel::step();
+    }
+};
+
 struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
 {
     rack::app::Knob *underlyerParamWidget{nullptr};
@@ -692,7 +713,14 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
     void onButton(const ButtonEvent &e) override
     {
         if (!bypassGesture())
+        {
+            auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+            if (spq)
+                spq->abbreviate = true;
             rack::Knob::onButton(e);
+            if (spq)
+                spq->abbreviate = false;
+        }
     }
     void onDragStart(const DragStartEvent &e) override
     {
@@ -723,6 +751,23 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
     {
         if (!bypassGesture())
             rack::Knob::onLeave(e);
+    }
+
+    void appendContextMenu(rack::Menu *menu) override {
+        auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+        if (spq)
+        {
+            if (menu->children.empty())
+                return;
+
+            auto firstItem = menu->children.front();
+            menu->removeChild(firstItem);
+            delete firstItem;
+
+            auto spql = new SQPParamLabel;
+            spql->spq = spq;
+            menu->addChildBottom(spql);
+        }
     }
 };
 
@@ -2219,8 +2264,14 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
     }
     void onButton(const ButtonEvent &e) override
     {
-        if (!bypassGesture())
+        if (!bypassGesture()) {
+            auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+            if (spq)
+                spq->abbreviate = true;
             rack::SliderKnob::onButton(e);
+            if (spq)
+                spq->abbreviate = false;
+        }
     }
     void onDragStart(const DragStartEvent &e) override
     {
@@ -2251,6 +2302,23 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
     {
         if (!bypassGesture())
             rack::SliderKnob::onLeave(e);
+    }
+
+    void appendContextMenu(rack::Menu *menu) override {
+        auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+        if (spq)
+        {
+            if (menu->children.empty())
+                return;
+
+            auto firstItem = menu->children.front();
+            menu->removeChild(firstItem);
+            delete firstItem;
+
+            auto spql = new SQPParamLabel;
+            spql->spq = spq;
+            menu->addChildBottom(spql);
+        }
     }
 };
 
