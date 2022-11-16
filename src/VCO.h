@@ -427,7 +427,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+        // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
 
         int nChan = polyChannelCount();
         outputs[OUTPUT_L].setChannels(nChan);

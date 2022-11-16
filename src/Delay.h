@@ -236,7 +236,7 @@ struct Delay : modules::XTModule
     float modVal{0}, dMod{0}, modPhase{0};
     void process(const ProcessArgs &args) override
     {
-        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+        // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
 
         if (inputs[INPUT_CLOCK].isConnected())
             clockProc.process(this, INPUT_CLOCK);
