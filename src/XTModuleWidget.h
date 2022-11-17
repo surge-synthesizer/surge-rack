@@ -52,17 +52,23 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
     }
 
     int snapNamesEvery{0};
+    double lastSnapTime{-100};
     void step() override
     {
+        // snap every 2 seconds, check every 5 frames
         if (snapNamesEvery == 0)
         {
-            snapNamesEvery =
-                2 * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
+            snapNamesEvery = 5;
             if (module)
             {
-                auto xtm = dynamic_cast<modules::XTModule *>(module);
-                if (xtm)
-                    xtm->snapCalculatedNames();
+                auto tnow = rack::system::getTime();
+                if (tnow - lastSnapTime > 1.0)
+                {
+                    auto xtm = dynamic_cast<modules::XTModule *>(module);
+                    if (xtm)
+                        xtm->snapCalculatedNames();
+                    lastSnapTime = tnow;
+                }
             }
         }
         snapNamesEvery--;
