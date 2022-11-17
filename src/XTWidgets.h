@@ -1281,43 +1281,39 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
 
     bool parameterMenuOnClick{true};
     int minScale{0}, maxScale{0}, maxVal{0};
-    int stepsUntilOpen{-1}, stepsSinceDoubleClick{-1};
+    double timeOfAction{-1}, timeOfDoubleClick{-1};
+    bool didAction{false}, didDoubleClick{false};
 
-    int secToFrame(float sec)
-    {
-        auto stepHz =
-            1.f * APP->window->getMonitorRefreshRate() / rack::settings::frameSwapInterval;
-        auto frm = sec * stepHz;
-        return (int)std::ceil(frm);
-    }
+
     void onAction(const ActionEvent &e) override
     {
-        if (stepsSinceDoubleClick < 0)
-        {
-            // The item is
-            stepsUntilOpen = secToFrame(0.15);
-        }
+        didAction = true;
+        timeOfAction = rack::system::getTime();
         Knob::onAction(e);
     }
     void onDoubleClick(const DoubleClickEvent &e) override
     {
-        stepsUntilOpen = -1;
-        stepsSinceDoubleClick = secToFrame(0.3);
+        didDoubleClick = true;
+        timeOfDoubleClick = rack::system::getTime();
         ParamWidget::onDoubleClick(e);
     }
     void step() override
     {
-        if (stepsUntilOpen >= 0)
+        if (didAction && !didDoubleClick)
         {
-            stepsUntilOpen--;
-            if (stepsUntilOpen == 0)
+            if (rack::system::getTime() - timeOfAction > 0.15)
             {
                 showQuantityMenu();
+                didAction = false;
             }
         }
-        if (stepsSinceDoubleClick >= 0)
+        if (didDoubleClick)
         {
-            stepsSinceDoubleClick--;
+            if (rack::system::getTime() - timeOfDoubleClick > 0.3)
+            {
+                didDoubleClick = false;
+            }
+            didAction = false;
         }
         rack::Knob::step();
     }
