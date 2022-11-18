@@ -34,6 +34,7 @@ struct LayoutItem
         KNOB16,
         VSLIDER,
         PORT,
+        OUT_PORT,
         MOMENTARY_PARAM,
         TOGGLE_PARAM,
         GROUP_LABEL,
@@ -374,6 +375,24 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             w->addChild(lab);
         }
         break;
+        case LayoutItem::OUT_PORT:
+        {
+            auto port = rack::createOutputCentered<widgets::Port>(
+                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + lc::verticalPortOffset_MM)), module,
+                lay.parId);
+            w->addChild(port);
+
+            auto boxx0 = lay.xcmm - lc::columnWidth_MM * 0.5;
+            auto boxy0 = lay.ycmm + 8.573 - 5;
+
+            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+            auto s0 = rack::mm2px(rack::Vec(lc::columnWidth_MM, 5));
+            auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+            w->addChild(lab);
+            std::cout << "FIXME: Make background region " << __LINE__ << " " << __FILE__
+                      << std::endl;
+            break;
+        }
         case LayoutItem::PORT:
         {
             auto port = rack::createInputCentered<widgets::Port>(

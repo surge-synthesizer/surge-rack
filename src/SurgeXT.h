@@ -81,3 +81,4 @@ extern rack::Model *modelFXEnsemble;
 extern rack::Model *modelFXCombulator;
 extern rack::Model *modelFXSpringReverb;
 extern rack::Model *modelFXTreeMonster;
+extern rack::Model *modelEGxVCA;

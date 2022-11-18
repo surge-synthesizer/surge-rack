@@ -332,6 +332,15 @@
       ]
     },
     {
+      "slug": "SurgeXTEGxVCA",
+      "name": "EG x VCA",
+      "description": "The Surge XT Envelope Generator VCA Combo",
+      "tags": [
+        "VCA",
+        "Envelope"
+      ]
+    },
+    {
       "slug": "SurgeXTMixer",
       "name": "Mixer",
       "description": "The Surge XT Mixer",
