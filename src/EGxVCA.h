@@ -91,6 +91,34 @@ struct EGxVCA : modules::XTModule
         configParam<modules::SurgeParameterParamQuantity>(EG_D, 0, 1, 0.1, "Decay");
         configParam<modules::SurgeParameterParamQuantity>(EG_S, 0, 1, 0.5, "Sustain");
         configParam<modules::SurgeParameterParamQuantity>(EG_R, 0, 1, 0.1, "Release");
+
+        // really need to configParam those mod params for this to work
+        for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
+        {
+            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1);
+
+            configParamNoRand(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+
+#if 0
+            int tp = paramModulatedBy(i + MOD_PARAM_0);
+
+            auto lb = paramQuantities[tp]->getLabel();
+
+            if (tp == LEVEL || tp == PAN)
+            {
+                std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
+                configParamNoRand(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+            }
+            else
+            {
+                std::string name = std::string("Mod ") + std::to_string(i % 4 + 1);
+                auto r = configParamNoRand<modules::SurgeParameterModulationQuantity>(
+                    MOD_PARAM_0 + i, -1, 1, 0, name);
+                r->baseName = name;
+            }
+#endif
+        }
+
         modAssist.initialize(this);
 
         configBypass(INPUT_L, OUTPUT_L);
@@ -116,6 +144,10 @@ struct EGxVCA : modules::XTModule
             processors[i]->init(storage.get(), adsr, storage->getPatch().scenedata[0], nullptr);
             doAttack[i] = false;
             doRelease[i] = false;
+            target[i] = 0.f;
+            dTarget[i] = 0.f;
+            levelTarget[i] = 0.f;
+            dLevel[i] = 0.f;
         }
     }
 
@@ -174,6 +206,9 @@ struct EGxVCA : modules::XTModule
     int nChan{-1};
 
     bool doAttack[MAX_POLY], doRelease[MAX_POLY];
+    float levelTarget[MAX_POLY], dLevel[MAX_POLY];
+    float target[MAX_POLY], dTarget[MAX_POLY];
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         auto currChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
@@ -181,9 +216,6 @@ struct EGxVCA : modules::XTModule
         if (currChan != nChan)
         {
             nChan = currChan;
-            outputs[OUTPUT_L].setChannels(nChan);
-            outputs[OUTPUT_R].setChannels(nChan);
-            outputs[ENV_OUT].setChannels(nChan);
         }
         for (int c = 0; c < nChan; ++c)
         {
@@ -200,6 +232,10 @@ struct EGxVCA : modules::XTModule
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
 
+            outputs[OUTPUT_L].setChannels(nChan);
+            outputs[OUTPUT_R].setChannels(nChan);
+            outputs[ENV_OUT].setChannels(nChan);
+
             for (int c = 0; c < nChan; ++c)
             {
                 adsr->a.set_value_f01(modAssist.values[EG_A][c]);
@@ -213,18 +249,31 @@ struct EGxVCA : modules::XTModule
                     processors[c]->attack();
                     doAttack[c] = false;
                 }
-                processors[c]->process_block();
                 if (doRelease[c])
                 {
                     processors[c]->release();
                     doRelease[c] = false;
                 }
+                processors[c]->process_block();
+                auto nt = processors[c]->get_output(0);
+                dTarget[c] = (nt - target[c]) * BLOCK_SIZE_INV;
+
+                auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
+                dLevel[c] = (nl - levelTarget[c]) * BLOCK_SIZE_INV;
             }
             processCount = 0;
         }
+
+        // ToDo - SIMDize
         for (int c = 0; c < nChan; ++c)
         {
-            outputs[ENV_OUT].setVoltage(processors[c]->get_output(0) * 10, c);
+            outputs[ENV_OUT].setVoltage(target[c] * 10, c);
+            outputs[OUTPUT_L].setVoltage(inputs[INPUT_L].getVoltage(c) * target[c] * levelTarget[c],
+                                         c);
+            outputs[OUTPUT_R].setVoltage(inputs[INPUT_R].getVoltage(c) * target[c] * levelTarget[c],
+                                         c);
+            target[c] += dTarget[c];
+            levelTarget[c] += dLevel[c];
         }
         processCount++;
     }
