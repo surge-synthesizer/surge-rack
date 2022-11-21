@@ -569,7 +569,7 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
             nvgFontFaceId(vg, style()->fontIdBold(vg));
             nvgFontSize(vg, 30);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "Filters", nullptr);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "Filter", nullptr);
             return;
         }
         const auto &freq = responseCurve.first;
