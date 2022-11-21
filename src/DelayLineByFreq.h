@@ -95,7 +95,8 @@ struct DelayLineByFreq : modules::XTModule
     {
         // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
 
-        int cc = std::max(inputs[INPUT_L].getChannels(), 1);
+        int cc = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
+                           inputs[INPUT_VOCT].getChannels(), 1});
 
         outputs[OUTPUT_L].setChannels(cc);
         outputs[OUTPUT_R].setChannels(cc);
