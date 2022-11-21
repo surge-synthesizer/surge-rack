@@ -13,6 +13,27 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
+/*
+ * EGxVCA ToDos
+ *
+ * - Clock and TempoSynch
+ * - Display area
+ *    - Analog/Digital control
+ *    - Draw the waveform
+ *    - Mode (DAHD vs ADSR) selector
+ *    - Digital Shape Controls
+ * - DSP
+ *    - Response Curve implementation
+ *    - Retrigger / Gate controls
+ *    - Fix Analog Envelope in Surge proper as n option
+ *    - DAHD mode v DASDR mode
+ *    - Pan implementation (follow models from MixMaster probably)
+ * - UI
+ *    - Longer throw sliders
+ *    - LintBuddy/Label inputs outputs mods etc
+ *    - Correct labels and param quantities for the modulator knobs
+ */
+
 #ifndef SURGE_XT_RACK_EGVCAHPP
 #define SURGE_XT_RACK_EGVCAHPP
 
@@ -32,13 +53,14 @@ namespace sst::surgext_rack::egxvca
 {
 struct EGxVCA : modules::XTModule
 {
-    static constexpr int n_mod_params{6};
+    static constexpr int n_mod_params{7};
     static constexpr int n_mod_inputs{4};
 
     enum ParamIds
     {
         LEVEL,
         PAN,
+        RESPONSE,
         EG_A, // these morph based on mode
         EG_D,
         EG_S,
@@ -58,6 +80,8 @@ struct EGxVCA : modules::XTModule
         INPUT_L,
         INPUT_R,
         GATE_IN,
+        RETRIG_IN,
+        CLOCK_IN,
         MOD_INPUT_0,
         NUM_INPUTS = MOD_INPUT_0 + n_mod_inputs,
     };
@@ -200,6 +224,12 @@ struct EGxVCA : modules::XTModule
         return false;
     }
 
+    void moduleSpecificSampleRateChange() override
+    {
+        clockProc.setSampleRate(APP->engine->getSampleRate());
+    }
+    modules::ClockProcessor<EGxVCA> clockProc;
+
     std::string getName() override { return std::string("EGxVCA"); }
     int processCount{BLOCK_SIZE - 1};
 
@@ -211,6 +241,11 @@ struct EGxVCA : modules::XTModule
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        if (inputs[CLOCK_IN].isConnected())
+            clockProc.process(this, CLOCK_IN);
+        else
+            clockProc.disconnect(this);
+
         auto currChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
                                   inputs[GATE_IN].getChannels(), 1});
         if (currChan != nChan)
@@ -276,6 +311,16 @@ struct EGxVCA : modules::XTModule
             levelTarget[c] += dLevel[c];
         }
         processCount++;
+    }
+
+    void activateTempoSync()
+    {
+        std::cout << "FIXME " << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
+    }
+
+    void deactivateTempoSync()
+    {
+        std::cout << "FIXME " << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
     }
 
     json_t *makeModuleSpecificJson() override { return nullptr; }

@@ -41,12 +41,13 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
 EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *module)
 {
     setModule(module);
-    typedef layout::LayoutEngine<EGxVCAWidget, EGxVCAWidget::M::LEVEL> engine_t;
+    typedef layout::LayoutEngine<EGxVCAWidget, EGxVCAWidget::M::LEVEL, EGxVCAWidget::M::CLOCK_IN>
+        engine_t;
     engine_t::initializeModulationToBlank(this);
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
 
-    auto bg = new widgets::Background(box.size, "EG x VCA", "vco", "BlankVCO");
+    auto bg = new widgets::Background(box.size, "EG x VCA", "fx", "BlankNoDisplay");
     addChild(bg);
 
     auto col = std::vector<float>();
@@ -57,28 +58,38 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
     const auto col0 = layout::LayoutConstants::firstColumnCenter_MM;
     const auto col1 =
         layout::LayoutConstants::firstColumnCenter_MM + layout::LayoutConstants::columnWidth_MM;
+    const auto col2 =
+        layout::LayoutConstants::firstColumnCenter_MM + 2 * layout::LayoutConstants::columnWidth_MM;
+    const auto col3 =
+        layout::LayoutConstants::firstColumnCenter_MM + 3 * layout::LayoutConstants::columnWidth_MM;
 
     const auto dSlider = layout::LayoutConstants::columnWidth_MM * 0.5f;
 
     const auto sliderStart = col1 + layout::LayoutConstants::columnWidth_MM * 0.25f;
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
     const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0];
-    const auto rowS = (row1 + row2) * 0.5f;
+    const auto row3 = layout::LayoutConstants::vcoRowCenters_MM[0] - (row1 - row2);
+    const auto rowS = (row2 + row3) * 0.5f;
 
     typedef layout::LayoutItem li_t;
     // fixme use the enums
     // clang-format off
     std::vector<li_t> layout = {
-        {li_t::KNOB9, "LEVEL", M::LEVEL, col0, row2},
-        {li_t::KNOB9, "PAN", M::PAN, col1, row2},
+        {li_t::KNOB12, "LEVEL", M::LEVEL, col0, rowS},
+        {li_t::KNOB9, "PAN", M::PAN, col1, row3},
+        {li_t::KNOB9, "RESP", M::RESPONSE, col1, row2},
 
         {li_t::PORT, "GATE", M::GATE_IN, col0, row1},
-        {li_t::OUT_PORT, "ENV", M::ENV_OUT, col1, row1},
+        {li_t::PORT, "RETRIG", M::RETRIG_IN, col1, row1},
+        {li_t::PORT, "CLOCK", M::CLOCK_IN, col2, row1},
+        {li_t::OUT_PORT, "ENV", M::ENV_OUT, col3, row1},
 
         {li_t::VSLIDER, "A", M::EG_A, sliderStart + 1.f * dSlider, rowS},
         {li_t::VSLIDER, "D", M::EG_D, sliderStart + 2.f * dSlider, rowS},
         {li_t::VSLIDER, "S", M::EG_S, sliderStart + 3.f * dSlider, rowS},
-        {li_t::VSLIDER, "R", M::EG_R, sliderStart + 4.f * dSlider, rowS}
+        {li_t::VSLIDER, "R", M::EG_R, sliderStart + 4.f * dSlider, rowS},
+
+        li_t::createLCDArea(row3 - rack::mm2px(2.5))
     };
     // clang-format on
 
