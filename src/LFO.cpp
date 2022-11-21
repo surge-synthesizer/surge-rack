@@ -734,7 +734,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         drawWaveform(vg);
     }
 
-    pdata tp[n_scene_params];
+    pdata tp[n_scene_params], tpcopy[n_scene_params];
     int priorDef{-1};
     void step() override
     {
@@ -744,22 +744,23 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         auto lfodata = module->lfostorageDisplay;
         auto storage = module->storage.get();
 
-        bool changed = false;
-        changed = changed || (tp[lfodata->delay.param_id_in_scene].i != lfodata->delay.val.i);
-        changed = changed || (tp[lfodata->attack.param_id_in_scene].i != lfodata->attack.val.i);
-        changed = changed || (tp[lfodata->hold.param_id_in_scene].i != lfodata->hold.val.i);
-        changed = changed || (tp[lfodata->decay.param_id_in_scene].i != lfodata->decay.val.i);
-        changed = changed || (tp[lfodata->sustain.param_id_in_scene].i != lfodata->sustain.val.i);
-        changed = changed || (tp[lfodata->release.param_id_in_scene].i != lfodata->release.val.i);
+        int s = storage->getPatch().scene_start[0];
+        auto *par = &(lfodata->rate);
+        while (par <= &lfodata->release)
+        {
 
-        changed =
-            changed || (tp[lfodata->magnitude.param_id_in_scene].i != lfodata->magnitude.val.i);
-        changed = changed || (tp[lfodata->rate.param_id_in_scene].i != lfodata->rate.val.i);
-        changed = changed || (tp[lfodata->shape.param_id_in_scene].i != lfodata->shape.val.i);
-        changed =
-            changed || (tp[lfodata->start_phase.param_id_in_scene].i != lfodata->start_phase.val.i);
-        changed = changed || (tp[lfodata->deform.param_id_in_scene].i != lfodata->deform.val.i);
-        changed = changed || (tp[lfodata->unipolar.param_id_in_scene].i != lfodata->unipolar.val.i);
+            tpcopy[par->param_id_in_scene].i = tp[par->param_id_in_scene].i;
+            ++par;
+        }
+        setupTP();
+
+        bool changed = false;
+        par = &(lfodata->rate);
+        while (par <= &lfodata->release)
+        {
+            changed = changed || (tpcopy[par->param_id_in_scene].i != tp[par->param_id_in_scene].i);
+            ++par;
+        }
 
         changed = changed || (priorDef != lfodata->deform.deform_type);
         priorDef = lfodata->deform.deform_type;
@@ -779,7 +780,8 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->minValue = minStepSlider;
         }
     }
-    void drawWaveform(NVGcontext *vg)
+
+    void setupTP()
     {
         auto lfodata = module->lfostorageDisplay;
         auto storage = module->storage.get();
@@ -799,6 +801,24 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         tp[lfodata->deform.param_id_in_scene].i = lfodata->deform.val.i;
         tp[lfodata->trigmode.param_id_in_scene].i = lm_keytrigger;
 
+        auto *par0 = &(lfodata->rate);
+        for (int p = LFO::RATE; p < LFO::RATE + LFO::n_lfo_params; ++p)
+        {
+            auto *oap = &par0[module->paramOffsetByID[p]];
+            if (oap->valtype == vt_float)
+            {
+                tp[oap->param_id_in_scene].f += module->modAssist.modvalues[p - LFO::RATE][0] *
+                                                (oap->val_max.f - oap->val_min.f);
+            }
+        }
+    }
+
+    void drawWaveform(NVGcontext *vg)
+    {
+        auto lfodata = module->lfostorageDisplay;
+        auto storage = module->storage.get();
+
+        setupTP();
         float susTime = 0.5;
         bool msegRelease = false;
         float msegReleaseAt = 0;
