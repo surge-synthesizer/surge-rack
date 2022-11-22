@@ -29,7 +29,11 @@ void XTStyle::initialize()
     std::string defaultsFile = rack::asset::user("SurgeXTRack/default-skin.json");
 
     json_error_t error;
-    json_t *fd = json_load_file(defaultsFile.c_str(), 0, &error);
+    json_t *fd{nullptr};
+    auto *fptr = std::fopen(defaultsFile.c_str(), "r");
+    if (fptr)
+        fd = json_loadf(fptr, 0, &error);
+    DEFER({ std::fclose(fptr); });
     if (!fd)
     {
         setGlobalStyle(MID);
@@ -429,7 +433,7 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
         {
             // Special case - white ring on light background
             if (c == SLIDER_RING_VALUE)
-                return nvgRGB(150,150,150);
+                return nvgRGB(150, 150, 150);
             return nvgRGB(0x33, 0x33, 0x33);
         }
 
