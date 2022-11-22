@@ -159,7 +159,7 @@ template <int fxType> struct FX : modules::XTModule
         modAssist.initialize(this);
         polyModAssist.initialize(this);
         if (maxPresets > 0)
-            loadPreset(0, false);
+            loadPreset(0, false, true);
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
@@ -373,7 +373,7 @@ template <int fxType> struct FX : modules::XTModule
         }
     };
 
-    void loadPreset(int which, bool recordHistory=true)
+    void loadPreset(int which, bool recordHistory=true, bool resetDefaults = false)
     {
         if (recordHistory)
         {
@@ -387,6 +387,10 @@ template <int fxType> struct FX : modules::XTModule
         for (int i = 0; i < n_fx_params; ++i)
         {
             paramQuantities[FX_PARAM_0 + i]->setValue(value01for(i, ps.p[i]));
+            if (resetDefaults)
+            {
+                paramQuantities[FX_PARAM_0 + i]->defaultValue = paramQuantities[FX_PARAM_0 + i]->getValue();
+            }
         }
 
         FXConfig<fxType>::loadPresetOntoSpecificParams(this, ps);
