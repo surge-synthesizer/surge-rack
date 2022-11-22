@@ -2339,6 +2339,38 @@ inline void VerticalSlider::onChange(const rack::widget::Widget::ChangeEvent &e)
     SliderKnob::onChange(e);
 }
 
+struct OutputDecoration : rack::Widget, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdw{nullptr};
+
+    void setup()
+    {
+        if (!bdw)
+        {
+            bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
+                                                 box.size,
+                                                 [this](auto v) { drawRegion(v);});
+            addChild(bdw);
+        }
+    }
+    void drawRegion(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 4.7);
+        nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y,
+                                           style()->getColor(style::XTStyle::OUTPUTBG_START),
+                                           style()->getColor(style::XTStyle::OUTPUTBG_END)
+                                               ));
+
+        nvgFill(vg);
+    }
+    void onStyleChanged() override
+    {
+        if (bdw)
+            bdw->dirty = true;
+    }
+};
+
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H

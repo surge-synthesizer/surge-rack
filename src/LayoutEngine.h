@@ -377,6 +377,15 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         break;
         case LayoutItem::OUT_PORT:
         {
+            auto bg = new widgets::OutputDecoration;
+            auto pd_MM = 0.5;
+            bg->box.pos = rack::mm2px(rack::Vec(lay.xcmm - lc::columnWidth_MM * 0.35 - pd_MM,
+                                                lay.ycmm - lc::columnWidth_MM * 0.3 - pd_MM));
+            bg->box.size = rack::mm2px(rack::Vec(lc::columnWidth_MM * 0.7 + pd_MM * 2,
+                                                 lc::columnWidth_MM * 0.6 + 5 + pd_MM * 2));
+            bg->setup();
+            w->addChild(bg);
+
             auto port = rack::createOutputCentered<widgets::Port>(
                 rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + lc::verticalPortOffset_MM)), module,
                 lay.parId);
@@ -387,10 +396,9 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
 
             auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
             auto s0 = rack::mm2px(rack::Vec(lc::columnWidth_MM, 5));
-            auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
+            auto lab = widgets::Label::createWithBaselineBox(
+                p0, s0, lay.label, lc::labelSize_pt, style::XTStyle::Colors::TEXT_LABEL_OUTPUT);
             w->addChild(lab);
-            std::cout << "FIXME: Make background region " << __LINE__ << " " << __FILE__
-                      << std::endl;
             break;
         }
         case LayoutItem::PORT:
