@@ -119,7 +119,10 @@ struct XTStyle
 
         SHADOW_BASE,
         SHADOW_OVER_GRADSTART,
-        SHADOW_OVER_GRADEND
+        SHADOW_OVER_GRADEND,
+
+        OUTPUTBG_START,
+        OUTPUTBG_END
     };
     const NVGcolor getColor(Colors c);
 

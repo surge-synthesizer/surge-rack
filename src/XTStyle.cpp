@@ -474,6 +474,30 @@ const NVGcolor XTStyle::getColor(sst::surgext_rack::style::XTStyle::Colors c)
             return nvgRGBAf(0.f, 0.f, 0.f, 0.20f);
         }
     }
+
+    case OUTPUTBG_START:
+    {
+        switch (*activeStyle)
+        {
+        case DARK:
+        case LIGHT:
+            return nvgRGB(0x52, 0x52, 0x52);
+        default:
+            return nvgRGB(0x27, 0x27, 0x29);
+        }
+    }
+
+    case OUTPUTBG_END:
+    {
+        switch (*activeStyle)
+        {
+        case DARK:
+        case LIGHT:
+            return nvgRGB(0x52, 0x52, 0x52);
+        default:
+            return nvgRGB(0x1E, 0x1E, 0x20);
+        }
+    }
     }
 
     return nvgRGB(255, 0, 0);
