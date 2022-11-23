@@ -10,6 +10,7 @@
   "manualUrl": "https://surge-synthesizer.github.io/rack_xt_manual/",
   "sourceUrl": "https://github.com/surge-synthesizer/surge-rack/",
   "donateUrl": "",
+  "changelogUrl": "https://github.com/surge-synthesizer/surge-rack/blob/main/docs/changelog.md",
   "modules": [
     {
       "slug": "SurgeXTVCF",
