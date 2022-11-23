@@ -22,14 +22,12 @@
  *    - Draw the waveform
  *    - Mode (DAHD vs ADSR) selector
  *    - Digital Shape Controls
+ *    - Draw the meters
  * - DSP
- *    - Response Curve implementation
  *    - Retrigger / Gate controls
- *    - Fix Analog Envelope in Surge proper as n option
  *    - DAHD mode v DASDR mode
  *    - Pan implementation (follow models from MixMaster probably)
  * - UI
- *    - Longer throw sliders
  *    - LintBuddy/Label inputs outputs mods etc
  *    - Correct labels and param quantities for the modulator knobs
  */
@@ -115,6 +113,9 @@ struct EGxVCA : modules::XTModule
         configParam<modules::SurgeParameterParamQuantity>(EG_D, 0, 1, 0.1, "Decay");
         configParam<modules::SurgeParameterParamQuantity>(EG_S, 0, 1, 0.5, "Sustain");
         configParam<modules::SurgeParameterParamQuantity>(EG_R, 0, 1, 0.1, "Release");
+        configSwitch(ANALOG_OR_DIGITAL, 0, 1, 0, "Curve", {"Digital", "Analog"});
+
+        configParam(RESPONSE, 0, 1, 0, "Linear/Exponential");
 
         // really need to configParam those mod params for this to work
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
@@ -168,10 +169,9 @@ struct EGxVCA : modules::XTModule
             processors[i]->init(storage.get(), adsr, storage->getPatch().scenedata[0], nullptr);
             doAttack[i] = false;
             doRelease[i] = false;
-            target[i] = 0.f;
-            dTarget[i] = 0.f;
-            levelTarget[i] = 0.f;
-            dLevel[i] = 0.f;
+
+            level[i].target = 1.0;
+            output[i].target = 0.0;
         }
     }
 
@@ -187,6 +187,8 @@ struct EGxVCA : modules::XTModule
             return &adsr_display->s;
         case EG_R:
             return &adsr_display->r;
+        case ANALOG_OR_DIGITAL:
+            return &adsr_display->mode;
         }
         return nullptr;
     }
@@ -236,8 +238,16 @@ struct EGxVCA : modules::XTModule
     int nChan{-1};
 
     bool doAttack[MAX_POLY], doRelease[MAX_POLY];
-    float levelTarget[MAX_POLY], dLevel[MAX_POLY];
-    float target[MAX_POLY], dTarget[MAX_POLY];
+
+    struct linterp
+    {
+        float target{0};
+        float dtarget{0};
+        inline void setTarget(float f) { dtarget = (f - target) * BLOCK_SIZE_INV; }
+        inline void step() { target += dtarget; }
+    };
+
+    linterp level[MAX_POLY], output[MAX_POLY], response[MAX_POLY];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -254,6 +264,8 @@ struct EGxVCA : modules::XTModule
         }
         for (int c = 0; c < nChan; ++c)
         {
+            processors[c]->correctAnalogMode = true; // use cprrected version
+
             if (triggers[c].process(inputs[GATE_IN].getVoltage(c)))
             {
                 doAttack[c] = true;
@@ -271,12 +283,16 @@ struct EGxVCA : modules::XTModule
             outputs[OUTPUT_R].setChannels(nChan);
             outputs[ENV_OUT].setChannels(nChan);
 
+            adsr->mode.set_value_f01(params[ANALOG_OR_DIGITAL].getValue());
+
             for (int c = 0; c < nChan; ++c)
             {
+                // FIXME - we need to do the tp / temposync thing here
                 adsr->a.set_value_f01(modAssist.values[EG_A][c]);
                 adsr->d.set_value_f01(modAssist.values[EG_D][c]);
                 adsr->s.set_value_f01(modAssist.values[EG_S][c]);
                 adsr->r.set_value_f01(modAssist.values[EG_R][c]);
+                processors[c]->correctAnalogMode = true;
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
 
                 if (doAttack[c])
@@ -290,11 +306,12 @@ struct EGxVCA : modules::XTModule
                     doRelease[c] = false;
                 }
                 processors[c]->process_block();
-                auto nt = processors[c]->get_output(0);
-                dTarget[c] = (nt - target[c]) * BLOCK_SIZE_INV;
+                output[c].setTarget(processors[c]->get_output(0));
 
                 auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
-                dLevel[c] = (nl - levelTarget[c]) * BLOCK_SIZE_INV;
+                level[c].setTarget(nl);
+
+                response[c].setTarget(modAssist.values[RESPONSE][c]);
             }
             processCount = 0;
         }
@@ -302,13 +319,20 @@ struct EGxVCA : modules::XTModule
         // ToDo - SIMDize
         for (int c = 0; c < nChan; ++c)
         {
-            outputs[ENV_OUT].setVoltage(target[c] * 10, c);
-            outputs[OUTPUT_L].setVoltage(inputs[INPUT_L].getVoltage(c) * target[c] * levelTarget[c],
-                                         c);
-            outputs[OUTPUT_R].setVoltage(inputs[INPUT_R].getVoltage(c) * target[c] * levelTarget[c],
-                                         c);
-            target[c] += dTarget[c];
-            levelTarget[c] += dLevel[c];
+            auto o1 = output[c].target;
+            auto o3 = o1 * o1 * o1;
+            auto r = response[c].target;
+            auto o = (1 - r) * o1 + r * o3;
+
+            auto l = level[c].target;
+            auto ol = o * l;
+
+            outputs[ENV_OUT].setVoltage(o1 * 10, c);
+            outputs[OUTPUT_L].setVoltage(inputs[INPUT_L].getVoltage(c) * ol, c);
+            outputs[OUTPUT_R].setVoltage(inputs[INPUT_R].getVoltage(c) * ol, c);
+            output[c].step();
+            level[c].step();
+            response[c].step();
         }
         processCount++;
     }

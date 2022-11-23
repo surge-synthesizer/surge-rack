@@ -84,10 +84,10 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
         {li_t::PORT, "CLOCK", M::CLOCK_IN, col2, row1},
         {li_t::OUT_PORT, "ENV", M::ENV_OUT, col3, row1},
 
-        {li_t::VSLIDER, "A", M::EG_A, sliderStart + 1.f * dSlider, rowS},
-        {li_t::VSLIDER, "D", M::EG_D, sliderStart + 2.f * dSlider, rowS},
-        {li_t::VSLIDER, "S", M::EG_S, sliderStart + 3.f * dSlider, rowS},
-        {li_t::VSLIDER, "R", M::EG_R, sliderStart + 4.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "A", M::EG_A, sliderStart + 1.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "D", M::EG_D, sliderStart + 2.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "S", M::EG_S, sliderStart + 3.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "R", M::EG_R, sliderStart + 4.f * dSlider, rowS},
 
         li_t::createLCDArea(row3 - rack::mm2px(2.5))
     };
@@ -97,6 +97,14 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
     {
         engine_t::layoutItem(this, lay, "EGxVCA");
     }
+
+    auto posx = widgets::LCDBackground::posx;
+    auto adp = rack::Vec(rack::app::RACK_GRID_WIDTH * 12 - 2 * posx - rack::mm2px(0.5),
+                         rack::mm2px(widgets::LCDBackground::posy_MM + 0.5));
+    auto ads = rack::Vec((rack::app::RACK_GRID_WIDTH * 12 - 2 * posx) * 0.5, rack::mm2px(5));
+    adp.x -= ads.x;
+    auto andig = widgets::PlotAreaMenuItem::create(adp, ads, module, M::ANALOG_OR_DIGITAL);
+    addChild(andig);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
     engine_t::createInputOutputPorts(this, M::INPUT_L, M::INPUT_R, M::OUTPUT_L, M::OUTPUT_R);
