@@ -1,20 +1,29 @@
-# SurgeRack VCV Modules Changelog
+# Surge XT VCV Modules Changelog
 
+## 2.1 - In Beta Now
 
-## Release 1.beta1.1 from 1.beta1.0
+- New Modules
+    - EGxVCA (still in development)
 
-1.beta1.1 fixes some immediate problems ahead of the Rack 1.2 release but still leaves a collection
-of issues outstanding ahead of a non-beta release.
+- Module Features and Behaviors
+    - **Mixer**: Module unmutes channel 2 or 3 the first time you connect an input to its ports
+    - **TunedDelay**:
+        - polyphony is set by either the inputs or by v/oct
+        - monophonic audio signals are broadcast to multiple delay lines if given a polyphonic v/oct
+    - **TreeMonster**: Added a v/oct and env output from the internal state so the pitch tracking and envelope  
+      following can be used in other contexts
 
-* Add the SurgeNoise module, which implements the noise channel of the Surge VST Mixer.
-* Fix input mappings in SurgeEQ, causing problems in duplication, connecting, CV Control, and leading
-  to exceptions in Rack.
-* Make the configuration state of parameters in the FX modules the default setting, resulting in
-  right-mouse/initialize working on all the FX modules.
-* Fix a problem with preset scanning in FX units by using the rack-standard preset mechanism.
-* Only scan wavetables when you load the WTOSC module, not when you load other modules.
+- UI
+    - Substantially improve the modulation tooltips for Surge parameters
+    - Correct an error with the modulation tooltip that, in some cases, would show the
+      modulation value as base value
+    - VCF panel preview now says "FILTER" not "FILTERS"
+    - Modulations on the LFOxEG module update the wave in response to modulated values
 
-## Up to release 1.beta1.0
+- Other Changes
+    - use `std::fopen`/`json_loadf` rather than `json_loadfile` to load skin defaults
+    - Add a widget and Skin for self-drawing output region backgrounds
 
-* 1.beta1.0 was the first release, containing the basics modules and functionality as documented
-  in the manual.
+## 2.0.1 - Nov 17, 2022
+
+2.0.1 was the initial release of Surge XT for Rack.

@@ -18,7 +18,7 @@
  *
  * - Clock and TempoSynch
  * - Display area
- *    - Analog/Digital control
+ *    - Analog/Digital control as click-to-switch menu
  *    - Draw the waveform
  *    - Mode (DAHD vs ADSR) selector
  *    - Digital Shape Controls
