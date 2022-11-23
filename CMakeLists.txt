@@ -26,6 +26,7 @@ add_custom_command(TARGET ${PROJECT_NAME}
 add_custom_command(TARGET ${PROJECT_NAME}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND RACK_DIR=${RACK_DIR} arch -x86_64 make -j
+        COMMAND ${CMAKE_COMMAND} -E copy plugin.json /Users/paul/Documents/Rack2/plugins/SurgeXTRack
         COMMAND ${CMAKE_COMMAND} -E copy plugin.dylib /Users/paul/Documents/Rack2/plugins/SurgeXTRack
         USES_TERMINAL)
 

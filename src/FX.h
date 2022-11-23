@@ -42,6 +42,10 @@ template <int fxType> struct FXConfig
     static void configExtraInputs(FX<fxType> *M) {}
     static void processExtraInputs(FX<fxType> *M) {}
 
+    static constexpr int extraOutputs() { return 0; }
+    static void configExtraOutputs(FX<fxType> *M) {}
+    static void populateExtraOutputs(FX<fxType> *M, int chan, Effect *fx) {}
+
     static constexpr int specificParamCount() { return 0; }
     static void configSpecificParams(FX<fxType> *M) {}
     static void processSpecificParams(FX<fxType> *M) {}
@@ -92,7 +96,8 @@ template <int fxType> struct FX : modules::XTModule
     {
         OUTPUT_L,
         OUTPUT_R,
-        NUM_OUTPUTS
+        EXTRA_OUTPUT_0,
+        NUM_OUTPUTS = EXTRA_OUTPUT_0 + FXConfig<fxType>::extraOutputs()
     };
 
     enum LightIds
@@ -155,11 +160,12 @@ template <int fxType> struct FX : modules::XTModule
         FXConfig<fxType>::configExtraInputs(this);
         configOutput(OUTPUT_L, "Left (or Mono merged)");
         configOutput(OUTPUT_R, "Right");
+        FXConfig<fxType>::configExtraOutputs(this);
 
         modAssist.initialize(this);
         polyModAssist.initialize(this);
         if (maxPresets > 0)
-            loadPreset(0, false);
+            loadPreset(0, false, true);
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
@@ -373,7 +379,7 @@ template <int fxType> struct FX : modules::XTModule
         }
     };
 
-    void loadPreset(int which, bool recordHistory=true)
+    void loadPreset(int which, bool recordHistory=true, bool resetDefaults = false)
     {
         if (recordHistory)
         {
@@ -387,6 +393,10 @@ template <int fxType> struct FX : modules::XTModule
         for (int i = 0; i < n_fx_params; ++i)
         {
             paramQuantities[FX_PARAM_0 + i]->setValue(value01for(i, ps.p[i]));
+            if (resetDefaults)
+            {
+                paramQuantities[FX_PARAM_0 + i]->defaultValue = paramQuantities[FX_PARAM_0 + i]->getValue();
+            }
         }
 
         FXConfig<fxType>::loadPresetOntoSpecificParams(this, ps);
@@ -403,6 +413,8 @@ template <int fxType> struct FX : modules::XTModule
         alignas(16)[MAX_POLY][BLOCK_SIZE];
     float processedL alignas(16)[MAX_POLY][BLOCK_SIZE], processedR
         alignas(16)[MAX_POLY][BLOCK_SIZE];
+
+    float extraOutputs alignas(16)[std::max(1,FXConfig<fxType>::extraOutputs())][MAX_POLY][BLOCK_SIZE];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -432,6 +444,9 @@ template <int fxType> struct FX : modules::XTModule
 
         outputs[OUTPUT_L].setChannels(1);
         outputs[OUTPUT_R].setChannels(1);
+
+        for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+            outputs[EXTRA_OUTPUT_0 + i].setChannels(1);
 
         if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
         {
@@ -504,6 +519,8 @@ template <int fxType> struct FX : modules::XTModule
 
             surge_effect->process_ringout(processedL[0], processedR[0], true);
 
+            FXConfig<fxType>::populateExtraOutputs(this, 0, surge_effect.get());
+
             bufferPos = 0;
         }
 
@@ -518,6 +535,11 @@ template <int fxType> struct FX : modules::XTModule
         {
             outputs[OUTPUT_L].setVoltage(outl);
             outputs[OUTPUT_R].setVoltage(outr);
+        }
+
+        for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+        {
+            outputs[EXTRA_OUTPUT_0 + i].setVoltage(extraOutputs[i][0][bufferPos]);
         }
     }
 
@@ -557,6 +579,9 @@ template <int fxType> struct FX : modules::XTModule
 
         outputs[OUTPUT_L].setChannels(chan);
         outputs[OUTPUT_R].setChannels(chan);
+
+        for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+            outputs[EXTRA_OUTPUT_0 + i].setChannels(chan);
 
         for (int c = 0; c < chan; ++c)
         {
@@ -637,6 +662,8 @@ template <int fxType> struct FX : modules::XTModule
                 }
 
                 surge_effect_poly[c]->process_ringout(processedL[c], processedR[c], true);
+
+                FXConfig<fxType>::populateExtraOutputs(this, c, surge_effect_poly[c].get());
             }
             bufferPos = 0;
         }
@@ -655,6 +682,11 @@ template <int fxType> struct FX : modules::XTModule
             {
                 outputs[OUTPUT_L].setVoltage(outl, c);
                 outputs[OUTPUT_R].setVoltage(outr, c);
+            }
+
+            for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+            {
+                outputs[EXTRA_OUTPUT_0 + i].setVoltage(extraOutputs[i][c][bufferPos], c);
             }
         }
     }

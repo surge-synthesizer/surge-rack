@@ -95,15 +95,22 @@ struct DelayLineByFreq : modules::XTModule
     {
         // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
 
-        int cc = std::max(inputs[INPUT_L].getChannels(), 1);
+        int lc = inputs[INPUT_L].getChannels();
+        int rc = inputs[INPUT_R].getChannels();
+        int cc = std::max({lc, rc, inputs[INPUT_VOCT].getChannels(), 1});
+
+        // If LC or RC are 1 we want to braodcast that input to all poly channels
+        // so set up a multiplier for channel in the get below
+        auto lm = (lc == 1 ? 0 : 1);
+        auto rm = (rc == 1 ? 0 : 1);
 
         outputs[OUTPUT_L].setChannels(cc);
         outputs[OUTPUT_R].setChannels(cc);
 
         for (int i = 0; i < cc; ++i)
         {
-            auto il = inputs[INPUT_L].getVoltage(i);
-            auto ir = inputs[INPUT_R].getVoltage(i);
+            auto il = inputs[INPUT_L].getVoltage(lm * i);
+            auto ir = inputs[INPUT_R].getVoltage(rm * i);
 
             float pitch0 =
                 (params[VOCT].getValue() + 5) * 12 + inputs[INPUT_VOCT].getVoltage(i) * 12;

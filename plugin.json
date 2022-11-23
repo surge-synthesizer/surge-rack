@@ -1,7 +1,7 @@
 {
   "slug": "SurgeXTRack",
   "name": "Surge XT",
-  "version": "2.0.beta.0",
+  "version": "2.1.beta.0",
   "license": "GPL-3.0-or-later",
   "author": "Surge Synth Team",
   "authorEmail": "",
@@ -10,6 +10,7 @@
   "manualUrl": "https://surge-synthesizer.github.io/rack_xt_manual/",
   "sourceUrl": "https://github.com/surge-synthesizer/surge-rack/",
   "donateUrl": "",
+  "changelogUrl": "https://github.com/surge-synthesizer/surge-rack/blob/main/docs/changelog.md",
   "modules": [
     {
       "slug": "SurgeXTVCF",
@@ -329,6 +330,15 @@
         "Effect",
         "Delay",
         "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTEGxVCA",
+      "name": "EG x VCA",
+      "description": "The Surge XT Envelope Generator VCA Combo",
+      "tags": [
+        "VCA",
+        "Envelope"
       ]
     },
     {

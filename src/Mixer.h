@@ -100,6 +100,7 @@ struct Mixer : modules::XTModule
 
     std::array<bool, 6> routes;
     std::array<bool, 3> needed;
+    std::array<bool, 3> everConnected;
     float noisegen[MAX_POLY][2][2];
 
     Mixer() : XTModule()
@@ -165,6 +166,9 @@ struct Mixer : modules::XTModule
 
         vuLevel[0] = 0.f;
         vuLevel[1] = 0.f;
+
+        for (int i = 0; i < 3; ++i)
+            everConnected[i] = false;
     }
 
     modules::ModulationAssistant<Mixer, n_mixer_params, OSC1_LEV, n_mod_inputs, MIXER_MOD_INPUT>
@@ -183,6 +187,16 @@ struct Mixer : modules::XTModule
         bool anySolo{false};
         for (int i = 0; i < 6; ++i)
             routes[i] = false;
+
+        for (int i = 0; i < 3; ++i)
+        {
+            if (!everConnected[i] && (inputs[INPUT_OSC1_L + 2 * i].isConnected() ||
+                                      inputs[INPUT_OSC1_R + 2 * i].isConnected()))
+            {
+                everConnected[i] = true;
+                params[OSC1_MUTE + i].setValue(0);
+            }
+        }
 
         for (int i = OSC1_SOLO; i <= RM2x3_SOLO; ++i)
         {

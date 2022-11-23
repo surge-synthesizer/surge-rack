@@ -33,7 +33,9 @@ struct LayoutItem
         KNOB14,
         KNOB16,
         VSLIDER,
+        VSLIDER_25,
         PORT,
+        OUT_PORT,
         MOMENTARY_PARAM,
         TOGGLE_PARAM,
         GROUP_LABEL,
@@ -235,6 +237,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         case LayoutItem::KNOB14:
         case LayoutItem::KNOB16:
         case LayoutItem::VSLIDER:
+        case LayoutItem::VSLIDER_25:
         {
             widgets::ModulatableKnob *knob{nullptr};
             int diff = lay.type - LayoutItem::KNOB9;
@@ -267,6 +270,12 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                                                                par);
                 halfSize = (19 - 9) * 0.5;
             }
+            if (diff == 5)
+            {
+                knob = widgets::VerticalSlider::createCentered(pos, rack::mm2px(lay.spanmm), module,
+                                                               par, "fader_bg_25.svg");
+                halfSize = (25 - 9) * 0.5;
+            }
             if (knob)
             {
                 w->addChild(knob->asWidget());
@@ -288,7 +297,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 w->addChild(lab);
                 w->underKnobs[lay.parId] = knob;
 
-                if (diff != 4)
+                if (diff < 4)
                 {
                     auto rknob = static_cast<widgets::KnobN *>(knob->asWidget());
                     for (int m = 0; m < W::M::n_mod_inputs; ++m)
@@ -310,8 +319,8 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                     for (int m = 0; m < W::M::n_mod_inputs; ++m)
                     {
                         int id = W::M::modulatorIndexFor(lay.parId + param0, m);
-                        auto *k =
-                            widgets::VerticalSliderModulator::createCentered(pos, 19, module, id);
+                        auto *k = widgets::VerticalSliderModulator::createCentered(
+                            pos, (diff == 4 ? 19 : 25), module, id);
                         w->overlays[lay.parId][m] = k;
                         k->setVisible(false);
                         k->underlyerParamWidget = rknob;
@@ -374,6 +383,32 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             w->addChild(lab);
         }
         break;
+        case LayoutItem::OUT_PORT:
+        {
+            auto bg = new widgets::OutputDecoration;
+            auto pd_MM = 0.5;
+            bg->box.pos = rack::mm2px(rack::Vec(lay.xcmm - lc::columnWidth_MM * 0.35 - pd_MM,
+                                                lay.ycmm - lc::columnWidth_MM * 0.3 - pd_MM));
+            bg->box.size = rack::mm2px(rack::Vec(lc::columnWidth_MM * 0.7 + pd_MM * 2,
+                                                 lc::columnWidth_MM * 0.6 + 5 + pd_MM * 2));
+            bg->setup();
+            w->addChild(bg);
+
+            auto port = rack::createOutputCentered<widgets::Port>(
+                rack::mm2px(rack::Vec(lay.xcmm, lay.ycmm + lc::verticalPortOffset_MM)), module,
+                lay.parId);
+            w->addChild(port);
+
+            auto boxx0 = lay.xcmm - lc::columnWidth_MM * 0.5;
+            auto boxy0 = lay.ycmm + 8.573 - 5;
+
+            auto p0 = rack::mm2px(rack::Vec(boxx0, boxy0));
+            auto s0 = rack::mm2px(rack::Vec(lc::columnWidth_MM, 5));
+            auto lab = widgets::Label::createWithBaselineBox(
+                p0, s0, lay.label, lc::labelSize_pt, style::XTStyle::Colors::TEXT_LABEL_OUTPUT);
+            w->addChild(lab);
+            break;
+        }
         case LayoutItem::PORT:
         {
             auto port = rack::createInputCentered<widgets::Port>(

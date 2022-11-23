@@ -183,6 +183,7 @@ struct XTModule : public rack::Module
 
     virtual Parameter *surgeDisplayParameterForParamId(int paramId) { return nullptr; }
     virtual Parameter *surgeDisplayParameterForModulatorParamId(int paramId) { return nullptr; }
+    virtual rack::ParamQuantity *rackParamQuantityUnderlyingModulatorParamId(int paramId) { return nullptr; }
 
     std::unique_ptr<SurgeStorage> storage;
     int storage_id_start, storage_id_end;
@@ -374,6 +375,7 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
 
 struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, CalculatedName
 {
+    bool abbreviate = false;
     inline XTModule *xtm() { return static_cast<XTModule *>(module); }
     inline Parameter *surgepar()
     {
@@ -385,6 +387,18 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
         auto par = mc->surgeDisplayParameterForModulatorParamId(paramId);
         return par;
     }
+
+    inline rack::ParamQuantity *underlyingRackPar()
+    {
+        auto mc = xtm();
+        if (!mc)
+        {
+            return nullptr;
+        }
+        auto par = mc->rackParamQuantityUnderlyingModulatorParamId(paramId);
+        return par;
+    }
+
 
     virtual void setDisplayValueString(std::string s) override
     {
@@ -436,19 +450,34 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
 
         char txt[256], txt2[256];
         ModulationDisplayInfoWindowStrings iw;
-        auto norm = surgepar()->val_max.f - surgepar()->val_min.f;
-        par->get_display_of_modulation_depth(txt, getValue() * norm, true,
+
+        // We don't want to use the modulated value here
+        // so copy the parameter and reset to the underlying
+        // base value.
+        auto tempPar = Parameter();
+        tempPar = *par;
+        auto rp = underlyingRackPar();
+        if (rp)
+            tempPar.set_value_f01(rp->getValue());
+
+        auto sp = &tempPar;
+
+        auto norm = sp->val_max.f - sp->val_min.f;
+        sp->get_display_of_modulation_depth(txt, getValue() * norm, true,
                                              Parameter::ModulationDisplayMode::InfoWindow,
                                              &iw);
-        par->get_display_of_modulation_depth(txt2, getValue() * norm, true,
+        sp->get_display_of_modulation_depth(txt2, getValue() * norm, true,
                                              Parameter::ModulationDisplayMode::Menu);
 
         if (iw.val.empty())
             return txt2;
 
         std::ostringstream oss;
-        oss << iw.dvalplus << " (" << iw.val << " to " << iw.valplus << " @10v; "
-                          << iw.valminus << " @-10v)";
+        oss << iw.dvalplus << "\n" << iw.val << " @ 0v\n"
+                            << iw.valplus << " @ 10v\n"
+                          << iw.valminus << " @ -10v";
+        if (abbreviate)
+            return iw.dvalplus;
         return oss.str();
     }
 };

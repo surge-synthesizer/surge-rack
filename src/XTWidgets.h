@@ -576,6 +576,27 @@ struct HasBDW
     BufferedDrawFunctionWidget *bdw{nullptr};
 };
 
+struct SQPParamLabel : rack::ui::MenuLabel {
+    modules::SurgeParameterModulationQuantity *spq{nullptr};
+    void step() override {
+        if (spq)
+        {
+            auto ntext = spq->getLabel() + ": ";
+            auto r = spq->getDisplayValueString();
+            auto p = r.find("\n");
+            if (p != std::string::npos)
+                r = r.substr(0,p);
+            ntext += r;
+            text = ntext;
+        }
+        else
+        {
+            text = "SOFTWARE ERROR - null spq";
+        }
+        MenuLabel::step();
+    }
+};
+
 struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
 {
     rack::app::Knob *underlyerParamWidget{nullptr};
@@ -692,7 +713,14 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
     void onButton(const ButtonEvent &e) override
     {
         if (!bypassGesture())
+        {
+            auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+            if (spq)
+                spq->abbreviate = true;
             rack::Knob::onButton(e);
+            if (spq)
+                spq->abbreviate = false;
+        }
     }
     void onDragStart(const DragStartEvent &e) override
     {
@@ -723,6 +751,23 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
     {
         if (!bypassGesture())
             rack::Knob::onLeave(e);
+    }
+
+    void appendContextMenu(rack::Menu *menu) override {
+        auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+        if (spq)
+        {
+            if (menu->children.empty())
+                return;
+
+            auto firstItem = menu->children.front();
+            menu->removeChild(firstItem);
+            delete firstItem;
+
+            auto spql = new SQPParamLabel;
+            spql->spq = spq;
+            menu->addChildBottom(spql);
+        }
     }
 };
 
@@ -1914,14 +1959,17 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     rack::widget::SvgWidget *tray{nullptr}, *handle{nullptr};
 
     std::unordered_set<VerticalSliderModulator *> modSliders;
+    std::string bgname;
 
     static VerticalSlider *createCentered(const rack::Vec &pos, float height,
-                                          modules::XTModule *module, int paramId)
+                                          modules::XTModule *module, int paramId,
+                                          const std::string bgsvg = "fader_bg.svg")
     {
         auto res = new VerticalSlider();
 
         auto compDir = res->style()->skinAssetDir() + "/components";
-        auto bg = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
+        res->bgname = bgsvg;
+        auto bg = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgsvg));
 
         auto sz = rack::Vec(5, 20);
         if (bg)
@@ -1954,7 +2002,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto compDir = style()->skinAssetDir() + "/components";
 
         tray->setSvg(
-            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg")));
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgname)));
         baseFB->addChild(tray);
 
         handle->setSvg(
@@ -2068,7 +2116,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
 
         auto compDir = style()->skinAssetDir() + "/components";
 
-        auto ts = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
+        auto ts = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgname));
         auto hs =
             rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_handle.svg"));
 
@@ -2219,8 +2267,14 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
     }
     void onButton(const ButtonEvent &e) override
     {
-        if (!bypassGesture())
+        if (!bypassGesture()) {
+            auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+            if (spq)
+                spq->abbreviate = true;
             rack::SliderKnob::onButton(e);
+            if (spq)
+                spq->abbreviate = false;
+        }
     }
     void onDragStart(const DragStartEvent &e) override
     {
@@ -2252,6 +2306,23 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
         if (!bypassGesture())
             rack::SliderKnob::onLeave(e);
     }
+
+    void appendContextMenu(rack::Menu *menu) override {
+        auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+        if (spq)
+        {
+            if (menu->children.empty())
+                return;
+
+            auto firstItem = menu->children.front();
+            menu->removeChild(firstItem);
+            delete firstItem;
+
+            auto spql = new SQPParamLabel;
+            spql->spq = spq;
+            menu->addChildBottom(spql);
+        }
+    }
 };
 
 inline void VerticalSlider::onChange(const rack::widget::Widget::ChangeEvent &e)
@@ -2270,6 +2341,38 @@ inline void VerticalSlider::onChange(const rack::widget::Widget::ChangeEvent &e)
 
     SliderKnob::onChange(e);
 }
+
+struct OutputDecoration : rack::Widget, style::StyleParticipant
+{
+    BufferedDrawFunctionWidget *bdw{nullptr};
+
+    void setup()
+    {
+        if (!bdw)
+        {
+            bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
+                                                 box.size,
+                                                 [this](auto v) { drawRegion(v);});
+            addChild(bdw);
+        }
+    }
+    void drawRegion(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 4.7);
+        nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y,
+                                           style()->getColor(style::XTStyle::OUTPUTBG_START),
+                                           style()->getColor(style::XTStyle::OUTPUTBG_END)
+                                               ));
+
+        nvgFill(vg);
+    }
+    void onStyleChanged() override
+    {
+        if (bdw)
+            bdw->dirty = true;
+    }
+};
 
 } // namespace sst::surgext_rack::widgets
 
