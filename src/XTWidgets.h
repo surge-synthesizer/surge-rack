@@ -1959,14 +1959,17 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     rack::widget::SvgWidget *tray{nullptr}, *handle{nullptr};
 
     std::unordered_set<VerticalSliderModulator *> modSliders;
+    std::string bgname;
 
     static VerticalSlider *createCentered(const rack::Vec &pos, float height,
-                                          modules::XTModule *module, int paramId)
+                                          modules::XTModule *module, int paramId,
+                                          const std::string bgsvg = "fader_bg.svg")
     {
         auto res = new VerticalSlider();
 
         auto compDir = res->style()->skinAssetDir() + "/components";
-        auto bg = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
+        res->bgname = bgsvg;
+        auto bg = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgsvg));
 
         auto sz = rack::Vec(5, 20);
         if (bg)
@@ -1999,7 +2002,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto compDir = style()->skinAssetDir() + "/components";
 
         tray->setSvg(
-            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg")));
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgname)));
         baseFB->addChild(tray);
 
         handle->setSvg(
@@ -2113,7 +2116,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
 
         auto compDir = style()->skinAssetDir() + "/components";
 
-        auto ts = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_bg.svg"));
+        auto ts = rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgname));
         auto hs =
             rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/fader_handle.svg"));
 
