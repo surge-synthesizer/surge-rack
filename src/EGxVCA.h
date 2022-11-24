@@ -27,6 +27,7 @@
  *    - Retrigger / Gate controls
  *    - DAHD mode v DASDR mode
  *    - Pan implementation (follow models from MixMaster probably)
+ *    - SIMD for response etc... and be more parsimonious with cube etc...
  * - UI
  *    - LintBuddy/Label inputs outputs mods etc
  *    - Correct labels and param quantities for the modulator knobs
@@ -297,7 +298,7 @@ struct EGxVCA : modules::XTModule
 
                 if (doAttack[c])
                 {
-                    processors[c]->attack();
+                    processors[c]->attackFrom(processors[c]->get_output(0));
                     doAttack[c] = false;
                 }
                 if (doRelease[c])

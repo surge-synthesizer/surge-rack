@@ -32,8 +32,10 @@ void XTStyle::initialize()
     json_t *fd{nullptr};
     auto *fptr = std::fopen(defaultsFile.c_str(), "r");
     if (fptr)
+    {
         fd = json_loadf(fptr, 0, &error);
-    DEFER({ std::fclose(fptr); });
+        DEFER({ std::fclose(fptr); });
+    }
     if (!fd)
     {
         setGlobalStyle(MID);
