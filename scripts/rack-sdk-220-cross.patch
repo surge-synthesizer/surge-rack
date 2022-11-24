@@ -1,0 +1,39 @@
+diff -ruN ../../R2ARM_ORIG/Rack-SDK/arch.mk ./arch.mk
+--- ../../R2ARM_ORIG/Rack-SDK/arch.mk	2022-11-23 16:12:06.000000000 -0500
++++ ./arch.mk	2022-11-24 07:35:27.000000000 -0500
+@@ -1,6 +1,9 @@
+ MACHINE := $(shell $(CC) -dumpmachine)
+ 
+-ifneq (,$(findstring x86_64-,$(MACHINE)))
++ifneq (,$(findstring arm64,$(CROSS_COMPILE)))
++	ARCH_ARM64 := 1
++	ARCH_CPU := arm64
++else ifneq (,$(findstring x86_64-,$(MACHINE)))
+ 	ARCH_X64 := 1
+ 	ARCH_CPU := x64
+ else ifneq (,$(findstring arm64-,$(MACHINE)))
+diff -ruN ../../R2ARM_ORIG/Rack-SDK/compile.mk ./compile.mk
+--- ../../R2ARM_ORIG/Rack-SDK/compile.mk	2022-11-23 16:12:06.000000000 -0500
++++ ./compile.mk	2022-11-24 07:44:05.000000000 -0500
+@@ -27,7 +27,8 @@
+ endif
+ ifdef ARCH_ARM64
+ 	FLAGS += -DARCH_ARM64
+-	FLAGS += -march=armv8-a+fp+simd
++	FLAGS += -arch arm64 -march=armv8-a+fp+simd
++        LDFLAGS += -arch arm64
+ endif
+ 
+ ifdef ARCH_LIN
+diff -ruN ../../R2ARM_ORIG/Rack-SDK/dep.mk ./dep.mk
+--- ../../R2ARM_ORIG/Rack-SDK/dep.mk	2022-11-23 16:12:06.000000000 -0500
++++ ./dep.mk	2022-11-24 07:40:12.000000000 -0500
+@@ -14,7 +14,7 @@
+ 	DEP_FLAGS += -march=nehalem
+ endif
+ ifdef ARCH_ARM64
+-	DEP_FLAGS += -march=armv8-a+fp+simd
++	DEP_FLAGS += -arch=arm64 -march=armv8-a+fp+simd
+ endif
+ 
+ ifdef ARCH_MAC

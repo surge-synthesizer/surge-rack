@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 env:
   rack-sdk-version: 2.1.2
+  cross-rack-sdk-version: 2.2.0
   rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
 
 defaults:
@@ -61,6 +62,39 @@ jobs:
           path: ${{ env.rack-plugin-toolchain-dir }}/plugin-build
           name: ${{ matrix.platform }}
 
+  build-mac-cross:
+    name: mac-arm-cross
+    needs: modify-plugin-version
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions/cache@v3
+        id: plugin-version-cache
+        with:
+          path: plugin.json
+          key: ${{ github.sha }}-${{ github.run_id }}
+      - name: Get Rack-SDK
+        run: |
+          pushd $HOME
+          curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.cross-rack-sdk-version }}-mac-arm64.zip
+          unzip Rack-SDK.zip
+          popd
+          patch -ruN -d $HOME/Rack-SDK < ./scripts/rack-sdk-220-cross.patch
+      - name: Build plugin
+        run: |
+          export RACK_DIR=$HOME/Rack-SDK
+          export CROSS_COMPILE=arm64
+          make -j dep
+          make -j dist
+          lipo -archs plugin.dylib
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: dist
+          name: mac_arm64
+
   build-mac:
     name: mac
     needs: modify-plugin-version
@@ -96,7 +130,7 @@ jobs:
     # see also https://vcvrack.com/manual/Manifest#version
     if: startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'surge-synthesizer'
     runs-on: ubuntu-latest
-    needs: [build, build-mac]
+    needs: [build, build-mac, build-mac-cross]
     steps:
       - uses: actions/checkout@v3
       - uses: FranzDiebold/github-env-vars-action@v2
@@ -133,7 +167,7 @@ jobs:
     # see also https://vcvrack.com/manual/Manifest#version
     if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'surge-synthesizer' }}
     runs-on: ubuntu-latest
-    needs: [build, build-mac]
+    needs: [build, build-mac, build-mac-cross]
     steps:
       - uses: actions/download-artifact@v3
         with:
