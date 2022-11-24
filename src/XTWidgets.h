@@ -262,8 +262,32 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
             titleLabel->tracking = 0.7;
             addChild(titleLabel);
         }
+
+        if (alphaWarning)
+        {
+            alphaWarning->dirty = true;
+        }
+    }
+
+    BufferedDrawFunctionWidget *alphaWarning{nullptr};
+    void addAlpha()
+    {
+        alphaWarning = new BufferedDrawFunctionWidget(rack::Vec(0,0), rack::Vec(100,20),[this](auto vg){ drawAlpha(vg);});
+        addChild(alphaWarning);
+    }
+    void drawAlpha(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 18);
+        nvgTextAlign(vg, NVG_ALIGN_TOP|NVG_ALIGN_LEFT);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
+        nvgText(vg, 1.5, 1.5, "ALPHA", nullptr);
+        nvgFillColor(vg, nvgRGB(255,0,0));
+        nvgText(vg, 1, 1, "ALPHA", nullptr);
     }
 };
+
 
 struct ModRingKnob;
 

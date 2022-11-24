@@ -1,6 +1,6 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Beta Now
+## 2.1 - In Beta Now (this as of a97451f2 / Nov 23)
 
 - New Modules
     - EGxVCA (still in development)
