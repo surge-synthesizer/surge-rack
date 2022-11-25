@@ -13,6 +13,10 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
+#if ARCH_LIN
+#include <immintrin.h>
+#endif
+
 #include "VCO.h"
 #include "VCOConfig.h"
 #include "XTWidgets.h"
