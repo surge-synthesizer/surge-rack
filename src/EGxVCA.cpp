@@ -35,7 +35,13 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
-    void appendModuleSpecificMenu(rack::ui::Menu *menu) override {}
+    void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        menu->addChild(new rack::ui::MenuSeparator);
+        /*
+         * Clock entries
+         */
+    }
 };
 
 EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *module)
@@ -49,6 +55,7 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
 
     auto bg = new widgets::Background(box.size, "EG x VCA", "fx", "BlankNoDisplay");
     addChild(bg);
+    bg->addAlpha();
 
     auto col = std::vector<float>();
     for (int i = 0; i < 4; ++i)
