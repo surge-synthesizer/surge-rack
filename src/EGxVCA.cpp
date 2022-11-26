@@ -110,7 +110,7 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
                          rack::mm2px(widgets::LCDBackground::posy_MM + 0.5));
     auto ads = rack::Vec((rack::app::RACK_GRID_WIDTH * 12 - 2 * posx) * 0.5, rack::mm2px(5));
     adp.x -= ads.x;
-    auto andig = widgets::PlotAreaMenuItem::create(adp, ads, module, M::ANALOG_OR_DIGITAL);
+    auto andig = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ANALOG_OR_DIGITAL);
     addChild(andig);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
