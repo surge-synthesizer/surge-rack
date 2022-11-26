@@ -354,14 +354,6 @@ template <int oscType> struct VCO : public modules::XTModule
         return &oscstorage_display->p[paramId - OSC_CTRL_PARAM_0];
     }
 
-    rack::ParamQuantity *rackParamQuantityUnderlyingModulatorParamId(int modParamId) override {
-        auto paramId = paramModulatedBy(modParamId);
-        if (paramId < PITCH_0 || paramId >= OSC_CTRL_PARAM_0 + n_osc_params)
-            return nullptr;
-        return paramQuantities[paramId];
-    }
-
-
     int processPosition = BLOCK_SIZE + 1;
 
     static constexpr int n_state_slots{4};
