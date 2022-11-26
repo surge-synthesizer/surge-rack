@@ -65,7 +65,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelFXSpringReverb);
     p->addModel(modelFXTreeMonster);
 
-    p->addModel(modelEGxVCA);
+    // p->addModel(modelEGxVCA);
 
     sst::surgext_rack::style::XTStyle::initialize();
 }
