@@ -183,7 +183,6 @@ struct XTModule : public rack::Module
 
     virtual Parameter *surgeDisplayParameterForParamId(int paramId) { return nullptr; }
     virtual Parameter *surgeDisplayParameterForModulatorParamId(int paramId) { return nullptr; }
-    virtual rack::ParamQuantity *rackParamQuantityUnderlyingModulatorParamId(int paramId) { return nullptr; }
 
     std::unique_ptr<SurgeStorage> storage;
     int storage_id_start, storage_id_end;
@@ -388,18 +387,6 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
         return par;
     }
 
-    inline rack::ParamQuantity *underlyingRackPar()
-    {
-        auto mc = xtm();
-        if (!mc)
-        {
-            return nullptr;
-        }
-        auto par = mc->rackParamQuantityUnderlyingModulatorParamId(paramId);
-        return par;
-    }
-
-
     virtual void setDisplayValueString(std::string s) override
     {
         auto par = surgepar();
@@ -450,23 +437,11 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
 
         char txt[256], txt2[256];
         ModulationDisplayInfoWindowStrings iw;
-
-        // We don't want to use the modulated value here
-        // so copy the parameter and reset to the underlying
-        // base value.
-        auto tempPar = Parameter();
-        tempPar = *par;
-        auto rp = underlyingRackPar();
-        if (rp)
-            tempPar.set_value_f01(rp->getValue());
-
-        auto sp = &tempPar;
-
-        auto norm = sp->val_max.f - sp->val_min.f;
-        sp->get_display_of_modulation_depth(txt, getValue() * norm, true,
+        auto norm = surgepar()->val_max.f - surgepar()->val_min.f;
+        par->get_display_of_modulation_depth(txt, getValue() * norm, true,
                                              Parameter::ModulationDisplayMode::InfoWindow,
                                              &iw);
-        sp->get_display_of_modulation_depth(txt2, getValue() * norm, true,
+        par->get_display_of_modulation_depth(txt2, getValue() * norm, true,
                                              Parameter::ModulationDisplayMode::Menu);
 
         if (iw.val.empty())
