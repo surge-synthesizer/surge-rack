@@ -1587,10 +1587,7 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
     static constexpr float padTop_MM = 1.4;
     static constexpr float padBot_MM = 1.6;
     BufferedDrawFunctionWidget *bdw{nullptr};
-    std::function<std::string(const std::string &)> transformLabel;
-    std::function<void()> onShowMenu = []() {};
-    bool upcaseDisplay{true};
-    bool centerDisplay{false};
+    bool alignLeft{false};
 
     static PlotAreaToggleClick *create(rack::Vec pos, rack::Vec sz, rack::Module *module, int paramId)
     {
@@ -1608,7 +1605,6 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
         res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
                                                   [res](NVGcontext *vg) { res->drawWidget(vg); });
         res->addChild(res->bdw);
-        res->transformLabel = [](const std::string &s) { return s; };
 
         return res;
     }
@@ -1620,36 +1616,21 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
             return;
 
         auto pv = pq->getDisplayValueString();
-        if (upcaseDisplay)
-            for (auto &q : pv)
-                q = std::toupper(q);
-        pv = transformLabel(pv);
 
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        if (centerDisplay)
+        if (alignLeft)
         {
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, pv.c_str(), nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_LEFT);
+            nvgText(vg, 0, box.size.y * 0.5, pv.c_str(), nullptr);
         }
         else
         {
-            nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
-            nvgText(vg, box.size.x - box.size.y - rack::mm2px(0.5), box.size.y * 0.5, pv.c_str(),
+            nvgTextAlign(vg, NVG_ALIGN_CENTER| NVG_ALIGN_RIGHT);
+            nvgText(vg, box.size.x, box.size.y * 0.5, pv.c_str(),
                     nullptr);
-
-            float gapX = rack::mm2px(0.5);
-            float gapY = rack::mm2px(0.7);
-            nvgBeginPath(vg);
-            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
-            nvgMoveTo(vg, box.size.x - box.size.y + gapX, gapY);
-            nvgLineTo(vg, box.size.x - gapX, gapY);
-            nvgLineTo(vg, box.size.x - box.size.y * 0.5, box.size.y - gapY);
-            nvgFill(vg);
-            nvgStroke(vg);
         }
     }
 
