@@ -338,7 +338,17 @@
       "description": "The Surge XT Envelope Generator VCA Combo",
       "tags": [
         "VCA",
-        "Envelope generator"
+        "Envelope generator",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTQuadAD",
+      "name": "Quad AD",
+      "description": "Four Attack-Decay Envelope Generators",
+      "tags": [
+        "Envelope generator",
+        "Polyphonic"
       ]
     },
     {
