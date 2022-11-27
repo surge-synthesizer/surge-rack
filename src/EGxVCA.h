@@ -148,6 +148,8 @@ struct EGxVCA : modules::XTModule
         }
 
         modAssist.initialize(this);
+        modAssist.setupMatrix(this);
+        modAssist.updateValues(this);
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
@@ -236,7 +238,7 @@ struct EGxVCA : modules::XTModule
     modules::ClockProcessor<EGxVCA> clockProc;
 
     std::string getName() override { return std::string("EGxVCA"); }
-    int processCount{BLOCK_SIZE - 1};
+    int processCount{BLOCK_SIZE};
 
     int nChan{-1};
 
@@ -277,7 +279,7 @@ struct EGxVCA : modules::XTModule
                 processors[c]->getEnvState() < ADSRState::s_release)
                 doRelease[c] = true;
         }
-        if (processCount == BLOCK_SIZE - 1)
+        if (processCount == BLOCK_SIZE)
         {
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
@@ -335,7 +337,7 @@ struct EGxVCA : modules::XTModule
             }
             processCount = 0;
         }
-
+      
         // ToDo - SIMDize
         for (int c = 0; c < nChan; ++c)
         {
