@@ -21,6 +21,10 @@ FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
 	-DTARGET_HEADLESS \
 	-DTARGET_RACK 
 
+FLAGS += -include immintrin.h
+
+
+
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch 
 # surge 1.7.1 for an include, just slap it in the code here for now. See #307
