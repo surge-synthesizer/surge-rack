@@ -53,10 +53,9 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
             rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
                                  [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
 
-        menu->addChild(rack::createMenuItem(
-            "Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
-            [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
-
+        menu->addChild(
+            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
 };
 
@@ -64,11 +63,11 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
 {
     widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
     EGxVCA *module{nullptr};
-    EnvCurveWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *module)
+    EnvCurveWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
     {
         box.pos = pos;
         box.size = size;
-        module = module;
+        module = md;
 
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
                                                       [this](auto vg) { drawBg(vg); });
@@ -108,11 +107,11 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
 {
     widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
     EGxVCA *module{nullptr};
-    ResponseMeterWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *module)
+    ResponseMeterWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
     {
         box.pos = pos;
         box.size = size;
-        module = module;
+        module = md;
 
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
                                                       [this](auto vg) { drawBg(vg); });

@@ -43,7 +43,7 @@ endif
 
 $(libsurge):
 	# Out-of-source build dir
-	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8 $(EXTRA_CMAKE)
+	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_AIRWINDOWS=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8 $(EXTRA_CMAKE)
 	# -DSURGE_SANITIZE=TRUE
 	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
 	cd $(SURGE_BLD) && make -j 4 surge-common
