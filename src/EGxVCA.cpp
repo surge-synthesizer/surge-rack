@@ -41,6 +41,108 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
         /*
          * Clock entries
          */
+        auto xtm = static_cast<M *>(module);
+
+        typedef modules::ClockProcessor<EGxVCA> cp_t;
+        menu->addChild(new rack::ui::MenuSeparator);
+        auto t = xtm->clockProc.clockStyle;
+        menu->addChild(
+            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
+
+        menu->addChild(
+            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+    }
+};
+
+struct EnvCurveWidget : rack::Widget, style::StyleParticipant
+{
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
+    EGxVCA *module{nullptr};
+    EnvCurveWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
+    {
+        box.pos = pos;
+        box.size = size;
+        module = md;
+
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
+                                                      [this](auto vg) { drawBg(vg); });
+        addChild(bdw);
+
+        bdwCurve = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), size, [this](auto vg) { drawCurve(vg); });
+        addChild(bdwCurve);
+    }
+
+    void drawBg(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgStrokeColor(vg, nvgRGB(255, 0, 0));
+        nvgStroke(vg);
+    }
+    void drawCurve(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFillColor(vg, nvgRGB(255, 0, 0));
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 10);
+
+        nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "Curve Soon", nullptr);
+        nvgStroke(vg);
+    }
+    void onStyleChanged() override
+    {
+        bdw->dirty = true;
+        bdwCurve->dirty = true;
+    }
+};
+
+struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
+{
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
+    EGxVCA *module{nullptr};
+    ResponseMeterWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
+    {
+        box.pos = pos;
+        box.size = size;
+        module = md;
+
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
+                                                      [this](auto vg) { drawBg(vg); });
+        addChild(bdw);
+
+        bdwCurve = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), size, [this](auto vg) { drawCurve(vg); });
+        addChild(bdwCurve);
+    }
+
+    void drawBg(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgStrokeColor(vg, nvgRGB(0, 255, 0));
+        nvgStroke(vg);
+    }
+    void drawCurve(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFillColor(vg, nvgRGB(0, 255, 0));
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 10);
+
+        nvgText(vg, box.size.x * 0.5, box.size.y * 0.4, "Meters", nullptr);
+        nvgText(vg, box.size.x * 0.5, box.size.y * 0.6, "Soon", nullptr);
+        nvgStroke(vg);
+    }
+
+    void onStyleChanged() override
+    {
+        bdw->dirty = true;
+        bdwCurve->dirty = true;
     }
 };
 
