@@ -5,7 +5,7 @@
 - New Modules
     - EGxVCA (still in development)
 
-## 2.0.2 - Nov 26, 2022
+## 2.0.3 - Nov 26, 2022
 
 - Module Features and Behaviors
     - **Mixer**: Module unmutes channel 2 or 3 the first time you connect an input to its ports
@@ -19,8 +19,6 @@
 
 - UI
     - Substantially improve the modulation tooltips for Surge parameters
-    - Correct an error with the modulation tooltip that, in some cases, would show the
-      modulation value as base value
     - VCF panel preview now says "FILTER" not "FILTERS"
     - Modulations on the LFOxEG module update the wave in response to modulated values
     - Correct the gradient on LFOxEG dark mode panel.
@@ -31,6 +29,6 @@
     - Activate ARM builds and make build with ARM
     - Make work with Rack SDK 2.2.0
 
-## 2.0.1 - Nov 17, 2022 (never built in library)
+## 2.0.2 - Unreleased
 
-2.0.1 was the initial release of Surge XT for Rack.
+## 2.0.1 - Initial Release

@@ -16,15 +16,14 @@
 /*
  * EGxVCA ToDos
  *
- * - Clock and TempoSynch
  * - Display area
  *    - Analog/Digital control as click-to-switch menu
  *    - Draw the waveform
- *    - Mode (DAHD vs ADSR) selector
  *    - Digital Shape Controls
  *    - Draw the meters
  * - DSP
  *    - Retrigger / Gate controls
+ *    - Attach from 0 or Attach from current
  *    - DAHD mode v DASDR mode
  *    - Pan implementation (follow models from MixMaster probably)
  *    - SIMD for response etc... and be more parsimonious with cube etc...
@@ -69,6 +68,8 @@ struct EGxVCA : modules::XTModule
         D_SHAPE,
         R_SHAPE,
         ENV_MODE,
+
+        ADSR_OR_DAHD,
 
         MOD_PARAM_0,
         NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
@@ -115,6 +116,7 @@ struct EGxVCA : modules::XTModule
         configParam<modules::SurgeParameterParamQuantity>(EG_S, 0, 1, 0.5, "Sustain");
         configParam<modules::SurgeParameterParamQuantity>(EG_R, 0, 1, 0.1, "Release");
         configSwitch(ANALOG_OR_DIGITAL, 0, 1, 0, "Curve", {"Digital", "Analog"});
+        configSwitch(ADSR_OR_DAHD, 0, 1, 0, "Mode", {"ADSR", "DAHD"});
 
         configParam(RESPONSE, 0, 1, 0, "Linear/Exponential");
 
@@ -284,17 +286,34 @@ struct EGxVCA : modules::XTModule
             outputs[OUTPUT_R].setChannels(nChan);
             outputs[ENV_OUT].setChannels(nChan);
 
-            adsr->mode.set_value_f01(params[ANALOG_OR_DIGITAL].getValue());
+            for (auto as : {adsr, adsr_display})
+            {
+                as->mode.set_value_f01(params[ANALOG_OR_DIGITAL].getValue());
 
+                as->a.set_value_f01(modAssist.basevalues[EG_A]);
+                as->d.set_value_f01(modAssist.basevalues[EG_D]);
+                as->s.set_value_f01(modAssist.basevalues[EG_S]);
+                as->r.set_value_f01(modAssist.basevalues[EG_R]);
+            }
             for (int c = 0; c < nChan; ++c)
             {
-                // FIXME - we need to do the tp / temposync thing here
-                adsr->a.set_value_f01(modAssist.values[EG_A][c]);
-                adsr->d.set_value_f01(modAssist.values[EG_D][c]);
-                adsr->s.set_value_f01(modAssist.values[EG_S][c]);
-                adsr->r.set_value_f01(modAssist.values[EG_R][c]);
-                processors[c]->correctAnalogMode = true;
                 copyScenedataSubset(0, storage_id_start, storage_id_end);
+
+                auto *oap = &adsr->a;
+                auto *eap = &adsr->r;
+                auto &pt = storage->getPatch().scenedata[0];
+                int idx = EG_A;
+                while (oap <= eap)
+                {
+                    if (oap->valtype == vt_float)
+                    {
+                        pt[oap->param_id_in_scene].f +=
+                            modAssist.modvalues[idx][c] * (oap->val_max.f - oap->val_min.f);
+                    }
+                    idx++;
+                    oap++;
+                }
+                processors[c]->correctAnalogMode = true;
 
                 if (doAttack[c])
                 {
@@ -340,17 +359,51 @@ struct EGxVCA : modules::XTModule
 
     void activateTempoSync()
     {
-        std::cout << "FIXME " << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
+        for (auto as : {adsr, adsr_display})
+        {
+            auto p = &(as->a);
+            while (p <= &(as->r))
+            {
+                if (p->can_temposync())
+                    p->temposync = true;
+                ++p;
+            }
+        }
     }
 
     void deactivateTempoSync()
     {
-        std::cout << "FIXME " << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
+        for (auto as : {adsr, adsr_display})
+        {
+            auto p = &(as->a);
+            while (p <= &(as->r))
+            {
+                if (p->can_temposync())
+                    p->temposync = false;
+                ++p;
+            }
+        }
     }
 
-    json_t *makeModuleSpecificJson() override { return nullptr; }
+    json_t *makeModuleSpecificJson() override
+    {
+        auto vc = json_object();
 
-    void readModuleSpecificJson(json_t *modJ) override {}
+        json_object_set(vc, "clockStyle", json_integer((int)clockProc.clockStyle));
+
+        return vc;
+    }
+
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        auto cs = json_object_get(modJ, "clockStyle");
+        if (cs)
+        {
+            auto csv = json_integer_value(cs);
+            clockProc.clockStyle =
+                static_cast<typename modules::ClockProcessor<EGxVCA>::ClockStyle>(csv);
+        }
+    }
 };
 } // namespace sst::surgext_rack::egxvca
 #endif
