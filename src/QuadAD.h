@@ -22,6 +22,8 @@
  *     - Mod Param Param Quanities
  *  UI
  *    - Slopes Glpyohs etc
+ *    - Curves
+ *    - Layout D/A and Trig/Hold
  *    - Remove Alpha Label
  *
  */
@@ -136,6 +138,9 @@ struct QuadAD : modules::XTModule
                 processors[i][p] = std::make_unique<dsp::envelopes::ADAREnvelope>(storage.get());
                 accumulatedOutputs[i][p] = 0.f;
             }
+            isTriggerLinked[i] = false;
+            isEnvLinked[i] = false;
+            adPoly[i] = 1;
         }
 
         for (int i = 0; i < n_ads; ++i)
@@ -222,40 +227,64 @@ struct QuadAD : modules::XTModule
     int processCount{BLOCK_SIZE};
     rack::dsp::SchmittTrigger inputTriggers[n_ads][MAX_POLY];
     float accumulatedOutputs[n_ads][MAX_POLY];
+
+    bool isTriggerLinked[n_ads], isEnvLinked[n_ads];
+    int adPoly[n_ads];
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         if (processCount == BLOCK_SIZE)
         {
+            processCount = 0;
+
+            for (int i = 0; i < n_ads; ++i)
+            {
+                int linkIdx = (i + n_ads - 1) & (n_ads - 1);
+                isTriggerLinked[i] = params[LINK_TRIGGER_0 + linkIdx].getValue() > 0.5;
+                isEnvLinked[i] = params[LINK_ENV_0 + linkIdx].getValue() > 0.5;
+            }
+
+            nChan = 1;
+            for (int i = 0; i < n_ads; ++i)
+            {
+                if (isTriggerLinked[i])
+                {
+                    int chl = inputs[TRIGGER_0 + i].getChannels();
+                    int j = (i + n_ads - 1) & (n_ads - 1);
+                    while (j != i)
+                    {
+                        if (!isTriggerLinked[j])
+                        {
+                            chl = std::max(chl, inputs[TRIGGER_0 + j].getChannels());
+                            break;
+                        }
+                        j = (j + n_ads - 1) & (n_ads - 1);
+                    }
+                    adPoly[i] = std::max(1, chl);
+                }
+                else
+                {
+                    adPoly[i] = inputs[TRIGGER_0 + i].isConnected()
+                                    ? inputs[TRIGGER_0 + i].getChannels()
+                                    : 1;
+                }
+                nChan = std::max(nChan, adPoly[i]);
+            }
+
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
-
-            processCount = 0;
         }
 
         int tnc = 1;
         for (int i = 0; i < n_ads; ++i)
         {
-            int triggerNbr = -1;
-            int sumNbr = -1;
             // who is my trigger neighbor?
             int linkIdx = (i + n_ads - 1) & (n_ads - 1);
-            if (params[LINK_TRIGGER_0 + linkIdx].getValue() > 0.5)
-                triggerNbr = linkIdx;
-            if (params[LINK_ENV_0 + linkIdx].getValue() > 0.5 && i != n_ads - 1)
-                sumNbr = linkIdx;
-            float linkMul = (triggerNbr >= 0) ? 10.f : 0.f;
+            float linkMul = isTriggerLinked[i] * 10.f;
 
-            if (inputs[TRIGGER_0 + i].isConnected() || triggerNbr >= 0)
+            if (inputs[TRIGGER_0 + i].isConnected() || isTriggerLinked[i] || isEnvLinked[i])
             {
-                int ch = inputs[TRIGGER_0 + i].getChannels();
-                if (triggerNbr >= 0)
-                {
-                    // use the OUTPUTS in case our neighrob is trigged by its
-                    // neighbor nthe inputs
-                    ch = std::max(ch, outputs[OUTPUT_0 + linkIdx].getChannels());
-                }
-                tnc = std::max(tnc, ch);
-
+                int ch = adPoly[i];
                 outputs[OUTPUT_0 + i].setChannels(ch);
                 auto as = params[A_SHAPE_0 + i].getValue();
                 auto ds = params[D_SHAPE_0 + i].getValue();
@@ -275,8 +304,8 @@ struct QuadAD : modules::XTModule
                                               (lv + iv) * 0.1);
 
                     auto ov = processors[i][c]->output * 10;
-                    if (sumNbr >= 0)
-                        ov += accumulatedOutputs[sumNbr][c];
+                    if (isEnvLinked[i])
+                        ov += accumulatedOutputs[linkIdx][c];
 
                     outputs[OUTPUT_0 + i].setVoltage(ov, c);
                     accumulatedOutputs[i][c] = ov;
