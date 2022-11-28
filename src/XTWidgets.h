@@ -1587,7 +1587,7 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
     static constexpr float padTop_MM = 1.4;
     static constexpr float padBot_MM = 1.6;
     BufferedDrawFunctionWidget *bdw{nullptr};
-    bool alignLeft{false};
+    enum Align { LEFT, RIGHT, CENTER } align{RIGHT};
 
     static PlotAreaToggleClick *create(rack::Vec pos, rack::Vec sz, rack::Module *module, int paramId)
     {
@@ -1621,17 +1621,30 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        if (alignLeft)
+        if (align == LEFT)
         {
-            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_LEFT);
+            nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
             nvgText(vg, 0, box.size.y * 0.5, pv.c_str(), nullptr);
+        }
+        else if (align == CENTER)
+        {
+            nvgTextAlign(vg, NVG_ALIGN_MIDDLE| NVG_ALIGN_CENTER);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, pv.c_str(),
+                    nullptr);
         }
         else
         {
-            nvgTextAlign(vg, NVG_ALIGN_CENTER| NVG_ALIGN_RIGHT);
+            nvgTextAlign(vg, NVG_ALIGN_MIDDLE| NVG_ALIGN_RIGHT);
             nvgText(vg, box.size.x, box.size.y * 0.5, pv.c_str(),
                     nullptr);
         }
+
+        /*
+        nvgBeginPath(vg);
+        nvgRect(vg, 0,0,box.size.x, box.size.y);
+        nvgStrokeColor(vg,nvgRGB(255,0,255));
+        nvgStroke(vg);
+         */
     }
 
     void onStyleChanged() override { bdw->dirty = true; }

@@ -25,8 +25,8 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
     typedef sst::surgext_rack::egxvca::EGxVCA M;
     EGxVCAWidget(M *module);
 
-    std::array<std::array<rack::Widget *, M::n_mod_inputs>, n_fx_params> overlays;
-    std::array<widgets::ModulatableKnob *, n_fx_params> underKnobs;
+    std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_mod_params> overlays;
+    std::array<widgets::ModulatableKnob *, M::n_mod_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
     void selectModulator(int mod) override
@@ -53,10 +53,9 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
             rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
                                  [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
 
-        menu->addChild(rack::createMenuItem(
-            "Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
-            [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
-
+        menu->addChild(
+            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
 };
 
@@ -64,11 +63,11 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
 {
     widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
     EGxVCA *module{nullptr};
-    EnvCurveWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *module)
+    EnvCurveWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
     {
         box.pos = pos;
         box.size = size;
-        module = module;
+        module = md;
 
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
                                                       [this](auto vg) { drawBg(vg); });
@@ -108,11 +107,11 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
 {
     widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
     EGxVCA *module{nullptr};
-    ResponseMeterWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *module)
+    ResponseMeterWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
     {
         box.pos = pos;
         box.size = size;
-        module = module;
+        module = md;
 
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
                                                       [this](auto vg) { drawBg(vg); });
@@ -225,7 +224,7 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
         auto ads = rack::Vec((rack::app::RACK_GRID_WIDTH * 12 - 2 * posx) * 0.5 - rack::mm2px(1.5),
                              rack::mm2px(6));
         auto mode = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ADSR_OR_DAHD);
-        mode->alignLeft = true;
+        mode->align = widgets::PlotAreaToggleClick::LEFT;
         addChild(mode);
     }
 

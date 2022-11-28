@@ -1,9 +1,13 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Beta Now (this as of a97451f2 / Nov 23)
+## 2.1 - In Pre-Beta Now (this as of e5eeb6832 / Nov 27)
 
 - New Modules
     - EGxVCA (still in development)
+    - QuadAD (still very much in development)
+
+- Infrastructure
+    - Skip the airwindows sub-library build in the surge dep phase since we dont use it in rack
 
 ## 2.0.3 - Nov 26, 2022
 

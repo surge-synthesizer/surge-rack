@@ -82,6 +82,8 @@ struct QuadAD : modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         modAssist.initialize(this);
+        modAssist.setupMatrix(this);
+        modAssist.updateValues(this);
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
