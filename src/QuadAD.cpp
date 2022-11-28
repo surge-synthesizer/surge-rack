@@ -39,6 +39,16 @@ struct QuadADWidget : public widgets::XTModuleWidget
     {
         if (!module)
             return;
+
+        auto xtm = static_cast<M *>(module);
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createMenuItem("Attack Starts from Zero",
+                                            CHECKMARK(xtm->attackFromZero),
+                                            [xtm]() { xtm->attackFromZero = true; }));
+
+        menu->addChild(rack::createMenuItem("Attack Starts from Current",
+                                            CHECKMARK(!xtm->attackFromZero),
+                                            [xtm]() { xtm->attackFromZero = false; }));
     }
 };
 
@@ -50,13 +60,17 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
 
-    auto bg = new widgets::Background(box.size, "QUAD AD", "other", "TotalBlank");
+    auto bg = new widgets::Background(box.size, "QUAD AD", "other", "FourOuts");
     addChild(bg);
     bg->addAlpha();
 
-    const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
-    const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0];
-    const auto row3 = layout::LayoutConstants::vcoRowCenters_MM[0] - (row1 - row2);
+    /*auto portSpacing = layout::LayoutConstants::inputRowCenter_MM -
+                       layout::LayoutConstants::modulationRowCenters_MM[1];*/
+    auto portSpacing = 0.f;
+
+    const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1] - portSpacing;
+    const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0] - portSpacing;
+    const auto row3 = layout::LayoutConstants::vcoRowCenters_MM[0] - portSpacing - (row1 - row2);
 
     typedef layout::LayoutItem li_t;
     engine_t::layoutItem(this, li_t::createLCDArea(row3 - rack::mm2px(2.5)), "QUAD AD");
@@ -74,6 +88,16 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
           {li_t::PORT, "TRIG", M::TRIGGER_0 + i, col, row1},
         };
         // clang-format on
+        layout[2].dynamicLabel = true;
+        layout[2].dynLabelFn = [i](modules::XTModule *m) -> std::string {
+            if (!m)
+                return {"TRIG"};
+            auto xtm = static_cast<M *>(m);
+            auto isg = xtm->params[M::ADAR_0 + i].getValue() > 0.5;
+            if (isg)
+                return {"GATE"};
+            return {"TRIG"};
+        };
 
         for (const auto &lay : layout)
         {
@@ -83,16 +107,42 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
         auto lcdw = rack::app::RACK_GRID_WIDTH * 12 - widgets::LCDBackground::posx * 2;
         auto w = lcdw / 4.0;
 
-        auto yAD = rack::mm2px(row3) - rack::mm2px(13);
-        auto x = widgets::LCDBackground::posx + w * i;
-        auto h = rack::mm2px(5.5);
-        auto mode = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(w, h), module,
-                                                         M::MODE_0 + i);
-        mode->align = widgets::PlotAreaToggleClick::CENTER;
-        addChild(mode);
+        {
+            auto yAD = rack::mm2px(widgets::LCDBackground::posy_MM - 1.2);
+            auto x = widgets::LCDBackground::posx + w * i;
+            auto h = rack::mm2px(5);
+            auto mode = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(w, h),
+                                                             module, M::MODE_0 + i);
+            mode->align = widgets::PlotAreaToggleClick::CENTER;
+            addChild(mode);
+        }
+        {
+            auto yAD = rack::mm2px(widgets::LCDBackground::posy_MM - 1.2 + 5);
+            auto x = widgets::LCDBackground::posx + w * i;
+            auto h = rack::mm2px(5);
+            auto mode = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(w, h),
+                                                             module, M::ADAR_0 + i);
+            mode->align = widgets::PlotAreaToggleClick::CENTER;
+            addChild(mode);
+        }
+
+        {
+            auto yAD = rack::mm2px(row3) - rack::mm2px(13);
+            auto x = widgets::LCDBackground::posx + w * i;
+            auto lw = w * 0.5;
+            auto h = rack::mm2px(5.5);
+            auto A = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(lw, h),
+                                                          module, M::A_SHAPE_0 + i);
+            A->align = widgets::PlotAreaToggleClick::CENTER;
+            addChild(A);
+            auto D = widgets::PlotAreaToggleClick::create(rack::Vec(x + lw, yAD), rack::Vec(lw, h),
+                                                          module, M::D_SHAPE_0 + i);
+            D->align = widgets::PlotAreaToggleClick::CENTER;
+            addChild(D);
+        }
     }
 
-    engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
+    engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0, -portSpacing);
 
     int kc = 0;
     for (int i = M::OUTPUT_0; i < M::OUTPUT_0 + M::n_ads; ++i)

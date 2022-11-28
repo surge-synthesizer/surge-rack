@@ -446,6 +446,13 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                     };
                 }
             }
+            else if (lay.dynamicLabel)
+            {
+                lab->hasDynamicLabel = true;
+                lab->module = module;
+                lab->dynamicLabel = lay.dynLabelFn;
+            }
+
             w->addChild(lab);
         }
         break;
