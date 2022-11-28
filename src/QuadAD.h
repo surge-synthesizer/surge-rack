@@ -16,8 +16,7 @@
 /*
  * ToDos
  *
- * - DSP
- *     - Linking for trigger chains
+ *  DSP
  *     - Maybe a bit more profiling?
  *  Rack
  *     - Mod Param Param Quanities
@@ -62,7 +61,8 @@ struct QuadAD : modules::XTModule
         D_SHAPE_0 = A_SHAPE_0 + n_ads,
         ADAR_0 = D_SHAPE_0 + n_ads,
         LINK_TRIGGER_0 = ADAR_0 + n_ads,
-        MOD_PARAM_0 = LINK_TRIGGER_0 + n_ads,
+        LINK_ENV_0 = LINK_TRIGGER_0 + n_ads,
+        MOD_PARAM_0 = LINK_ENV_0 + n_ads,
         NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
     };
 
@@ -134,6 +134,7 @@ struct QuadAD : modules::XTModule
             for (int p = 0; p < MAX_POLY; ++p)
             {
                 processors[i][p] = std::make_unique<dsp::envelopes::ADAREnvelope>(storage.get());
+                accumulatedOutputs[i][p] = 0.f;
             }
         }
 
@@ -148,6 +149,10 @@ struct QuadAD : modules::XTModule
             configSwitch(LINK_TRIGGER_0 + i, 0, 1, 0,
                          "Link " + std::to_string(i + 1) + " EOC to " +
                              std::to_string((i + 1) % n_ads + 1) + " Attack",
+                         {"Off", "On"});
+            configSwitch(LINK_ENV_0 + i, 0, 1, 0,
+                         "Sum " + std::to_string(i + 1) + " ENV to " +
+                             std::to_string((i + 1) % n_ads + 1) + " Output",
                          {"Off", "On"});
         }
 
@@ -216,6 +221,7 @@ struct QuadAD : modules::XTModule
     std::atomic<bool> attackFromZero{false};
     int processCount{BLOCK_SIZE};
     rack::dsp::SchmittTrigger inputTriggers[n_ads][MAX_POLY];
+    float accumulatedOutputs[n_ads][MAX_POLY];
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         if (processCount == BLOCK_SIZE)
@@ -229,26 +235,53 @@ struct QuadAD : modules::XTModule
         int tnc = 1;
         for (int i = 0; i < n_ads; ++i)
         {
-            if (inputs[TRIGGER_0 + i].isConnected())
+            int triggerNbr = -1;
+            int sumNbr = -1;
+            // who is my trigger neighbor?
+            int linkIdx = (i + n_ads - 1) & (n_ads - 1);
+            if (params[LINK_TRIGGER_0 + linkIdx].getValue() > 0.5)
+                triggerNbr = linkIdx;
+            if (params[LINK_ENV_0 + linkIdx].getValue() > 0.5 && i != n_ads - 1)
+                sumNbr = linkIdx;
+            float linkMul = (triggerNbr >= 0) ? 10.f : 0.f;
+
+            if (inputs[TRIGGER_0 + i].isConnected() || triggerNbr >= 0)
             {
                 int ch = inputs[TRIGGER_0 + i].getChannels();
+                if (triggerNbr >= 0)
+                {
+                    // use the OUTPUTS in case our neighrob is trigged by its
+                    // neighbor nthe inputs
+                    ch = std::max(ch, outputs[OUTPUT_0 + linkIdx].getChannels());
+                }
                 tnc = std::max(tnc, ch);
+
                 outputs[OUTPUT_0 + i].setChannels(ch);
                 auto as = params[A_SHAPE_0 + i].getValue();
                 auto ds = params[D_SHAPE_0 + i].getValue();
                 for (int c = 0; c < ch; ++c)
                 {
                     auto iv = inputs[TRIGGER_0 + i].getVoltage(c);
-                    if (inputTriggers[i][c].process(iv))
+                    auto lv = processors[linkIdx][c]->eoc_output * linkMul;
+
+                    if (inputTriggers[i][c].process(iv + lv))
                     {
                         processors[i][c]->attackFrom(attackFromZero ? 0 : processors[i][c]->output,
                                                      as, params[MODE_0 + i].getValue() < 0.5,
                                                      params[ADAR_0 + i].getValue() > 0.5);
                     }
                     processors[i][c]->process(modAssist.values[ATTACK_0 + i][c],
-                                              modAssist.values[DECAY_0 + i][c], as, ds, iv * 0.1);
+                                              modAssist.values[DECAY_0 + i][c], as, ds,
+                                              (lv + iv) * 0.1);
 
-                    outputs[OUTPUT_0 + i].setVoltage(processors[i][c]->output * 10, c);
+                    auto ov = processors[i][c]->output * 10;
+                    if (sumNbr >= 0)
+                        ov += accumulatedOutputs[sumNbr][c];
+
+                    outputs[OUTPUT_0 + i].setVoltage(ov, c);
+                    accumulatedOutputs[i][c] = ov;
+                    // outputs[OUTPUT_0 + i].setVoltage(
+                    //     (processors[i][c]->output + processors[i][c]->eoc_output) * 10, c);
                 }
             }
             else
