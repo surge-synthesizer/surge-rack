@@ -15,133 +15,133 @@
 			"slug": "SurgeDelay",
 			"name": "SurgeDelay",
 			"description": "The Surge stereo delay effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Delay" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Delay" ]
 		},
 		{
 			"slug": "SurgeChorus",
 			"name": "SurgeChorus",
 			"description": "The Surge chorus effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Chorus" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Chorus" ]
 		},
 		{
 			"slug": "SurgeEQ",
 			"name": "SurgeEQ",
 			"description": "The Surge 3-band equalizer",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Equalizer" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Equalizer" ]
 		},
 		{
 			"slug": "SurgePhaser",
 			"name": "SurgePhaser",
 			"description": "The Surge phaser",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Phaser" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Phaser" ]
 		},
 		{
 			"slug": "SurgeRotary",
 			"name": "SurgeRotary",
 			"description": "The Surge rotary speaker emulation effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeDistort",
 			"name": "SurgeDistort",
 			"description": "The Surge distortion effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Distortion", "Waveshaper" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Distortion", "Waveshaper" ]
 		},
 		{
 			"slug": "SurgeReverb",
 			"name": "SurgeReverb",
 			"description": "The Surge reverb",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Reverb" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Reverb" ]
 		},
 		{
 			"slug": "SurgeReverb2",
 			"name": "SurgeReverb2",
 			"description": "The Surge reverb (second one)",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Reverb" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Reverb" ]
 		},
 		{
 			"slug": "SurgeFreqShift",
 			"name": "SurgeFreqShift",
 			"description": "The Surge frequency shifter",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeConditioner",
 			"name": "SurgeConditioner",
 			"description": "The Surge conditioner/limiter effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Limiter", "EQ" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Limiter", "EQ" ]
 		},
 		{
 			"slug": "SurgeFlanger",
 			"name": "SurgeFlanger",
 			"description": "The Surge flanger effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Flanger" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Flanger" ]
 		},
 		{
 			"slug": "SurgeRingMod",
 			"name": "SurgeRingMod",
 			"description": "The Surge ring modulator effect",
-			"hidden" : true, "tags": [ "Effect", "Polyphonic", "Ring Modulator" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Effect", "Polyphonic", "Ring Modulator" ]
 		},
 		{
 			"slug": "SurgeClock",
 			"name": "SurgeClock",
 			"description": "A utility clock generator",
-			"hidden" : true, "tags": [ "Clock Generator" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Clock Generator" ]
 		},
 		{
 			"slug": "SurgeADSR",
 			"name": "SurgeADSR",
 			"description": "The Surge ADSR envelope generator with various modes",
-			"hidden" : true, "tags": [ "Envelope generator", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Envelope generator", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeOSC",
 			"name": "SurgeOSC",
 			"description": "The Surge classic oscillators, including square, saw, sine, FM and niose",
-			"hidden" : true, "tags": ["VCO", "Polyphonic"]
+			"deprecated" : true, "hidden" : true, "tags": ["VCO", "Polyphonic"]
 		},
 		{
 			"slug": "SurgeWaveShaper",
 			"name": "SurgeWaveShaper",
 			"description": "The Surge waveshapers",
-			"hidden" : true, "tags": [ "Waveshaper", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Waveshaper", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeWTOSC",
 			"name": "SurgeWTOSC",
 			"description": "The Surge WaveTable collection with a pair of interpolating oscillators",
-			"hidden" : true, "tags": [ "VCO", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "VCO", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeNoise",
 			"name": "SurgeNoise",
 			"description": "The Surge correlated noise channel",
-			"hidden" : true, "tags": [ "Noise" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Noise" ]
 		},
 		{
 			"slug": "SurgeLFO",
 			"name": "SurgeLFO",
 			"description": "The Surge LFO",
-			"hidden" : true, "tags": [ "LFO", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "LFO", "Polyphonic" ]
 		},
 		{
 			"slug": "SurgeVOC",
 			"name": "SurgeVOC",
 			"description": "The Surge vocoder",
-			"hidden" : true, "tags": [ "Vocoder", "Polyphonic" ]
+			"deprecated" : true, "hidden" : true, "tags": [ "Vocoder", "Polyphonic" ]
 		},
         {
             "slug" : "SurgeBiquad",
             "name": "SurgeBiquad",
             "description": "A single BiQuad filter stage of the Surge FilterBank",
-            "hidden" : true, "tags": [ "VCF", "Polyphonic" ]
+            "deprecated" : true, "hidden" : true, "tags": [ "VCF", "Polyphonic" ]
         },
         {
             "slug" : "SurgePatchPlayer",
             "name": "SurgePatchPlayer",
             "description": "A full instance of the Surge plugin able to play the patches in your environment",
-            "hidden" : true, "tags": [ "Synth voice", "Polyphonic" ]
+            "deprecated" : true, "hidden" : true, "tags": [ "Synth voice", "Polyphonic" ]
         },
         {
             "slug" : "SurgeUpgradeToXT",
