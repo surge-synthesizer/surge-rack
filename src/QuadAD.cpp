@@ -104,6 +104,11 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
             engine_t::layoutItem(this, lay, "QuadVCA");
         }
 
+        auto cp = rack::mm2px(rack::Vec(col + layout::LayoutConstants::columnWidth_MM * 0.5, row1));
+        auto trigLight = rack::createParamCentered<widgets::ActivateKnobSwitch>(
+            cp, module, M::LINK_TRIGGER_0 + i);
+        addChild(trigLight);
+
         auto lcdw = rack::app::RACK_GRID_WIDTH * 12 - widgets::LCDBackground::posx * 2;
         auto w = lcdw / 4.0;
 
@@ -154,6 +159,14 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
         addOutput(
             rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xc, yc)), module, i));
 
+        if (i != M::OUTPUT_0 + M::n_ads - 1)
+        {
+            auto cp =
+                rack::mm2px(rack::Vec(xc + layout::LayoutConstants::columnWidth_MM * 0.5, yc));
+            auto sumLight = rack::createParamCentered<widgets::ActivateKnobSwitch>(
+                cp, module, M::LINK_ENV_0 + i);
+            addChild(sumLight);
+        }
         auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
         auto lab = engine_t::makeLabelAt(bl, kc, "ENV" + std::to_string(i - M::OUTPUT_0 + 1),
                                          style::XTStyle::TEXT_LABEL_OUTPUT);
