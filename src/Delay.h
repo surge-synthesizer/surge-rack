@@ -83,7 +83,8 @@ struct Delay : modules::XTModule
     modules::MonophonicModulationAssistant<Delay, n_delay_params, TIME_L, n_mod_inputs,
                                            DELAY_MOD_INPUT>
         modulationAssistant;
-    modules::ClockProcessor<Delay> clockProc;
+    typedef modules::ClockProcessor<Delay> clockProcessor_t;
+    clockProcessor_t clockProc;
 
     float tsV(float f)
     {
@@ -324,20 +325,11 @@ struct Delay : modules::XTModule
     json_t *makeModuleSpecificJson() override
     {
         auto fx = json_object();
-        json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+        clockProc.toJson(fx);
         return fx;
     }
 
-    void readModuleSpecificJson(json_t *modJ) override
-    {
-        auto cs = json_object_get(modJ, "clockStyle");
-        if (cs)
-        {
-            auto csv = json_integer_value(cs);
-            clockProc.clockStyle =
-                static_cast<typename modules::ClockProcessor<Delay>::ClockStyle>(csv);
-        }
-    }
+    void readModuleSpecificJson(json_t *modJ) override { clockProc.fromJson(modJ); }
 };
 } // namespace sst::surgext_rack::delay
 #endif

@@ -34,17 +34,7 @@ struct DelayWidget : widgets::XTModuleWidget
     {
         if (!module)
             return;
-        auto xtm = static_cast<Delay *>(module);
-        typedef modules::ClockProcessor<Delay> cp_t;
-        menu->addChild(new rack::ui::MenuSeparator);
-        auto t = xtm->clockProc.clockStyle;
-        menu->addChild(
-            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
-                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
-
-        menu->addChild(
-            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
-                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+        addClockMenu<Delay>(menu);
     }
 
     void selectModulator(int mod) override

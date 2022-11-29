@@ -44,18 +44,7 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
         /*
          * Clock entries
          */
-        auto xtm = static_cast<M *>(module);
-
-        typedef modules::ClockProcessor<EGxVCA> cp_t;
-        menu->addChild(new rack::ui::MenuSeparator);
-        auto t = xtm->clockProc.clockStyle;
-        menu->addChild(
-            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
-                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
-
-        menu->addChild(
-            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
-                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+        addClockMenu<EGxVCA>(menu);
     }
 };
 

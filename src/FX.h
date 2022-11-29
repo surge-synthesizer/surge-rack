@@ -176,7 +176,8 @@ template <int fxType> struct FX : modules::XTModule
     {
         clockProc.setSampleRate(APP->engine->getSampleRate());
     }
-    modules::ClockProcessor<FX<fxType>> clockProc;
+    typedef modules::ClockProcessor<FX<fxType>> clockProcessor_t;
+    clockProcessor_t clockProc;
 
     // If you need em you have a scnmidt trigger for extra inputs
     // add one since 0 length arrays are gross and its just memory smidges
@@ -736,7 +737,7 @@ template <int fxType> struct FX : modules::XTModule
         }
         if (FXConfig<fxType>::usesClock())
         {
-            json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+            clockProc.toJson(fx);
         }
 
         if (FXConfig<fxType>::allowsPolyphony())
@@ -767,13 +768,7 @@ template <int fxType> struct FX : modules::XTModule
         }
         if (FXConfig<fxType>::usesClock())
         {
-            auto cs = json_object_get(modJ, "clockStyle");
-            if (cs)
-            {
-                auto csv = json_integer_value(cs);
-                clockProc.clockStyle =
-                    static_cast<typename modules::ClockProcessor<FX<fxType>>::ClockStyle>(csv);
-            }
+           clockProc.fromJson(modJ);
         }
 
         if (FXConfig<fxType>::allowsPolyphony())

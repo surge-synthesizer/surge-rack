@@ -63,16 +63,7 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
 
         if (FXConfig<fxType>::usesClock())
         {
-            typedef modules::ClockProcessor<FX<fxType>> cp_t;
-            menu->addChild(new rack::ui::MenuSeparator);
-            auto t = xtm->clockProc.clockStyle;
-            menu->addChild(
-                rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
-                                     [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
-
-            menu->addChild(rack::createMenuItem(
-                "Clock in BPM CV", CHECKMARK(t == modules::ClockProcessor<FX<fxType>>::BPM_VOCT),
-                [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+            addClockMenu<FX<fxType>>(menu);
         }
     }
 };

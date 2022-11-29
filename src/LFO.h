@@ -321,7 +321,8 @@ struct LFO : modules::XTModule
     int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY], priorEnvStage[MAX_POLY];
     int trigABCountdown[2][MAX_POLY];
 
-    modules::ClockProcessor<LFO> clockProc;
+    typedef modules::ClockProcessor<LFO> clockProcessor_t;
+    clockProcessor_t clockProc;
 
     void activateTempoSync()
     {
@@ -711,7 +712,7 @@ struct LFO : modules::XTModule
     json_t *makeModuleSpecificJson() override
     {
         auto fx = json_object();
-        json_object_set(fx, "clockStyle", json_integer((int)clockProc.clockStyle));
+        clockProc.toJson(fx);
         json_object_set(fx, "retriggerFromZero", json_boolean(retriggerFromZero));
         json_object_set(fx, "onepoleFactor", json_real(onepoleFactor));
         return fx;
@@ -719,15 +720,7 @@ struct LFO : modules::XTModule
 
     void readModuleSpecificJson(json_t *modJ) override
     {
-        {
-            auto cs = json_object_get(modJ, "clockStyle");
-            if (cs)
-            {
-                auto csv = json_integer_value(cs);
-                clockProc.clockStyle =
-                    static_cast<typename modules::ClockProcessor<LFO>::ClockStyle>(csv);
-            }
-        }
+        clockProc.fromJson(modJ);
         {
             auto rt = json_object_get(modJ, "retriggerFromZero");
             if (rt)

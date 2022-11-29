@@ -16,11 +16,14 @@
 /*
  * ToDos
  *
- * - DSP
- *    - Digital Slopes
+ *  DSP
+ *     - Maybe a bit more profiling?
+ *  Rack
+ *     - Mod Param Param Quanities
  *  UI
- *    - Render
- *    - Pick digital slopes
+ *    - Slopes Glpyohs etc
+ *    - Curves
+ *    - Layout D/A and Trig/Hold
  *    - Remove Alpha Label
  *
  */
@@ -39,6 +42,7 @@
 
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
+#include "dsp/ADAREnvelope.h"
 
 namespace sst::surgext_rack::quadad
 {
@@ -57,8 +61,10 @@ struct QuadAD : modules::XTModule
         MODE_0 = DECAY_0 + n_ads,
         A_SHAPE_0 = MODE_0 + n_ads,
         D_SHAPE_0 = A_SHAPE_0 + n_ads,
-
-        MOD_PARAM_0 = D_SHAPE_0 + n_ads,
+        ADAR_0 = D_SHAPE_0 + n_ads,
+        LINK_TRIGGER_0 = ADAR_0 + n_ads,
+        LINK_ENV_0 = LINK_TRIGGER_0 + n_ads,
+        MOD_PARAM_0 = LINK_ENV_0 + n_ads,
         NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
     };
 
@@ -73,6 +79,7 @@ struct QuadAD : modules::XTModule
     enum OutputIds
     {
         OUTPUT_0,
+        // EOC_0 = OUTPUT_0 + n_ads,
         NUM_OUTPUTS = OUTPUT_0 + n_ads
     };
 
@@ -113,131 +120,8 @@ struct QuadAD : modules::XTModule
         }
     };
 
-    struct ADEnvelope
-    {
-        SurgeStorage *storage;
-        ADEnvelope(SurgeStorage *s) : storage(s)
-        {
-            for (int i = 0; i < BLOCK_SIZE; ++i)
-                outputCache[i] = 0;
-        }
-        enum Stage
-        {
-            s_attack,
-            s_decay,
-            s_complete
-        } stage{s_complete};
-
-        bool isDigital{true};
-
-        float phase{0}, start{0};
-
-        float output;
-        float outputCache[BLOCK_SIZE], outBlock0{0.f};
-        int current{BLOCK_SIZE};
-
-        // Analog Mode
-        float v_c1{0}, v_c1_delayed{0.f};
-        bool discharge{false};
-
-        void attackFrom(float f, bool id)
-        {
-            phase = 0;
-            stage = s_attack;
-            current = BLOCK_SIZE;
-            isDigital = id;
-
-            v_c1 = 0.f;
-            v_c1_delayed = 0.f;
-            discharge = false;
-        }
-
-        inline void process(const float a, const float d)
-        {
-            if (stage == s_complete)
-            {
-                output = 0;
-                return;
-            }
-            if (current == BLOCK_SIZE)
-            {
-                float target = 0;
-                if (isDigital)
-                {
-                    switch (stage)
-                    {
-                    case s_complete:
-                        target = 0;
-                        break;
-                    case s_attack:
-                    {
-                        phase += storage->envelope_rate_linear(a);
-                        if (phase >= 1)
-                        {
-                            phase = 1;
-                            stage = s_decay;
-                        }
-                        target = phase;
-                        break;
-                    }
-                    case s_decay:
-                    {
-                        phase -= storage->envelope_rate_linear(d);
-                        if (phase <= 0)
-                        {
-                            phase = 0;
-                            stage = s_complete;
-                        }
-                        target = phase;
-                    }
-                    }
-                }
-                else
-                {
-                    const float coeff_offset =
-                        2.f - log(storage->samplerate / BLOCK_SIZE) / log(2.f);
-
-                    discharge = (v_c1_delayed >= 0.99999f) || discharge;
-                    v_c1_delayed = v_c1;
-
-                    const float v_gate = 1.02f;
-                    auto v_attack = discharge ? 0 : v_gate;
-                    auto v_decay = discharge ? 0 : v_gate;
-
-                    // In this case we only need the coefs in their stage
-                    float coef_A = !discharge ? powf(2.f, std::min(0.f, coeff_offset - a)) : 0;
-                    float coef_D = discharge ? powf(2.f, std::min(0.f, coeff_offset - d)) : 0;
-
-                    auto diff_v_a = std::max(0.f, v_attack - v_c1);
-                    auto diff_v_d = std::min(0.f, v_decay - v_c1);
-
-                    v_c1 = v_c1 + diff_v_a * coef_A + diff_v_d * coef_D;
-                    target = v_c1;
-                    if (v_c1 < 1e-6 && discharge)
-                    {
-                        v_c1 = 0;
-                        v_c1_delayed = 0;
-                        discharge = false;
-                        target = 0;
-                        stage = s_complete;
-                    }
-                }
-                float dO = (target - outBlock0) * BLOCK_SIZE_INV;
-                for (int i = 0; i < BLOCK_SIZE; ++i)
-                {
-                    outputCache[i] = outBlock0 + dO * i;
-                }
-                outBlock0 = target;
-
-                current = 0;
-            }
-
-            output = outputCache[current];
-            current++;
-        }
-    };
-
-    std::array<std::array<std::unique_ptr<ADEnvelope>, MAX_POLY>, n_ads> processors;
+    std::array<std::array<std::unique_ptr<dsp::envelopes::ADAREnvelope>, MAX_POLY>, n_ads>
+        processors;
 
     QuadAD() : XTModule()
     {
@@ -251,8 +135,12 @@ struct QuadAD : modules::XTModule
         {
             for (int p = 0; p < MAX_POLY; ++p)
             {
-                processors[i][p] = std::make_unique<ADEnvelope>(storage.get());
+                processors[i][p] = std::make_unique<dsp::envelopes::ADAREnvelope>(storage.get());
+                accumulatedOutputs[i][p] = 0.f;
             }
+            isTriggerLinked[i] = false;
+            isEnvLinked[i] = false;
+            adPoly[i] = 1;
         }
 
         for (int i = 0; i < n_ads; ++i)
@@ -260,12 +148,31 @@ struct QuadAD : modules::XTModule
             configParam<ADParamQuantity>(ATTACK_0 + i, -8, 2, -5, "Attack " + std::to_string(i));
             configParam<ADParamQuantity>(DECAY_0 + i, -8, 2, -5, "Decay " + std::to_string(i));
             configSwitch(MODE_0 + i, 0, 1, 0, "Mode", {"Digital", "Analog"});
-            configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"Slow", "Linear", "Fast"});
-            configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"Slow", "Linear", "Fast"});
+            configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"A <", "A -", "A >"});
+            configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"D <", "D -", "D >"});
+            configSwitch(ADAR_0 + i, 0, 1, 0, "AD vs AR", {"AD Trig", "AR Gate"});
+            configSwitch(LINK_TRIGGER_0 + i, 0, 1, 0,
+                         "Link " + std::to_string(i + 1) + " EOC to " +
+                             std::to_string((i + 1) % n_ads + 1) + " Attack",
+                         {"Off", "On"});
+            configSwitch(LINK_ENV_0 + i, 0, 1, 0,
+                         "Sum " + std::to_string(i + 1) + " ENV to " +
+                             std::to_string((i + 1) % n_ads + 1) + " Output",
+                         {"Off", "On"});
         }
 
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
             configParam(MOD_PARAM_0 + i, -1, 1, 0);
+
+        for (int i = 0; i < n_ads; ++i)
+        {
+            configInput(TRIGGER_0 + i, "Trigger/Gate " + std::to_string(i));
+            configOutput(OUTPUT_0 + i, "ENV " + std::to_string(i));
+            configBypass(TRIGGER_0 + i, OUTPUT_0 + i);
+        }
+
+        for (int i = 0; i < n_mod_inputs; ++i)
+            configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -316,36 +223,94 @@ struct QuadAD : modules::XTModule
 
     int nChan{-1};
 
+    std::atomic<bool> attackFromZero{false};
     int processCount{BLOCK_SIZE};
     rack::dsp::SchmittTrigger inputTriggers[n_ads][MAX_POLY];
+    float accumulatedOutputs[n_ads][MAX_POLY];
+
+    bool isTriggerLinked[n_ads], isEnvLinked[n_ads];
+    int adPoly[n_ads];
+
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         if (processCount == BLOCK_SIZE)
         {
+            processCount = 0;
+
+            for (int i = 0; i < n_ads; ++i)
+            {
+                int linkIdx = (i + n_ads - 1) & (n_ads - 1);
+                isTriggerLinked[i] = params[LINK_TRIGGER_0 + linkIdx].getValue() > 0.5;
+                isEnvLinked[i] = params[LINK_ENV_0 + linkIdx].getValue() > 0.5;
+            }
+
+            nChan = 1;
+            for (int i = 0; i < n_ads; ++i)
+            {
+                if (isTriggerLinked[i])
+                {
+                    int chl = inputs[TRIGGER_0 + i].getChannels();
+                    int j = (i + n_ads - 1) & (n_ads - 1);
+                    while (j != i)
+                    {
+                        if (!isTriggerLinked[j])
+                        {
+                            chl = std::max(chl, inputs[TRIGGER_0 + j].getChannels());
+                            break;
+                        }
+                        j = (j + n_ads - 1) & (n_ads - 1);
+                    }
+                    adPoly[i] = std::max(1, chl);
+                }
+                else
+                {
+                    adPoly[i] = inputs[TRIGGER_0 + i].isConnected()
+                                    ? inputs[TRIGGER_0 + i].getChannels()
+                                    : 1;
+                }
+                nChan = std::max(nChan, adPoly[i]);
+            }
+
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
-
-            processCount = 0;
         }
 
         int tnc = 1;
         for (int i = 0; i < n_ads; ++i)
         {
-            if (inputs[TRIGGER_0 + i].isConnected())
-            {
-                int ch = inputs[TRIGGER_0 + i].getChannels();
-                tnc = std::max(tnc, ch);
-                outputs[OUTPUT_0 + i].setChannels(ch);
+            // who is my trigger neighbor?
+            int linkIdx = (i + n_ads - 1) & (n_ads - 1);
+            float linkMul = isTriggerLinked[i] * 10.f;
 
+            if (inputs[TRIGGER_0 + i].isConnected() || isTriggerLinked[i] || isEnvLinked[i])
+            {
+                int ch = adPoly[i];
+                outputs[OUTPUT_0 + i].setChannels(ch);
+                auto as = params[A_SHAPE_0 + i].getValue();
+                auto ds = params[D_SHAPE_0 + i].getValue();
                 for (int c = 0; c < ch; ++c)
                 {
-                    if (inputTriggers[i][c].process(inputs[TRIGGER_0 + i].getVoltage(c)))
+                    auto iv = inputs[TRIGGER_0 + i].getVoltage(c);
+                    auto lv = processors[linkIdx][c]->eoc_output * linkMul;
+
+                    if (inputTriggers[i][c].process(iv + lv))
                     {
-                        processors[i][c]->attackFrom(0.f, params[MODE_0 + i].getValue() < 0.5);
+                        processors[i][c]->attackFrom(attackFromZero ? 0 : processors[i][c]->output,
+                                                     as, params[MODE_0 + i].getValue() < 0.5,
+                                                     params[ADAR_0 + i].getValue() > 0.5);
                     }
                     processors[i][c]->process(modAssist.values[ATTACK_0 + i][c],
-                                              modAssist.values[DECAY_0 + i][c]);
-                    outputs[OUTPUT_0 + i].setVoltage(processors[i][c]->output * 10, c);
+                                              modAssist.values[DECAY_0 + i][c], as, ds,
+                                              (lv + iv) * 0.1);
+
+                    auto ov = processors[i][c]->output * 10;
+                    if (isEnvLinked[i])
+                        ov += accumulatedOutputs[linkIdx][c];
+
+                    outputs[OUTPUT_0 + i].setVoltage(ov, c);
+                    accumulatedOutputs[i][c] = ov;
+                    // outputs[OUTPUT_0 + i].setVoltage(
+                    //     (processors[i][c]->output + processors[i][c]->eoc_output) * 10, c);
                 }
             }
             else
@@ -359,9 +324,23 @@ struct QuadAD : modules::XTModule
         processCount++;
     }
 
-    json_t *makeModuleSpecificJson() override { return nullptr; }
+    json_t *makeModuleSpecificJson() override
+    {
+        auto qv = json_object();
+        json_object_set(qv, "attackFromZero", json_boolean(attackFromZero));
+        return qv;
+    }
 
-    void readModuleSpecificJson(json_t *modJ) override {}
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        {
+            auto az = json_object_get(modJ, "attackFromZero");
+            if (az)
+            {
+                attackFromZero = json_boolean_value(az);
+            }
+        }
+    }
 };
 } // namespace sst::surgext_rack::quadad
 #endif
