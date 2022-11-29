@@ -142,15 +142,7 @@ struct LFOWidget : widgets::XTModuleWidget
                                             [m, wtE, wtR]() { m->setWhichTemposyc(!wtR, wtE); }));
         menu->addChild(rack::createMenuItem("Temposync Env Rates", CHECKMARK(wtE),
                                             [m, wtE, wtR]() { m->setWhichTemposyc(wtR, !wtE); }));
-        menu->addChild(new rack::MenuSeparator);
-
-        auto t = m->clockProc.clockStyle;
-        menu->addChild(
-            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
-                                 [m]() { m->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
-
-        menu->addChild(rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
-                                            [m]() { m->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+        addClockMenu<LFO>(menu);
     }
 
     void selectModulator(int mod) override

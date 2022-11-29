@@ -987,6 +987,22 @@ template <typename T> struct ClockProcessor
         sampleRate = sr;
         sampleRateInv = 1.f / sr;
     }
+
+    void toJson(json_t *onto)
+    {
+        json_object_set(onto, "clockStyle", json_integer((int)clockStyle));
+    }
+
+    void fromJson(json_t *modJ)
+    {
+        auto cs = json_object_get(modJ, "clockStyle");
+        if (cs)
+        {
+            auto csv = json_integer_value(cs);
+            clockStyle =
+                static_cast<ClockStyle>(csv);
+        }
+    }
 };
 
 struct DCBlocker {

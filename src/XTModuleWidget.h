@@ -78,6 +78,22 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
     virtual void selectModulator(int whichMod) {}
 
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) {}
+
+    template <typename T> void addClockMenu(rack::ui::Menu *menu)
+    {
+        typedef typename T::clockProcessor_t cp_t;
+        auto xtm = static_cast<T *>(module);
+
+        menu->addChild(new rack::ui::MenuSeparator);
+        auto t = xtm->clockProc.clockStyle;
+        menu->addChild(
+            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
+
+        menu->addChild(
+            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
+                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+    }
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 
   protected:
