@@ -235,7 +235,8 @@ struct EGxVCA : modules::XTModule
     {
         clockProc.setSampleRate(APP->engine->getSampleRate());
     }
-    modules::ClockProcessor<EGxVCA> clockProc;
+    typedef modules::ClockProcessor<EGxVCA> clockProcessor_t;
+    clockProcessor_t clockProc;
 
     std::string getName() override { return std::string("EGxVCA"); }
     int processCount{BLOCK_SIZE};
@@ -337,7 +338,7 @@ struct EGxVCA : modules::XTModule
             }
             processCount = 0;
         }
-      
+
         // ToDo - SIMDize
         for (int c = 0; c < nChan; ++c)
         {
@@ -391,21 +392,12 @@ struct EGxVCA : modules::XTModule
     {
         auto vc = json_object();
 
-        json_object_set(vc, "clockStyle", json_integer((int)clockProc.clockStyle));
+        clockProc.toJson(vc);
 
         return vc;
     }
 
-    void readModuleSpecificJson(json_t *modJ) override
-    {
-        auto cs = json_object_get(modJ, "clockStyle");
-        if (cs)
-        {
-            auto csv = json_integer_value(cs);
-            clockProc.clockStyle =
-                static_cast<typename modules::ClockProcessor<EGxVCA>::ClockStyle>(csv);
-        }
-    }
+    void readModuleSpecificJson(json_t *modJ) override { clockProc.fromJson(modJ); }
 };
 } // namespace sst::surgext_rack::egxvca
 #endif
