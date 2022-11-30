@@ -103,10 +103,9 @@ struct Waveshaper : public modules::XTModule
         configOnOff(LOCUT_ENABLED, 0, "Enable Low Cut");
         configOnOff(HICUT_ENABLED, 0, "Enable High Cut");
 
-        configParam<WaveshaperTypeParamQuanity>(WSHP_TYPE, 0,
-                                                (int)sst::waveshapers::WaveshaperType::n_ws_types,
-                                                (int)sst::waveshapers::WaveshaperType::wst_ojd,
-                                                "Waveshaper Function");
+        configParam<WaveshaperTypeParamQuanity>(
+            WSHP_TYPE, 0, (int)sst::waveshapers::WaveshaperType::n_ws_types,
+            (int)sst::waveshapers::WaveshaperType::wst_ojd, "Waveshaper Function");
 
         for (int i = 0; i < n_wshp_params * n_mod_inputs; ++i)
         {
@@ -195,6 +194,18 @@ struct Waveshaper : public modules::XTModule
     int lastPolyL{-2}, lastPolyR{-2};
     int monoChannelOffset{0};
 
+    std::atomic<bool> doDCBlock{true};
+    bool wasDoDCBlock{true};
+    /*
+     * This is a bit annoying - i don't want to break 2.0.3.0 patches by turning on
+     * a dc blocker but they had no module.json so if you unstream one of them
+     * you don't even get called in moduleFromJSON. So I need to know the state of
+     * having been constructed and having no json delivered to me rather than having a json
+     * block without a dodc in it (which means I am on the new software).
+     */
+    bool wasDoDCBlockSetByJSON{false};
+    modules::DCBlockerSIMD4 blockers[MAX_POLY << 1]; // stereo
+
     void restackSIMD()
     {
         stereoStack = false;
@@ -202,6 +213,11 @@ struct Waveshaper : public modules::XTModule
         nSIMDSlots = 0;
 
         memset(voiceIndexForPolyPos, 0, sizeof(voiceIndexForPolyPos));
+
+        for (int i = 0; i < MAX_POLY << 1; ++i)
+        {
+            blockers[i].reset();
+        }
 
         if (lastPolyL == -1 && lastPolyR == -1)
         {
@@ -279,6 +295,22 @@ struct Waveshaper : public modules::XTModule
         {
             modulationAssistant.setupMatrix(this);
             modulationAssistant.updateValues(this);
+
+            if (!wasDoDCBlockSetByJSON)
+            {
+                // See comment above
+                doDCBlock = false;
+                wasDoDCBlockSetByJSON = true;
+            }
+
+            if (doDCBlock && !wasDoDCBlock)
+            {
+                for (int i = 0; i < MAX_POLY << 1; ++i)
+                {
+                    blockers[i].reset();
+                }
+            }
+            wasDoDCBlock = doDCBlock;
 
             auto loOn = params[LOCUT_ENABLED].getValue() > 0.5;
             auto hiOn = params[HICUT_ENABLED].getValue() > 0.5;
@@ -380,7 +412,13 @@ struct Waveshaper : public modules::XTModule
             auto in = _mm_mul_ps(_mm_load_ps(iv), rackToSurgeOsc);
             in = _mm_add_ps(in, _mm_set1_ps(mv[BIAS - DRIVE][0]));
             auto fin = wsPtr(&wss[0], in, drive);
-            fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(_mm_set1_ps(mv[OUT_GAIN - DRIVE][0])));
+            fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(
+                                      _mm_set1_ps(mv[OUT_GAIN - DRIVE][0])));
+
+            if (doDCBlock)
+            {
+                fin = blockers[0].filter(fin);
+            }
             fin = _mm_mul_ps(fin, surgeToRackOsc);
             _mm_store_ps(ov, fin);
 
@@ -432,7 +470,14 @@ struct Waveshaper : public modules::XTModule
                 auto in = _mm_mul_ps(_mm_loadu_ps(tmpVal + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mods[BIAS - DRIVE]);
                 auto fin = wsPtr(&wss[i], in, mods[0 /* DRIVE - DRIVE */]);
-                fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(mods[OUT_GAIN - DRIVE]));
+                fin = _mm_mul_ps(
+                    fin, modules::DecibelParamQuantity::ampToLinearSSE(mods[OUT_GAIN - DRIVE]));
+
+                if (doDCBlock)
+                {
+                    fin = blockers[i].filter(fin);
+                }
+
                 fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(tmpValOut + (i << 2), fin);
             }
@@ -470,7 +515,14 @@ struct Waveshaper : public modules::XTModule
                 auto in = _mm_mul_ps(_mm_loadu_ps(iv + (i << 2)), rackToSurgeOsc);
                 in = _mm_add_ps(in, mvsse[BIAS - DRIVE][i]);
                 auto fin = wsPtr(&wss[i], in, drive);
-                fin = _mm_mul_ps(fin, modules::DecibelParamQuantity::ampToLinearSSE(mvsse[OUT_GAIN - DRIVE][i]));
+                fin = _mm_mul_ps(
+                    fin, modules::DecibelParamQuantity::ampToLinearSSE(mvsse[OUT_GAIN - DRIVE][i]));
+
+                if (doDCBlock)
+                {
+                    fin = blockers[i].filter(fin);
+                }
+
                 fin = _mm_mul_ps(fin, surgeToRackOsc);
                 _mm_storeu_ps(ov + (i << 2), fin);
             }
@@ -512,6 +564,27 @@ struct Waveshaper : public modules::XTModule
         if (offset >= n_mod_inputs * (n_wshp_params + 1) || offset < 0)
             return -1;
         return offset / n_mod_inputs + DRIVE;
+    }
+
+    json_t *makeModuleSpecificJson() override
+    {
+        auto ws = json_object();
+        json_object_set(ws, "doDCBlock", json_boolean(doDCBlock));
+        return ws;
+    }
+
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        auto ddb = json_object_get(modJ, "doDCBlock");
+        if (ddb)
+        {
+            wasDoDCBlockSetByJSON = true; // see comment above
+            doDCBlock = json_boolean_value(ddb);
+        }
+        else
+        {
+            doDCBlock = true;
+        }
     }
 };
 
