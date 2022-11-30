@@ -1217,6 +1217,7 @@ struct ModToggleButton : GlowOverlayHoverButton<rack::widget::Widget>
         if (e.action == GLFW_PRESS)
         {
             armed = true;
+            e.consume(this);
         }
         if (armed && e.action == GLFW_RELEASE)
         {
