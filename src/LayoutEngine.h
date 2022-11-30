@@ -433,9 +433,8 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                         if (!m)
                             return "CLOCK";
                         auto fxm = static_cast<typename W::M *>(m);
-                        typedef modules::ClockProcessor<typename W::M> cp_t;
 
-                        if (fxm->clockProc.clockStyle == cp_t::QUARTER_NOTE)
+                        if (fxm->clockProc.clockStyle == W::M::clockProcessor_t::QUARTER_NOTE)
                         {
                             return "CLOCK";
                         }

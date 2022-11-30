@@ -133,7 +133,8 @@ struct LFOWidget : widgets::XTModuleWidget
                 m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->setValue(v ? 0 : 1);
             }));
         menu->addChild(new rack::MenuSeparator);
-        typedef modules::ClockProcessor<LFO> cp_t;
+
+        addClockMenu<LFO>(menu);
 
         auto wts = (int)std::round(m->paramQuantities[LFO::WHICH_TEMPOSYNC]->getValue());
         auto wtR = (bool)(wts & 1);
@@ -142,7 +143,6 @@ struct LFOWidget : widgets::XTModuleWidget
                                             [m, wtE, wtR]() { m->setWhichTemposyc(!wtR, wtE); }));
         menu->addChild(rack::createMenuItem("Temposync Env Rates", CHECKMARK(wtE),
                                             [m, wtE, wtR]() { m->setWhichTemposyc(wtR, !wtE); }));
-        addClockMenu<LFO>(menu);
     }
 
     void selectModulator(int mod) override
@@ -1387,9 +1387,8 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
                     if (!xm)
                         return "CLOCK";
                     auto m = static_cast<LFO *>(xm);
-                    typedef modules::ClockProcessor<LFO> cp_t;
 
-                    if (m->clockProc.clockStyle == cp_t::QUARTER_NOTE)
+                    if (m->clockProc.clockStyle == LFO::clockProcessor_t::QUARTER_NOTE)
                         return "CLOCK";
                     else
                         return "BPM";
