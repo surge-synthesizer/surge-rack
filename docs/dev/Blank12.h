@@ -34,9 +34,9 @@
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
 
-namespace sst::surgext_rack::quadad
+namespace sst::surgext_rack::blank12
 {
-struct QuadAD : modules::XTModule
+struct BLANK12 : modules::XTModule
 {
     static constexpr int n_mod_params{1};
     static constexpr int n_mod_inputs{4};
@@ -71,9 +71,9 @@ struct QuadAD : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::ModulationAssistant<QuadAD, n_mod_params, PAR0, n_mod_inputs, MOD_INPUT_0> modAssist;
+    modules::ModulationAssistant<BLANK12, n_mod_params, PAR0, n_mod_inputs, MOD_INPUT_0> modAssist;
 
-    QuadAD() : XTModule()
+    BLANK12() : XTModule()
     {
         {
             std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
@@ -134,9 +134,10 @@ struct QuadAD : modules::XTModule
     {
         clockProc.setSampleRate(APP->engine->getSampleRate());
     }
-    modules::ClockProcessor<QuadAD> clockProc;
+    typedef modules::ClockProcessor<BLANK12> clockProcessor_t;
+    clockProcessor_t clockProc;
 
-    std::string getName() override { return std::string("QuadAD"); }
+    std::string getName() override { return std::string("BLANK12"); }
 
     int nChan{-1};
 
@@ -168,21 +169,15 @@ struct QuadAD : modules::XTModule
     {
         auto vc = json_object();
 
-        json_object_set(vc, "clockStyle", json_integer((int)clockProc.clockStyle));
+        clockProc.toJson(vc);
 
         return vc;
     }
 
     void readModuleSpecificJson(json_t *modJ) override
     {
-        auto cs = json_object_get(modJ, "clockStyle");
-        if (cs)
-        {
-            auto csv = json_integer_value(cs);
-            clockProc.clockStyle =
-                static_cast<typename modules::ClockProcessor<QuadAD>::ClockStyle>(csv);
-        }
+        clockProc.fromJson(modJ);
     }
 };
-} // namespace sst::surgext_rack::quadad
+} // namespace sst::surgext_rack::blank12
 #endif

@@ -13,17 +13,17 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-#include "QuadAD.h"
+#include "BLANK12.h"
 #include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "SurgeXT.h"
 
-namespace sst::surgext_rack::quadad::ui
+namespace sst::surgext_rack::blank12::ui
 {
-struct QuadADWidget : public widgets::XTModuleWidget
+struct BLANK12Widget : public widgets::XTModuleWidget
 {
-    typedef sst::surgext_rack::quadad::QuadAD M;
-    QuadADWidget(M *module);
+    typedef sst::surgext_rack::blank12::BLANK12 M;
+    BLANK12Widget(M *module);
 
     std::array<std::array<rack::Widget *, M::n_mod_inputs>, n_fx_params> overlays;
     std::array<widgets::ModulatableKnob *, n_fx_params> underKnobs;
@@ -44,25 +44,14 @@ struct QuadADWidget : public widgets::XTModuleWidget
         /*
          * Clock entries
          */
-        auto xtm = static_cast<M *>(module);
-
-        typedef modules::ClockProcessor<QuadAD> cp_t;
-        menu->addChild(new rack::ui::MenuSeparator);
-        auto t = xtm->clockProc.clockStyle;
-        menu->addChild(
-            rack::createMenuItem("Clock in QuarterNotes", CHECKMARK(t == cp_t::QUARTER_NOTE),
-                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::QUARTER_NOTE; }));
-
-        menu->addChild(
-            rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
-                                 [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
+        addClockMenu<BLANK12>(menu);
     }
 };
 
-QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *module)
+BLANK12Widget::BLANK12Widget(sst::surgext_rack::blank12::ui::BLANK12Widget::M *module)
 {
     setModule(module);
-    typedef layout::LayoutEngine<QuadADWidget, M::PAR0, M::CLOCK_IN> engine_t;
+    typedef layout::LayoutEngine<BLANK12Widget, M::PAR0, M::CLOCK_IN> engine_t;
     engine_t::initializeModulationToBlank(this);
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
@@ -76,8 +65,8 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
     engine_t::createLeftRightInputLabels(this);
     resetStyleCouplingToModule();
 }
-} // namespace sst::surgext_rack::quadad::ui
+} // namespace sst::surgext_rack::blank12::ui
 
-rack::Model *modelQuadAD =
-    rack::createModel<sst::surgext_rack::quadad::ui::QuadADWidget::M,
-                      sst::surgext_rack::quadad::ui::QuadADWidget>("SurgeXTQuadAD");
+rack::Model *modelBLANK12 =
+    rack::createModel<sst::surgext_rack::blank12::ui::BLANK12Widget::M,
+                      sst::surgext_rack::blank12::ui::BLANK12Widget>("SurgeXTBLANK12");
