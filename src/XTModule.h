@@ -105,7 +105,8 @@ struct XTModule : public rack::Module
         {
             showedPathsOnce = true;
             INFO("[SurgeXTRack] storage::dataPath = '%s'", storage->datapath.u8string().c_str());
-            INFO("[SurgeXTRack] storage::userDataPath = '%s'", storage->userDataPath.u8string().c_str());
+            INFO("[SurgeXTRack] storage::userDataPath = '%s'",
+                 storage->userDataPath.u8string().c_str());
         }
 
         onSampleRateChange();
@@ -195,7 +196,8 @@ struct XTModule : public rack::Module
         json_object_set_new(rootJ, "buildInfo", json_string(getBuildInfo().c_str()));
         json_object_set_new(rootJ, "isCoupledToGlobalStyle", json_boolean(isCoupledToGlobalStyle));
         json_object_set_new(rootJ, "localStyle", json_integer(localStyle));
-        json_object_set_new(rootJ, "localDisplayRegionColor", json_integer(localDisplayRegionColor));
+        json_object_set_new(rootJ, "localDisplayRegionColor",
+                            json_integer(localDisplayRegionColor));
         json_object_set_new(rootJ, "localModulationColor", json_integer(localModulationColor));
         json_object_set_new(rootJ, "localControlValueColor", json_integer(localControlValueColor));
         json_object_set_new(rootJ, "localPowerButtonColor", json_integer(localPowerButtonColor));
@@ -254,14 +256,14 @@ struct XTModule : public rack::Module
             readModuleSpecificJson(specificJ);
     }
 
-    template<typename T=rack::ParamQuantity, typename ...Args>
-    T *configParamNoRand(Args... args){
+    template <typename T = rack::ParamQuantity, typename... Args> T *configParamNoRand(Args... args)
+    {
         auto *res = configParam<T>(args...);
         res->randomizeEnabled = false;
         return res;
     }
 
-    template<typename T=rack::SwitchQuantity>
+    template <typename T = rack::SwitchQuantity>
     T *configOnOff(int paramId, float defaultValue, const std::string &name)
     {
         return configSwitch<T>(paramId, 0, 1, defaultValue, name, {"Off", "On"});
@@ -272,8 +274,7 @@ struct XTModule : public rack::Module
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
     style::XTStyle::LightColor localDisplayRegionColor{style::XTStyle::ORANGE},
-        localModulationColor{style::XTStyle::BLUE},
-        localControlValueColor{style::XTStyle::ORANGE},
+        localModulationColor{style::XTStyle::BLUE}, localControlValueColor{style::XTStyle::ORANGE},
         localPowerButtonColor{style::XTStyle::GREEN};
 };
 
@@ -283,8 +284,7 @@ struct CalculatedName
     virtual std::string getCalculatedName() = 0;
 };
 
-struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
-                                     CalculatedName
+struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity, CalculatedName
 {
     inline XTModule *xtm() { return static_cast<XTModule *>(module); }
     inline Parameter *surgepar()
@@ -334,7 +334,8 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity,
         return par->get_name();
     }
 
-    virtual std::string getDisplayValueString() override {
+    virtual std::string getDisplayValueString() override
+    {
         return getDisplayValueStringForValue(getValue());
     }
     virtual std::string getDisplayValueStringForValue(float f)
@@ -400,7 +401,7 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
         bool valid{false};
         float v = par->calculate_modulation_value_from_string(s, emsg, valid);
         if (valid)
-            setValue(v * (par->val_max.f - par->val_min.f) );
+            setValue(v * (par->val_max.f - par->val_min.f));
     }
 
     std::string baseName{"MOD_ERROR"};
@@ -439,8 +440,7 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
         ModulationDisplayInfoWindowStrings iw;
         auto norm = surgepar()->val_max.f - surgepar()->val_min.f;
         par->get_display_of_modulation_depth(txt, getValue() * norm, true,
-                                             Parameter::ModulationDisplayMode::InfoWindow,
-                                             &iw);
+                                             Parameter::ModulationDisplayMode::InfoWindow, &iw);
         par->get_display_of_modulation_depth(txt2, getValue() * norm, true,
                                              Parameter::ModulationDisplayMode::Menu);
 
@@ -448,9 +448,10 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
             return txt2;
 
         std::ostringstream oss;
-        oss << iw.dvalplus << "\n" << iw.val << " @ 0v\n"
-                            << iw.valplus << " @ 10v\n"
-                          << iw.valminus << " @ -10v";
+        oss << iw.dvalplus << "\n"
+            << iw.val << " @ 0v\n"
+            << iw.valplus << " @ 10v\n"
+            << iw.valminus << " @ -10v";
         if (abbreviate)
             return iw.dvalplus;
         return oss.str();
@@ -619,7 +620,7 @@ struct DecibelParamQuantity : rack::engine::ParamQuantity
     static __m128 ampToLinearSSE(__m128 xin)
     {
         auto x = _mm_max_ss(xin, _mm_setzero_ps());
-        return _mm_mul_ps(x, _mm_mul_ps(x,x));
+        return _mm_mul_ps(x, _mm_mul_ps(x, x));
     }
     static float linearToAmp(float x)
     {
@@ -999,18 +1000,17 @@ template <typename T> struct ClockProcessor
         if (cs)
         {
             auto csv = json_integer_value(cs);
-            clockStyle =
-                static_cast<ClockStyle>(csv);
+            clockStyle = static_cast<ClockStyle>(csv);
         }
     }
 };
 
-struct DCBlocker {
+// A block wise single channel DC Blocker
+struct DCBlocker
+{
     float xN1{0}, yN1{0};
     float fac{0.9995};
-    DCBlocker() {
-        reset();
-    }
+    DCBlocker() { reset(); }
     void reset()
     {
         xN1 = 0.f;
@@ -1019,7 +1019,7 @@ struct DCBlocker {
 
     inline void filter(float *x) // BLOCK_SIZE
     {
-        for (int i=0; i<BLOCK_SIZE; ++i)
+        for (int i = 0; i < BLOCK_SIZE; ++i)
         {
             auto dx = x[i] - xN1;
             auto fv = dx + fac * yN1;
@@ -1029,6 +1029,31 @@ struct DCBlocker {
 
             x[i] = fv;
         }
+    }
+};
+
+// A sample-wise 4-across SIMD dc blocker
+struct DCBlockerSIMD4
+{
+    __m128 fac, xN1, yN1;
+    DCBlockerSIMD4()
+    {
+        fac = _mm_set1_ps(0.9995);
+        reset();
+    }
+    void reset()
+    {
+        xN1 = _mm_setzero_ps();
+        yN1 = _mm_setzero_ps();
+    }
+
+    inline __m128 filter(__m128 x) // BLOCK_SIZE
+    {
+        auto dx = _mm_sub_ps(x, xN1);
+        auto fv = _mm_add_ps(dx, _mm_mul_ps(fac, yN1));
+        xN1 = x;
+        yN1 = fv;
+        return fv;
     }
 };
 

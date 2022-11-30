@@ -38,6 +38,21 @@ struct WaveshaperWidget : widgets::XTModuleWidget
         if (toggles[mod])
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
+
+
+    void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (module)
+        {
+            auto m = static_cast<M *>(module);
+            menu->addChild(new rack::ui::MenuSeparator);
+
+            menu->addChild(rack::createMenuItem("Apply DC Blocker",
+                                                CHECKMARK(m->doDCBlock),
+                                                [m]() { m->doDCBlock = !m->doDCBlock;}));
+        }
+    }
+
 };
 
 struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
