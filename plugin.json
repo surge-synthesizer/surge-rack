@@ -348,6 +348,7 @@
       "description": "Four Attack-Decay Envelope Generators",
       "tags": [
         "Envelope generator",
+        "Quad",
         "Polyphonic"
       ]
     },
