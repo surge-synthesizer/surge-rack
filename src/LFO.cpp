@@ -18,6 +18,7 @@
 #include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "LayoutEngine.h"
+#include "NBarEditorWidget.h"
 
 namespace sst::surgext_rack::lfo::ui
 {
@@ -154,187 +155,6 @@ struct LFOWidget : widgets::XTModuleWidget
 
 struct LFOStepWidget : rack::Widget, style::StyleParticipant
 {
-    struct StepSlider : rack::app::SliderKnob, style::StyleParticipant
-    {
-        widgets::BufferedDrawFunctionWidget *bdw{nullptr};
-        widgets::BufferedDrawFunctionWidget *bdwLight{nullptr};
-
-        static StepSlider *create(const rack::Vec &pos, const rack::Vec &sz,
-                                  modules::XTModule *module, int paramId)
-        {
-            auto res = new StepSlider();
-
-            res->box.pos = pos;
-            res->box.size = sz;
-
-            res->module = module;
-            res->paramId = paramId;
-            res->initParamQuantity();
-
-            res->setup();
-
-            return res;
-        }
-
-        void setup()
-        {
-            bdw = new widgets::BufferedDrawFunctionWidget(
-                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawSlider(vg); });
-            bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
-                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawLight(vg); });
-
-            addChild(bdw);
-            addChild(bdwLight);
-        }
-
-        bool isInLoop()
-        {
-            auto step = paramId - LFO::STEP_SEQUENCER_STEP_0;
-            return step >= sp && step < ep;
-        }
-        bool isInOrBeforeLoop()
-        {
-            auto step = paramId - LFO::STEP_SEQUENCER_STEP_0;
-            return step < ep;
-        }
-
-        static constexpr float cramY = 0.98, padY = (1.f - cramY) * 0.5f;
-        void drawSlider(NVGcontext *vg)
-        {
-            nvgBeginPath(vg);
-            nvgRect(vg, 0, 0, box.size.x, box.size.y);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
-            nvgStrokeWidth(vg, 0.75);
-            nvgStroke(vg);
-
-            auto pq = getParamQuantity();
-            if (!pq)
-                return;
-            auto v = (-pq->getValue()) * 0.5 + 0.5;
-            if (uni)
-                v = (1.0 - std::clamp(pq->getValue(), 0.f, 1.f));
-
-            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
-            if (!isInLoop())
-                col = style()->getColor(style::XTStyle::PLOT_MARKS);
-            auto gcp = col;
-            gcp.a = 0.0;
-            auto gcn = col;
-            gcn.a = 0.9;
-
-            auto s = box.size.y * 0.5;
-            if (uni)
-            {
-                s = box.size.y;
-            }
-            auto e = cramY * box.size.y * v + padY;
-            if (s > e)
-            {
-                std::swap(gcp, gcn);
-                std::swap(s, e);
-            }
-            nvgBeginPath(vg);
-            nvgRect(vg, 1, s, box.size.x - 2, e - s);
-            nvgFillPaint(vg, nvgLinearGradient(vg, 0, s, 0, e, gcp, gcn));
-            nvgFill(vg);
-
-            if (!uni)
-            {
-                nvgBeginPath(vg);
-                nvgMoveTo(vg, 0, box.size.y * 0.5);
-                nvgLineTo(vg, box.size.x, box.size.y * 0.5);
-                nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
-                nvgStrokeWidth(vg, 0.75);
-                nvgStroke(vg);
-            }
-        }
-
-        void drawLight(NVGcontext *vg)
-        {
-            auto pq = getParamQuantity();
-            if (!pq)
-                return;
-            auto v = (-pq->getValue()) * 0.5 + 0.5;
-            if (uni)
-                v = (1.0 - std::clamp(pq->getValue(), 0.f, 1.f));
-
-            auto e = cramY * box.size.y * v + padY;
-
-            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
-            if (!isInOrBeforeLoop())
-                col = style()->getColor(style::XTStyle::PLOT_MARKS);
-
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, 1, e);
-            nvgLineTo(vg, box.size.x - 1, e);
-            nvgStrokeWidth(vg, 1.5);
-            nvgStrokeColor(vg, col);
-            nvgStroke(vg);
-        }
-
-        int sp{-1}, ep{-1};
-        bool uni{false};
-        void step() override
-        {
-            if (module)
-            {
-                auto ss =
-                    (int)std::round(module->paramQuantities[LFO::STEP_SEQUENCER_START]->getValue());
-                auto se =
-                    (int)std::round(module->paramQuantities[LFO::STEP_SEQUENCER_END]->getValue());
-                auto su = (bool)(module->paramQuantities[LFO::UNIPOLAR]->getValue() > 0.5);
-                if (sp != ss || ep != se || uni != su)
-                {
-                    bdwLight->dirty = true;
-                    bdw->dirty = true;
-                }
-                sp = ss;
-                ep = se;
-                uni = su;
-            }
-            rack::app::SliderKnob::step();
-        }
-
-        inline void onChange(const rack::widget::Widget::ChangeEvent &e) override
-        {
-            bdw->dirty = true;
-            bdwLight->dirty = true;
-        }
-
-        void onStyleChanged() override
-        {
-            bdw->dirty = true;
-            bdwLight->dirty = true;
-        }
-
-        rack::Vec buttonPos;
-        void onButton(const ButtonEvent &e) override
-        {
-            if (e.action == GLFW_PRESS)
-                buttonPos = e.pos;
-
-            if (e.action == GLFW_RELEASE)
-            {
-                auto diff = buttonPos - e.pos;
-                if (diff.norm() < 0.05)
-                {
-                    // auto e = cramY * box.size.y * v + padY;
-                    // e - padY = cY * bsy * v
-                    // v = ( e- padY)/(cY * bsy);
-                    auto val = (buttonPos.y - padY) / (cramY * box.size.y);
-                    if (uni)
-                        val = 1 - val;
-                    else
-                        val = (1 - val) * 2 - 1;
-                    if (getParamQuantity())
-                        getParamQuantity()->setValue(val);
-                }
-                buttonPos = rack::Vec(-1, -1);
-            }
-
-            SliderKnob::onButton(e);
-        }
-    };
 
     struct TriggerSwitch : rack::app::Switch, style::StyleParticipant
     {
@@ -533,13 +353,18 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             rack::Vec(2, y0 + ytrig0), rack::Vec(x0 - 4, box.size.y - y0 - ypad - ytrig0), module);
         addChild(jog);
 
+        auto slPos = rack::Vec(x0, y0 + ytrig0);
+        auto slSize = rack::Vec(dx * LFO::n_steps, box.size.y - y0 - ypad - ytrig0);
+        auto sliders = widgets::NBarWidget<LFO::n_steps>::create(slPos, slSize, module,
+                                                                 LFO::STEP_SEQUENCER_STEP_0);
+        sliders->isActive = [](auto m, auto b) {
+            auto ev = m->params[LFO::STEP_SEQUENCER_END].getValue();
+            return b < ev;
+        };
+        addChild(sliders);
+
         for (int i = 0; i < LFO::n_steps; ++i)
         {
-            auto pos = rack::Vec(i * dx + x0, y0 + ytrig0);
-            auto sz = rack::Vec(dx, box.size.y - y0 - ypad - ytrig0);
-            auto ks = StepSlider::create(pos, sz, module, LFO::STEP_SEQUENCER_STEP_0 + i);
-            addChild(ks);
-
             auto spos = rack::Vec(i * dx + x0, ytrig0);
             auto ssz = rack::Vec(dx, y0);
             auto sks = TriggerSwitch::create(spos, ssz, module, LFO::STEP_SEQUENCER_TRIGGER_0 + i);

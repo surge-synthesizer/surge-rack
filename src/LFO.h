@@ -204,8 +204,9 @@ struct LFO : modules::XTModule
             configParam(STEP_SEQUENCER_STEP_0 + i, -1, 1, 0,
                         std::string("Step ") + std::to_string(i + 1));
             params[STEP_SEQUENCER_STEP_0 + i].setValue(1.f * i / (n_steps - 1));
-            configParam(STEP_SEQUENCER_TRIGGER_0 + i, 0, 3, 0,
-                        std::string("Step Trigger ") + std::to_string(i + 1));
+            configSwitch(STEP_SEQUENCER_TRIGGER_0 + i, 0, 3, 0,
+                         std::string("Step Trigger ") + std::to_string(i + 1),
+                         {"Off", "A", "B", "A and B"});
         }
         configParam(STEP_SEQUENCER_START, 0, n_steps - 1, 0, "First Loop Point")->snapEnabled =
             true;

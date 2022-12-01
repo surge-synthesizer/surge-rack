@@ -272,7 +272,8 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
     BufferedDrawFunctionWidget *alphaWarning{nullptr};
     void addAlpha()
     {
-        alphaWarning = new BufferedDrawFunctionWidget(rack::Vec(0,0), rack::Vec(100,20),[this](auto vg){ drawAlpha(vg);});
+        alphaWarning = new BufferedDrawFunctionWidget(rack::Vec(0, 0), rack::Vec(100, 20),
+                                                      [this](auto vg) { drawAlpha(vg); });
         addChild(alphaWarning);
     }
     void drawAlpha(NVGcontext *vg)
@@ -280,14 +281,13 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         nvgBeginPath(vg);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, 18);
-        nvgTextAlign(vg, NVG_ALIGN_TOP|NVG_ALIGN_LEFT);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
         nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
         nvgText(vg, 1.5, 1.5, "ALPHA", nullptr);
-        nvgFillColor(vg, nvgRGB(255,0,0));
+        nvgFillColor(vg, nvgRGB(255, 0, 0));
         nvgText(vg, 1, 1, "ALPHA", nullptr);
     }
 };
-
 
 struct ModRingKnob;
 
@@ -310,7 +310,8 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     std::string knobPointerAsset, knobBackgroundAsset;
 
     KnobN() {}
-    ~KnobN() {
+    ~KnobN()
+    {
         // we removed shadow so it won't be deleted by the sweep
         if (shadow)
         {
@@ -479,9 +480,9 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
                 rack::Vec(0, 0), box.size, [this](auto vg) { this->drawValueRing(vg); });
             addChild(bwValue);
 
-            bwShadow = new BufferedDrawFunctionWidget(rack::Vec(0, rack::mm2px(shadowOffset_MM)),
-                                                      box.size, [this](auto vg)
-                                                      { this->drawShadow(vg); });
+            bwShadow =
+                new BufferedDrawFunctionWidget(rack::Vec(0, rack::mm2px(shadowOffset_MM)), box.size,
+                                               [this](auto vg) { this->drawShadow(vg); });
             addChildBottom(bwShadow);
         }
         bw->dirty = true;
@@ -493,28 +494,27 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
             return;
 
         nvgBeginPath(vg);
-        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5,
-                   rack::mm2px(shadowOneW_MM) * 0.5, rack::mm2px(shadowOneH_MM) * 0.5);
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, rack::mm2px(shadowOneW_MM) * 0.5,
+                   rack::mm2px(shadowOneH_MM) * 0.5);
         nvgFillColor(vg, style()->getColor(style::XTStyle::SHADOW_BASE));
-        //nvgStrokeColor(vg, nvgRGB(255,0,0));
-        //nvgStroke(vg);
+        // nvgStrokeColor(vg, nvgRGB(255,0,0));
+        // nvgStroke(vg);
         nvgFill(vg);
 
         auto s2 = rack::mm2px(shadowTwoOffset_MM);
         nvgSave(vg);
-        nvgScissor(vg, 0, box.size.y*0.5, box.size.x, box.size.y * 0.5);
+        nvgScissor(vg, 0, box.size.y * 0.5, box.size.x, box.size.y * 0.5);
         nvgBeginPath(vg);
         auto start = box.size.y * 0.5 + s2 + rack::mm2px(shadowTwoH_MM) * 0.25;
         auto end = box.size.y * 0.5 + s2 + rack::mm2px(shadowTwoH_MM) * 0.5;
-        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5 + s2,
-                   rack::mm2px(shadowTwoW_MM) * 0.5, rack::mm2px(shadowTwoH_MM) * 0.5);
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5 + s2, rack::mm2px(shadowTwoW_MM) * 0.5,
+                   rack::mm2px(shadowTwoH_MM) * 0.5);
         nvgFillPaint(vg, nvgLinearGradient(vg, 0, start, 0, end,
                                            style()->getColor(style::XTStyle::SHADOW_OVER_GRADSTART),
-                                           style()->getColor(style::XTStyle::SHADOW_OVER_GRADEND)
-                                           ));
+                                           style()->getColor(style::XTStyle::SHADOW_OVER_GRADEND)));
         nvgFill(vg);
-        //nvgStrokeColor(vg, nvgRGB(0,255,0));
-        //nvgStroke(vg);
+        // nvgStrokeColor(vg, nvgRGB(0,255,0));
+        // nvgStroke(vg);
 
         nvgRestore(vg);
     }
@@ -600,16 +600,18 @@ struct HasBDW
     BufferedDrawFunctionWidget *bdw{nullptr};
 };
 
-struct SQPParamLabel : rack::ui::MenuLabel {
+struct SQPParamLabel : rack::ui::MenuLabel
+{
     modules::SurgeParameterModulationQuantity *spq{nullptr};
-    void step() override {
+    void step() override
+    {
         if (spq)
         {
             auto ntext = spq->getLabel() + ": ";
             auto r = spq->getDisplayValueString();
             auto p = r.find("\n");
             if (p != std::string::npos)
-                r = r.substr(0,p);
+                r = r.substr(0, p);
             ntext += r;
             text = ntext;
         }
@@ -738,7 +740,8 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
     {
         if (!bypassGesture())
         {
-            auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+            auto spq =
+                dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
             if (spq)
                 spq->abbreviate = true;
             rack::Knob::onButton(e);
@@ -777,7 +780,8 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
             rack::Knob::onLeave(e);
     }
 
-    void appendContextMenu(rack::Menu *menu) override {
+    void appendContextMenu(rack::Menu *menu) override
+    {
         auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
         if (spq)
         {
@@ -1061,9 +1065,8 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
         shadowSize.pos.y += rack::mm2px(0.5);
         shadowSize = shadowSize.grow(2);
 
-        bwShadow = new BufferedDrawFunctionWidget(shadowSize.pos,
-                                                  shadowSize.size, [this](auto vg)
-                                                  { this->drawShadow(vg); });
+        bwShadow = new BufferedDrawFunctionWidget(shadowSize.pos, shadowSize.size,
+                                                  [this](auto vg) { this->drawShadow(vg); });
         T::addChildBottom(bwShadow);
     }
 
@@ -1083,23 +1086,22 @@ template <typename T> struct GlowOverlayHoverButton : T, style::StyleParticipant
         auto box = shadowSize;
 
         nvgBeginPath(vg);
-        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5,
-                   rack::mm2px(shadowOneW_MM) * 0.5, rack::mm2px(shadowOneH_MM) * 0.5);
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, rack::mm2px(shadowOneW_MM) * 0.5,
+                   rack::mm2px(shadowOneH_MM) * 0.5);
         nvgFillColor(vg, style()->getColor(style::XTStyle::SHADOW_BASE));
         nvgFill(vg);
 
         auto s2 = rack::mm2px(shadowTwoOffset_MM);
         nvgSave(vg);
-        nvgScissor(vg, 0, box.size.y*0.5, box.size.x, box.size.y * 0.5);
+        nvgScissor(vg, 0, box.size.y * 0.5, box.size.x, box.size.y * 0.5);
         nvgBeginPath(vg);
         auto start = box.size.y * 0.5 + s2 + rack::mm2px(shadowTwoH_MM) * 0.25;
         auto end = box.size.y * 0.5 + s2 + rack::mm2px(shadowTwoH_MM) * 0.5;
-        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5 + s2,
-                   rack::mm2px(shadowTwoW_MM) * 0.5, rack::mm2px(shadowTwoH_MM) * 0.5);
+        nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5 + s2, rack::mm2px(shadowTwoW_MM) * 0.5,
+                   rack::mm2px(shadowTwoH_MM) * 0.5);
         nvgFillPaint(vg, nvgLinearGradient(vg, 0, start, 0, end,
                                            style()->getColor(style::XTStyle::SHADOW_OVER_GRADSTART),
-                                           style()->getColor(style::XTStyle::SHADOW_OVER_GRADEND)
-                                               ));
+                                           style()->getColor(style::XTStyle::SHADOW_OVER_GRADEND)));
         nvgFill(vg);
 
         nvgRestore(vg);
@@ -1354,7 +1356,6 @@ struct LabeledPlotAreaControl : public rack::app::Knob, style::StyleParticipant
     double timeOfAction{-1}, timeOfDoubleClick{-1};
     bool didAction{false}, didDoubleClick{false};
 
-
     void onAction(const ActionEvent &e) override
     {
         didAction = true;
@@ -1582,15 +1583,20 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     }
 };
 
-
 struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
 {
     static constexpr float padTop_MM = 1.4;
     static constexpr float padBot_MM = 1.6;
     BufferedDrawFunctionWidget *bdw{nullptr};
-    enum Align { LEFT, RIGHT, CENTER } align{RIGHT};
+    enum Align
+    {
+        LEFT,
+        RIGHT,
+        CENTER
+    } align{RIGHT};
 
-    static PlotAreaToggleClick *create(rack::Vec pos, rack::Vec sz, rack::Module *module, int paramId)
+    static PlotAreaToggleClick *create(rack::Vec pos, rack::Vec sz, rack::Module *module,
+                                       int paramId)
     {
         auto *res = rack::createWidget<PlotAreaToggleClick>(pos);
 
@@ -1629,15 +1635,13 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
         }
         else if (align == CENTER)
         {
-            nvgTextAlign(vg, NVG_ALIGN_MIDDLE| NVG_ALIGN_CENTER);
-            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, pv.c_str(),
-                    nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, pv.c_str(), nullptr);
         }
         else
         {
-            nvgTextAlign(vg, NVG_ALIGN_MIDDLE| NVG_ALIGN_RIGHT);
-            nvgText(vg, box.size.x, box.size.y * 0.5, pv.c_str(),
-                    nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
+            nvgText(vg, box.size.x, box.size.y * 0.5, pv.c_str(), nullptr);
         }
 
         /*
@@ -1949,7 +1953,8 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
             icol.a = halo;
             NVGcolor ocol = pcol;
             ocol.a = 0.f;
-            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, y0 + ringpx * 0.5, ringpx * 0.5, ringpx * 0.5 + halopx, icol, ocol);
+            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, y0 + ringpx * 0.5,
+                                               ringpx * 0.5, ringpx * 0.5 + halopx, icol, ocol);
             nvgFillPaint(vg, paint);
             nvgFill(vg);
         }
@@ -2017,7 +2022,8 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
         Knob::onAction(e);
     }
 
-    void appendContextMenu(rack::Menu *menu) override {
+    void appendContextMenu(rack::Menu *menu) override
+    {
         auto pq = getParamQuantity();
         auto spq = dynamic_cast<modules::SurgeParameterParamQuantity *>(pq);
 
@@ -2037,14 +2043,13 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
         {
             auto fval = Parameter::intScaledToFloat(i, nLights - 1);
             auto sval = spq->getDisplayValueStringForValue(fval);
-            menu->addChild(rack::createMenuItem(sval, CHECKMARK(i==pqv),
-                                                [pq, fval](){pq->setValue(fval);}));
+            menu->addChild(rack::createMenuItem(sval, CHECKMARK(i == pqv),
+                                                [pq, fval]() { pq->setValue(fval); }));
         }
 
         menu->addChild(new rack::MenuSeparator);
-        menu->addChild(rack::createMenuItem("Initialize", "Double-click", [=]() {
-            this->resetAction();
-        }));
+        menu->addChild(
+            rack::createMenuItem("Initialize", "Double-click", [=]() { this->resetAction(); }));
     }
 };
 
@@ -2099,8 +2104,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         handle = new rack::SvgWidget();
         auto compDir = style()->skinAssetDir() + "/components";
 
-        tray->setSvg(
-            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgname)));
+        tray->setSvg(rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + bgname)));
         baseFB->addChild(tray);
 
         handle->setSvg(
@@ -2365,8 +2369,10 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
     }
     void onButton(const ButtonEvent &e) override
     {
-        if (!bypassGesture()) {
-            auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
+        if (!bypassGesture())
+        {
+            auto spq =
+                dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
             if (spq)
                 spq->abbreviate = true;
             rack::SliderKnob::onButton(e);
@@ -2405,7 +2411,8 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
             rack::SliderKnob::onLeave(e);
     }
 
-    void appendContextMenu(rack::Menu *menu) override {
+    void appendContextMenu(rack::Menu *menu) override
+    {
         auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
         if (spq)
         {
@@ -2448,9 +2455,8 @@ struct OutputDecoration : rack::Widget, style::StyleParticipant
     {
         if (!bdw)
         {
-            bdw = new BufferedDrawFunctionWidget(rack::Vec(0,0),
-                                                 box.size,
-                                                 [this](auto v) { drawRegion(v);});
+            bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                 [this](auto v) { drawRegion(v); });
             addChild(bdw);
         }
     }
@@ -2460,8 +2466,7 @@ struct OutputDecoration : rack::Widget, style::StyleParticipant
         nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 4.7);
         nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y,
                                            style()->getColor(style::XTStyle::OUTPUTBG_START),
-                                           style()->getColor(style::XTStyle::OUTPUTBG_END)
-                                               ));
+                                           style()->getColor(style::XTStyle::OUTPUTBG_END)));
 
         nvgFill(vg);
     }
@@ -2475,3 +2480,4 @@ struct OutputDecoration : rack::Widget, style::StyleParticipant
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H
+
