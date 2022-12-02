@@ -83,3 +83,4 @@ extern rack::Model *modelFXSpringReverb;
 extern rack::Model *modelFXTreeMonster;
 extern rack::Model *modelEGxVCA;
 extern rack::Model *modelQuadAD;
+extern rack::Model *modelQuadLFO;
