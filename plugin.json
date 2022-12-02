@@ -345,9 +345,19 @@
     {
       "slug": "SurgeXTQuadAD",
       "name": "Quad AD",
-      "description": "Four Attack-Decay Envelope Generators",
+      "description": "Four Attack-Decay or Attack-Hold-Release Envelope Generators",
       "tags": [
         "Envelope generator",
+        "Quad",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTQuadLFO",
+      "name": "Quad LFO",
+      "description": "Four LFOs",
+      "tags": [
+        "LFO",
         "Quad",
         "Polyphonic"
       ]

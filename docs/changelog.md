@@ -1,13 +1,32 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Pre-Beta Now (this as of e5eeb6832 / Nov 27)
+## 2.1 - In Pre-Beta Now (this as of c314e1e1f037 / Dec 2)
 
 - New Modules
     - EGxVCA (still in development)
     - QuadAD (still very much in development)
 
-- Infrastructure
+- Module Changes
+    - The *Waveshaper* has a DC Blocker. It is on by default in new instances but 
+      waveshapers saved with 2.0 releases will laod with the blocker off to
+      retain compatability.
+
+- Module UI Changes
+    - The *LFO* step editor is substantially better, allowing cross bar
+      drags and other gestures
+    - The *Alias* harmonic editor is similarly improved
+    - *LFO* randomization of shape is constrained so a step sequencer
+      never randomizes off of a step setting.
+
+- Bug Fixes
+    - The modulation arm button didn't consume events, leading it to work 
+       inconsistently in module lock mode
+
+- Infrastructure and Code Cleanups
     - Skip the airwindows sub-library build in the surge dep phase since we dont use it in rack
+    - Centralize some more implementations of clock UI and processing elements
+    - Upgrade all our github actions to SDK 2.2 including an ARM cross compile
+    - Add a blank module in docs and a little script to bring it to life with a name
 
 ## 2.0.3 - Nov 26, 2022
 
