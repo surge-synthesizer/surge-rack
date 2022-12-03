@@ -22,8 +22,18 @@ $(libsurge):
 	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release $(EXTRA_CMAKE)
 	cmake --build $(SURGE_BLD)
 
-# FLAGS will be passed to both the C and C++ compiler
-FLAGS += -Isurge/src/common
+FLAGS += -Isurge/src/common \
+	-Isurge/src/common/dsp \
+	-Isurge/src/common/dsp/vembertech \
+	-Isurge/libs/sst/sst-filters/include \
+	-Isurge/libs/sst/sst-cpputils/include \
+	-Isurge/libs/sst/sst-plugininfra/include \
+	-Isurge/libs/sst/sst-waveshapers/include \
+	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
+	-Isurge/libs/tuning-library/include \
+	-I$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/include \
+	-DRELEASE=1 \
+	-DSURGE_COMPILE_BLOCK_SIZE=8
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch
