@@ -67,7 +67,7 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
     const auto row3 = layout::LayoutConstants::vcoRowCenters_MM[0] - portSpacing - (row1 - row2);
 
     typedef layout::LayoutItem li_t;
-    engine_t::layoutItem(this, li_t::createLCDArea(row3 - rack::mm2px(2.5)), "QUAD AD");
+    engine_t::layoutItem(this, li_t::createLCDArea(row3 - rack::mm2px(2.5)), "QUAD LFO");
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
 
