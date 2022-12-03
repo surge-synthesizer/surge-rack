@@ -60,7 +60,7 @@ target_include_directories (${PROJECT_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RA
 target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
 
 add_library (plugin SHARED src/SurgeXT.cpp)
-target_include_directories (plugin PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
+target_include_directories (plugin PRIVATE surge/src/common ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
 target_link_libraries (plugin PRIVATE ${PROJECT_NAME})
 
 function (_get_all_cmake_targets out_var current_dir)

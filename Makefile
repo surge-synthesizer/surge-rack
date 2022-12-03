@@ -23,29 +23,7 @@ $(libsurge):
 	cmake --build $(SURGE_BLD)
 
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS += -Isurge/src/common \
-	-Isurge/src/common/dsp \
-	-Isurge/src/common/dsp/filters \
-	-Isurge/src/common/dsp/vembertech \
-	-Isurge/src/common/dsp/utilities \
-	-Isurge/src/common/dsp/oscillators \
-	-Isurge/src/common/dsp/modulators \
-	-Isurge/src/surge-testrunner \
-	-Isurge/libs/sst/sst-filters/include \
-	-Isurge/libs/sst/sst-cpputils/include \
-	-Isurge/libs/sst/sst-waveshapers/include \
-	-Isurge/libs/sst/sst-plugininfra/include \
-	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
-	-Isurge/libs/sst/sst-plugininfra/libs/filesystem \
-	-Isurge/libs/fmt/include \
-	-Isurge/libs/LuaJitLib/LuaJIT/src  \
-	-I$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/include \
-	-Isurge/libs/strnatcmp \
-	-Isurge/src/headless \
-	-Isurge/libs/tuning-library/include \
-	-include limits \
-	-DRELEASE=1 \
-	-DSURGE_COMPILE_BLOCK_SIZE=8
+FLAGS += -Isurge/src/common
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch
