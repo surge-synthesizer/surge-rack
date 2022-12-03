@@ -1,33 +1,10 @@
 RACK_DIR ?= ../..
 include $(RACK_DIR)/arch.mk
 
-SURGE_RACK_BASE_VERSION=XT1-0-1
-SURGE_RACK_PLUG_VERSION=$(shell git rev-parse --short HEAD)
-SURGE_RACK_SURGE_VERSION=$(shell cd surge && git rev-parse --short HEAD)
-
 SURGE_BLD=dep/surge-build
-libsurge := $(SURGE_BLD)/src/common/libsurge-common.a
+libsurge := $(SURGE_BLD)/libsurge-rack.a
 
-
-LIBFILESYSTEM = $(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/libfilesystem.a
-ifdef ARCH_WIN
-LIBFILESYSTEM =
-endif
-
-OBJECTS += $(libsurge) \
-	$(SURGE_BLD)/src/common/libjuce_dsp_rack_sub.a \
-	$(SURGE_BLD)/src/lua/libsurge-lua-src.a \
-	$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
-    $(SURGE_BLD)/libs/libsamplerate/src/libsamplerate.a \
-    $(SURGE_BLD)/libs/fmt/libfmt.a \
-    $(SURGE_BLD)/libs/sst/sst-plugininfra/libs/strnatcmp/libstrnatcmp.a \
-    $(SURGE_BLD)/libs/sst/sst-plugininfra/libsst-plugininfra.a \
-    $(LIBFILESYSTEM) \
-    $(SURGE_BLD)/libs/oddsound-mts/liboddsound-mts.a \
-    $(SURGE_BLD)/libs/sqlite-3.23.3/libsqlite.a \
-    $(SURGE_BLD)/libs/airwindows/libairwindows.a \
-    $(SURGE_BLD)/libs/eurorack/libeurorack.a
-
+OBJECTS += $(libsurge)
 
 # Trigger the static library to be built when running `make dep`
 DEPS += $(libsurge)
@@ -42,36 +19,11 @@ endif
 endif
 
 $(libsurge):
-	# Out-of-source build dir
-	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_AIRWINDOWS=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8 $(EXTRA_CMAKE)
-	# -DSURGE_SANITIZE=TRUE
-	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
-	cd $(SURGE_BLD) && make -j 4 surge-common
+	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release $(EXTRA_CMAKE)
+	cmake --build $(SURGE_BLD)
 
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS += -Isurge/src/common \
-	-Isurge/src/common/dsp \
-	-Isurge/src/common/dsp/filters \
-	-Isurge/src/common/dsp/vembertech \
-	-Isurge/src/common/dsp/utilities \
-	-Isurge/src/common/dsp/oscillators \
-	-Isurge/src/common/dsp/modulators \
-	-Isurge/src/surge-testrunner \
-	-Isurge/libs/sst/sst-filters/include \
-	-Isurge/libs/sst/sst-cpputils/include \
-	-Isurge/libs/sst/sst-waveshapers/include \
-	-Isurge/libs/sst/sst-plugininfra/include \
-	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
-	-Isurge/libs/sst/sst-plugininfra/libs/filesystem \
-	-Isurge/libs/fmt/include \
-	-Isurge/libs/LuaJitLib/LuaJIT/src  \
-	-I$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/include \
-	-Isurge/libs/strnatcmp \
-	-Isurge/src/headless \
-	-Isurge/libs/tuning-library/include \
-	-include limits \
-	-DRELEASE=1 \
-	-DSURGE_COMPILE_BLOCK_SIZE=8
+FLAGS += -Isurge/src/common
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch
@@ -92,7 +44,7 @@ LDFLAGS +=
 #LDFLAGS += -fsanitize=address -fsanitize=undefined
 
 # Add .cpp and .c files to the build
-SOURCES += $(wildcard src/*.cpp)
+SOURCES += src/SurgeXT.cpp
 
 # ASM ERRORS need fixing
 
