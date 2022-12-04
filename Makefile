@@ -16,7 +16,6 @@ endif
 
 OBJECTS += $(libsurge) \
 	$(SURGE_BLD)/src/common/libjuce_dsp_rack_sub.a \
-	$(SURGE_BLD)/src/lua/libsurge-lua-src.a \
 	$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/tinyxml/libtinyxml.a \
     $(SURGE_BLD)/libs/libsamplerate/src/libsamplerate.a \
     $(SURGE_BLD)/libs/fmt/libfmt.a \
