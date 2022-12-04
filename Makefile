@@ -23,7 +23,6 @@ OBJECTS += $(libsurge) \
     $(SURGE_BLD)/libs/sst/sst-plugininfra/libs/strnatcmp/libstrnatcmp.a \
     $(SURGE_BLD)/libs/sst/sst-plugininfra/libsst-plugininfra.a \
     $(LIBFILESYSTEM) \
-    $(SURGE_BLD)/libs/oddsound-mts/liboddsound-mts.a \
     $(SURGE_BLD)/libs/sqlite-3.23.3/libsqlite.a \
     $(SURGE_BLD)/libs/airwindows/libairwindows.a \
     $(SURGE_BLD)/libs/eurorack/libeurorack.a
@@ -43,7 +42,7 @@ endif
 
 $(libsurge):
 	# Out-of-source build dir
-	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_AIRWINDOWS=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8 $(EXTRA_CMAKE)
+	cd surge && $(CMAKE) -B../$(SURGE_BLD) -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSURGE_SKIP_JUCE_FOR_RACK=TRUE -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_AIRWINDOWS=TRUE -DSURGE_SKIP_ODDSOUND_MTS=TRUE -DSURGE_COMPILE_BLOCK_SIZE=8 $(EXTRA_CMAKE)
 	# -DSURGE_SANITIZE=TRUE
 	# $(CMAKE) --build doesn't work here since the arguments are set for stage one only, so use make directly.
 	cd $(SURGE_BLD) && make -j 4 surge-common
