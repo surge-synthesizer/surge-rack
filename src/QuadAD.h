@@ -19,11 +19,11 @@
  *  DSP
  *     - Maybe a bit more profiling?
  *  Rack
- *     - Mod Param Param Quanities
+ *     - Mod Param Param Quanities - display, typein, etc...
  *  UI
- *    - Slopes Glpyohs etc
- *    - Curves
- *    - Layout D/A and Trig/Hold
+ *    - Slopes Glpyohs etc on the A=/A- etc...
+ *    - Curves on the display
+ *    - Layout D/A and Trig/Hold controls
  *    - Remove Alpha Label
  *
  */

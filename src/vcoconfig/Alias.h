@@ -17,6 +17,7 @@
 #define SURGEXT_ALIAS_CONFIG_H
 
 #include "dsp/oscillators/AliasOscillator.h"
+#include "../NBarEditorWidget.h"
 
 namespace sst::surgext_rack::vco
 {
@@ -86,142 +87,6 @@ namespace alias_ed
 {
 struct HarmEd : public rack::Widget, style::StyleParticipant
 {
-    // I'm sure one day the fact that i copied this form the LFO will make me sad
-    struct HarmSlider : rack::app::SliderKnob, style::StyleParticipant
-    {
-        widgets::BufferedDrawFunctionWidget *bdw{nullptr};
-        widgets::BufferedDrawFunctionWidget *bdwLight{nullptr};
-
-        static HarmSlider *create(const rack::Vec &pos, const rack::Vec &sz,
-                                  modules::XTModule *module, int paramId)
-        {
-            auto res = new HarmSlider();
-
-            res->box.pos = pos;
-            res->box.size = sz;
-
-            res->module = module;
-            res->paramId = paramId;
-            res->initParamQuantity();
-
-            res->setup();
-
-            return res;
-        }
-
-        void setup()
-        {
-            bdw = new widgets::BufferedDrawFunctionWidget(
-                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawSlider(vg); });
-            bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
-                rack::Vec(0, 0), box.size, [this](auto *vg) { this->drawLight(vg); });
-
-            addChild(bdw);
-            addChild(bdwLight);
-        }
-
-        static constexpr float cramY = 0.98, padY = (1.f - cramY) * 0.5f;
-        void drawSlider(NVGcontext *vg)
-        {
-            nvgBeginPath(vg);
-            nvgRect(vg, 0, 0, box.size.x, box.size.y);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
-            nvgStrokeWidth(vg, 0.75);
-            nvgStroke(vg);
-
-            auto pq = getParamQuantity();
-            if (!pq)
-                return;
-            auto v = (-pq->getValue()) * 0.5 + 0.5;
-
-            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
-            auto gcp = col;
-            gcp.a = 0.0;
-            auto gcn = col;
-            gcn.a = 0.9;
-
-            auto s = box.size.y * 0.5;
-            auto e = cramY * box.size.y * v + padY;
-            if (s > e)
-            {
-                std::swap(gcp, gcn);
-                std::swap(s, e);
-            }
-            nvgBeginPath(vg);
-            nvgRect(vg, 1, s, box.size.x - 2, e - s);
-            nvgFillPaint(vg, nvgLinearGradient(vg, 0, s, 0, e, gcp, gcn));
-            nvgFill(vg);
-
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, 0, box.size.y * 0.5);
-            nvgLineTo(vg, box.size.x, box.size.y * 0.5);
-            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
-            nvgStrokeWidth(vg, 0.75);
-            nvgStroke(vg);
-        }
-
-        void drawLight(NVGcontext *vg)
-        {
-            auto pq = getParamQuantity();
-            if (!pq)
-                return;
-            auto v = (-pq->getValue()) * 0.5 + 0.5;
-
-            auto e = cramY * box.size.y * v + padY;
-
-            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
-
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, 1, e);
-            nvgLineTo(vg, box.size.x - 1, e);
-            nvgStrokeWidth(vg, 1.5);
-            nvgStrokeColor(vg, col);
-            nvgStroke(vg);
-        }
-
-        int sp{-1}, ep{-1};
-        bool uni{false};
-
-        inline void onChange(const rack::widget::Widget::ChangeEvent &e) override
-        {
-            bdw->dirty = true;
-            bdwLight->dirty = true;
-        }
-
-        void onStyleChanged() override
-        {
-            bdw->dirty = true;
-            bdwLight->dirty = true;
-        }
-
-        rack::Vec buttonPos;
-        void onButton(const ButtonEvent &e) override
-        {
-            if (e.action == GLFW_PRESS)
-                buttonPos = e.pos;
-
-            if (e.action == GLFW_RELEASE)
-            {
-                auto diff = buttonPos - e.pos;
-                if (diff.norm() < 0.05)
-                {
-                    // auto e = cramY * box.size.y * v + padY;
-                    // e - padY = cY * bsy * v
-                    // v = ( e- padY)/(cY * bsy);
-                    auto val = (buttonPos.y - padY) / (cramY * box.size.y);
-                    val = (1 - val) * 2 - 1;
-                    if (getParamQuantity())
-                        getParamQuantity()->setValue(val);
-                }
-                buttonPos = rack::Vec(-1, -1);
-                bdw->dirty = true;
-                bdwLight->dirty = true;
-            }
-
-            SliderKnob::onButton(e);
-        }
-    };
-
     VCO<ot_alias> *module{nullptr};
     std::function<void(rack::Widget *)> onClose{nullptr};
     bool closePressed{false};
@@ -257,18 +122,16 @@ struct HarmEd : public rack::Widget, style::StyleParticipant
                                                            [this](auto *v) { drawClose(v); });
         addChild(bdwClose);
 
-        for (int i = 0; i < 16; ++i)
-        {
-            int par = VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i;
-            float y0 = rack::mm2px(6);
-            float xpad = rack::mm2px(2);
-            float h = box.size.y - rack::mm2px(1) - y0;
-            float w = (box.size.x - 2 * xpad) / 16;
-            float x0 = xpad + w * i;
-
-            auto s = HarmSlider::create(rack::Vec(x0, y0), rack::Vec(w, h), module, par);
-            addChild(s);
-        }
+        int par = VCO<ot_alias>::ADDITIONAL_VCO_PARAMS;
+        float y0 = rack::mm2px(6);
+        float xpad = rack::mm2px(2);
+        float h = box.size.y - rack::mm2px(1) - y0;
+        float w = (box.size.x - 2 * xpad);
+        auto bed = widgets::NBarWidget<16>::create(rack::Vec(xpad, y0),
+                                                   rack::Vec(w,h),
+                                                   module,
+                                                   par);
+        addChild(bed);
     }
 
     void drawClose(NVGcontext *vg)

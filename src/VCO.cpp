@@ -136,11 +136,20 @@ struct WavetableMenuBuilder
         }
         menu->addChild(new rack::ui::MenuSeparator);
         menu->addChild(rack::createMenuItem("Load Wavetable File", "", [module]() {
+#ifdef USING_CARDINAL_NOT_RACK
+            async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load Wavetable File", [=](char *openF){
+                if (openF)
+                {
+                    DEFER({ std::free(openF); });
+                    sendLoadForPath(module, openF);
+                }
+            });
+#else
 #if MAC
             osdialog_filters *filters{nullptr};
 #else
-                auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
-                DEFER({ osdialog_filters_free(filters); });
+            auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav,.wt,.WT,.Wt");
+            DEFER({ osdialog_filters_free(filters); });
 #endif
             char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
             if (openF)
@@ -148,8 +157,18 @@ struct WavetableMenuBuilder
                 DEFER({ std::free(openF); });
                 sendLoadForPath(module, openF);
             }
+#endif
         }));
         menu->addChild(rack::createMenuItem("Load WaveEdit Wavetable", "", [module]() {
+#ifdef USING_CARDINAL_NOT_RACK
+            async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load WaveEdit Wavetable", [=](char *openF){
+                if (openF)
+                {
+                    DEFER({ std::free(openF); });
+                    sendLoadForPath(module, openF, 256);
+                }
+            });
+#else
             auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav");
             DEFER({ osdialog_filters_free(filters); });
             char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
@@ -158,12 +177,22 @@ struct WavetableMenuBuilder
                 DEFER({ std::free(openF); });
                 sendLoadForPath(module, openF, 256);
             }
+#endif
         }));
         menu->addChild(rack::createSubmenuItem("Load Untagged Wav as", "", [module](auto *pm) {
             for (int i = 6; i < 13; ++i)
             {
                 auto label = std::to_string(1 << i) + " Sample Frame WaveTable";
                 pm->addChild(rack::createMenuItem(label, "", [module, i]() {
+#ifdef USING_CARDINAL_NOT_RACK
+                    async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load Untagged Wav", [=](char *openF){
+                        if (openF)
+                        {
+                            DEFER({ std::free(openF); });
+                            sendLoadForPath(module, openF, 1 << i);
+                        }
+                    });
+#else
                     auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav");
                     DEFER({ osdialog_filters_free(filters); });
                     char *openF = osdialog_file(OSDIALOG_OPEN, nullptr, nullptr, filters);
@@ -172,6 +201,7 @@ struct WavetableMenuBuilder
                         DEFER({ std::free(openF); });
                         sendLoadForPath(module, openF, 1 << i);
                     }
+#endif
                 }));
             }
         }));

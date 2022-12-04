@@ -67,6 +67,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
 
     p->addModel(modelEGxVCA);
     p->addModel(modelQuadAD);
+    p->addModel(modelQuadLFO);
 
     sst::surgext_rack::style::XTStyle::initialize();
 }

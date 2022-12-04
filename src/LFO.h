@@ -179,8 +179,25 @@ struct LFO : modules::XTModule
             {
                 maxv = Parameter::intScaledToFloat(lt_stepseq, par->val_max.i, par->val_min.i);
             }
-            configParam<modules::SurgeParameterParamQuantity>(
+            auto pq = configParam<modules::SurgeParameterParamQuantity>(
                 p, 0, maxv, par->get_default_value_f01(), par->get_name());
+            if (p == SHAPE)
+            {
+                pq->customRandomize = [this](auto pq) {
+                    auto *par = &lfostorage->rate + paramOffsetByID[pq->paramId];
+                    auto cv = Parameter::intUnscaledFromFloat(pq->getValue(), par->val_max.i,
+                                                              par->val_min.i);
+
+                    if (cv >= lt_stepseq)
+                    {
+                        return;
+                    }
+
+                    auto ncv = rand() % (lt_stepseq);
+                    auto v01 = Parameter::intScaledToFloat(ncv, par->val_max.i, par->val_min.i);
+                    pq->setValue(v01);
+                };
+            }
         }
 
         for (int p = LFO_MOD_PARAM_0; p < UNUSED_PARAM_DEPRECATED; ++p)
@@ -192,9 +209,9 @@ struct LFO : modules::XTModule
         }
 
         configParamNoRand(UNUSED_PARAM_DEPRECATED, 0, 1, 0, "Unused/Deprecated");
-        configParam(DEFORM_TYPE, 0, 4, 0, "Deform Type");
+        configParamNoRand(DEFORM_TYPE, 0, 4, 0, "Deform Type");
         configParamNoRand(WHICH_TEMPOSYNC, 0, 3, 1, "Which Temposync");
-        configParam(RANDOM_PHASE, 0, 1, 0, "Randomize Initial Phase");
+        configParamNoRand(RANDOM_PHASE, 0, 1, 0, "Randomize Initial Phase");
 
         configParamNoRand(TRIGA_TYPE, 0, 3, DEFAULT, "Trigger A");
         configParamNoRand(TRIGB_TYPE, 0, 3, DEFAULT, "Trigger B");
@@ -204,12 +221,14 @@ struct LFO : modules::XTModule
             configParam(STEP_SEQUENCER_STEP_0 + i, -1, 1, 0,
                         std::string("Step ") + std::to_string(i + 1));
             params[STEP_SEQUENCER_STEP_0 + i].setValue(1.f * i / (n_steps - 1));
-            configParam(STEP_SEQUENCER_TRIGGER_0 + i, 0, 3, 0,
-                        std::string("Step Trigger ") + std::to_string(i + 1));
+            configSwitch(STEP_SEQUENCER_TRIGGER_0 + i, 0, 3, 0,
+                         std::string("Step Trigger ") + std::to_string(i + 1),
+                         {"Off", "A", "B", "A and B"});
         }
-        configParam(STEP_SEQUENCER_START, 0, n_steps - 1, 0, "First Loop Point")->snapEnabled =
+        configParamNoRand(STEP_SEQUENCER_START, 0, n_steps - 1, 0, "First Loop Point")
+            ->snapEnabled = true;
+        configParamNoRand(STEP_SEQUENCER_END, 1, n_steps, n_steps, "Last Loop Point")->snapEnabled =
             true;
-        configParam(STEP_SEQUENCER_END, 1, n_steps, n_steps, "Last Loop Point")->snapEnabled = true;
 
         configParamNoRand(SCALE_RAW_OUTPUTS, 0, 1, 1, "Scale raw outputs by amp?");
         configParamNoRand(NO_TRIG_POLY, 1, 16, 1, "Scale raw outputs by amp?")->snapEnabled = true;

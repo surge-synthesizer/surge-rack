@@ -298,6 +298,15 @@ struct SurgeParameterParamQuantity : public rack::engine::ParamQuantity, Calcula
         return par;
     }
 
+    std::function<void(SurgeParameterParamQuantity *)> customRandomize{nullptr};
+    void randomize() override
+    {
+        if (customRandomize)
+            customRandomize(this);
+        else
+            ParamQuantity::randomize();
+    }
+
     virtual void setDisplayValueString(std::string s) override
     {
         auto par = surgepar();
