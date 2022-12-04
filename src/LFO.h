@@ -79,6 +79,7 @@ struct LFO : modules::XTModule
         NO_TRIG_POLY,
         BROADCAST_TRIG_TO_POLY,
         UNTRIGGERED_ENV_NONZERO,
+        RANDOMIZATION_CHANGES_SHAPES,
         NUM_PARAMS
     };
     enum InputIds
@@ -184,6 +185,10 @@ struct LFO : modules::XTModule
             if (p == SHAPE)
             {
                 pq->customRandomize = [this](auto pq) {
+                    auto rcs = params[RANDOMIZATION_CHANGES_SHAPES].getValue() > 0.5;
+                    if (!rcs)
+                        return;
+
                     auto *par = &lfostorage->rate + paramOffsetByID[pq->paramId];
                     auto cv = Parameter::intUnscaledFromFloat(pq->getValue(), par->val_max.i,
                                                               par->val_min.i);
@@ -235,6 +240,7 @@ struct LFO : modules::XTModule
         configParamNoRand(BROADCAST_TRIG_TO_POLY, FOLLOW_TRIG_POLY, TAKE_CHANNEL_0,
                           FOLLOW_TRIG_POLY, "Trigger Broadcast Mode");
         configOnOff(UNTRIGGERED_ENV_NONZERO, 0, "Without connected trigger, output Envelope?");
+        configOnOff(RANDOMIZATION_CHANGES_SHAPES, 1, "Randomize changes curve shape outside Step?")->randomizeEnabled = false;
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
