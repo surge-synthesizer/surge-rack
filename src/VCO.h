@@ -131,6 +131,7 @@ template <int oscType> struct VCO : public modules::XTModule
         modAssist;
     int wavetableCount{0};
 
+    int spawnOscType{oscType};
     VCO() : XTModule(), halfbandIN(6, true)
     {
         std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
@@ -152,7 +153,11 @@ template <int oscType> struct VCO : public modules::XTModule
 
         if constexpr (VCOConfig<oscType>::requiresWavetables())
         {
-            if (!oscstorage->wt.everBuilt)
+            if (wavetableCount == 0)
+            {
+                spawnOscType = ot_sine;
+            }
+            else if (!oscstorage->wt.everBuilt)
             {
                 oscstorage->wt.queue_id = 0;
                 oscstorage_display->wt.queue_id = 0;
@@ -164,14 +169,14 @@ template <int oscType> struct VCO : public modules::XTModule
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         copyScenedataSubset(0, storage_id_start, storage_id_end);
-        auto config_osc = spawn_osc(oscType, storage.get(), oscstorage,
+        auto config_osc = spawn_osc(spawnOscType, storage.get(), oscstorage,
                                     storage->getPatch().scenedata[0], oscdisplaybuffer[0]);
         config_osc->init_ctrltypes();
         config_osc->init_default_values();
         config_osc->init_extra_config();
         config_osc->init(72.0);
 
-        auto display_osc = spawn_osc(oscType, storage.get(), oscstorage_display,
+        auto display_osc = spawn_osc(spawnOscType, storage.get(), oscstorage_display,
                                      storage->getPatch().scenedata[0], oscdisplaybuffer[1]);
         display_osc->init_ctrltypes();
         display_osc->init_default_values();
@@ -487,7 +492,7 @@ template <int oscType> struct VCO : public modules::XTModule
                     (params[OCTAVE_SHIFT].getValue() + inputs[PITCH_CV].getVoltage(c)) * 12;
                 if (!surge_osc[c])
                 {
-                    surge_osc[c] = spawn_osc(oscType, storage.get(), oscstorage,
+                    surge_osc[c] = spawn_osc(spawnOscType, storage.get(), oscstorage,
                                              storage->getPatch().scenedata[0], oscbuffer[c]);
 
                     surge_osc[c]->init(pitch0);
@@ -705,7 +710,7 @@ template <int oscType> struct VCO : public modules::XTModule
     json_t *makeModuleSpecificJson() override
     {
         auto vco = json_object();
-        if (VCOConfig<oscType>::requiresWavetables())
+        if (VCOConfig<oscType>::requiresWavetables() && wavetableCount > 0)
         {
             auto *wtT = json_object();
             json_object_set(wtT, "draw3D", json_boolean(draw3DWavetable));
