@@ -59,16 +59,15 @@ target_include_directories (${PROJECT_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RA
 
 target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
 
-add_library (plugin SHARED src/SurgeXT.cpp)
-target_compile_definitions(plugin PRIVATE SURGE_COMPILE_BLOCK_SIZE=8)
-target_include_directories (plugin PRIVATE surge/src/common surge/src/common/dsp src/common/dsp/vembertech
-  surge/libs/sst/sst-filters/include surge/libs/sst/sst-cpputils/include surge/libs/sst/sst-plugininfra/include
-  surge/libs/sst/sst-waveshapers/include surge/libs/tuning-library/include
-  surge/libs/sst/sst-plugininfra/libs/tinyxml/include
-  ${CMAKE_CURRENT_BINARY_DIR}/libs/sst/sst-plugininfra/libs/filesystem/include
-  ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
-
-target_link_libraries (plugin PRIVATE ${PROJECT_NAME})
+#add_library (plugin SHARED src/SurgeXT.cpp)
+#target_compile_definitions(plugin PRIVATE SURGE_COMPILE_BLOCK_SIZE=8)
+#target_include_directories (plugin PRIVATE surge/src/common surge/src/common/dsp src/common/dsp/vembertech
+#  surge/libs/sst/sst-filters/include surge/libs/sst/sst-cpputils/include surge/libs/sst/sst-plugininfra/include
+#  surge/libs/sst/sst-waveshapers/include surge/libs/tuning-library/include
+#  surge/libs/sst/sst-plugininfra/libs/tinyxml/include
+#  ${CMAKE_CURRENT_BINARY_DIR}/libs/sst/sst-plugininfra/libs/filesystem/include
+#  ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
+#target_link_libraries (plugin PRIVATE ${PROJECT_NAME})
 
 function (_get_all_cmake_targets out_var current_dir)
     get_property(targets DIRECTORY ${current_dir} PROPERTY BUILDSYSTEM_TARGETS)

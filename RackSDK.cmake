@@ -3,7 +3,7 @@ message("RackSDK.cmake loaded!")
 # default flags from CMake
 #  -O3 -DNDEBUG -fPIC
 
-add_definitions(-funsafe-math-optimizations -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-parameter)
+add_definitions(-funsafe-math-optimizations -fno-omit-frame-pointer -fPIC -Wall -Wextra -Wno-unused-parameter)
 
 message (STATUS "CMAKE_SYSTEM_NAME - ${CMAKE_SYSTEM_NAME}")
 
