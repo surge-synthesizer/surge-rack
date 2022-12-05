@@ -134,10 +134,7 @@ struct QuadLFO : modules::XTModule
 
     std::array<std::array<std::unique_ptr<dsp::modulators::SimpleLFO>, MAX_POLY>, n_lfos>
         processors;
-    void setupSurge()
-    {
-        setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
-    }
+    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false); }
 
     int polyChannelCount() { return nChan; }
     static int paramModulatedBy(int modIndex)

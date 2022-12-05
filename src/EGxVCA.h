@@ -161,7 +161,7 @@ struct EGxVCA : modules::XTModule
     std::array<rack::dsp::SchmittTrigger, MAX_POLY> triggers;
     void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
+        setupSurgeCommon(NUM_PARAMS, false);
 
         adsr = &(storage->getPatch().scene[0].adsr[0]);
         adsr_display = &(storage->getPatch().scene[0].adsr[1]);
