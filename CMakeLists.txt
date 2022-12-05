@@ -38,7 +38,6 @@ add_subdirectory (surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
-set (NO_WARN_CAST_FUNCTION_TYPE -Wno-cast-function-type)
 set (NO_WARN_MAYBE_UNINITIALIZED -Wno-maybe-uninitialized)
 set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-but-set-variable)
 set (NO_WARN_STRINGOP_TRUNCATION -Wno-stringop-truncation)
@@ -50,7 +49,6 @@ set (NO_WARN_MISMATCHED_TAGS "")
 set (NO_WARN_SELF_ASSIGN "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set (NO_WARN_CAST_FUNCTION_TYPE -Wno-bad-function-cast)
   set (NO_WARN_MAYBE_UNINITIALIZED -Wno-uninitialized)
   set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-const-variable)
   set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
@@ -65,8 +63,7 @@ endif ()
 target_compile_options (juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy ${NO_WARN_MAYBE_UNINITIALIZED})
 target_compile_options (eurorack PRIVATE -Wno-unused-local-typedefs ${NO_WARN_INFINITE_RECURSION})
 target_compile_options (oddsound-mts PRIVATE -Wno-char-subscripts)
-target_compile_options (sqlite PRIVATE -Wno-implicit-fallthrough -Wno-unused-value -Wno-misleading-indentation
-  ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_CAST_FUNCTION_TYPE})
+target_compile_options (sqlite PRIVATE -Wno-error)
 target_compile_options (sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options (sst-waveshapers INTERFACE -Wno-unused-variable)
 target_compile_options (tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
