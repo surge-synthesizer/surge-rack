@@ -19,15 +19,15 @@
  * ToDos
  *
  * Module
- *   - Triggers and attacks
+ *   - Triggers and attacks and Shapes
+ *   - Polyphony generally. Probably want both triggers and manual control
  *   - Code up the Modes
  *       - Independent
  *       - Temposync with C/M
  *       - Temposync with Phase
  *       - Interwoven / Spread
- *    - Polyphony generally. Probably want both triggers and manual control
- *   - Config Param and Units
- *   - Some performance.
+ *    - Config Param and Units
+ *    - Some performance.
  *       - I bet we can do a better job with the simd-ized process
  *         for instance if we hand indeices and arrays to the process
  *         methods
@@ -35,9 +35,7 @@
  *       - That sort of stuff
  * UI
  *   - Dynamic Laaels based on Mode
- *   - UI for modes
- *   - UI for each LFO with a shape selector/preview, a uni/bi, and
- *     a tempo display
+ *   - replace the t/k with the contents
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
@@ -70,7 +68,8 @@ struct QuadLFO : modules::XTModule
         SHAPE_0 = DEFORM_0 + n_lfos,
         BIPOLAR_0 = SHAPE_0 + n_lfos,
         MOD_PARAM_0 = BIPOLAR_0 + n_lfos,
-        NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
+        INTERPLAY_MODE = MOD_PARAM_0 + n_mod_params * n_mod_inputs,
+        NUM_PARAMS
     };
 
     enum InputIds
@@ -116,6 +115,9 @@ struct QuadLFO : modules::XTModule
             configParam(MOD_PARAM_0 + i, -1, 1, 0);
         for (int i = 0; i < n_mod_inputs; ++i)
             configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
+
+        configSwitch(INTERPLAY_MODE, 0, 3, 0, "LFO Inter-operation Mode",
+                     {"Independent LFOs", "Quad Phase", "Ratio Rates", "Spread Rate"});
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
