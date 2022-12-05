@@ -39,17 +39,42 @@ add_subdirectory (surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
-target_compile_options (juce_dsp_rack_sub PRIVATE -Wno-maybe-uninitialized)
-target_compile_options (eurorack PRIVATE -Wno-unused-local-typedefs)
+set (NO_WARN_CAST_FUNCTION_TYPE -Wno-cast-function-type)
+set (NO_WARN_MAYBE_UNINITIALIZED -Wno-maybe-uninitialized)
+set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-but-set-variable)
+set (NO_WARN_STRINGOP_TRUNCATION -Wno-stringop-truncation)
+set (NO_WARN_CLASS_MEMACCESS -Wno-class-memaccess)
+set (NO_WARN_INFINITE_RECURSION "")
+set (NO_WARN_UNUSED_PRIVATE_FIELD "")
+set (NO_WARN_UNUSED_LAMBDA_CAPTURE "")
+set (NO_WARN_MISMATCHED_TAGS "")
+set (NO_WARN_SELF_ASSIGN "")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set (NO_WARN_CAST_FUNCTION_TYPE -Wno-bad-function-cast)
+  set (NO_WARN_MAYBE_UNINITIALIZED -Wno-uninitialized)
+  set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-const-variable)
+  set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
+  set (NO_WARN_CLASS_MEMACCESS -Wno-class-varargs)
+  set (NO_WARN_INFINITE_RECURSION -Wno-infinite-recursion)
+  set (NO_WARN_UNUSED_PRIVATE_FIELD -Wno-unused-private-field)
+  set (NO_WARN_UNUSED_LAMBDA_CAPTURE -Wno-unused-lambda-capture)
+  set (NO_WARN_MISMATCHED_TAGS -Wno-mismatched-tags)
+  set (NO_WARN_SELF_ASSIGN -Wno-self-assign)
+endif ()
+
+target_compile_options (juce_dsp_rack_sub PRIVATE ${NO_WARN_MAYBE_UNINITIALIZED})
+target_compile_options (eurorack PRIVATE -Wno-unused-local-typedefs ${NO_WARN_INFINITE_RECURSION})
 target_compile_options (oddsound-mts PRIVATE -Wno-char-subscripts)
-target_compile_options (sqlite PRIVATE -Wno-implicit-fallthrough -Wno-cast-function-type -Wno-misleading-indentation)
+target_compile_options (sqlite PRIVATE -Wno-implicit-fallthrough ${NO_WARN_CAST_FUNCTION_TYPE} -Wno-misleading-indentation)
 target_compile_options (sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options (sst-waveshapers INTERFACE -Wno-unused-variable)
 target_compile_options (tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
-target_compile_options (tuning-library INTERFACE -Wno-maybe-uninitialized)
-target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value
-  -Wno-implicit-fallthrough -Wno-reorder -Wno-unused-but-set-variable -Wno-char-subscripts -Wno-stringop-truncation
-  -Wno-unused-local-typedefs -Wno-class-memaccess -Wno-range-loop-construct -Wno-nonnull -Wno-uninitialized)
+target_compile_options (tuning-library INTERFACE ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_UNUSED_PRIVATE_FIELD})
+target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value -Wno-reorder
+  -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct -Wno-nonnull
+  ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
+  ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})
 
 file (GLOB RACK_SOURCES src/*.cpp)
 list (REMOVE_ITEM RACK_SOURCES src/SurgeXT.cpp)
