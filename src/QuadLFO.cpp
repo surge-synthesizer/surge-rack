@@ -48,6 +48,79 @@ struct QuadLFOWidget : public widgets::XTModuleWidget
     }
 };
 
+struct QuadWavePicker : rack::Widget, style::StyleParticipant
+{
+    QuadLFO *module{nullptr};
+    int idx{0};
+    static QuadWavePicker *create(const rack::Vec &pos, const rack::Vec &size, QuadLFO *module,
+                                  int i)
+    {
+        auto res = new QuadWavePicker;
+        res->box.size = size;
+        res->box.pos = pos;
+        res->module = module;
+        res->idx = i;
+
+        return res;
+    }
+
+    float up{rack::mm2px(4)};
+
+    void draw(const DrawArgs &args) override
+    {
+        if (!module)
+            return;
+
+        // FIXME - hack to quick merge
+        auto vg = args.vg;
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        auto uni = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx]->getValue() < 0.5;
+        auto shp = module->paramQuantities[QuadLFO::SHAPE_0 + idx]->getDisplayValueString();
+
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 7.3 * 96 / 72);
+        nvgText(vg, up * 0.5, up * 0.5, uni ? "0+" : "+/-", nullptr);
+        nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, shp.c_str(), nullptr);
+    }
+
+    void onButton(const ButtonEvent &e) override
+    {
+        if (module && e.action == GLFW_PRESS)
+        {
+            if (e.pos.x < up && e.pos.y < up)
+            {
+                auto pq = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx];
+                pq->setValue(!pq->getValue());
+            }
+            else
+            {
+                auto pq = module->paramQuantities[QuadLFO::SHAPE_0 + idx];
+                auto *sq = dynamic_cast<rack::engine::SwitchQuantity *>(pq);
+
+                if (sq)
+                {
+
+                    auto menu = rack::createMenu();
+                    menu->addChild(rack::createMenuLabel("Shape"));
+                    menu->addChild(new rack::ui::MenuSeparator);
+                    float minValue = pq->getMinValue();
+                    int index = (int)std::floor(pq->getValue() - minValue);
+                    int numStates = sq->labels.size();
+                    for (int i = 0; i < numStates; i++)
+                    {
+                        std::string label = sq->labels[i];
+                        menu->addChild(rack::createMenuItem(label, CHECKMARK(index == i),
+                                                            [pq, i]() { pq->setValue(i); }));
+                    }
+                }
+            }
+            e.consume(this);
+        }
+    }
+    void onStyleChanged() override {}
+};
 QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *module)
 {
     setModule(module);
@@ -92,6 +165,36 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
             engine_t::layoutItem(this, lay, "QuadLFO");
         }
     }
+
+    {
+        auto presetHeight = 5.5;
+        auto labelHeight = 5.0;
+        auto topx = widgets::LCDBackground::posx;
+        auto topy = widgets::LCDBackground::posy;
+        auto width = box.size.x - 2 * widgets::LCDBackground::posx;
+        auto height = rack::mm2px(row3 - rack::mm2px(2.5)) - widgets::LCDBackground::posy;
+        auto preset = widgets::DebugRect::create(rack::Vec(topx, topy),
+                                                 rack::Vec(width, rack::mm2px(presetHeight)));
+        preset->fill = nvgRGBA(255, 0, 255, 120);
+        addChild(preset);
+
+        topy += rack::mm2px(presetHeight);
+        height -= rack::mm2px(presetHeight);
+        auto qw = width / M::n_lfos;
+        for (int i = 0; i < M::n_lfos; ++i)
+        {
+            auto bh = height - rack::mm2px(labelHeight);
+            auto ql = QuadWavePicker::create(rack::Vec(topx + qw * i, topy), rack::Vec(qw, bh),
+                                             module, i);
+            addChild(ql);
+
+            auto ll = widgets::DebugRect::create(rack::Vec(topx + qw * i, topy + bh),
+                                                 rack::Vec(qw, rack::mm2px(labelHeight)));
+            ll->fill = nvgRGBA(255, 0, 120, 120);
+            addChild(ll);
+        }
+    }
+
     int kc = 0;
     for (int i = M::OUTPUT_0; i < M::OUTPUT_0 + M::n_lfos; ++i)
     {

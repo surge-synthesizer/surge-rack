@@ -69,6 +69,7 @@ struct BufferedDrawFunctionWidgetOnLayer : BufferedDrawFunctionWidget
 
 struct DebugRect : rack::TransparentWidget
 {
+    NVGcolor fill{nvgRGBA(255, 255, 0, 40)}, stroke{nvgRGB(255, 0, 0)};
     static DebugRect *create(const rack::Vec &pos, const rack::Vec &size)
     {
         auto r = new DebugRect();
@@ -79,8 +80,8 @@ struct DebugRect : rack::TransparentWidget
     void draw(const DrawArgs &args) override
     {
         nvgBeginPath(args.vg);
-        nvgStrokeColor(args.vg, nvgRGB(255, 0, 0));
-        nvgFillColor(args.vg, nvgRGBA(255, 255, 0, 40));
+        nvgStrokeColor(args.vg, stroke);
+        nvgFillColor(args.vg, fill);
         nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
         nvgFill(args.vg);
         nvgStroke(args.vg);
@@ -2480,4 +2481,3 @@ struct OutputDecoration : rack::Widget, style::StyleParticipant
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H
-

@@ -181,10 +181,7 @@ struct QuadAD : modules::XTModule
         snapCalculatedNames();
     }
 
-    void setupSurge()
-    {
-        setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
-    }
+    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false); }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
