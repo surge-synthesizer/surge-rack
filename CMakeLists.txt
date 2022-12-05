@@ -39,7 +39,6 @@ add_subdirectory (surge)
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
 set (NO_WARN_MAYBE_UNINITIALIZED -Wno-maybe-uninitialized)
-set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-but-set-variable)
 set (NO_WARN_STRINGOP_TRUNCATION -Wno-stringop-truncation)
 set (NO_WARN_CLASS_MEMACCESS -Wno-class-memaccess)
 set (NO_WARN_INFINITE_RECURSION "")
@@ -50,7 +49,6 @@ set (NO_WARN_SELF_ASSIGN "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set (NO_WARN_MAYBE_UNINITIALIZED -Wno-uninitialized)
-  set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-const-variable)
   set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
   set (NO_WARN_CLASS_MEMACCESS -Wno-class-varargs)
   set (NO_WARN_INFINITE_RECURSION -Wno-infinite-recursion)
@@ -70,7 +68,7 @@ target_compile_options (tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-comp
 target_compile_options (tuning-library INTERFACE ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_UNUSED_PRIVATE_FIELD})
 target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value -Wno-uninitialized
   -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct -Wno-nonnull -Wno-reorder
-  ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
+  -Wno-unused-but-set-variable ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
   ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})
 
 file (GLOB RACK_SOURCES src/*.cpp)
