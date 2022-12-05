@@ -19,7 +19,7 @@ endif
 endif
 
 $(libsurge_rack):
-	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist $(EXTRA_CMAKE)
+	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(SURGE_BLD)/dist $(EXTRA_CMAKE)
 	cmake --build $(SURGE_BLD) -- -j
 	cmake --install $(SURGE_BLD)
 
@@ -55,8 +55,8 @@ endif
 ifdef ARCH_WIN
 FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
 LDFLAGS += -L$(SURGE_BLD)/dist/lib/static \
-           -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra -lfmt -lsqlite \
-           -loddsound-mts -leurorack -lairwindows \
+           -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra \
+           -lfmt -lsqlite -loddsound-mts -leurorack -lairwindows \
            -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
 endif
 
