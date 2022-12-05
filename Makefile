@@ -2,12 +2,12 @@ RACK_DIR ?= ../..
 include $(RACK_DIR)/arch.mk
 
 SURGE_BLD=dep/surge-build
-libsurge := $(SURGE_BLD)/libsurge-rack.a
+libsurge_rack := $(SURGE_BLD)/libsurge-rack.a
 
-OBJECTS += $(libsurge)
+OBJECTS += $(libsurge_rack)
 
 # Trigger the static library to be built when running `make dep`
-DEPS += $(libsurge)
+DEPS += $(libsurge_rack)
 
 EXTRA_CMAKE :=
 ifdef ARCH_MAC
@@ -18,22 +18,10 @@ else
 endif
 endif
 
-$(libsurge):
-	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release $(EXTRA_CMAKE)
-	cmake --build $(SURGE_BLD)
-
-FLAGS += -Isurge/src/common \
-	-Isurge/src/common/dsp \
-	-Isurge/src/common/dsp/vembertech \
-	-Isurge/libs/sst/sst-filters/include \
-	-Isurge/libs/sst/sst-cpputils/include \
-	-Isurge/libs/sst/sst-plugininfra/include \
-	-Isurge/libs/sst/sst-waveshapers/include \
-	-Isurge/libs/sst/sst-plugininfra/libs/tinyxml/include \
-	-Isurge/libs/tuning-library/include \
-	-I$(SURGE_BLD)/libs/sst/sst-plugininfra/libs/filesystem/include \
-	-DRELEASE=1 \
-	-DSURGE_COMPILE_BLOCK_SIZE=8
+$(libsurge_rack):
+	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist $(EXTRA_CMAKE)
+	cmake --build $(SURGE_BLD) -- -j
+	cmake --install $(SURGE_BLD)
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
 # toolchain rack uses requires the install (the surge toolchain implicitly includes it). Rather than patch
@@ -66,7 +54,10 @@ endif
 
 ifdef ARCH_WIN
 FLAGS += -std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden
-LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
+LDFLAGS += -L$(SURGE_BLD)/dist/lib/static \
+           -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra -lfmt -lsqlite \
+           -loddsound-mts -leurorack -lairwindows \
+           -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
 endif
 
 ifdef ARCH_LIN
@@ -109,7 +100,6 @@ ifdef ARCH_LIN
     CMAKE += -DCMAKE_SYSTEM_NAME=Linux
 endif
 
-
 # Add Surge Specific make flags based on architecture
 ifdef ARCH_MAC
 # Obvioulsy get rid of this one day
@@ -144,12 +134,6 @@ ifdef ARCH_WIN
 		 -Wno-int-in-bool-context
 	FLAGS += -DWINDOWS
 endif
-
-FLAGS += -DSURGE_RACK_BASE_VERSION=$(SURGE_RACK_BASE_VERSION)
-FLAGS += -DSURGE_RACK_PLUG_VERSION=$(SURGE_RACK_PLUG_VERSION)
-FLAGS += -DSURGE_RACK_SURGE_VERSION=$(SURGE_RACK_SURGE_VERSION)
-
-CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/745
 

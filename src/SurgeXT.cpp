@@ -14,7 +14,6 @@
  */
 
 #include "SurgeXT.h"
-#include "SurgeStorage.h"
 #include "XTStyle.h"
 
 namespace logger = rack::logger;
