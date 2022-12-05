@@ -26,7 +26,6 @@ message (STATUS "SURGE_RACK_BASE_VERSION ${SURGE_RACK_BASE_VERSION}")
 message (STATUS "SURGE_RACK_PLUG_VERSION ${SURGE_RACK_PLUG_VERSION}")
 message (STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 
-
 set (SURGE_SKIP_JUCE_FOR_RACK TRUE CACHE BOOL "skip surge Juce build")
 set (SURGE_SKIP_LUA TRUE CACHE BOOL "skip surge Lua build")
 set (SURGE_SKIP_AIRWINDOWS TRUE CACHE BOOL "skip surge airwindows build")
@@ -63,7 +62,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set (NO_WARN_SELF_ASSIGN -Wno-self-assign)
 endif ()
 
-target_compile_options (juce_dsp_rack_sub PRIVATE ${NO_WARN_MAYBE_UNINITIALIZED})
+target_compile_options (juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy ${NO_WARN_MAYBE_UNINITIALIZED})
 target_compile_options (eurorack PRIVATE -Wno-unused-local-typedefs ${NO_WARN_INFINITE_RECURSION})
 target_compile_options (oddsound-mts PRIVATE -Wno-char-subscripts)
 target_compile_options (sqlite PRIVATE -Wno-implicit-fallthrough ${NO_WARN_CAST_FUNCTION_TYPE} -Wno-misleading-indentation)
@@ -71,8 +70,8 @@ target_compile_options (sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options (sst-waveshapers INTERFACE -Wno-unused-variable)
 target_compile_options (tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
 target_compile_options (tuning-library INTERFACE ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_UNUSED_PRIVATE_FIELD})
-target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value -Wno-reorder
-  -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct -Wno-nonnull
+target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value -Wno-uninitialized
+  -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct -Wno-nonnull -Wno-reorder
   ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
   ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})
 
