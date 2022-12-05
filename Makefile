@@ -20,7 +20,7 @@ endif
 
 $(libsurge_rack):
 	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(SURGE_BLD)/dist $(EXTRA_CMAKE)
-	cmake --build $(SURGE_BLD) -- -j
+	cmake --build $(SURGE_BLD)
 	cmake --install $(SURGE_BLD)
 
 # to understand that -include limits, btw: Surge 1.7 doesn't include it but uses numeric_limits. The windows
