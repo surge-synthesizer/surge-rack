@@ -20,6 +20,10 @@
 #include "dsp/DSPExternalAdapterUtils.h"
 #include "LayoutEngine.h"
 
+#ifndef __EMSCRIPTEN__
+#define SURGE_VCF_WITH_THREADED_ANALYSER 1
+#endif
+
 namespace sst::surgext_rack::vcf::ui
 {
 struct VCFWidget : widgets::XTModuleWidget
@@ -358,6 +362,7 @@ struct FilterPlotParameters
     float freqSmoothOctaves = 1.0f / 12.0f;
 };
 
+#if SURGE_VCF_WITH_THREADED_ANALYSER
 struct FilterAnalzer
 {
     FilterAnalzer() { analysisThread = std::make_unique<std::thread>(callRunThread, this); }
@@ -433,10 +438,13 @@ struct FilterAnalzer
     std::unique_ptr<std::thread> analysisThread;
     bool hasWork{false}, continueWaiting{true};
 };
+#endif
 
 struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipant
 {
+#if SURGE_VCF_WITH_THREADED_ANALYSER
     std::unique_ptr<FilterAnalzer> analyzer;
+#endif
     VCF *module{nullptr};
     widgets::BufferedDrawFunctionWidget *bdw{nullptr};
     widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
@@ -458,8 +466,10 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
 
     void setup()
     {
+#if SURGE_VCF_WITH_THREADED_ANALYSER
         if (module)
             analyzer = std::make_unique<FilterAnalzer>();
+#endif
         bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
                                                       [this](auto vg) { this->drawUnder(vg); });
         bdwPlot = new widgets::BufferedDrawFunctionWidgetOnLayer(
@@ -472,6 +482,7 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
     float lastFreq{-1}, lastReso{-1}, lastTy{-1}, lastSub{-1}, lastGn{-1};
 
     std::pair<std::vector<float>, std::vector<float>> responseCurve;
+#if SURGE_VCF_WITH_THREADED_ANALYSER
     void step() override
     {
         if (!module)
@@ -521,6 +532,7 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
             analyzer->request(ty, sty, fr * 12 - 9, re, gn);
         }
     }
+#endif
     static constexpr float lowFreq = 10.f;
     static constexpr float highFreq = 18000.f;
     static constexpr float dbMin = -42.f;
