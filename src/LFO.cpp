@@ -133,7 +133,12 @@ struct LFOWidget : widgets::XTModuleWidget
                 auto v = m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->getValue() > 0.5;
                 m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->setValue(v ? 0 : 1);
             }));
-        menu->addChild(new rack::MenuSeparator);
+        menu->addChild(rack::createMenuItem(
+            "Rack Randomization Changes Shape",
+            CHECKMARK(m->params[LFO::RANDOMIZATION_CHANGES_SHAPES].getValue() > 0.5), [m]() {
+                auto v = m->paramQuantities[LFO::RANDOMIZATION_CHANGES_SHAPES]->getValue() > 0.5;
+                m->paramQuantities[LFO::RANDOMIZATION_CHANGES_SHAPES]->setValue(v ? 0 : 1);
+            }));
 
         addClockMenu<LFO>(menu);
 

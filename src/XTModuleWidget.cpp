@@ -216,11 +216,13 @@ void XTModuleWidget::appendContextMenu(rack::ui::Menu *menu)
     auto xtm = static_cast<modules::XTModule *>(module);
     appendModuleSpecificMenu(menu);
     menu->addChild(new rack::ui::MenuSeparator);
+#ifndef USING_CARDINAL_NOT_RACK
     auto globalItem =
         rack::createMenuItem("Use Global Style", CHECKMARK(module && xtm->isCoupledToGlobalStyle),
                              [this]() { toggleCoupleToGlobalStyle(); });
     menu->addChild(globalItem);
     menu->addChild(rack::createSubmenuItem("Skin", "", [this](auto *x) { skinMenuFor(x, this); }));
+#endif
     menu->addChild(
         rack::createSubmenuItem("Colors", "", [this](auto *x) { colorsMenuFor(x, this); }));
     menu->addChild(rack::createSubmenuItem("Value Displays", "",

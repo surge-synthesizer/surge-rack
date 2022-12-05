@@ -38,7 +38,11 @@ void XTStyle::initialize()
     }
     if (!fd)
     {
+#ifdef USING_CARDINAL_NOT_RACK
+        setGlobalStyle(rack::settings::darkMode ? DARK : LIGHT);
+#else
         setGlobalStyle(MID);
+#endif
         setGlobalDisplayRegionColor(ORANGE);
         setGlobalModulationColor(BLUE);
         setGlobalControlValueColor(ORANGE);

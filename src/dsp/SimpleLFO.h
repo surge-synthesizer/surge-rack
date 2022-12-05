@@ -17,16 +17,39 @@
 #define SURGERACK_SIMPLELFO_H
 
 #include "SurgeStorage.h"
+#include "DSPUtils.h"
 
 namespace sst::surgext_rack::dsp::modulators
 {
 struct SimpleLFO
 {
     SurgeStorage *storage;
+    std::default_random_engine gen;
+    std::uniform_real_distribution<float> distro;
+    std::function<float()> urng;
+
+    float rngState[2]{0, 0};
+    float rngHistory[4]{0, 0, 0, 0};
+
+    float rngCurrent{0};
+
     SimpleLFO(SurgeStorage *s) : storage(s)
     {
+        gen = std::default_random_engine();
+        gen.seed(storage->rand_u32());
+        distro = std::uniform_real_distribution<float>(-1.f, 1.f);
+        urng = [this]() -> float { return distro(gen); };
+
         for (int i = 0; i < BLOCK_SIZE; ++i)
             outputCache[i] = 0;
+
+        rngState[0] = urng();
+        rngState[1] = urng();
+        for (int i = 0; i < 4; ++i)
+        {
+            rngCurrent = correlated_noise_o2mk2_suppliedrng(rngState[0], rngState[1], 0, urng);
+            rngHistory[3 - i] = rngCurrent;
+        }
     }
 
     enum Shape
@@ -54,7 +77,6 @@ struct SimpleLFO
 
     inline void process(const float r, const float d, const int lshape)
     {
-
         if (current == BLOCK_SIZE)
         {
             float target{0.f};
@@ -63,10 +85,51 @@ struct SimpleLFO
             phase += frate;
 
             if (phase > 1)
+            {
+                if (lshape == SH_NOISE || lshape == SMOOTH_NOISE)
+                {
+                    rngCurrent =
+                        correlated_noise_o2mk2_suppliedrng(rngState[0], rngState[1], d, urng);
+
+                    rngHistory[3] = rngHistory[2];
+                    rngHistory[2] = rngHistory[1];
+                    rngHistory[1] = rngHistory[0];
+
+                    rngHistory[0] = rngCurrent;
+                }
                 phase -= 1;
-
-            target = bend1(std::sin(2.0 * M_PI * phase), d);
-
+            }
+            auto shp = (Shape)(lshape);
+            switch (shp)
+            {
+            case SINE:
+                target = bend1(std::sin(2.0 * M_PI * phase), d);
+                break;
+            case RAMP:
+                target = bend1(2 * phase - 1, d);
+                break;
+            case TRI:
+            {
+                auto tphase = (phase + 0.25);
+                if (tphase > 1)
+                    tphase -= 1;
+                target = bend1(-1.f + 4.f * ((tphase > 0.5) ? (1 - tphase) : tphase), d);
+                break;
+            }
+            case PULSE:
+                target = (phase < (d + 1) * 0.5) ? 1 : -1;
+                break;
+            case SMOOTH_NOISE:
+                target =
+                    cubic_ipol(rngHistory[3], rngHistory[2], rngHistory[1], rngHistory[0], phase);
+                break;
+            case SH_NOISE:
+                target = rngCurrent;
+                break;
+            default:
+                target = 0.1;
+                break;
+            }
             float dO = (target - outBlock0) * BLOCK_SIZE_INV;
             for (int i = 0; i < BLOCK_SIZE; ++i)
             {
