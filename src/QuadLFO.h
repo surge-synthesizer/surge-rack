@@ -19,7 +19,7 @@
  * ToDos
  *
  * Module
- *   - Code up the LFOs
+ *   - Triggers and attacks
  *   - Code up the Modes
  *       - Independent
  *       - Temposync with C/M
@@ -27,6 +27,12 @@
  *       - Interwoven / Spread
  *    - Polyphony generally. Probably want both triggers and manual control
  *   - Config Param and Units
+ *   - Some performance.
+ *       - I bet we can do a better job with the simd-ized process
+ *         for instance if we hand indeices and arrays to the process
+ *         methods
+ *       - Cache the offsets for uni / bipolar and do it SSE-wise
+ *       - That sort of stuff
  * UI
  *   - Dynamic Laaels based on Mode
  *   - UI for modes
@@ -100,7 +106,7 @@ struct QuadLFO : modules::XTModule
 
         for (int i = 0; i < n_lfos; ++i)
         {
-            configParam(RATE_0 + i, -3, 4, 0);
+            configParam(RATE_0 + i, -3, 6, 0);
             configParam(DEFORM_0 + i, -1, 1, 0);
             configSwitch(SHAPE_0 + i, 0, 5, 0, "Shape",
                          {"Sin", "Ramp", "Tri", "Pulse", "Rand", "S&H"});
@@ -202,11 +208,16 @@ struct QuadLFO : modules::XTModule
         for (int i = 0; i < n_lfos; ++i)
         {
             outputs[OUTPUT_0 + i].setChannels(nChan);
+            auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
+            auto off{0}, mul{5};
+            if (uni)
+                off = 1;
             for (int c = 0; c < nChan; ++c)
             {
                 processors[i][c]->process(modAssist.values[RATE_0 + i][c],
-                                          modAssist.values[DEFORM_0 + i][c], 0);
-                outputs[OUTPUT_0 + i].setVoltage(processors[i][c]->output * 5);
+                                          modAssist.values[DEFORM_0 + i][c],
+                                          params[SHAPE_0 + i].getValue());
+                outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul);
             }
         }
         processCount++;
