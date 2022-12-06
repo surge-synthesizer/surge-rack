@@ -94,7 +94,7 @@ target_link_libraries (${LIB_NAME} PRIVATE Rack)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
-  target_compile_options(${LIB_NAME} PRIVATE "-undefined dynamic_lookup")
+  set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif ()
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
