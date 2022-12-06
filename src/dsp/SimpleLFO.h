@@ -75,6 +75,44 @@ struct SimpleLFO
         return x;
     }
 
+    inline void attackForDisplay(const int lshape)
+    {
+        attack(lshape);
+
+        gen = std::default_random_engine();
+        gen.seed(525600 + 8675309);
+        distro = std::uniform_real_distribution<float>(-1.f, 1.f);
+        urng = [this]() -> float { return distro(gen); };
+
+        for (int i = 0; i < BLOCK_SIZE; ++i)
+            outputCache[i] = 0;
+
+        rngState[0] = urng();
+        rngState[1] = urng();
+        for (int i = 0; i < 4; ++i)
+        {
+            rngCurrent = correlated_noise_o2mk2_suppliedrng(rngState[0], rngState[1], 0, urng);
+            rngHistory[3 - i] = rngCurrent;
+        }
+    }
+    // FIXME - make this work for proper attacks
+    inline void attack(const int lshape)
+    {
+        phase = 0;
+        current = BLOCK_SIZE;
+        for (int i = 0; i < BLOCK_SIZE; ++i)
+            outputCache[i] = 0;
+        output = 0;
+        outBlock0 = 0;
+    }
+
+    // Really just used from the UI thread
+    inline void processResettingBlock(const float f, const float d, const int lshape)
+    {
+        current = BLOCK_SIZE;
+        process(f, d, lshape);
+    }
+
     inline void process(const float r, const float d, const int lshape)
     {
         if (current == BLOCK_SIZE)
