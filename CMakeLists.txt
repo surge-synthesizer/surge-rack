@@ -75,8 +75,8 @@ target_compile_options (tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-comp
 target_compile_options (tuning-library INTERFACE ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_UNUSED_PRIVATE_FIELD})
 target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value -Wno-uninitialized
   -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct -Wno-nonnull -Wno-reorder
-  ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
-  ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})
+  -Wno-unused-but-set-variable ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
+  ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})  
 
 file (GLOB RACK_SOURCES src/*.cpp)
 list (REMOVE_ITEM RACK_SOURCES src/SurgeXT.cpp)
