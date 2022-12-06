@@ -86,6 +86,7 @@ target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
+  target_link_libraries (${LIB_NAME} PRIVATE ${PROJECT_NAME})
 endif ()
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
