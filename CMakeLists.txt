@@ -49,7 +49,8 @@ set (NO_WARN_MISMATCHED_TAGS "")
 set (NO_WARN_SELF_ASSIGN "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-const-variable")
+  #set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-const-variable")-Wunused-but-set-variable
+  set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-but-set-variable")
   if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-but-set-variable")
   endif ()
