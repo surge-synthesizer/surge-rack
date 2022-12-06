@@ -1,9 +1,9 @@
-#cmake_minimum_required (VERSION 3.20)
 cmake_minimum_required (VERSION 3.16)
-project (surge-rack VERSION 1.0 LANGUAGES C CXX)
+project (surge-rack LANGUAGES C CXX)
 include (RackSDK.cmake)
 set (CMAKE_CXX_STANDARD 17)
 
+set (PLUGIN_NAME SurgeXTRack)
 ## check for Windows non gcc env in RackSDK.cmake!!!
 
 if ("${RACK_SDK_DIR}" STREQUAL "")
@@ -78,39 +78,43 @@ add_library (${PROJECT_NAME} STATIC ${RACK_SOURCES})
 target_include_directories (${PROJECT_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
 target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
 
-install(TARGETS surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows
+# Do not change the LIB_NAME!
+set(LIB_NAME plugin)
+add_library (${LIB_NAME} MODULE src/SurgeXT.cpp)
+target_include_directories (${LIB_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
+target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
+endif ()
+set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
+  target_link_libraries(${LIB_NAME} PRIVATE Threads::Threads)
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
+  target_link_libraries (${LIB_NAME} PRIVATE Rack ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
+    sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
+endif ()
+
+install(TARGETS ${LIB_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 
-#add_library (${LIB_NAME} MODULE ${RACK_SOURCES})
-#set_target_properties (${LIB_NAME} PROPERTIES PREFIX "")
-#target_compile_definitions (${LIB_NAME} PRIVATE SURGE_COMPILE_BLOCK_SIZE=8)
-#target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
-#target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
-#target_link_libraries (${LIB_NAME} PRIVATE surge-common Rack)
-#target_include_directories (${LIB_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
-        #target_include_directories (plugin PRIVATE surge/src/common surge/src/common/dsp src/common/dsp/vembertech
-#  surge/libs/sst/sst-filters/include surge/libs/sst/sst-cpputils/include surge/libs/sst/sst-plugininfra/include
-#  surge/libs/sst/sst-waveshapers/include surge/libs/tuning-library/include
-#  surge/libs/sst/sst-plugininfra/libs/tinyxml/include
-#  ${CMAKE_CURRENT_BINARY_DIR}/libs/sst/sst-plugininfra/libs/filesystem/include
-#  ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
-#target_link_libraries (plugin PRIVATE ${PROJECT_NAME})
+file(GLOB LICENSE LICENSE*)
+file(INSTALL plugin.json res docs patches presets ${LICENSE} README.md DESTINATION ${PLUGIN_NAME})
+file(INSTALL surge/resources/surge-shared/configuration.xml
+             surge/resources/surge-shared/windows.wt
+             surge/resources/data/wavetables
+             surge/resources/data/wavetables_3rdparty
+             surge/resources/data/fx_presets
+             res/surge_extra_data/fx_presets
+    DESTINATION ${PLUGIN_NAME}/build/surge-data)
 
-function (_get_all_cmake_targets out_var current_dir)
-    get_property(targets DIRECTORY ${current_dir} PROPERTY BUILDSYSTEM_TARGETS)
-    get_property(subdirs DIRECTORY ${current_dir} PROPERTY SUBDIRECTORIES)
-
-    foreach(subdir ${subdirs})
-        _get_all_cmake_targets(subdir_targets ${subdir})
-        list(APPEND targets ${subdir_targets})
-    endforeach()
-
-    set(${out_var} ${targets} PARENT_SCOPE)
-endfunction()
-
-# Run at end of top-level CMakeLists
-_get_all_cmake_targets(all_targets ${CMAKE_CURRENT_LIST_DIR})
-
-message (STATUS "Buildtargets -- ${all_targets}")
+install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
