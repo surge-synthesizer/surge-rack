@@ -90,13 +90,13 @@ jobs:
         run: |
           export RACK_DIR=$HOME/Rack-SDK
           export CROSS_COMPILE=${{ matrix.platform }}
-          make -j dep
-          make -j dist
+          make dep
+          make dist
           echo "Plugin architecture '$(lipo -archs plugin.dylib)'"
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          path: dist
+          path: dist/*.vcvplugin
           name: mac-${{ matrix.platform }}
 
   publish:
