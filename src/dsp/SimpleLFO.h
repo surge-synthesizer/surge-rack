@@ -113,6 +113,18 @@ struct SimpleLFO
         process(f, d, lshape);
     }
 
+    float lastDPhase{0};
+    inline void applyPhaseOffset(float dPhase)
+    {
+        if (dPhase != lastDPhase)
+        {
+            phase += dPhase - lastDPhase;
+            if (phase > 1)
+                phase -= 1;
+        }
+        lastDPhase = dPhase;
+    }
+
     inline void process(const float r, const float d, const int lshape)
     {
         if (current == BLOCK_SIZE)

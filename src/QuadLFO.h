@@ -225,9 +225,25 @@ struct QuadLFO : modules::XTModule
             modAssist.updateValues(this);
         }
 
+        auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
+
+        switch (ip)
+        {
+        case 0:
+            processIndependentLFOs();
+            break;
+        case 1:
+            processQuadPhaseLFOs();
+        default:
+            break;
+        }
+        processCount++;
+    }
+
+    void processQuadPhaseLFOs()
+    {
         for (int i = 0; i < n_lfos; ++i)
         {
-            outputs[OUTPUT_0 + i].setChannels(nChan);
             auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
             auto off{0}, mul{5};
             if (uni)
@@ -235,7 +251,37 @@ struct QuadLFO : modules::XTModule
             bool ic = inputs[TRIGGER_0 + i].isConnected();
             auto shape = (int)std::round(params[SHAPE_0 + i].getValue());
             auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
-            for (int c = 0; c < nChan; ++c)
+            for (int c = 0; c < chanByLFO[i]; ++c)
+            {
+                auto r = modAssist.values[RATE_0][c];
+                // FIXME scales
+                if (i != 0)
+                {
+                    auto dph = (modAssist.values[RATE_0 + i][c] + 3)/9;
+                    processors[i][c]->applyPhaseOffset(dph);
+                }
+                if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                {
+                    processors[i][c]->attack(shape);
+                }
+                processors[i][c]->process(r, modAssist.values[DEFORM_0 + i][c], shape);
+                outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
+            }
+        }
+    }
+
+    void processIndependentLFOs()
+    {
+        for (int i = 0; i < n_lfos; ++i)
+        {
+            auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
+            auto off{0}, mul{5};
+            if (uni)
+                off = 1;
+            bool ic = inputs[TRIGGER_0 + i].isConnected();
+            auto shape = (int)std::round(params[SHAPE_0 + i].getValue());
+            auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
+            for (int c = 0; c < chanByLFO[i]; ++c)
             {
                 if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
                 {
@@ -246,7 +292,6 @@ struct QuadLFO : modules::XTModule
                 outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
             }
         }
-        processCount++;
     }
 
     void activateTempoSync()
