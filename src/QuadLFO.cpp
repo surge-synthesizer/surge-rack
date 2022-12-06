@@ -35,12 +35,31 @@ struct QuadLFOWidget : public widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
+    void polyMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+        p->addChild(rack::createMenuLabel("Polyphony"));
+        p->addChild(new rack::ui::MenuSeparator);
+        int cp = m->forcePolyphony;
+        p->addChild(rack::createMenuItem("Follow Trigger Input", CHECKMARK(-1 == cp),
+                                         [m]() { m->forcePolyphony = -1; }));
+        for (int i = 1; i <= 16; ++i)
+        {
+            p->addChild(rack::createMenuItem(std::to_string(i), CHECKMARK(i == cp),
+                                             [m, i]() { m->forcePolyphony = i; }));
+        }
+    }
+
     void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (!module)
             return;
-
+        auto m = static_cast<M *>(module);
         menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(
+            rack::createSubmenuItem("Polyphony", "", [this, m](auto *x) { polyMenu(x, m); }));
+
         /*
          * Clock entries
          */
