@@ -126,8 +126,10 @@ struct SimpleLFO
             {
                 if (lshape == SH_NOISE || lshape == SMOOTH_NOISE)
                 {
+                    // The deform can push correlated noise out of bounds
+                    auto ud = d * 0.8;
                     rngCurrent =
-                        correlated_noise_o2mk2_suppliedrng(rngState[0], rngState[1], d, urng);
+                        correlated_noise_o2mk2_suppliedrng(rngState[0], rngState[1], ud, urng);
 
                     rngHistory[3] = rngHistory[2];
                     rngHistory[2] = rngHistory[1];
