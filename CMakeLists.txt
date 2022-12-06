@@ -92,7 +92,11 @@ target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
-  target_link_libraries (${LIB_NAME} PRIVATE ${PROJECT_NAME})
+  find_library (CORESERVICES_LIBRARY CoreServices)
+  find_library (COREFOUNDATION_LIBRARY CoreFoundation)
+  target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
+  target_link_libraries (${LIB_NAME} PRIVATE ${PROJECT_NAME} ${COREFOUNDATION_LIBRARY} ${FOUNDATION_LIBRARY}
+    surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows)
 endif ()
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
