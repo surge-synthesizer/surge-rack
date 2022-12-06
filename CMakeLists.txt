@@ -88,27 +88,19 @@ target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
 set(LIB_NAME plugin)
 add_library (${LIB_NAME} MODULE src/SurgeXT.cpp)
 target_include_directories (${LIB_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
+target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
 target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
+target_link_libraries (${LIB_NAME} PRIVATE Rack)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
-  find_library (CORESERVICES_LIBRARY CoreServices)
-  find_library (COREFOUNDATION_LIBRARY CoreFoundation)
-  target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
-  target_link_libraries (${LIB_NAME} PRIVATE ${PROJECT_NAME} ${COREFOUNDATION_LIBRARY} ${FOUNDATION_LIBRARY}
-    surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows)
+  target_compile_options(${LIB_NAME} PRIVATE "-undefined dynamic_lookup")
 endif ()
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(THREADS_PREFER_PTHREAD_FLAG ON)
-  find_package(Threads REQUIRED)
-  target_link_libraries(${LIB_NAME} PRIVATE Threads::Threads)
-endif ()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
-  target_link_libraries (${LIB_NAME} PRIVATE Rack ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
+  target_link_libraries (${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
     sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
 endif ()
 
