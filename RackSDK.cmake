@@ -1,46 +1,62 @@
-message("RackSDK.cmake loaded!")
+# Mapping of plugin build definitions from the Rack-SDK arch.mk, compile.mk, dep.mk and plugin.mk to CMake.
 
-# default flags from CMake
-#  -O3 -DNDEBUG -fPIC
+set (RACK_SDK_VERSION 2.2.0)
+message (STATUS "load RackSDK.cmake, mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
-add_definitions(-funsafe-math-optimizations -fno-omit-frame-pointer -fPIC -Wall -Wextra -Wno-unused-parameter)
+include_directories (${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
+link_directories (${RACK_SDK_DIR})
+link_libraries (Rack)
 
-message (STATUS "CMAKE_SYSTEM_NAME - ${CMAKE_SYSTEM_NAME}")
+# This is needed for Rack for DAWs.
+# Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
+add_compile_options (-fPIC)
+# Generate dependency files alongside the object files
+add_compile_options (-MMD -MP)
+# Debugger symbols. These are removed with `strip`.
+add_compile_options (-g)
+# Optimization
+add_compile_options (-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
+# Warnings
+add_compile_options (-Wall -Wextra -Wno-unused-parameter)
+# C++ standard
+set (CMAKE_CXX_STANDARD 11)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  message (STATUS "CMAKE SYSTEM is Linux")
-  add_definitions(-DARCH_LIN=1)
-endif ()
+add_compile_options (-MMD -MP -g -funsafe-math-optimizations -fno-omit-frame-pointer -fPIC -Wall -Wextra -Wno-unused-parameter)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if (NOT MINGW)
     message (FATAL_ERROR "Rack plugin development environment is only supported for MSYS2/MinGW")
   endif ()
-  message (STATUS "CMAKE SYSTEM is Windows")
-  add_definitions(-DARCH_WIN=1)
+  link_libraries(Rack)
+  add_compile_definitions(ARCH_WIN ARCH_X64)
+  add_compile_definitions(_USE_MATH_DEFINES)
+  add_compile_options(-municode)
+  add_compile_options(-Wsuggest-override)
+  add_compile_options(-static-libstdc++)
+  add_compile_options(-march=nehalem)
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  message (STATUS "CMAKE SYSTEM is Darwin/MacOS")
-  add_definitions(-DARCH_MAC=1)
+  message (STATUS "Build Mac OSX Plugin for architecture ${CMAKE_OSX_ARCHITECTURES}")
+  add_compile_definitions(ARCH_MAC)
+  add_compile_options(-static-libstdc++)
+  if (${CMAKE_OSX_ARCHITECTURES} MATCHES "x86_64")
+    add_compile_definitions(ARCH_X64)
+    add_compile_options(-march=nehalem)
+  endif ()
+  if (${CMAKE_OSX_ARCHITECTURES} MATCHES "arm64")
+    add_compile_definitions(ARCH_ARM64)
+    add_compile_options(-march=armv8-a+fp+simd)
+  endif ()
 endif ()
 
-#  -DARCH_LIN=1 -DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
-#  -DJUCE_MODULE_AVAILABLE_juce_audio_basics=1
-#  -DJUCE_MODULE_AVAILABLE_juce_core=1
-#  -DJUCE_MODULE_AVAILABLE_juce_dsp=1
-#  -DJUCE_MODULE_VAILABLE_juce_audio_formats=1
-#  -DJUCE_STANDALONE_APPLICATION=0
-#  DJUCE_USE_CURL=0
-#  -DJUCE_WEB_BROWSER=0
-#  -DNDEBUG=1
-#  -I/home/user/Downloads/surge-rack/surge/src/common/../../libs/JUCE/modules
-#  -O3 -DNDEBUG -fPIC
-#  -funsafe-math-optimizations -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-parameter -funsafe-math-optimizations
-#  -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-parameter -Wno-multichar -Werror
-#  -fvisibility=hidden
-#  -fvisibility-inlines-hidden -Wformat-truncation=0 -Wno-free-nonheap-object -Wno-return-local-addr
-#  -std=c++1z -MD -MT
-#
-#  surge/src/common/CMakeFiles/juce_dsp_rack_sub.dir/__/__/libs/JUCE/modules/juce_audio_formats/juce_audio_formats.cpp.o -MF surge/src/common/CMakeFiles/juce_dsp_rack_sub.dir/__/__/libs/JUCE/modules/juce_audio_formats/juce_audio_formats.cpp.o.d -o surge/src/common/CMakeFiles/juce_dsp_rack_sub.dir/__/__/libs/JUCE/modules/juce_audio_formats/juce_audio_formats.cpp.o
-#  -c /home/user/Downloads/surge-rack/surge/libs/JUCE/modules/juce_audio_formats/juce_audio_formats.cpp
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  add_compile_definitions(ARCH_LIN ARCH_X64)
+  # This prevents static variables in the DSO (dynamic shared object) from being preserved after dlclose().
+  add_compile_options(-fno-gnu-unique)
+  # When Rack loads a plugin, it symlinks /tmp/Rack2 to its system dir, so the plugin can link to libRack.
+  add_compile_options(-Wl,-rpath=/tmp/Rack2)
+  # Since the plugin's compiler could be a different version than Rack's compiler, link libstdc++ and libgcc statically to avoid ABI issues.
+  add_compile_options(-static-libstdc++ -static-libgcc)
+  add_compile_options(-march=nehalem)
+endif ()

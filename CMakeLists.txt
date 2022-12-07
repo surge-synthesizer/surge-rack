@@ -1,20 +1,20 @@
 cmake_minimum_required (VERSION 3.16)
 set (CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 project (surge-rack VERSION 1.1 LANGUAGES C CXX)
-include (RackSDK.cmake)
-set (CMAKE_CXX_STANDARD 17)
-
-set (PLUGIN_NAME SurgeXTRack)
-# Do not change the LIB_NAME!
-set(LIB_NAME plugin)
-
-## check for Windows non gcc env in RackSDK.cmake!!!
 
 if ("${RACK_SDK_DIR}" STREQUAL "")
   message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
 else ()
   message (STATUS "use Rack-SDK in '${RACK_SDK_DIR}'")
 endif ()
+
+include (RackSDK.cmake)
+
+set (CMAKE_CXX_STANDARD 17)
+
+set (PLUGIN_NAME SurgeXTRack)
+# Do not change the LIB_NAME!
+set(LIB_NAME plugin)
 
 find_package (Git REQUIRED)
 
@@ -83,15 +83,13 @@ target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qual
 file (GLOB RACK_SOURCES src/*.cpp)
 list (REMOVE_ITEM RACK_SOURCES src/SurgeXT.cpp)
 
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
+
 add_library (${PROJECT_NAME} STATIC ${RACK_SOURCES})
-target_include_directories (${PROJECT_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
 target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
 
 add_library (${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_include_directories (${LIB_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
-target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
 target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
-target_link_libraries (${LIB_NAME} PRIVATE Rack)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
@@ -101,7 +99,6 @@ endif ()
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
   target_link_libraries (${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
     sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
 endif ()
