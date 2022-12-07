@@ -1,29 +1,29 @@
 # Mapping of plugin build definitions from the Rack-SDK arch.mk, compile.mk, dep.mk and plugin.mk to CMake.
 
-set (RACK_SDK_VERSION 2.2.0)
-message (STATUS "load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
+set(RACK_SDK_VERSION 2.2.0)
+message(STATUS "load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
-include_directories (${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
-link_directories (${RACK_SDK_DIR})
-link_libraries (Rack)
+include_directories(${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
+link_directories(${RACK_SDK_DIR})
+link_libraries(Rack)
 
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
-add_compile_options (-fPIC)
+add_compile_options(-fPIC)
 # Generate dependency files alongside the object files
-add_compile_options (-MMD -MP)
+add_compile_options(-MMD -MP)
 # Debugger symbols. These are removed with `strip`.
-add_compile_options (-g)
+add_compile_options(-g)
 # Optimization
-add_compile_options (-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
+add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
 # Warnings
-add_compile_options (-Wall -Wextra -Wno-unused-parameter)
+add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if (NOT MINGW)
-    message (FATAL_ERROR "Rack plugin development environment is only supported for MSYS2/MinGW")
+    message(FATAL_ERROR "Rack plugin development environment is only supported for MSYS2/MinGW")
   endif ()
   link_libraries(Rack)
   add_compile_definitions(ARCH_WIN ARCH_X64)
@@ -37,7 +37,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  message (STATUS "Build Mac OSX Plugin for architecture ${CMAKE_OSX_ARCHITECTURES}")
+  message(STATUS "Build Mac OSX Plugin for architecture ${CMAKE_OSX_ARCHITECTURES}")
   add_compile_definitions(ARCH_MAC)
   add_compile_options(-static-libstdc++)
   if (${CMAKE_OSX_ARCHITECTURES} MATCHES "x86_64")
