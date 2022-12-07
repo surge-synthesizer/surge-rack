@@ -25,6 +25,9 @@
  *       - Temposync with Phase
  *       - Interwoven / Spread
  *    - Config Param and Units
+ *        - tempoSync case
+ *        - Two unimplemented modes
+ *    - Configure dynamic triggers
  *    - Some performance Especially SIMD the high poly cases
  *       - I bet we can do a better job with the simd-ized process
  *         for instance if we hand indeices and arrays to the process
@@ -32,8 +35,7 @@
  *       - Cache the offsets for uni / bipolar and do it SSE-wise
  *       - That sort of stuff
  * UI
- *   - Dynamic Laaels based on Mode
- *   - replace the t/k with the contents
+ *   - Dynamic Trigger based on Mode
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
@@ -93,6 +95,160 @@ struct QuadLFO : modules::XTModule
     modules::ModulationAssistant<QuadLFO, n_mod_params, RATE_0, n_mod_inputs, MOD_INPUT_0>
         modAssist;
 
+    enum QuadLFOModes
+    {
+        INDEPENDENT,
+        PHASE_OFFSET,
+        RATIO,
+        SPREAD
+    };
+
+    struct RateQuantity : rack::engine::ParamQuantity, modules::CalculatedName
+    {
+        static inline float independentRateScale(float f) { return f * 13 - 5; }
+        static inline float independentRateScaleInv(float f) { return (f + 5) / 13; }
+        static inline float phaseRateScale(float f) { return f; }
+        static inline float phaseRateScaleInv(float f) { return f; }
+
+        QuadLFO *qlfo() { return static_cast<QuadLFO *>(module); }
+
+        QuadLFOModes mode()
+        {
+            if (!module)
+                return INDEPENDENT;
+            auto r =
+                (QuadLFOModes)(int)std::round(module->params[QuadLFO::INTERPLAY_MODE].getValue());
+            return r;
+        }
+
+        void setDisplayValueString(std::string s) override
+        {
+            auto m = mode();
+            int off = paramId - QuadLFO::RATE_0;
+            auto v = std::stof(s);
+            auto setRate = [this](float v) {
+                if (v < 0)
+                    setValue(independentRateScaleInv(0));
+                else
+                {
+                    auto ilv = log2(v);
+                    auto isv = independentRateScaleInv(ilv);
+                    auto csv = std::clamp(isv, minValue, maxValue);
+                    setValue(csv);
+                }
+            };
+            switch (m)
+            {
+            case INDEPENDENT:
+            {
+                setRate(v);
+            }
+            break;
+            case PHASE_OFFSET:
+            {
+                if (off == 0)
+                {
+                    setRate(v);
+                }
+                else
+                {
+                    auto ilv = v / 360.0;
+                    auto isv = phaseRateScaleInv(ilv);
+                    auto csv = std::clamp(isv, minValue, maxValue);
+                    setValue(csv);
+                }
+            }
+            break;
+            default:
+                setValue(0);
+            }
+        }
+
+        std::string getDisplayValueString() override
+        {
+            auto m = mode();
+            int off = paramId - QuadLFO::RATE_0;
+            auto v = getValue();
+            auto fmtRate = [this](auto v) {
+                auto sv = independentRateScale(v);
+                auto res = pow(2.0, sv);
+                if (res < 10)
+                    return fmt::format("{:.2f} Hz", res);
+                else
+                    return fmt::format("{:.1f} Hz", res);
+            };
+            switch (m)
+            {
+            case INDEPENDENT:
+            {
+                return fmtRate(v);
+            }
+            case PHASE_OFFSET:
+            {
+                if (off == 0)
+                {
+                    return fmtRate(v);
+                }
+                else
+                {
+                    return fmt::format("{:.1f}{}", v * 360.0, u8"\u00B0");
+                }
+            }
+            default:
+                return std::to_string(v);
+            }
+        }
+
+        std::string getLabel() override
+        {
+            auto res = getCalculatedName();
+            return res;
+        }
+        std::string getCalculatedName() override
+        {
+            auto m = mode();
+            int off = paramId - QuadLFO::RATE_0;
+            switch (m)
+            {
+            case INDEPENDENT:
+                return "Rate " + std::to_string(off + 1);
+            case PHASE_OFFSET:
+                if (off == 0)
+                {
+                    return "Rate";
+                }
+                else
+                {
+                    return "Phase Offset " + std::to_string(off + 1);
+                }
+            default:
+                return "FIXME";
+            }
+        }
+
+        std::string getPanelLabel()
+        {
+            auto m = mode();
+            int off = paramId - QuadLFO::RATE_0;
+            switch (m)
+            {
+            case INDEPENDENT:
+                return "RATE";
+            case PHASE_OFFSET:
+                if (off == 0)
+                {
+                    return "RATE";
+                }
+                else
+                {
+                    return "PHASE";
+                }
+            default:
+                return "FIXME";
+            }
+        }
+    };
+
     QuadLFO() : XTModule()
     {
         {
@@ -101,9 +257,10 @@ struct QuadLFO : modules::XTModule
         }
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
+        float defaultRate0 = RateQuantity::independentRateScaleInv(0.f);
         for (int i = 0; i < n_lfos; ++i)
         {
-            configParam(RATE_0 + i, -3, 6, 0);
+            configParam<RateQuantity>(RATE_0 + i, 0, 1, defaultRate0);
             configParam(DEFORM_0 + i, -1, 1, 0);
             configSwitch(SHAPE_0 + i, 0, 5, 0, "Shape",
                          {"Sin", "Ramp", "Tri", "Pulse", "Rand", "S&H"});
@@ -171,6 +328,16 @@ struct QuadLFO : modules::XTModule
     {
         clockProc.setSampleRate(APP->engine->getSampleRate());
     }
+
+    std::string getRatePanelLabel(int idx)
+    {
+        auto pq = paramQuantities[RATE_0 + idx];
+        auto rpq = dynamic_cast<RateQuantity *>(pq);
+        if (!rpq)
+            return "ERROR";
+        return rpq->getPanelLabel();
+    }
+
     typedef modules::ClockProcessor<QuadLFO> clockProcessor_t;
     clockProcessor_t clockProc;
 
@@ -253,11 +420,10 @@ struct QuadLFO : modules::XTModule
             auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
             for (int c = 0; c < chanByLFO[i]; ++c)
             {
-                auto r = modAssist.values[RATE_0][c];
-                // FIXME scales
+                auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0][c]);
                 if (i != 0)
                 {
-                    auto dph = (modAssist.values[RATE_0 + i][c] + 3)/9;
+                    auto dph = RateQuantity::phaseRateScale(modAssist.values[RATE_0 + i][c]);
                     processors[i][c]->applyPhaseOffset(dph);
                 }
                 if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
@@ -283,12 +449,12 @@ struct QuadLFO : modules::XTModule
             auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
             for (int c = 0; c < chanByLFO[i]; ++c)
             {
+                auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0 + i][c]);
                 if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
                 {
                     processors[i][c]->attack(shape);
                 }
-                processors[i][c]->process(modAssist.values[RATE_0 + i][c],
-                                          modAssist.values[DEFORM_0 + i][c], shape);
+                processors[i][c]->process(r, modAssist.values[DEFORM_0 + i][c], shape);
                 outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
             }
         }
