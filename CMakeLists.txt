@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.16)
-project (surge-rack LANGUAGES C CXX)
+project (surge-rack VERSION 1.1 LANGUAGES C CXX)
 include (RackSDK.cmake)
 set (CMAKE_CXX_STANDARD 17)
 
@@ -95,6 +95,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
   set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif ()
+
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
