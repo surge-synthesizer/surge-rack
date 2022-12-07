@@ -1,7 +1,7 @@
 # Mapping of plugin build definitions from the Rack-SDK arch.mk, compile.mk, dep.mk and plugin.mk to CMake.
 
 set (RACK_SDK_VERSION 2.2.0)
-message (STATUS "load RackSDK.cmake, mapping based on Rack-SDK-${RACK_SDK_VERSION})")
+message (STATUS "load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
 include_directories (${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
 link_directories (${RACK_SDK_DIR})
@@ -21,8 +21,6 @@ add_compile_options (-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
 set (CMAKE_CXX_STANDARD 11)
 
-add_compile_options (-MMD -MP -g -funsafe-math-optimizations -fno-omit-frame-pointer -fPIC -Wall -Wextra -Wno-unused-parameter)
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if (NOT MINGW)
     message (FATAL_ERROR "Rack plugin development environment is only supported for MSYS2/MinGW")
@@ -30,7 +28,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   link_libraries(Rack)
   add_compile_definitions(ARCH_WIN ARCH_X64)
   add_compile_definitions(_USE_MATH_DEFINES)
-  add_compile_options(-municode)
+  #disabled - causes surge-rack/surge/libs/sst/sst-plugininfra/src/misc_windows.cpp:20:20: error: cannot convert 'const char*' to 'LPCWSTR' {aka 'const wchar_t*'}
+  #add_compile_options(-municode)
   add_compile_options(-Wsuggest-override)
   add_compile_options(-static-libstdc++)
   add_compile_options(-march=nehalem)
