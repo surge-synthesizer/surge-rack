@@ -19,7 +19,7 @@ endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   message (STATUS "CMAKE SYSTEM is Darwin/MacOS")
-  add_definitions(-DARCH_MAC=1 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9)
+  add_definitions(-DARCH_MAC=1)
 endif ()
 
 #  -DARCH_LIN=1 -DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1

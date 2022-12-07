@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.16)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 project (surge-rack VERSION 1.1 LANGUAGES C CXX)
 include (RackSDK.cmake)
 set (CMAKE_CXX_STANDARD 17)
