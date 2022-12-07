@@ -49,11 +49,10 @@ set (NO_WARN_MISMATCHED_TAGS "")
 set (NO_WARN_SELF_ASSIGN "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  #set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-const-variable")-Wunused-but-set-variable
-  #set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-but-set-variable")
-  #if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-  #  set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-but-set-variable")
-  #endif ()
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Rack cross compiler toolchain Clang 12
+    set (NO_WARN_UNUSED_BUT_SET_VARIABLE "")
+  endif ()
   set (NO_WARN_MAYBE_UNINITIALIZED -Wno-uninitialized)
   set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
   set (NO_WARN_CLASS_MEMACCESS -Wno-class-varargs)
