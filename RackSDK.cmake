@@ -28,7 +28,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   link_libraries(Rack)
   add_compile_definitions(ARCH_WIN ARCH_X64)
   add_compile_definitions(_USE_MATH_DEFINES)
-  #disabled - causes surge-rack/surge/libs/sst/sst-plugininfra/src/misc_windows.cpp:20:20: error: cannot convert 'const char*' to 'LPCWSTR' {aka 'const wchar_t*'}
+  # disabled - causes surge-rack/surge/libs/sst/sst-plugininfra/src/misc_windows.cpp:20:20: error: cannot convert 'const char*' to 'LPCWSTR' {aka 'const wchar_t*'}
+  # see also https://gcc.gnu.org/onlinedocs/gcc/x86-Windows-Options.html
   #add_compile_options(-municode)
   add_compile_options(-Wsuggest-override)
   add_compile_options(-static-libstdc++)
