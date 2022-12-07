@@ -53,6 +53,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # Rack cross compiler toolchain Clang 12
     set (NO_WARN_UNUSED_BUT_SET_VARIABLE "")
   endif ()
+  #set (NO_WARN_MAYBE_UNINITIALIZED -Wno-uninitialized)
+  set (NO_WARN_MAYBE_UNINITIALIZED "")
   set (NO_WARN_MNO_WARN_UNUSED_BUT_SET_VARIABLEAYBE_UNINITIALIZED -Wno-uninitialized)
   set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
   set (NO_WARN_CLASS_MEMACCESS -Wno-class-varargs)
