@@ -35,7 +35,7 @@ endif
 ifdef ARCH_WIN
 LDFLAGS += -L$(SURGE_BLD)/dist/lib/static \
            -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra \
-           -lfmt -lsqlite -loddsound-mts -leurorack -lairwindows \
+           -lfmt -lsqlite -leurorack -lairwindows \
            -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
 endif
 

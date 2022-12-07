@@ -34,6 +34,7 @@ message(STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 set(SURGE_SKIP_JUCE_FOR_RACK TRUE CACHE BOOL "skip surge Juce build")
 set(SURGE_SKIP_LUA TRUE CACHE BOOL "skip surge Lua build")
 set(SURGE_SKIP_AIRWINDOWS TRUE CACHE BOOL "skip surge airwindows build")
+set(SURGE_SKIP_ODDSOUND_MTS TRUE CACHE BOOL "skip surge oddsound-mts build")
 set(SURGE_SKIP_VST3 TRUE CACHE BOOL "skip surge VST3 build")
 set(SURGE_SKIP_ALSA TRUE CACHE BOOL "skip surge Alsa build")
 set(SURGE_SKIP_STANDALONE TRUE CACHE BOOL "skip surge standalone build")
@@ -70,7 +71,6 @@ endif ()
 
 target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy ${NO_WARN_MAYBE_UNINITIALIZED})
 target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs ${NO_WARN_INFINITE_RECURSION})
-target_compile_options(oddsound-mts PRIVATE -Wno-char-subscripts)
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options(sst-waveshapers INTERFACE -Wno-unused-variable)
@@ -101,10 +101,10 @@ set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
-    sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
+    sst-plugininfra fmt sqlite eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
 endif ()
 
-install(TARGETS ${LIB_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite oddsound-mts eurorack airwindows
+install(TARGETS ${LIB_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite eurorack airwindows
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
