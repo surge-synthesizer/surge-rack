@@ -97,6 +97,9 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
             if (b == QuadLFO::RATE_0 || b == QuadLFO::DEFORM_0)
                 res->dirtyChecks.back().isModulated = true;
         }
+        res->dirtyChecks.push_back(widgets::DirtyHelper<QuadLFO>());
+        res->dirtyChecks.back().module = module;
+        res->dirtyChecks.back().par = QuadLFO::INTERPLAY_MODE;
 
         if (module)
             res->lfo = std::make_unique<dsp::modulators::SimpleLFO>(module->storage.get());
@@ -139,7 +142,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, "t/k", nullptr);
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString().c_str(), nullptr);
 
         float pushX = rack::mm2px(0.87);
         float pushY = rack::mm2px(0.7);
@@ -161,6 +164,8 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
     {
         if (!module)
             return;
+
+        auto ip = (int)std::round(module->paramQuantities[QuadLFO::INTERPLAY_MODE]->getValue());
 
         auto s = (int)std::round(module->paramQuantities[QuadLFO::SHAPE_0 + idx]->getValue());
         // auto r = (int)std::round(module->paramQuantities[QuadLFO::RATE_0 + idx]->getValue());
@@ -194,9 +199,14 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         auto d = module->modAssist.values[QuadLFO::DEFORM_0 + idx][0];
 
         lfo->attackForDisplay(s);
-
         nvgBeginPath(vg);
 
+        if (idx != 0 && ip == 1)
+        {
+            auto dph = QuadLFO::RateQuantity::phaseRateScale(
+                module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
+            lfo->applyPhaseOffset(dph);
+        }
         lfo->processResettingBlock(r, d, s);
         if (zeroEndpoints)
             nvgMoveTo(vg, xoff, (box.size.y - yshift - ypad - labelHeight) * 0.5 + yshift);
@@ -317,6 +327,15 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
         // clang-format on
 
         // todo dynamic labels like layout[n].dynamicLabel=true .dynLabelFn etc
+        layout[0].dynamicLabel = true;
+        layout[0].dynLabelFn = [i](modules::XTModule *m) -> std::string {
+            auto ql = dynamic_cast<QuadLFO *>(m);
+            if (ql)
+            {
+                return ql->getRatePanelLabel(i);
+            }
+            return {"ERR"};
+        };
 
         for (const auto &lay : layout)
         {

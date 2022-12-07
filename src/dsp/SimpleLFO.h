@@ -94,11 +94,13 @@ struct SimpleLFO
             rngCurrent = correlated_noise_o2mk2_suppliedrng(rngState[0], rngState[1], 0, urng);
             rngHistory[3 - i] = rngCurrent;
         }
+        lastDPhase = 0;
     }
     // FIXME - make this work for proper attacks
     inline void attack(const int lshape)
     {
         phase = 0;
+        lastDPhase = 0;
         current = BLOCK_SIZE;
         for (int i = 0; i < BLOCK_SIZE; ++i)
             outputCache[i] = 0;
