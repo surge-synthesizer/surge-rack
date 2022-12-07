@@ -1666,7 +1666,7 @@ template <typename T> struct GenericPresetJogSelector : public T, style::StylePa
 
     rack::Vec leftJogSize, rightJogSize, leftJogPos, rightJogPos;
 
-    void setup()
+    virtual void setup()
     {
         bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0),
                                              rack::Vec(this->box.size.x, this->box.size.y),
@@ -1768,6 +1768,78 @@ template <typename T> struct GenericPresetJogSelector : public T, style::StylePa
 
 typedef GenericPresetJogSelector<rack::Widget> PresetJogSelector;
 typedef GenericPresetJogSelector<rack::ParamWidget> ParamJogSelector;
+
+struct SteppedParamAsPresetJog : GenericPresetJogSelector<rack::ParamWidget>
+{
+    modules::XTModule *module{nullptr};
+    int paramId;
+    int lastValue{-1};
+    void setup() override
+    {
+        GenericPresetJogSelector<rack::ParamWidget>::setup();
+        if (module)
+            initParamQuantity();
+    }
+
+    rack::engine::SwitchQuantity *getQuantity()
+    {
+        if (!module)
+            return nullptr;
+        return dynamic_cast<rack::engine::SwitchQuantity *>(module->paramQuantities[paramId]);
+    }
+
+    void onPresetJog(int dir /* +/- 1 */) override
+    {
+        auto sq = getQuantity();
+        if (!sq)
+            return;
+        auto v = (int)std::round(sq->getValue());
+        v += dir;
+        if (v < sq->getMinValue())
+            v = sq->getMaxValue();
+        else if (v > sq->getMaxValue())
+            v = sq->getMinValue();
+        sq->setValue(v);
+    }
+    void onShowMenu() override
+    {
+        auto sq = getQuantity();
+        if (!sq)
+            return;
+
+        auto menu = rack::createMenu();
+        menu->addChild(rack::createMenuLabel(sq->getLabel()));
+        menu->addChild(new rack::ui::MenuSeparator);
+        float minValue = sq->getMinValue();
+        int index = (int)std::floor(sq->getValue() - minValue);
+        int numStates = sq->labels.size();
+        for (int i = 0; i < numStates; i++)
+        {
+            std::string label = sq->labels[i];
+            menu->addChild(
+                rack::createMenuItem(label, CHECKMARK(index == i), [sq, i]() { sq->setValue(i); }));
+        }
+    }
+    std::string getPresetName() override
+    {
+        auto sq = getQuantity();
+        if (!sq)
+            return "ERROR";
+        auto v = std::clamp((int)std::round(sq->getValue() - sq->getMinValue()), 0,
+                            (int)(sq->labels.size() - 1));
+        return sq->labels[v];
+    }
+    bool isDirty() override
+    {
+        auto sq = getQuantity();
+        if (!sq)
+            return false;
+        auto v = (int)std::round(sq->getValue());
+        bool res = v != lastValue;
+        lastValue = v;
+        return res;
+    };
+};
 
 inline void KnobN::onChange(const rack::widget::Widget::ChangeEvent &e)
 {

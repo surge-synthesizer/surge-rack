@@ -35,12 +35,31 @@ struct QuadLFOWidget : public widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
+    void polyMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+        p->addChild(rack::createMenuLabel("Polyphony"));
+        p->addChild(new rack::ui::MenuSeparator);
+        int cp = m->forcePolyphony;
+        p->addChild(rack::createMenuItem("Follow Trigger Input", CHECKMARK(-1 == cp),
+                                         [m]() { m->forcePolyphony = -1; }));
+        for (int i = 1; i <= 16; ++i)
+        {
+            p->addChild(rack::createMenuItem(std::to_string(i), CHECKMARK(i == cp),
+                                             [m, i]() { m->forcePolyphony = i; }));
+        }
+    }
+
     void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (!module)
             return;
-
+        auto m = static_cast<M *>(module);
         menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(
+            rack::createSubmenuItem("Polyphony", "", [this, m](auto *x) { polyMenu(x, m); }));
+
         /*
          * Clock entries
          */
@@ -52,6 +71,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
 {
     QuadLFO *module{nullptr};
     int idx{0};
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwLight{nullptr};
     static QuadWavePicker *create(const rack::Vec &pos, const rack::Vec &size, QuadLFO *module,
                                   int i)
     {
@@ -61,65 +81,203 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         res->module = module;
         res->idx = i;
 
+        res->bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), size,
+                                                           [res](auto v) { res->drawBG(v); });
+        res->addChild(res->bdw);
+
+        res->bdwLight = new widgets::BufferedDrawFunctionWidget(
+            rack::Vec(0, 0), size, [res](auto v) { res->drawLight(v); });
+        res->addChild(res->bdwLight);
+
+        for (auto b : {QuadLFO::SHAPE_0, QuadLFO::RATE_0, QuadLFO::DEFORM_0, QuadLFO::BIPOLAR_0})
+        {
+            res->dirtyChecks.push_back(widgets::DirtyHelper<QuadLFO>());
+            res->dirtyChecks.back().module = module;
+            res->dirtyChecks.back().par = b + res->idx;
+            if (b == QuadLFO::RATE_0 || b == QuadLFO::DEFORM_0)
+                res->dirtyChecks.back().isModulated = true;
+        }
+
+        if (module)
+            res->lfo = std::make_unique<dsp::modulators::SimpleLFO>(module->storage.get());
         return res;
     }
 
-    float up{rack::mm2px(4)};
-
-    void draw(const DrawArgs &args) override
+    float labelHeight{rack::mm2px(4.5)};
+    void drawBG(NVGcontext *vg)
     {
         if (!module)
             return;
 
-        // FIXME - hack to quick merge
-        auto vg = args.vg;
-        nvgBeginPath(vg);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
-        auto uni = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx]->getValue() < 0.5;
-        auto shp = module->paramQuantities[QuadLFO::SHAPE_0 + idx]->getDisplayValueString();
+        if (idx != 3)
+        {
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, box.size.x, 0);
+            nvgLineTo(vg, box.size.x, box.size.y);
+            nvgStrokeWidth(vg, 0.75);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
+            nvgStroke(vg);
+        }
 
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, 0, 0);
+        nvgLineTo(vg, box.size.x, 0);
+        nvgStrokeWidth(vg, 0.75);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, 0, box.size.y - labelHeight);
+        nvgLineTo(vg, box.size.x, box.size.y - labelHeight);
+        nvgStrokeWidth(vg, 0.75);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        auto txtColor = style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT);
+        nvgFillColor(vg, txtColor);
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 7.3 * 96 / 72);
-        nvgText(vg, up * 0.5, up * 0.5, uni ? "0+" : "+/-", nullptr);
-        nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, shp.c_str(), nullptr);
+        nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, "t/k", nullptr);
+
+        float pushX = rack::mm2px(0.87);
+        float pushY = rack::mm2px(0.7);
+        float sz = rack::mm2px(2.5);
+        float gapX = rack::mm2px(0.5);
+        float gapY = rack::mm2px(0.7);
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgMoveTo(vg, box.size.x - sz + gapX - pushX, gapY + pushY);
+        nvgLineTo(vg, box.size.x - gapX - pushX, gapY + pushY);
+        nvgLineTo(vg, box.size.x - sz * 0.5 - pushX, sz - gapY + pushY);
+        nvgFill(vg);
+        nvgStroke(vg);
     }
 
+    std::unique_ptr<dsp::modulators::SimpleLFO> lfo;
+    void drawLight(NVGcontext *vg)
+    {
+        if (!module)
+            return;
+
+        auto s = (int)std::round(module->paramQuantities[QuadLFO::SHAPE_0 + idx]->getValue());
+        // auto r = (int)std::round(module->paramQuantities[QuadLFO::RATE_0 + idx]->getValue());
+
+        /*
+         * We want N cycles on display and that sets rate. So
+         */
+        int cycles = 1;
+        bool zeroEndpoints{false};
+        if (s == dsp::modulators::SimpleLFO::SMOOTH_NOISE ||
+            s == dsp::modulators::SimpleLFO::SH_NOISE)
+            cycles = 4;
+
+        if (s == dsp::modulators::SimpleLFO::PULSE)
+            zeroEndpoints = true;
+
+        float yshift = rack::mm2px(3.9);
+        float ypad = rack::mm2px(2.1);
+        float xoff = rack::mm2px(1.5);
+
+        // How many samples do we want
+        int oversample = 4;
+        float dx = 1.0 / oversample;
+        int samples = (int)(box.size.x - 2 * xoff) * oversample; // 4 to let us scale up to 400%
+
+        // so how much time do we need
+        auto time = samples * module->storage->samplerate_inv;
+        auto freq = 1.0 / time;
+        auto r = log2(freq * BLOCK_SIZE_INV * cycles);
+
+        auto d = module->modAssist.values[QuadLFO::DEFORM_0 + idx][0];
+
+        lfo->attackForDisplay(s);
+
+        nvgBeginPath(vg);
+
+        lfo->processResettingBlock(r, d, s);
+        if (zeroEndpoints)
+            nvgMoveTo(vg, xoff, (box.size.y - yshift - ypad - labelHeight) * 0.5 + yshift);
+        for (int i = 0; i < samples - (zeroEndpoints); ++i)
+        {
+            lfo->processResettingBlock(r, d, s);
+            auto v = lfo->output;
+            v = (v * 0.5 + 0.5);
+
+            float x = i * dx + xoff;
+            float y = (1 - v) * (box.size.y - yshift - ypad - labelHeight) + yshift;
+            if (i == 0 && !zeroEndpoints)
+                nvgMoveTo(vg, x, y);
+            else
+                nvgLineTo(vg, x, y);
+        }
+
+        if (zeroEndpoints)
+            nvgLineTo(vg, ((samples - zeroEndpoints) * dx) + xoff,
+                      (box.size.y - yshift - ypad - labelHeight) * 0.5 + yshift);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_CURVE));
+        nvgStrokeWidth(vg, 1.25);
+        nvgStroke(vg);
+    }
+
+    std::vector<widgets::DirtyHelper<QuadLFO>> dirtyChecks;
+    void step() override
+    {
+        if (module)
+        {
+            auto isD = false;
+            for (auto &d : dirtyChecks)
+                isD = isD || d.dirty();
+            if (isD)
+            {
+                bdw->dirty = true;
+                bdwLight->dirty = true;
+            }
+        }
+        rack::Widget::step();
+    }
     void onButton(const ButtonEvent &e) override
     {
         if (module && e.action == GLFW_PRESS)
         {
-            if (e.pos.x < up && e.pos.y < up)
-            {
-                auto pq = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx];
-                pq->setValue(!pq->getValue());
-            }
-            else
-            {
-                auto pq = module->paramQuantities[QuadLFO::SHAPE_0 + idx];
-                auto *sq = dynamic_cast<rack::engine::SwitchQuantity *>(pq);
+            auto pq = module->paramQuantities[QuadLFO::SHAPE_0 + idx];
+            auto *sq = dynamic_cast<rack::engine::SwitchQuantity *>(pq);
 
-                if (sq)
+            if (sq)
+            {
+
+                auto menu = rack::createMenu();
+                menu->addChild(rack::createMenuLabel("Shape"));
+                menu->addChild(new rack::ui::MenuSeparator);
+                float minValue = pq->getMinValue();
+                int index = (int)std::floor(pq->getValue() - minValue);
+                int numStates = sq->labels.size();
+                for (int i = 0; i < numStates; i++)
                 {
-
-                    auto menu = rack::createMenu();
-                    menu->addChild(rack::createMenuLabel("Shape"));
-                    menu->addChild(new rack::ui::MenuSeparator);
-                    float minValue = pq->getMinValue();
-                    int index = (int)std::floor(pq->getValue() - minValue);
-                    int numStates = sq->labels.size();
-                    for (int i = 0; i < numStates; i++)
-                    {
-                        std::string label = sq->labels[i];
-                        menu->addChild(rack::createMenuItem(label, CHECKMARK(index == i),
-                                                            [pq, i]() { pq->setValue(i); }));
-                    }
+                    std::string label = sq->labels[i];
+                    menu->addChild(rack::createMenuItem(label, CHECKMARK(index == i),
+                                                        [pq, i]() { pq->setValue(i); }));
                 }
+
+                menu->addChild(new rack::ui::MenuSeparator);
+                auto bpq = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx];
+                auto bv = bpq->getValue() > 0.5;
+                menu->addChild(rack::createMenuItem("Unipolar (0/10v)", CHECKMARK(!bv),
+                                                    [bpq]() { bpq->setValue(0); }));
+
+                menu->addChild(rack::createMenuItem("Bipolar (-5/+5v)", CHECKMARK(bv),
+                                                    [bpq]() { bpq->setValue(1); }));
             }
             e.consume(this);
         }
     }
-    void onStyleChanged() override {}
+    void onStyleChanged() override
+    {
+        bdw->dirty = true;
+        bdwLight->dirty = true;
+    }
 };
 QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *module)
 {
@@ -167,15 +325,18 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
     }
 
     {
-        auto presetHeight = 5.5;
-        auto labelHeight = 5.0;
+        auto presetHeight = 4.5;
         auto topx = widgets::LCDBackground::posx;
         auto topy = widgets::LCDBackground::posy;
         auto width = box.size.x - 2 * widgets::LCDBackground::posx;
         auto height = rack::mm2px(row3 - rack::mm2px(2.5)) - widgets::LCDBackground::posy;
-        auto preset = widgets::DebugRect::create(rack::Vec(topx, topy),
-                                                 rack::Vec(width, rack::mm2px(presetHeight)));
-        preset->fill = nvgRGBA(255, 0, 255, 120);
+
+        auto preset = new widgets::SteppedParamAsPresetJog;
+        preset->box.pos = rack::Vec(topx, topy);
+        preset->box.size = rack::Vec(width, rack::mm2px(presetHeight));
+        preset->module = module;
+        preset->paramId = QuadLFO::INTERPLAY_MODE;
+        preset->setup();
         addChild(preset);
 
         topy += rack::mm2px(presetHeight);
@@ -183,15 +344,9 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
         auto qw = width / M::n_lfos;
         for (int i = 0; i < M::n_lfos; ++i)
         {
-            auto bh = height - rack::mm2px(labelHeight);
-            auto ql = QuadWavePicker::create(rack::Vec(topx + qw * i, topy), rack::Vec(qw, bh),
+            auto ql = QuadWavePicker::create(rack::Vec(topx + qw * i, topy), rack::Vec(qw, height),
                                              module, i);
             addChild(ql);
-
-            auto ll = widgets::DebugRect::create(rack::Vec(topx + qw * i, topy + bh),
-                                                 rack::Vec(qw, rack::mm2px(labelHeight)));
-            ll->fill = nvgRGBA(255, 0, 120, 120);
-            addChild(ll);
         }
     }
 

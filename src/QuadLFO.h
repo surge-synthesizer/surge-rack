@@ -19,15 +19,13 @@
  * ToDos
  *
  * Module
- *   - Triggers and attacks
  *   - Code up the Modes
  *       - Independent
  *       - Temposync with C/M
  *       - Temposync with Phase
  *       - Interwoven / Spread
- *    - Polyphony generally. Probably want both triggers and manual control
- *   - Config Param and Units
- *   - Some performance.
+ *    - Config Param and Units
+ *    - Some performance Especially SIMD the high poly cases
  *       - I bet we can do a better job with the simd-ized process
  *         for instance if we hand indeices and arrays to the process
  *         methods
@@ -35,9 +33,7 @@
  *       - That sort of stuff
  * UI
  *   - Dynamic Laaels based on Mode
- *   - UI for modes
- *   - UI for each LFO with a shape selector/preview, a uni/bi, and
- *     a tempo display
+ *   - replace the t/k with the contents
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
@@ -70,7 +66,8 @@ struct QuadLFO : modules::XTModule
         SHAPE_0 = DEFORM_0 + n_lfos,
         BIPOLAR_0 = SHAPE_0 + n_lfos,
         MOD_PARAM_0 = BIPOLAR_0 + n_lfos,
-        NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
+        INTERPLAY_MODE = MOD_PARAM_0 + n_mod_params * n_mod_inputs,
+        NUM_PARAMS
     };
 
     enum InputIds
@@ -116,6 +113,9 @@ struct QuadLFO : modules::XTModule
             configParam(MOD_PARAM_0 + i, -1, 1, 0);
         for (int i = 0; i < n_mod_inputs; ++i)
             configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
+
+        configSwitch(INTERPLAY_MODE, 0, 3, 0, "LFO Inter-operation Mode",
+                     {"Independent LFOs", "Quad Phase", "Ratio Rates", "Spread Rate"});
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -176,9 +176,12 @@ struct QuadLFO : modules::XTModule
 
     std::string getName() override { return std::string("QuadLFO"); }
 
-    int nChan{-1};
+    int nChan{-1}, chanByLFO[n_lfos]{1, 1, 1, 1};
+    std::atomic<int> forcePolyphony{-1};
 
     int processCount{BLOCK_SIZE};
+
+    rack::dsp::SchmittTrigger triggers[n_lfos][MAX_POLY];
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         if (inputs[CLOCK_IN].isConnected())
@@ -192,32 +195,103 @@ struct QuadLFO : modules::XTModule
 
             // auto currChan = std::max({inputs[INPUT_L].getChannels(),
             // inputs[INPUT_R].getChannels(), 1});
-            auto currChan = 1;
-            if (currChan != nChan)
+            if (forcePolyphony > 0)
             {
-                nChan = currChan;
+                for (int i = 0; i < n_lfos; ++i)
+                {
+                    // FIXME this is mode dependent
+                    chanByLFO[i] = forcePolyphony;
+                }
+                nChan = forcePolyphony;
+            }
+            else
+            {
+                int cc = 1;
+                for (int i = 0; i < n_lfos; ++i)
+                {
+                    // FIXME this is mode dependent
+                    chanByLFO[i] = std::max(1, inputs[TRIGGER_0 + i].getChannels());
+                    cc = std::max(cc, chanByLFO[i]);
+                }
+                nChan = cc;
+            }
+
+            for (int i = 0; i < n_lfos; ++i)
+            {
+                outputs[OUTPUT_0 + i].setChannels(chanByLFO[i]);
             }
 
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
         }
 
+        auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
+
+        switch (ip)
+        {
+        case 0:
+            processIndependentLFOs();
+            break;
+        case 1:
+            processQuadPhaseLFOs();
+        default:
+            break;
+        }
+        processCount++;
+    }
+
+    void processQuadPhaseLFOs()
+    {
         for (int i = 0; i < n_lfos; ++i)
         {
-            outputs[OUTPUT_0 + i].setChannels(nChan);
             auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
             auto off{0}, mul{5};
             if (uni)
                 off = 1;
-            for (int c = 0; c < nChan; ++c)
+            bool ic = inputs[TRIGGER_0 + i].isConnected();
+            auto shape = (int)std::round(params[SHAPE_0 + i].getValue());
+            auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
+            for (int c = 0; c < chanByLFO[i]; ++c)
             {
-                processors[i][c]->process(modAssist.values[RATE_0 + i][c],
-                                          modAssist.values[DEFORM_0 + i][c],
-                                          params[SHAPE_0 + i].getValue());
-                outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul);
+                auto r = modAssist.values[RATE_0][c];
+                // FIXME scales
+                if (i != 0)
+                {
+                    auto dph = (modAssist.values[RATE_0 + i][c] + 3)/9;
+                    processors[i][c]->applyPhaseOffset(dph);
+                }
+                if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                {
+                    processors[i][c]->attack(shape);
+                }
+                processors[i][c]->process(r, modAssist.values[DEFORM_0 + i][c], shape);
+                outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
             }
         }
-        processCount++;
+    }
+
+    void processIndependentLFOs()
+    {
+        for (int i = 0; i < n_lfos; ++i)
+        {
+            auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
+            auto off{0}, mul{5};
+            if (uni)
+                off = 1;
+            bool ic = inputs[TRIGGER_0 + i].isConnected();
+            auto shape = (int)std::round(params[SHAPE_0 + i].getValue());
+            auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
+            for (int c = 0; c < chanByLFO[i]; ++c)
+            {
+                if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                {
+                    processors[i][c]->attack(shape);
+                }
+                processors[i][c]->process(modAssist.values[RATE_0 + i][c],
+                                          modAssist.values[DEFORM_0 + i][c], shape);
+                outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
+            }
+        }
     }
 
     void activateTempoSync()
@@ -235,11 +309,24 @@ struct QuadLFO : modules::XTModule
         auto vc = json_object();
 
         clockProc.toJson(vc);
+        json_object_set(vc, "forcePolyphony", json_integer(forcePolyphony));
 
         return vc;
     }
 
-    void readModuleSpecificJson(json_t *modJ) override { clockProc.fromJson(modJ); }
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        clockProc.fromJson(modJ);
+        auto fp = json_object_get(modJ, "forcePolyphony");
+        if (fp)
+        {
+            forcePolyphony = json_integer_value(fp);
+        }
+        else
+        {
+            forcePolyphony = -1;
+        }
+    }
 };
 } // namespace sst::surgext_rack::quadlfo
 #endif

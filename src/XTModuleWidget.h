@@ -100,6 +100,27 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
     void resetStyleCouplingToModule();
     void toggleCoupleToGlobalStyle();
 };
+
+template <typename M, bool useAnimValues = true> struct DirtyHelper
+{
+    M *module{nullptr};
+    float lastValue{0};
+    int par;
+    int isModulated{false};
+
+    inline bool dirty()
+    {
+        auto r = module->paramQuantities[par]->getValue();;
+        if constexpr (useAnimValues)
+        {
+            if (isModulated)
+                r = module->modAssist.values[par][0];
+        }
+        auto v = r != lastValue;
+        lastValue = r;
+        return v;
+    }
+};
 } // namespace sst::surgext_rack::widgets
 
 #endif
