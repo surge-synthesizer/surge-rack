@@ -25,7 +25,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if (NOT MINGW)
     message(FATAL_ERROR "Rack plugin development environment is only supported for MSYS2/MinGW")
   endif ()
-  link_libraries(Rack)
   add_compile_definitions(ARCH_WIN ARCH_X64)
   add_compile_definitions(_USE_MATH_DEFINES)
   # disabled - causes surge-rack/surge/libs/sst/sst-plugininfra/src/misc_windows.cpp:20:20: error: cannot convert 'const char*' to 'LPCWSTR' {aka 'const wchar_t*'}
