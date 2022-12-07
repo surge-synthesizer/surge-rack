@@ -83,7 +83,7 @@ target_compile_options (surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qual
 file (GLOB RACK_SOURCES src/*.cpp)
 list (REMOVE_ITEM RACK_SOURCES src/SurgeXT.cpp)
 
-add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
+add_compile_options("-fvisibility=hidden" "-fvisibility-inlines-hidden")
 
 add_library (${PROJECT_NAME} STATIC ${RACK_SOURCES})
 target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
