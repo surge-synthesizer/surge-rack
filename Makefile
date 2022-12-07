@@ -2,12 +2,12 @@ RACK_DIR ?= ../..
 include $(RACK_DIR)/arch.mk
 
 SURGE_BLD=dep/surge-build
-libsurge_rack := $(SURGE_BLD)/libsurge-rack.a
+libsurge_xt_rack := $(SURGE_BLD)/libSurgeXTRack.a
 
-OBJECTS += $(libsurge_rack)
+OBJECTS += $(libsurge_xt_rack)
 
 # Trigger the surge-rack CMake build when running `make dep`
-DEPS += $(libsurge_rack)
+DEPS += $(libsurge_xt_rack)
 
 EXTRA_CMAKE :=
 ifdef ARCH_MAC
@@ -18,7 +18,7 @@ else
 endif
 endif
 
-$(libsurge_rack):
+$(libsurge_xt_rack):
 	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(SURGE_BLD)/dist $(EXTRA_CMAKE)
 	cmake --build $(SURGE_BLD) -- -j $(shell getconf _NPROCESSORS_ONLN)
 	cmake --install $(SURGE_BLD)

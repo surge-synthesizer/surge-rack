@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-project(surge-rack VERSION 1.1 LANGUAGES C CXX)
+project(SurgeXTRack VERSION 1.1 LANGUAGES C CXX)
 
 if ("${RACK_SDK_DIR}" STREQUAL "")
   message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
@@ -12,7 +12,8 @@ include(RackSDK.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(PLUGIN_NAME SurgeXTRack)
+set(PLUGIN_NAME ${PROJECT_NAME})
+
 # Do not change the LIB_NAME!
 set(LIB_NAME plugin)
 
