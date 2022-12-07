@@ -51,7 +51,7 @@ set (NO_WARN_SELF_ASSIGN "")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Rack cross compiler toolchain Clang 12
-    set ( "")
+    set (NO_WARN_UNUSED_BUT_SET_VARIABLE "")
   endif ()
   set (NO_WARN_MNO_WARN_UNUSED_BUT_SET_VARIABLEAYBE_UNINITIALIZED -Wno-uninitialized)
   set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
