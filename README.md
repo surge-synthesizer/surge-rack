@@ -24,13 +24,26 @@ If you want to help with the code please hit us up in the #surge-rack channel in
 Still interested? Well we have a binary [Here](https://github.com/surge-synthesizer/surge-rack/releases/tag/Nightly)
 which we update on every commit, so it is the latest greatest. And you can build the standard way:
 
+Checkout sources:
 ```
-git clone https://github.com/surge-synthesizer/surge-rack/
+git clone https://github.com/surge-synthesizer/surge-rack
 cd surge-rack
 git submodule update --init --recursive
+```
+Build with Make:
+```
 export RACK_DIR=location-of-rack-SDK-or-source
 make dist
 ```
+Build directly with CMake:
+```
+mkdir surge-rack-build
+cd surge-rack-build
+cmake -DCMAKE_INSTALL_PREFIX=dist -DRACK_SDK_DIR=location-of-rack-SDK-or-source ../surge-rack
+make install
+```
+To compile the plugin with CMake for Mac OSX `x86_64` platform append `-DCMAKE_OSX_ARCHITECTURES="x86_64"` to the cmake command,to
+for `arm64` platform use `-DCMAKE_OSX_ARCHITECTURES="arm64"`.
 
 ## License and Copyright
 
