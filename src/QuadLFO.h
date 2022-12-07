@@ -19,15 +19,13 @@
  * ToDos
  *
  * Module
- *   - Code up the Modes
- *       - Independent
- *       - Temposync with C/M
- *       - Temposync with Phase
+ *    - Rewrite the whole thing for aligned blocks
+ *    - Code up the Modes
  *       - Interwoven / Spread
- *    - Config Param and Units
- *        - tempoSync case
- *        - Two unimplemented modes
- *    - Configure dynamic triggers
+ *    - Those process methods seem like some sharing is possible.
+ *    - Trigger Labels and Functions in mode 1-3
+ *    - Mode 3
+*     - Clock and tempoSync case
  *    - Some performance Especially SIMD the high poly cases
  *       - I bet we can do a better job with the simd-ized process
  *         for instance if we hand indeices and arrays to the process
@@ -35,7 +33,7 @@
  *       - Cache the offsets for uni / bipolar and do it SSE-wise
  *       - That sort of stuff
  * UI
- *   - Dynamic Trigger based on Mode
+ *   - Dynamic Trigger labels based on Mode
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
@@ -109,6 +107,14 @@ struct QuadLFO : modules::XTModule
         static inline float independentRateScaleInv(float f) { return (f + 5) / 13; }
         static inline float phaseRateScale(float f) { return f; }
         static inline float phaseRateScaleInv(float f) { return f; }
+        static inline float ratioRateScale(float f)
+        {
+            // We want to go from 0.5 to 8
+            auto v = 7.5 * f + 0.5;
+            // But we want to be quantized to halves
+            v = std::round(v * 2) / 2;
+            return v;
+        }
 
         QuadLFO *qlfo() { return static_cast<QuadLFO *>(module); }
 
@@ -159,6 +165,19 @@ struct QuadLFO : modules::XTModule
                 }
             }
             break;
+            case RATIO:
+                if (off == 0)
+                {
+                    setRate(v);
+                }
+                else
+                {
+                    /*auto ilv = v / 360.0;
+                    auto isv = phaseRateScaleInv(ilv);
+                    auto csv = std::clamp(isv, minValue, maxValue);
+                    setValue(csv); */
+                    setValue(0);
+                }
             default:
                 setValue(0);
             }
@@ -194,6 +213,18 @@ struct QuadLFO : modules::XTModule
                     return fmt::format("{:.1f}{}", v * 360.0, u8"\u00B0");
                 }
             }
+            case RATIO:
+            {
+                if (off == 0)
+                {
+                    return fmtRate(v);
+                }
+                else
+                {
+                    return fmt::format("{:.1f}", ratioRateScale(v));
+                }
+            }
+            break;
             default:
                 return std::to_string(v);
             }
@@ -221,6 +252,15 @@ struct QuadLFO : modules::XTModule
                 {
                     return "Phase Offset " + std::to_string(off + 1);
                 }
+            case RATIO:
+                if (off == 0)
+                {
+                    return "Rate";
+                }
+                else
+                {
+                    return "Frequency Ratio " + std::to_string(off + 1);
+                }
             default:
                 return "FIXME";
             }
@@ -242,6 +282,15 @@ struct QuadLFO : modules::XTModule
                 else
                 {
                     return "PHASE";
+                }
+            case RATIO:
+                if (off == 0)
+                {
+                    return "RATE";
+                }
+                else
+                {
+                    return "RATIO";
                 }
             default:
                 return "FIXME";
@@ -396,11 +445,15 @@ struct QuadLFO : modules::XTModule
 
         switch (ip)
         {
-        case 0:
+        case INDEPENDENT:
             processIndependentLFOs();
             break;
-        case 1:
+        case PHASE_OFFSET:
             processQuadPhaseLFOs();
+            break;
+        case RATIO:
+            processRatioLFOs();
+            break;
         default:
             break;
         }
@@ -409,6 +462,8 @@ struct QuadLFO : modules::XTModule
 
     void processQuadPhaseLFOs()
     {
+        bool retrig[MAX_POLY];
+
         for (int i = 0; i < n_lfos; ++i)
         {
             auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
@@ -426,9 +481,25 @@ struct QuadLFO : modules::XTModule
                     auto dph = RateQuantity::phaseRateScale(modAssist.values[RATE_0 + i][c]);
                     processors[i][c]->applyPhaseOffset(dph);
                 }
-                if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                if (i == 0)
                 {
-                    processors[i][c]->attack(shape);
+                    if (ic &&
+                        triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                    {
+                        processors[i][c]->attack(shape);
+                        retrig[c] = true;
+                    }
+                    else
+                    {
+                        retrig[c] = false;
+                    }
+                }
+                else
+                {
+                    if (retrig[c])
+                    {
+                        processors[i][c]->attack(shape);
+                    }
                 }
                 processors[i][c]->process(r, modAssist.values[DEFORM_0 + i][c], shape);
                 outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
@@ -453,6 +524,55 @@ struct QuadLFO : modules::XTModule
                 if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
                 {
                     processors[i][c]->attack(shape);
+                }
+                processors[i][c]->process(r, modAssist.values[DEFORM_0 + i][c], shape);
+                outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
+            }
+        }
+    }
+
+    void processRatioLFOs()
+    {
+        bool retrig[MAX_POLY];
+        for (int i = 0; i < n_lfos; ++i)
+        {
+            auto uni = params[BIPOLAR_0 + i].getValue() < 0.5;
+            auto off{0}, mul{5};
+            if (uni)
+                off = 1;
+            bool ic = inputs[TRIGGER_0 + i].isConnected();
+            auto shape = (int)std::round(params[SHAPE_0 + i].getValue());
+            auto monoTrigger = ic && inputs[TRIGGER_0 + i].getChannels() == 1;
+            float rateOff = 0.f;
+            if (i != 0)
+            {
+                auto dph = RateQuantity::ratioRateScale(modAssist.basevalues[RATE_0 + i]);
+                // This calculation obviously can be cahched sucks every sample but is correct
+                rateOff = log2(dph);
+            }
+            for (int c = 0; c < chanByLFO[i]; ++c)
+            {
+                auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0][c]) + rateOff;
+
+                if (i == 0)
+                {
+                    if (ic &&
+                        triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                    {
+                        processors[i][c]->attack(shape);
+                        retrig[c] = true;
+                    }
+                    else
+                    {
+                        retrig[c] = false;
+                    }
+                }
+                else
+                {
+                    if (retrig[c])
+                    {
+                        processors[i][c]->attack(shape);
+                    }
                 }
                 processors[i][c]->process(r, modAssist.values[DEFORM_0 + i][c], shape);
                 outputs[OUTPUT_0 + i].setVoltage((processors[i][c]->output + off) * mul, c);
