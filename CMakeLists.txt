@@ -1,10 +1,13 @@
 cmake_minimum_required (VERSION 3.16)
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+set (CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 project (surge-rack VERSION 1.1 LANGUAGES C CXX)
 include (RackSDK.cmake)
 set (CMAKE_CXX_STANDARD 17)
 
 set (PLUGIN_NAME SurgeXTRack)
+# Do not change the LIB_NAME!
+set(LIB_NAME plugin)
+
 ## check for Windows non gcc env in RackSDK.cmake!!!
 
 if ("${RACK_SDK_DIR}" STREQUAL "")
@@ -84,8 +87,6 @@ add_library (${PROJECT_NAME} STATIC ${RACK_SOURCES})
 target_include_directories (${PROJECT_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
 target_link_libraries (${PROJECT_NAME} PRIVATE surge-common)
 
-# Do not change the LIB_NAME!
-set(LIB_NAME plugin)
 add_library (${LIB_NAME} MODULE src/SurgeXT.cpp)
 target_include_directories (${LIB_NAME} PRIVATE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
 target_link_directories(${LIB_NAME} PRIVATE ${RACK_SDK_DIR})
