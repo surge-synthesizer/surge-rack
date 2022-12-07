@@ -38,7 +38,7 @@ add_subdirectory (surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
-set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-but-set-variable")
+set (NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-but-set-variable)
 set (NO_WARN_MAYBE_UNINITIALIZED -Wno-maybe-uninitialized)
 set (NO_WARN_STRINGOP_TRUNCATION -Wno-stringop-truncation)
 set (NO_WARN_CLASS_MEMACCESS -Wno-class-memaccess)
@@ -51,13 +51,12 @@ set (NO_WARN_SELF_ASSIGN "")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Rack cross compiler toolchain Clang 12
-    set (NO_WARN_UNUSED_BUT_SET_VARIABLE "")
+    set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-const-variable")
   endif ()
   set (NO_WARN_MAYBE_UNINITIALIZED "")
   set (NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
   set (NO_WARN_CLASS_MEMACCESS -Wno-class-varargs)
   set (NO_WARN_INFINITE_RECURSION -Wno-infinite-recursion)
-  set (NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-const-variable")
   set (NO_WARN_UNUSED_PRIVATE_FIELD -Wno-unused-private-field)
   set (NO_WARN_UNUSED_LAMBDA_CAPTURE -Wno-unused-lambda-capture)
   set (NO_WARN_MISMATCHED_TAGS -Wno-mismatched-tags)
