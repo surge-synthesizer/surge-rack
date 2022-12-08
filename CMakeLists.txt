@@ -102,7 +102,7 @@ add_library(${PROJECT_NAME} STATIC
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_link_libraries(${LIB_NAME} PRIVATE {PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
+target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
   sst-plugininfra fmt sqlite eurorack airwindows)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
