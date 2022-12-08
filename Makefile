@@ -28,17 +28,15 @@ SOURCES += src/SurgeXT.cpp
 
 FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
 
-ifdef ARCH_MAC
-LDFLAGS += -framework CoreFoundation -framework CoreServices
 LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra \
            -lfmt -lsqlite -leurorack -lairwindows
+
+ifdef ARCH_MAC
+LDFLAGS += -framework CoreFoundation -framework CoreServices
 endif
 
 ifdef ARCH_WIN
-LDFLAGS += -L$(SURGE_BLD)/dist/lib/static \
-           -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra \
-           -lfmt -lsqlite -leurorack -lairwindows \
-           -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
+LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
 endif
 
 ifdef ARCH_LIN
