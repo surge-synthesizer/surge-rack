@@ -423,6 +423,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             auto s0 = rack::mm2px(rack::Vec(lc::columnWidth_MM, 5));
             auto lab = widgets::Label::createWithBaselineBox(p0, s0, lay.label);
 
+
             if constexpr (clockId >= 0)
             {
                 if (module && lay.parId == clockId)
@@ -445,7 +446,8 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                     };
                 }
             }
-            else if (lay.dynamicLabel)
+
+            if (lay.dynamicLabel && lay.parId != clockId)
             {
                 lab->hasDynamicLabel = true;
                 lab->module = module;

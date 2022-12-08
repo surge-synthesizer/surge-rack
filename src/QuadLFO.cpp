@@ -142,7 +142,9 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString().c_str(), nullptr);
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5,
+                module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString().c_str(),
+                nullptr);
 
         float pushX = rack::mm2px(0.87);
         float pushY = rack::mm2px(0.7);
@@ -207,13 +209,13 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
                 module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
             lfo->applyPhaseOffset(dph);
         }
-        lfo->processResettingBlock(r, d, s);
+        lfo->process_block(r, d, s);
         if (zeroEndpoints)
             nvgMoveTo(vg, xoff, (box.size.y - yshift - ypad - labelHeight) * 0.5 + yshift);
         for (int i = 0; i < samples - (zeroEndpoints); ++i)
         {
-            lfo->processResettingBlock(r, d, s);
-            auto v = lfo->output;
+            lfo->process_block(r, d, s);
+            auto v = lfo->outputBlock[0];
             v = (v * 0.5 + 0.5);
 
             float x = i * dx + xoff;
@@ -292,7 +294,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
 QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *module)
 {
     setModule(module);
-    typedef layout::LayoutEngine<QuadLFOWidget, M::RATE_0, M::CLOCK_IN> engine_t;
+    typedef layout::LayoutEngine<QuadLFOWidget, M::RATE_0> engine_t;
     engine_t::initializeModulationToBlank(this);
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
@@ -333,6 +335,24 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
             if (ql)
             {
                 return ql->getRatePanelLabel(i);
+            }
+            return {"ERR"};
+        };
+        layout[1].dynamicLabel = true;
+        layout[1].dynLabelFn = [i](modules::XTModule *m) -> std::string {
+            auto ql = dynamic_cast<QuadLFO *>(m);
+            if (ql)
+            {
+                return ql->getDeformPanelLabel(i);
+            }
+            return {"ERR"};
+        };
+        layout[2].dynamicLabel = true;
+        layout[2].dynLabelFn = [i](modules::XTModule *m) -> std::string {
+            auto ql = dynamic_cast<QuadLFO *>(m);
+            if (ql)
+            {
+                return ql->getTriggerPanelLabel(i);
             }
             return {"ERR"};
         };
