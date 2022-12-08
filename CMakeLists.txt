@@ -8,7 +8,7 @@ else ()
   message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
 endif ()
 
-message(STATUS "Installing into ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
 
 include(RackSDK.cmake)
 
@@ -26,6 +26,7 @@ execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CUR
 
 execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/surge
         OUTPUT_VARIABLE SURGE_RACK_SURGE_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 message(STATUS "SURGE_RACK_PLUG_VERSION ${SURGE_RACK_PLUG_VERSION}")
 message(STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 
@@ -100,13 +101,20 @@ add_library(${PROJECT_NAME} STATIC
         )
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
-add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set (SHARED_LIB_TYPE SHARED)
+else ()
+  set (SHARED_LIB_TYPE MODULE)
+endif ()
+
+add_library(${LIB_NAME} ${SHARED_LIB_TYPE} src/SurgeXT.cpp)
 target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
   set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+else()
+  target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
 endif ()
 
 add_custom_target(${PROJECT_NAME}_quick_install
