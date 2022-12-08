@@ -2,7 +2,7 @@ name: Build VCV Rack Plugin
 on: [push, pull_request]
 
 env:
-  rack-sdk-version: 2.2.0
+  rack-sdk-version: 2.2.1
   rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
 
 defaults:
@@ -88,8 +88,10 @@ jobs:
           patch -ruN -d $HOME/Rack-SDK < ./scripts/rack-sdk-220-cross.patch
       - name: Build plugin
         run: |
+          CROSS_COMPILE_TARGET_x64=x86_64-apple-darwin
+          CROSS_COMPILE_TARGET_arm64=arm64-apple-darwin
           export RACK_DIR=$HOME/Rack-SDK
-          export CROSS_COMPILE=${{ matrix.platform }}
+          export CROSS_COMPILE=$CROSS_COMPILE_TARGET_${{ matrix.platform }}
           make dep
           make dist
           echo "Plugin architecture '$(lipo -archs plugin.dylib)'"
