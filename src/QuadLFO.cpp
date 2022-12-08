@@ -116,7 +116,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         {
             nvgBeginPath(vg);
             nvgMoveTo(vg, box.size.x, 0);
-            nvgLineTo(vg, box.size.x, box.size.y);
+            nvgLineTo(vg, box.size.x, box.size.y - 1);
             nvgStrokeWidth(vg, 0.75);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
             nvgStroke(vg);

@@ -21,6 +21,7 @@
  * Module
  *    - Code Interwoven / Spread mode
  *    - Clock and tempoSync cases
+ *    - Square Wave sample transition sample accurate inside block
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
