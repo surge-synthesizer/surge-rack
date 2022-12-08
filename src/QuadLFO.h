@@ -25,7 +25,7 @@
  *    - Those process methods seem like some sharing is possible.
  *    - Trigger Labels and Functions in mode 1-3
  *    - Mode 3
-*     - Clock and tempoSync case
+ *     - Clock and tempoSync case
  *    - Some performance Especially SIMD the high poly cases
  *       - I bet we can do a better job with the simd-ized process
  *         for instance if we hand indeices and arrays to the process
@@ -188,7 +188,7 @@ struct QuadLFO : modules::XTModule
             auto m = mode();
             int off = paramId - QuadLFO::RATE_0;
             auto v = getValue();
-            auto fmtRate = [this](auto v) {
+            auto fmtRate = [](auto v) {
                 auto sv = independentRateScale(v);
                 auto res = pow(2.0, sv);
                 if (res < 10)

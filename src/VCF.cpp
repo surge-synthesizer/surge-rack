@@ -104,7 +104,7 @@ struct VCFSelector : widgets::ParamJogSelector
         int type = (int)std::round(getParamQuantity()->getValue());
         auto di = fsm.remapStreamedIndexToDisplayIndex(type);
         di += dir;
-        if (di >= fsmOrdering.size())
+        if (di >= (int)fsmOrdering.size())
             di = 0;
         if (di < 0)
             di = fsmOrdering.size() - 1;
@@ -591,7 +591,7 @@ struct FilterPlotWidget : rack::widget::TransparentWidget, style::StyleParticipa
         nvgScissor(vg, 0, 0.5, box.size.x, box.size.y - 1);
 
         auto makePath = [&]() -> std::pair<float, float> {
-            int curr = 0;
+            uint64_t curr = 0;
             nvgBeginPath(vg);
             bool first{true};
             float firstf = 0, lastf = 0;

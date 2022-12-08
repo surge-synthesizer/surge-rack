@@ -69,7 +69,7 @@ endif ()
 
 target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy ${NO_WARN_MAYBE_UNINITIALIZED})
 target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs ${NO_WARN_INFINITE_RECURSION})
-target_compile_options(sqlite PRIVATE -Wno-error)
+target_compile_options(sqlite PRIVATE -Wno-error -Wno-unused-but-set-variable)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options(sst-waveshapers INTERFACE -Wno-unused-variable)
 target_compile_options(tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
@@ -80,6 +80,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
   ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})  
 
 add_compile_options("-fvisibility=hidden" "-fvisibility-inlines-hidden")
+add_compile_options("-Werror" "-Wno-unused-command-line-argument")
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
@@ -101,7 +102,6 @@ add_library(${PROJECT_NAME} STATIC
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
 target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

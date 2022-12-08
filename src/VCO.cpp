@@ -111,7 +111,7 @@ struct WavetableMenuBuilder
 
             if (idx == storage->firstThirdPartyWTCategory ||
                 (idx == storage->firstUserWTCategory &&
-                 storage->firstUserWTCategory != storage->wt_category.size()))
+                 storage->firstUserWTCategory != (int)storage->wt_category.size()))
             {
                 addSepIfMaking = true;
             }
