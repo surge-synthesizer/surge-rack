@@ -80,7 +80,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
   ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
   ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})  
 
-add_compile_options("-fvisibility=hidden" "-fvisibility-inlines-hidden")
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
@@ -109,7 +109,7 @@ else ()
 endif ()
 
 add_library(${LIB_NAME} ${SHARED_LIB_TYPE} src/SurgeXT.cpp)
-target_compile_options(${LIB_NAME} PRIVATE -Werror)
+target_compile_options(${LIB_NAME} PRIVATE -Werror ${NO_WARN_UNUSED_BUT_SET_VARIABLE})
 target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
