@@ -82,10 +82,6 @@ jobs:
           pushd $HOME
           curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-${{ matrix.platform }}.zip
           unzip Rack-SDK.zip
-      - name: Patch Rack-SDK for arm64
-        if: ${{ matrix.platform == 'arm64' }}
-        run: |
-          patch -ruN -d $HOME/Rack-SDK < ./scripts/rack-sdk-220-cross.patch
       - name: Build plugin
         run: |
           CROSS_COMPILE_TARGET_x64=x86_64-apple-darwin
