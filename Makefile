@@ -37,10 +37,12 @@ endif
 
 ifdef ARCH_WIN
 LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
+else
+LDFLAGS += -lfilesystem
 endif
 
 ifdef ARCH_LIN
-LDFLAGS += -pthread -lfilesystem
+LDFLAGS += -pthread
 endif
 
 # Add files to the ZIP package when running `make dist`
