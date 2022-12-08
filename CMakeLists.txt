@@ -5,8 +5,10 @@ project(SurgeXTRack VERSION 1.0 LANGUAGES C CXX)
 if ("${RACK_SDK_DIR}" STREQUAL "")
   message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
 else ()
-  message(STATUS "use Rack-SDK in '${RACK_SDK_DIR}'")
+  message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
 endif ()
+
+message(STATUS "Installing into ${CMAKE_INSTALL_PREFIX}")
 
 include(RackSDK.cmake)
 
@@ -24,10 +26,6 @@ execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CUR
 
 execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/surge
         OUTPUT_VARIABLE SURGE_RACK_SURGE_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-set(SURGE_RACK_BASE_VERSION XT1-0-1)
-
-message(STATUS "SURGE_RACK_BASE_VERSION ${SURGE_RACK_BASE_VERSION}")
 message(STATUS "SURGE_RACK_PLUG_VERSION ${SURGE_RACK_PLUG_VERSION}")
 message(STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 
@@ -81,26 +79,47 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
   ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
   ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})  
 
-file(GLOB RACK_SOURCES src/*.cpp)
-list(REMOVE_ITEM RACK_SOURCES src/SurgeXT.cpp)
-
 add_compile_options("-fvisibility=hidden" "-fvisibility-inlines-hidden")
 
-add_library(${PROJECT_NAME} STATIC ${RACK_SOURCES})
+add_library(${PROJECT_NAME} STATIC
+        src/Delay.cpp
+        src/DelayLineByFreq.cpp
+        src/EGxVCA.cpp
+        src/FX.cpp
+        src/LFO.cpp
+        src/Mixer.cpp
+        src/ModMatrix.cpp
+        src/QuadAD.cpp
+        src/QuadLFO.cpp
+        src/VCF.cpp
+        src/VCO.cpp
+        src/Waveshaper.cpp
+        src/XTModule.cpp
+        src/XTModuleWidget.cpp
+        src/XTStyle.cpp
+        )
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
 target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
+target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
   set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif ()
 
+add_custom_target(${PROJECT_NAME}_quick_install
+        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${LIB_NAME}.* ${CMAKE_INSTALL_PREFIX}/SurgeXTRack
+        COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/SurgeXTRack
+        )
+add_dependencies(${PROJECT_NAME}_quick_install ${PROJECT_NAME})
+add_dependencies(${PROJECT_NAME}_quick_install ${LIB_NAME})
+
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
+  target_link_libraries(${LIB_NAME} PRIVATE surge-common juce_dsp_rack_sub tinyxml strnatcmp
     sst-plugininfra fmt sqlite eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
 endif ()
 
