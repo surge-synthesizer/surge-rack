@@ -102,7 +102,8 @@ add_library(${PROJECT_NAME} STATIC
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
+target_link_libraries(${LIB_NAME} PRIVATE {PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
+  sst-plugininfra fmt sqlite eurorack airwindows)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
@@ -119,8 +120,10 @@ add_dependencies(${PROJECT_NAME}_quick_install ${LIB_NAME})
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  target_link_libraries(${LIB_NAME} PRIVATE surge-common juce_dsp_rack_sub tinyxml strnatcmp
-    sst-plugininfra fmt sqlite eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
+  target_link_libraries(${LIB_NAME} PRIVATE winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
+else ()
+  target_link_libraries(${LIB_NAME} PRIVATE filesystem)
+  install(TARGETS filesystem ARCHIVE DESTINATION lib/static)
 endif ()
 
 install(TARGETS ${LIB_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite eurorack airwindows

@@ -28,11 +28,11 @@ SOURCES += src/SurgeXT.cpp
 
 FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
 
-LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra \
-           -lfmt -lsqlite -leurorack -lairwindows
+LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lSurgeXTRack -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp \
+           -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
 
 ifdef ARCH_MAC
-LDFLAGS += -framework CoreFoundation -framework CoreServices
+LDFLAGS += -framework CoreFoundation -framework CoreServices -lfilesystem
 endif
 
 ifdef ARCH_WIN
@@ -40,7 +40,7 @@ LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_
 endif
 
 ifdef ARCH_LIN
-LDFLAGS += -pthread
+LDFLAGS += -pthread -lfilesystem
 endif
 
 # Add files to the ZIP package when running `make dist`
