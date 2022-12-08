@@ -196,7 +196,7 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
     rack::app::SvgPanel *svgPanel{nullptr};
 
     Background(rack::Vec size, const std::string &t, const std::string &grp, const std::string &pn)
-        : title(t), groupName(grp), panelName(pn)
+        : panelName(pn), groupName(grp), title(t)
     {
         box.size = size;
         onStyleChanged();

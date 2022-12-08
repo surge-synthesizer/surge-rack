@@ -139,8 +139,9 @@ template <int fxType> struct FX : modules::XTModule
             std::string name{"Mod"};
             name += std::to_string((i - FX_MOD_PARAM_0) % 4 + 1);
 
-            configParamNoRand<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1, 0,
-                                                                   name)->baseName = name;
+            configParamNoRand<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1,
+                                                                         0, name)
+                ->baseName = name;
         }
 
         FXConfig<fxType>::configSpecificParams(this);
@@ -345,7 +346,7 @@ template <int fxType> struct FX : modules::XTModule
 
     struct PresetChangeAction : rack::history::ModuleAction
     {
-        json_t* moduleJ{nullptr};
+        json_t *moduleJ{nullptr};
         int presetId{-1};
 
         ~PresetChangeAction()
@@ -364,7 +365,7 @@ template <int fxType> struct FX : modules::XTModule
 
         void undo()
         {
-            auto* module = APP->engine->getModule(moduleId);
+            auto *module = APP->engine->getModule(moduleId);
             if (module)
             {
                 module->fromJson(moduleJ);
@@ -373,14 +374,14 @@ template <int fxType> struct FX : modules::XTModule
 
         void redo()
         {
-            auto* module = APP->engine->getModule(moduleId);
-            auto* fx = dynamic_cast<FX<fxType> *>(module);
+            auto *module = APP->engine->getModule(moduleId);
+            auto *fx = dynamic_cast<FX<fxType> *>(module);
             if (fx)
                 fx->loadPreset(presetId);
         }
     };
 
-    void loadPreset(int which, bool recordHistory=true, bool resetDefaults = false)
+    void loadPreset(int which, bool recordHistory = true, bool resetDefaults = false)
     {
         if (recordHistory)
         {
@@ -388,7 +389,7 @@ template <int fxType> struct FX : modules::XTModule
             h->stash(this, which);
             APP->history->push(h);
         }
-        
+
         const auto &ps = presets[which];
 
         for (int i = 0; i < n_fx_params; ++i)
@@ -396,7 +397,8 @@ template <int fxType> struct FX : modules::XTModule
             paramQuantities[FX_PARAM_0 + i]->setValue(value01for(i, ps.p[i]));
             if (resetDefaults)
             {
-                paramQuantities[FX_PARAM_0 + i]->defaultValue = paramQuantities[FX_PARAM_0 + i]->getValue();
+                paramQuantities[FX_PARAM_0 + i]->defaultValue =
+                    paramQuantities[FX_PARAM_0 + i]->getValue();
             }
         }
 
@@ -415,7 +417,8 @@ template <int fxType> struct FX : modules::XTModule
     float processedL alignas(16)[MAX_POLY][BLOCK_SIZE], processedR
         alignas(16)[MAX_POLY][BLOCK_SIZE];
 
-    float extraOutputs alignas(16)[std::max(1,FXConfig<fxType>::extraOutputs())][MAX_POLY][BLOCK_SIZE];
+    float extraOutputs alignas(
+        16)[std::max(1, FXConfig<fxType>::extraOutputs())][MAX_POLY][BLOCK_SIZE];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -446,7 +449,7 @@ template <int fxType> struct FX : modules::XTModule
         outputs[OUTPUT_L].setChannels(1);
         outputs[OUTPUT_R].setChannels(1);
 
-        for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+        for (int i = 0; i < FXConfig<fxType>::extraOutputs(); ++i)
             outputs[EXTRA_OUTPUT_0 + i].setChannels(1);
 
         if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
@@ -538,7 +541,7 @@ template <int fxType> struct FX : modules::XTModule
             outputs[OUTPUT_R].setVoltage(outr);
         }
 
-        for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+        for (int i = 0; i < FXConfig<fxType>::extraOutputs(); ++i)
         {
             outputs[EXTRA_OUTPUT_0 + i].setVoltage(extraOutputs[i][0][bufferPos]);
         }
@@ -581,7 +584,7 @@ template <int fxType> struct FX : modules::XTModule
         outputs[OUTPUT_L].setChannels(chan);
         outputs[OUTPUT_R].setChannels(chan);
 
-        for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+        for (int i = 0; i < FXConfig<fxType>::extraOutputs(); ++i)
             outputs[EXTRA_OUTPUT_0 + i].setChannels(chan);
 
         for (int c = 0; c < chan; ++c)
@@ -685,7 +688,7 @@ template <int fxType> struct FX : modules::XTModule
                 outputs[OUTPUT_R].setVoltage(outr, c);
             }
 
-            for (int i=0; i<FXConfig<fxType>::extraOutputs(); ++i)
+            for (int i = 0; i < FXConfig<fxType>::extraOutputs(); ++i)
             {
                 outputs[EXTRA_OUTPUT_0 + i].setVoltage(extraOutputs[i][c][bufferPos], c);
             }
@@ -759,7 +762,7 @@ template <int fxType> struct FX : modules::XTModule
                 auto lpc = json_integer_value(lp);
                 auto pnc = std::string(json_string_value(pn));
                 auto pdc = json_boolean_value(pd);
-                if (lpc >= 0 && lpc < presets.size() && presets[lpc].name == pnc)
+                if (lpc >= 0 && lpc < (int)presets.size() && presets[lpc].name == pnc)
                 {
                     loadedPreset = lpc;
                     presetIsDirty = pdc;
@@ -768,7 +771,7 @@ template <int fxType> struct FX : modules::XTModule
         }
         if (FXConfig<fxType>::usesClock())
         {
-           clockProc.fromJson(modJ);
+            clockProc.fromJson(modJ);
         }
 
         if (FXConfig<fxType>::allowsPolyphony())

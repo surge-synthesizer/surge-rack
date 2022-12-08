@@ -99,6 +99,7 @@ add_library(${PROJECT_NAME} STATIC
         src/XTModuleWidget.cpp
         src/XTStyle.cpp
         )
+target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -108,6 +109,7 @@ else ()
 endif ()
 
 add_library(${LIB_NAME} ${SHARED_LIB_TYPE} src/SurgeXT.cpp)
+target_compile_options(${LIB_NAME} PRIVATE -Werror)
 target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
