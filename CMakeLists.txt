@@ -101,20 +101,12 @@ add_library(${PROJECT_NAME} STATIC
         )
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set (SHARED_LIB_TYPE SHARED)
-else ()
-  set (SHARED_LIB_TYPE MODULE)
-endif ()
-
-add_library(${LIB_NAME} ${SHARED_LIB_TYPE} src/SurgeXT.cpp)
+add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
 target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
   set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-else()
-  target_compile_options(${LIB_NAME} PRIVATE "-fuse-ld=gold" "-flto")
 endif ()
 
 add_custom_target(${PROJECT_NAME}_quick_install
