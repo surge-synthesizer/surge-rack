@@ -30,7 +30,8 @@ FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
 
 ifdef ARCH_MAC
 LDFLAGS += -framework CoreFoundation -framework CoreServices
-LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lsurge-common
+LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp -lsst-plugininfra \
+           -lfmt -lsqlite -leurorack -lairwindows
 endif
 
 ifdef ARCH_WIN
