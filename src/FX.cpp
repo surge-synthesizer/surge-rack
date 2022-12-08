@@ -111,7 +111,7 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         id += dir;
         if (id < 0)
             id = module->presets.size() - 1;
-        if (id >= module->presets.size())
+        if (id >= (int)module->presets.size())
             id = 0;
         forceDirty = true;
         setValue(id);

@@ -700,7 +700,7 @@ struct MonophonicModulationAssistant
     float modvalues alignas(16)[nPar];
     void initialize(M *m)
     {
-        for (auto p = 0; p < nPar; ++p)
+        for (auto p = 0U; p < nPar; ++p)
         {
             auto pq = m->paramQuantities[p + par0];
             f[p] = (pq->maxValue - pq->minValue);
@@ -711,9 +711,9 @@ struct MonophonicModulationAssistant
 
     void setupMatrix(M *m)
     {
-        for (auto p = 0; p < nPar; ++p)
+        for (auto p = 0U; p < nPar; ++p)
         {
-            for (auto i = 0; i < nInputs; ++i)
+            for (auto i = 0U; i < nInputs; ++i)
             {
                 auto idx = m->modulatorIndexFor(p + par0, i);
                 mu[p][i] = m->params[idx].getValue() * f[p];
@@ -724,16 +724,16 @@ struct MonophonicModulationAssistant
     void updateValues(M *m)
     {
         float inp[4];
-        for (int i = 0; i < nInputs; ++i)
+        for (auto i = 0U; i < nInputs; ++i)
         {
             inp[i] = m->inputs[i + input0].isConnected() * m->inputs[i + input0].getVoltage(0) *
                      RACK_TO_SURGE_CV_MUL;
         }
-        for (int p = 0; p < nPar; ++p)
+        for (auto p = 0U; p < nPar; ++p)
         {
             // Set up the base values
             auto mv = 0.f;
-            for (int i = 0; i < nInputs; ++i)
+            for (auto i = 0U; i < nInputs; ++i)
             {
                 mv += (mu[p][i] * inp[i]);
             }
@@ -763,7 +763,7 @@ struct ModulationAssistant
     bool anyConnected{false};
     void initialize(M *m)
     {
-        for (auto p = 0; p < nPar; ++p)
+        for (auto p = 0U; p < nPar; ++p)
         {
             auto pq = m->paramQuantities[p + par0];
             f[p] = (pq->maxValue - pq->minValue);
@@ -777,7 +777,7 @@ struct ModulationAssistant
         chans = std::max(1, m->polyChannelCount());
 
         anyConnected = false;
-        for (int i = 0; i < nInputs; ++i)
+        for (auto i = 0U; i < nInputs; ++i)
         {
             connected[i] = m->inputs[i + input0].isConnected();
             anyConnected = anyConnected || connected[i];
@@ -792,10 +792,10 @@ struct ModulationAssistant
             }
         }
 
-        for (auto p = 0; p < nPar; ++p)
+        for (auto p = 0U; p < nPar; ++p)
         {
             auto sm = 0.f;
-            for (auto i = 0; i < nInputs; ++i)
+            for (auto i = 0U; i < nInputs; ++i)
             {
                 auto idx = m->modulatorIndexFor(p + par0, i);
                 mu[p][i] = m->params[idx].getValue() * f[p];
@@ -812,17 +812,17 @@ struct ModulationAssistant
         {
             // Special case: chans = 1 can skip all the channel loops
             float inp[nInputs];
-            for (int i = 0; i < nInputs; ++i)
+            for (auto i = 0U; i < nInputs; ++i)
             {
                 inp[i] = connected[i] * m->inputs[i + input0].getVoltage(0) * RACK_TO_SURGE_CV_MUL;
             }
-            for (int p = 0; p < nPar; ++p)
+            for (auto p = 0U; p < nPar; ++p)
             {
                 // Set up the base values
                 auto mv = 0.f;
                 if (connectedParameter[p])
                 {
-                    for (int i = 0; i < nInputs; ++i)
+                    for (auto i = 0U; i < nInputs; ++i)
                     {
                         mv += mu[p][i] * inp[i];
                     }
@@ -840,7 +840,7 @@ struct ModulationAssistant
             const auto r2scv = _mm_set1_ps(RACK_TO_SURGE_CV_MUL);
             int polyChans = (chans - 1) / 4 + 1;
             __m128 snapInputs[nInputs][MAX_POLY >> 2];
-            for (int i = 0; i < nInputs; ++i)
+            for (auto i = 0U; i < nInputs; ++i)
             {
                 if (!connected[i])
                 {
@@ -868,7 +868,7 @@ struct ModulationAssistant
                     }
                 }
             }
-            for (int p = 0; p < nPar; ++p)
+            for (auto p = 0U; p < nPar; ++p)
             {
                 if (!connectedParameter[p])
                 {
@@ -889,7 +889,7 @@ struct ModulationAssistant
                     __m128 mv[MAX_POLY >> 2];
                     memset(mv, 0, polyChans * sizeof(__m128));
 
-                    for (int i = 0; i < nInputs; ++i)
+                    for (auto i = 0U; i < nInputs; ++i)
                     {
                         if (!connected[i])
                             continue;
@@ -1028,7 +1028,7 @@ struct DCBlocker
 
     inline void filter(float *x) // BLOCK_SIZE
     {
-        for (int i = 0; i < BLOCK_SIZE; ++i)
+        for (auto i = 0; i < BLOCK_SIZE; ++i)
         {
             auto dx = x[i] - xN1;
             auto fv = dx + fac * yN1;
