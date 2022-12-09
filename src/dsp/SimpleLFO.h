@@ -116,6 +116,14 @@ struct SimpleLFO
         lastDPhase = dPhase;
     }
 
+    inline void freeze()
+    {
+        for (auto &f : outputBlock)
+        {
+            f = lastTarget;
+        }
+    }
+
     inline void process_block(const float r, const float d, const int lshape, bool reverse = false)
     {
         float target{0.f};
