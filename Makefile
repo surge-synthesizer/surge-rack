@@ -26,7 +26,7 @@ $(libsurge_xt_rack):
 # Add .cpp and .c files to the build
 SOURCES += src/SurgeXT.cpp
 
-FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
+FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -std=c++17
 
 LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lSurgeXTRack -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp \
            -lsamplerate -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
@@ -44,6 +44,8 @@ endif
 ifdef ARCH_LIN
 LDFLAGS += -pthread
 endif
+
+
 
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
@@ -63,6 +65,9 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/
 
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
+
+# undo the 11-ness
+CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/745
 
