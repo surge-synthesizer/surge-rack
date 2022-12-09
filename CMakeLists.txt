@@ -99,11 +99,12 @@ add_library(${PROJECT_NAME} STATIC
         src/XTModuleWidget.cpp
         src/XTStyle.cpp
         )
+
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
 target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
-  sst-plugininfra fmt sqlite eurorack airwindows)
+  samplerate sst-plugininfra fmt sqlite eurorack airwindows)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
@@ -126,8 +127,8 @@ else ()
   install(TARGETS filesystem ARCHIVE DESTINATION lib/static)
 endif ()
 
-install(TARGETS ${LIB_NAME} ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite eurorack airwindows
-        RUNTIME DESTINATION bin
+install(TARGETS ${LIB_NAME} ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate
+        sst-plugininfra fmt sqlite eurorack airwindows
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 

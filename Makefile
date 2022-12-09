@@ -29,7 +29,7 @@ SOURCES += src/SurgeXT.cpp
 FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
 
 LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lSurgeXTRack -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp \
-           -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
+           -lsamplerate -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
 
 ifdef ARCH_MAC
 LDFLAGS += -framework CoreFoundation -framework CoreServices
