@@ -8,7 +8,7 @@ else ()
   message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
 endif ()
 
-message(STATUS "Installing into ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
 
 include(RackSDK.cmake)
 
@@ -26,6 +26,7 @@ execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CUR
 
 execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/surge
         OUTPUT_VARIABLE SURGE_RACK_SURGE_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 message(STATUS "SURGE_RACK_PLUG_VERSION ${SURGE_RACK_PLUG_VERSION}")
 message(STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 
@@ -42,45 +43,27 @@ add_subdirectory(surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
-set(NO_WARN_UNUSED_BUT_SET_VARIABLE -Wno-unused-but-set-variable)
-set(NO_WARN_MAYBE_UNINITIALIZED -Wno-maybe-uninitialized)
-set(NO_WARN_STRINGOP_TRUNCATION -Wno-stringop-truncation)
-set(NO_WARN_CLASS_MEMACCESS -Wno-class-memaccess)
-set(NO_WARN_INFINITE_RECURSION "")
-set(NO_WARN_UNUSED_PRIVATE_FIELD "")
-set(NO_WARN_UNUSED_LAMBDA_CAPTURE "")
-set(NO_WARN_MISMATCHED_TAGS "")
-set(NO_WARN_SELF_ASSIGN "")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # Rack cross compiler toolchain Clang 12
-    set(NO_WARN_UNUSED_BUT_SET_VARIABLE "-Wno-unused-const-variable")
-  endif ()
-  set(NO_WARN_MAYBE_UNINITIALIZED "")
-  set(NO_WARN_STRINGOP_TRUNCATION -Wno-string-concatenation)
-  set(NO_WARN_CLASS_MEMACCESS -Wno-class-varargs)
-  set(NO_WARN_INFINITE_RECURSION -Wno-infinite-recursion)
-  set(NO_WARN_UNUSED_PRIVATE_FIELD -Wno-unused-private-field)
-  set(NO_WARN_UNUSED_LAMBDA_CAPTURE -Wno-unused-lambda-capture)
-  set(NO_WARN_MISMATCHED_TAGS -Wno-mismatched-tags)
-  set(NO_WARN_SELF_ASSIGN -Wno-self-assign)
-endif ()
-
-target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy ${NO_WARN_MAYBE_UNINITIALIZED})
-target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs ${NO_WARN_INFINITE_RECURSION})
-target_compile_options(sqlite PRIVATE -Wno-error -Wno-unused-but-set-variable)
+target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>)
+target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
+target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options(sst-waveshapers INTERFACE -Wno-unused-variable)
 target_compile_options(tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
-target_compile_options(tuning-library INTERFACE ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_UNUSED_PRIVATE_FIELD})
+target_compile_options(tuning-library INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+                       $<$<PLATFORM_ID:Darwin>:-Wno-unused-private-field>)
 target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-qualifiers -Wno-unused-value -Wno-uninitialized
-  -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct -Wno-nonnull -Wno-reorder
-  ${NO_WARN_UNUSED_BUT_SET_VARIABLE} ${NO_WARN_STRINGOP_TRUNCATION} ${NO_WARN_CLASS_MEMACCESS} ${NO_WARN_SELF_ASSIGN}
-  ${NO_WARN_UNUSED_LAMBDA_CAPTURE} ${NO_WARN_MAYBE_UNINITIALIZED} ${NO_WARN_MISMATCHED_TAGS} ${NO_WARN_INFINITE_RECURSION})  
+                       -Wno-implicit-fallthrough -Wno-char-subscripts -Wno-unused-local-typedefs -Wno-range-loop-construct
+                       -Wno-nonnull -Wno-reorder
+                       $<IF:$<CXX_COMPILER_ID:Clang>,-Wno-unused-const-variable,-Wno-unused-but-set-variable>
+                       $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-stringop-truncation,-Wno-string-concatenation>
+                       $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-class-memaccess,-Wno-class-varargs>
+                       $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+                       $<$<PLATFORM_ID:Darwin>:-Wno-self-assign>
+                       $<$<PLATFORM_ID:Darwin>:-Wno-unused-lambda-capture>
+                       $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
+                       $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
-add_compile_options("-fvisibility=hidden" "-fvisibility-inlines-hidden")
-add_compile_options("-Werror" "-Wno-unused-command-line-argument")
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
@@ -99,10 +82,12 @@ add_library(${PROJECT_NAME} STATIC
         src/XTModuleWidget.cpp
         src/XTStyle.cpp
         )
+
 target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
+target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
+  samplerate sst-plugininfra fmt sqlite eurorack airwindows)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
@@ -119,12 +104,14 @@ add_dependencies(${PROJECT_NAME}_quick_install ${LIB_NAME})
 set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  target_link_libraries(${LIB_NAME} PRIVATE surge-common juce_dsp_rack_sub tinyxml strnatcmp
-    sst-plugininfra fmt sqlite eurorack airwindows winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
+  target_link_libraries(${LIB_NAME} PRIVATE winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
+else ()
+  target_link_libraries(${LIB_NAME} PRIVATE filesystem)
+  install(TARGETS filesystem ARCHIVE DESTINATION lib/static)
 endif ()
 
-install(TARGETS ${LIB_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite eurorack airwindows
-        RUNTIME DESTINATION bin
+install(TARGETS ${LIB_NAME} ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate
+        sst-plugininfra fmt sqlite eurorack airwindows
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 
