@@ -48,6 +48,7 @@ target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options(sst-waveshapers INTERFACE -Wno-unused-variable)
+target_compile_options(sst-filters INTERFACE -Wno-unused-variable $<$<CONFIG:Debug>:-Wno-sign-compare>)
 target_compile_options(tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
 target_compile_options(tuning-library INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-private-field>)
@@ -63,7 +64,11 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
-add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
+add_compile_options(-fvisibility=hidden
+        -fvisibility-inlines-hidden
+        $<$<PLATFORM_ID:Darwin>:-Werror>
+        $<$<PLATFORM_ID:Darwin>:-Wno-unused-command-line-argument>
+        $<$<CONFIG:Debug>:-DSURGEXT_RACK_DEBUG>)
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp

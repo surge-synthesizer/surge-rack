@@ -20,7 +20,9 @@
  *
  * Module
  *    - Code Interwoven / Spread mode
+ *    - Quadrature mode (amplitudes per)
  *    - Clock and tempoSync cases
+ *    - Square and S&H get sample accurate transitions in block rather than interps
  *    - Square Wave sample transition sample accurate inside block
  */
 
@@ -95,20 +97,27 @@ struct QuadLFO : modules::XTModule
         static inline float independentRateScaleInv(float f) { return (f + 5) / 13; }
         static inline float phaseRateScale(float f) { return f; }
         static inline float phaseRateScaleInv(float f) { return f; }
+
+        static constexpr std::array<float, 12> ratioRates{2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32};
         static inline float ratioRateScale(float f)
         {
-            // We want to go from 0.5 to 8
-            auto v = 7.5 * f + 0.5;
-            // But we want to be quantized to halves
-            v = std::round(v * 2) / 2;
-            return v;
-        }
+            auto nIdx = (int)ratioRates.size();
 
-        static inline float ratioRateScaleInv(float v)
-        {
-            auto f = (v - 0.5) / 7.5;
-            auto q = ratioRateScale(f);
-            auto res = (q - 0.5) / 7.5;
+            auto idx =
+                std::clamp((int)std::round(f * ((nIdx - 1) * 2 + 1) + 0.5), 0, (nIdx - 1) * 2 + 1);
+            auto res{0};
+            if (idx < nIdx)
+            {
+                // 0 -> 11, 11 -> 0, nidx is 12, so this is just nidx - 1 - idx
+                res = -ratioRates[nIdx - 1 - idx];
+            }
+            else if (idx == nIdx)
+                res = 0;
+            else
+            {
+                // nidx+1 -> 0
+                res = ratioRates[idx - (nIdx + 1)];
+            }
             return res;
         }
 
@@ -127,7 +136,14 @@ struct QuadLFO : modules::XTModule
         {
             auto m = mode();
             int off = paramId - QuadLFO::RATE_0;
-            auto v = std::stof(s);
+            auto v{0.f};
+            try
+            {
+                v = std::stof(s);
+            }
+            catch (const std::invalid_argument &e)
+            {
+            }
             auto setRate = [this](float v) {
                 if (v < 0)
                     setValue(independentRateScaleInv(0));
@@ -168,7 +184,46 @@ struct QuadLFO : modules::XTModule
                 }
                 else
                 {
-                    setValue(ratioRateScaleInv(v));
+                    auto vs{1.f};
+                    if (s[0] == '/')
+                    {
+                        vs = -1;
+                        v = std::atof(s.c_str() + 1);
+                    }
+                    else if (s[0] == 'x')
+                    {
+                        v = std::atof(s.c_str() + 1);
+                    }
+                    if (fabs(v - 1) < 0.1)
+                    {
+                        setValue(0.5);
+                    }
+                    else
+                    {
+                        auto clIdx{0}, dist{100000};
+                        for (auto i = 0U; i < ratioRates.size(); ++i)
+                        {
+                            if (fabs(v - ratioRates[i]) < dist)
+                            {
+                                dist = fabs(v - ratioRates[i]);
+                                clIdx = i;
+                            }
+                        }
+                        // OK now we know the closest index to what we typed so are we negative?
+                        auto val{0.f};
+                        if (vs > 0)
+                        {
+                            val = 1.f * (clIdx + ratioRates.size()) / ((ratioRates.size() - 1) * 2);
+                        }
+                        else
+                        {
+                            val = 1.f * ((ratioRates.size() - 1 - 1 - clIdx)) /
+                                  ((ratioRates.size() - 1) * 2);
+                        }
+                        std::cout << _D(clIdx) << " " << _D(ratioRates[clIdx]) << _D(val) << _D(s)
+                                  << std::endl;
+                        setValue(std::clamp(val, 0.f, 1.f));
+                    }
                 }
                 break;
             default:
@@ -214,7 +269,13 @@ struct QuadLFO : modules::XTModule
                 }
                 else
                 {
-                    return fmt::format("{:.1f}", ratioRateScale(v));
+                    auto r = ratioRateScale(v);
+                    if (r < 0)
+                        return fmt::format("/{}", (int)-r);
+                    else if (r > 0)
+                        return fmt::format("x{}", (int)r);
+                    else
+                        return "x1";
                 }
             }
             break;
@@ -561,22 +622,29 @@ struct QuadLFO : modules::XTModule
                     retrig[c] = ic && triggers[i][c].process(
                                           inputs[TRIGGER_0].getVoltage(c * (!monoTrigger)));
                 }
-                auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0][c]);
-                if (i != 0)
-                {
-                    r = R(this, r, i, c);
-                }
-                if (retrig[c])
-                {
-                    processors[i][c]->attack(shape);
-                }
-
                 bool frozen = fc && (inputs[TRIGGER_0 + 2].getVoltage(c * (!monoFreeze)) > 2);
-                bool reverse = rc && (inputs[TRIGGER_0 + 3].getVoltage(c * (!monoRev)) > 2);
 
-                if (!frozen)
+                if (frozen) [[unlikely]]
+                {
+                    processors[i][c]->freeze();
+                }
+                else
+                {
+                    auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0][c]);
+                    if (i != 0)
+                    {
+                        r = R(this, r, i, c);
+                    }
+                    if (retrig[c])
+                    {
+                        processors[i][c]->attack(shape);
+                    }
+
+                    bool reverse = rc && (inputs[TRIGGER_0 + 3].getVoltage(c * (!monoRev)) > 2);
+
                     processors[i][c]->process_block(r, modAssist.values[DEFORM_0 + i][c], shape,
                                                     reverse);
+                }
             }
         }
     }
@@ -592,7 +660,11 @@ struct QuadLFO : modules::XTModule
     static float RatioRelOp(QuadLFO *that, float r, int i, int c)
     {
         auto dph = RateQuantity::ratioRateScale(that->modAssist.basevalues[RATE_0 + i]);
-        return r + log2(dph);
+        auto s = (dph < 0 ? -1 : 1);
+        if (dph == 0)
+            return r;
+
+        return r + s * log2(std::fabs(dph));
     }
     void processRatioLFOs() { processQuadRelative<RatioRelOp>(); }
 
@@ -620,7 +692,7 @@ struct QuadLFO : modules::XTModule
         case RATIO:
             for (int i = 1; i < n_lfos; ++i)
             {
-                paramQuantities[RATE_0 + i]->defaultValue = RateQuantity::ratioRateScaleInv(1 + i);
+                paramQuantities[RATE_0 + i]->defaultValue = 0.5;
             }
             break;
         default:

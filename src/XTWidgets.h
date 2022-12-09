@@ -199,7 +199,12 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         : panelName(pn), groupName(grp), title(t)
     {
         box.size = size;
+
         onStyleChanged();
+
+#if SURGEXT_RACK_DEBUG
+        addDebug();
+#endif
     }
 
     void drawStubLayer(NVGcontext *vg)
@@ -268,6 +273,11 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         {
             alphaWarning->dirty = true;
         }
+
+        if (debugWarning)
+        {
+            debugWarning->dirty = true;
+        }
     }
 
     BufferedDrawFunctionWidget *alphaWarning{nullptr};
@@ -287,6 +297,25 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         nvgText(vg, 1.5, 1.5, "ALPHA", nullptr);
         nvgFillColor(vg, nvgRGB(255, 0, 0));
         nvgText(vg, 1, 1, "ALPHA", nullptr);
+    }
+
+    BufferedDrawFunctionWidget *debugWarning{nullptr};
+    void addDebug()
+    {
+        debugWarning = new BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto vg) { drawDebug(vg); });
+        addChild(debugWarning);
+    }
+    void drawDebug(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 18);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
+        nvgText(vg, box.size.x - 1.5, 1.5, "DBG", nullptr);
+        nvgFillColor(vg, nvgRGB(0, 0, 255));
+        nvgText(vg, box.size.x - 1, 1, "DBG", nullptr);
     }
 };
 
