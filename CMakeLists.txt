@@ -48,6 +48,7 @@ target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
 target_compile_options(sst-waveshapers INTERFACE -Wno-unused-variable)
+target_compile_options(sst-filters INTERFACE -Wno-unused-variable $<$<CONFIG:Debug>:-Wno-sign-compare>)
 target_compile_options(tinyxml PRIVATE -Wno-implicit-fallthrough -Wno-sign-compare)
 target_compile_options(tuning-library INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-private-field>)
@@ -63,7 +64,11 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
-add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
+add_compile_options(-fvisibility=hidden
+        -fvisibility-inlines-hidden
+        $<$<PLATFORM_ID:Darwin>:-Werror>
+        $<$<PLATFORM_ID:Darwin>:-Wno-unused-command-line-argument>
+        $<$<CONFIG:Debug>:-DSURGEXT_RACK_DEBUG>)
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
@@ -127,3 +132,23 @@ file(INSTALL surge/resources/surge-shared/configuration.xml
 
 install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
+
+
+add_custom_target(xt-rack-code-checks)
+
+# Clang Format checks
+find_program(CLANG_FORMAT_EXE NAMES clang-format-12 clang-format)
+set(CLANG_FORMAT_DIRS src)
+set(CLANG_FORMAT_EXTS cpp h)
+foreach(dir ${CLANG_FORMAT_DIRS})
+  foreach(ext ${CLANG_FORMAT_EXTS})
+    list(APPEND CLANG_FORMAT_GLOBS "':(glob)${dir}/**/*.${ext}'")
+  endforeach()
+endforeach()
+add_custom_command(TARGET xt-rack-code-checks
+        POST_BUILD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} -E echo About to check clang-format using ${CLANG_FORMAT_EXE}
+        COMMAND git ls-files -- ${CLANG_FORMAT_GLOBS} | xargs ${CLANG_FORMAT_EXE} --dry-run --Werror
+        )
+# }}}

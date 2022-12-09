@@ -127,10 +127,8 @@ struct HarmEd : public rack::Widget, style::StyleParticipant
         float xpad = rack::mm2px(2);
         float h = box.size.y - rack::mm2px(1) - y0;
         float w = (box.size.x - 2 * xpad);
-        auto bed = widgets::NBarWidget<16>::create(rack::Vec(xpad, y0),
-                                                   rack::Vec(w,h),
-                                                   module,
-                                                   par);
+        auto bed =
+            widgets::NBarWidget<16>::create(rack::Vec(xpad, y0), rack::Vec(w, h), module, par);
         addChild(bed);
     }
 

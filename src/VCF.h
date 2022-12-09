@@ -105,7 +105,7 @@ struct VCF : public modules::XTModule
         configParam(MIX, 0, 1, 1, "Mix", "%", 0.f, 100.f);
         configParamNoRand<modules::DecibelParamQuantity>(OUT_GAIN, 0, 2, 1, "Gain");
 
-        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types-1,
+        configParam<VCFTypeParamQuanity>(VCF_TYPE, 0, sst::filters::num_filter_types - 1,
                                          sst::filters::fut_obxd_4pole, "Filter Model Type");
 
         int mfst = 0;
@@ -393,10 +393,12 @@ struct VCF : public modules::XTModule
 
             for (int i = 0; i < MAX_POLY >> 2; ++i)
             {
-                auto tig = modules::DecibelParamQuantity::ampToLinearSSE(modulationAssistant.valuesSSE[IN_GAIN][i]);
+                auto tig = modules::DecibelParamQuantity::ampToLinearSSE(
+                    modulationAssistant.valuesSSE[IN_GAIN][i]);
                 dInGain[i] = _mm_mul_ps(_mm_sub_ps(tig, currentInGain[i]), oneOverBlock);
 
-                auto tog = modules::DecibelParamQuantity::ampToLinearSSE(modulationAssistant.valuesSSE[OUT_GAIN][i]);
+                auto tog = modules::DecibelParamQuantity::ampToLinearSSE(
+                    modulationAssistant.valuesSSE[OUT_GAIN][i]);
                 dOutGain[i] = _mm_mul_ps(_mm_sub_ps(tog, currentOutGain[i]), oneOverBlock);
 
                 auto tmix = modulationAssistant.valuesSSE[MIX][i];
@@ -406,7 +408,7 @@ struct VCF : public modules::XTModule
             processPosition = 0;
         }
 
-        for (int i = 0; i < MAX_POLY >> 2; i ++)
+        for (int i = 0; i < MAX_POLY >> 2; i++)
         {
             currentInGain[i] = _mm_add_ps(currentInGain[i], dInGain[i]);
             currentOutGain[i] = _mm_add_ps(currentOutGain[i], dOutGain[i]);
@@ -464,7 +466,7 @@ struct VCF : public modules::XTModule
             }
 
             float mvUnload alignas(16)[n_vcf_params][MAX_POLY];
-            for (int i = 0; i < MAX_POLY >> 2; i ++)
+            for (int i = 0; i < MAX_POLY >> 2; i++)
             {
                 _mm_store_ps(&mvUnload[IN_GAIN][i << 2], currentInGain[i]);
                 _mm_store_ps(&mvUnload[OUT_GAIN][i << 2], currentOutGain[i]);

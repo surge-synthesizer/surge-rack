@@ -28,8 +28,7 @@
 namespace sst::surgext_rack::vco::ui
 {
 
-template<int oscType>
-struct WavetableMenuBuilder
+template <int oscType> struct WavetableMenuBuilder
 {
     static void sendLoadFor(VCO<oscType> *module, int nt)
     {
@@ -48,7 +47,8 @@ struct WavetableMenuBuilder
         module->wavetableQueue.push(msg);
     }
 
-    static rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, VCO<oscType> *module, int categoryId)
+    static rack::ui::Menu *menuForCategory(rack::ui::Menu *menu, VCO<oscType> *module,
+                                           int categoryId)
     {
         if (!module)
             return nullptr;
@@ -137,13 +137,14 @@ struct WavetableMenuBuilder
         menu->addChild(new rack::ui::MenuSeparator);
         menu->addChild(rack::createMenuItem("Load Wavetable File", "", [module]() {
 #ifdef USING_CARDINAL_NOT_RACK
-            async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load Wavetable File", [=](char *openF){
-                if (openF)
-                {
-                    DEFER({ std::free(openF); });
-                    sendLoadForPath(module, openF);
-                }
-            });
+            async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load Wavetable File",
+                                     [=](char *openF) {
+                                         if (openF)
+                                         {
+                                             DEFER({ std::free(openF); });
+                                             sendLoadForPath(module, openF);
+                                         }
+                                     });
 #else
 #if MAC
             osdialog_filters *filters{nullptr};
@@ -161,13 +162,14 @@ struct WavetableMenuBuilder
         }));
         menu->addChild(rack::createMenuItem("Load WaveEdit Wavetable", "", [module]() {
 #ifdef USING_CARDINAL_NOT_RACK
-            async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load WaveEdit Wavetable", [=](char *openF){
-                if (openF)
-                {
-                    DEFER({ std::free(openF); });
-                    sendLoadForPath(module, openF, 256);
-                }
-            });
+            async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load WaveEdit Wavetable",
+                                     [=](char *openF) {
+                                         if (openF)
+                                         {
+                                             DEFER({ std::free(openF); });
+                                             sendLoadForPath(module, openF, 256);
+                                         }
+                                     });
 #else
             auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav");
             DEFER({ osdialog_filters_free(filters); });
@@ -185,13 +187,14 @@ struct WavetableMenuBuilder
                 auto label = std::to_string(1 << i) + " Sample Frame WaveTable";
                 pm->addChild(rack::createMenuItem(label, "", [module, i]() {
 #ifdef USING_CARDINAL_NOT_RACK
-                    async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load Untagged Wav", [=](char *openF){
-                        if (openF)
-                        {
-                            DEFER({ std::free(openF); });
-                            sendLoadForPath(module, openF, 1 << i);
-                        }
-                    });
+                    async_dialog_filebrowser(false, "wavetable.wav", nullptr, "Load Untagged Wav",
+                                             [=](char *openF) {
+                                                 if (openF)
+                                                 {
+                                                     DEFER({ std::free(openF); });
+                                                     sendLoadForPath(module, openF, 1 << i);
+                                                 }
+                                             });
 #else
                     auto filters = osdialog_filters_parse("Wavetables:wav,.WAV,.Wav");
                     DEFER({ osdialog_filters_free(filters); });
@@ -222,10 +225,7 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
     std::array<widgets::ModulatableKnob *, 8> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
-    void childrenChanged()
-    {
-        resetStyleCouplingToModule();
-    }
+    void childrenChanged() { resetStyleCouplingToModule(); }
     void selectModulator(int mod) override
     {
         if (toggles[mod])
@@ -254,14 +254,16 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
         auto hbM = m->halfbandM;
         auto hbS = m->halfbandSteep;
 
-        for (auto steep : { true, false})
+        for (auto steep : {true, false})
         {
-            for (auto M : { 6, 5, 4, 3, 2, 1})
+            for (auto M : {6, 5, 4, 3, 2, 1})
             {
-                auto name = std::string("M = ") + std::to_string(M) + ", " +
-                            (steep ? "steep" : "shallow");
-                p->addChild(rack::createMenuItem(name, CHECKMARK(hbM == M && hbS == steep),
-                                                 [m, M, steep] { m->setHalfbandCharacteristics(M, steep);}));
+                auto name =
+                    std::string("M = ") + std::to_string(M) + ", " + (steep ? "steep" : "shallow");
+                p->addChild(
+                    rack::createMenuItem(name, CHECKMARK(hbM == M && hbS == steep), [m, M, steep] {
+                        m->setHalfbandCharacteristics(M, steep);
+                    }));
             }
             if (steep)
                 p->addChild(new rack::MenuSeparator);
@@ -294,8 +296,9 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             if (VCOConfig<oscType>::requiresWavetables())
             {
                 menu->addChild(new rack::MenuSeparator);
-                menu->addChild(rack::createSubmenuItem("Wavetables", "",
-                                                       [m](auto *x) { WavetableMenuBuilder<oscType>::buildMenuOnto(x, m);}));
+                menu->addChild(rack::createSubmenuItem("Wavetables", "", [m](auto *x) {
+                    WavetableMenuBuilder<oscType>::buildMenuOnto(x, m);
+                }));
             }
             menu->addChild(new rack::MenuSeparator);
             menu->addChild(rack::createSubmenuItem("Character", "",
@@ -312,11 +315,10 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             menu->addChild(attenSlider);
 
             menu->addChild(rack::createSubmenuItem("Halfband Filter", "",
-                                                   [this,m](auto *x) { downsampleMenu(x,m);}));
+                                                   [this, m](auto *x) { downsampleMenu(x, m); }));
 
-            menu->addChild(rack::createMenuItem("Apply DC Blocker",
-                                                CHECKMARK(m->doDCBlock),
-                                                [m]() { m->doDCBlock = !m->doDCBlock;}));
+            menu->addChild(rack::createMenuItem("Apply DC Blocker", CHECKMARK(m->doDCBlock),
+                                                [m]() { m->doDCBlock = !m->doDCBlock; }));
             VCOConfig<oscType>::addMenuItems(m, menu);
         }
     }
@@ -402,7 +404,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             rack::Vec(0, 0), box.size, [this](auto *vg) { drawPlot(vg); });
         addChild(bdwPlot);
 
-        for (int i=0; i<n_osc_params; ++i)
+        for (int i = 0; i < n_osc_params; ++i)
             priorDeform[i] = 0;
     }
 
@@ -722,8 +724,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
     void drawPlotBackground(NVGcontext *vg)
     {
-        if (module && VCOConfig<oscType>::requiresWavetables() &&
-            module->draw3DWavetable &&
+        if (module && VCOConfig<oscType>::requiresWavetables() && module->draw3DWavetable &&
             module->wavetableCount > 0)
         {
             draw3DBackground(vg);
@@ -774,7 +775,6 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
                 nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
                 nvgText(vg, box.size.x - rack::mm2px(0.5), ys3d * 0.5, "OneShot", nullptr);
-
             }
         }
     }
@@ -1034,8 +1034,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         else if (!oscPath.empty())
         {
             bool is3D{false};
-            if (module && VCOConfig<oscType>::requiresWavetables() &&
-                module->draw3DWavetable &&
+            if (module && VCOConfig<oscType>::requiresWavetables() && module->draw3DWavetable &&
                 module->wavetableCount > 0)
             {
                 is3D = true;
@@ -1070,9 +1069,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 }
                 nvgLineTo(vg, box.size.x, box.size.y * 0.5);
                 nvgLineTo(vg, 0, box.size.y * 0.5);
-                nvgFillPaint(vg,
-                             nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp,
-                             gcn));
+                nvgFillPaint(
+                    vg, nvgLinearGradient(vg, 0, box.size.y * 0.1, 0, box.size.y * 0.5, gcp, gcn));
                 nvgFill(vg);
 
                 nvgBeginPath(vg);
@@ -1092,9 +1090,8 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 }
                 nvgLineTo(vg, box.size.x, box.size.y * 0.5);
                 nvgLineTo(vg, 0, box.size.y * 0.5);
-                nvgFillPaint(vg,
-                              nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn,
-                              gcp));
+                nvgFillPaint(
+                    vg, nvgLinearGradient(vg, 0, box.size.y * 0.5, 0, box.size.y * 0.9, gcn, gcp));
                 nvgFill(vg);
             }
 
@@ -1234,8 +1231,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
                 surgePar.get_display(txt, true, fv);
                 std::string nm = surgePar.get_name();
-                men->addChild(rack::createMenuItem(
-                    txt, CHECKMARK(i == surgePar.val.i), [nm, pq, fv]() {
+                men->addChild(
+                    rack::createMenuItem(txt, CHECKMARK(i == surgePar.val.i), [nm, pq, fv]() {
                         auto *h = new rack::history::ParamChange;
                         h->name = std::string("change ") + nm;
                         h->moduleId = pq->module->id;
@@ -1267,18 +1264,18 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
     // breakage but not too bad.
     {
         auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
-        auto lab = engine_t::makeLabelAt(
-            bl, 1, "", style::XTStyle::TEXT_LABEL);
+        auto lab = engine_t::makeLabelAt(bl, 1, "", style::XTStyle::TEXT_LABEL);
         lab->hasDynamicLabel = true;
         lab->module = module;
         lab->dynamicLabel = [](auto m) -> std::string {
             if (VCOConfig<oscType>::requiresWavetables() && m)
             {
-                auto vm = dynamic_cast<VCO<oscType>*>(m);
+                auto vm = dynamic_cast<VCO<oscType> *>(m);
                 if (vm && vm->isWTOneShot())
                     return "TRIG";
             }
-            return VCOConfig<oscType>::retriggerLabel();;
+            return VCOConfig<oscType>::retriggerLabel();
+            ;
         };
         addChild(lab);
     }
