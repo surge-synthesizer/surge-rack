@@ -39,7 +39,6 @@ struct WaveshaperWidget : widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
-
     void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (module)
@@ -47,12 +46,10 @@ struct WaveshaperWidget : widgets::XTModuleWidget
             auto m = static_cast<M *>(module);
             menu->addChild(new rack::ui::MenuSeparator);
 
-            menu->addChild(rack::createMenuItem("Apply DC Blocker",
-                                                CHECKMARK(m->doDCBlock),
-                                                [m]() { m->doDCBlock = !m->doDCBlock;}));
+            menu->addChild(rack::createMenuItem("Apply DC Blocker", CHECKMARK(m->doDCBlock),
+                                                [m]() { m->doDCBlock = !m->doDCBlock; }));
         }
     }
-
 };
 
 struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::StyleParticipant
@@ -385,7 +382,8 @@ struct WaveshaperSelector : widgets::ParamJogSelector
         {
             if (gn == group)
             {
-                menu->addChild(rack::createMenuItem(sst::waveshapers::wst_names[id], CHECKMARK(id == type),
+                menu->addChild(rack::createMenuItem(sst::waveshapers::wst_names[id],
+                                                    CHECKMARK(id == type),
                                                     [this, cid = id]() { setType(cid); }));
             }
         }
@@ -407,7 +405,8 @@ struct WaveshaperSelector : widgets::ParamJogSelector
         {
             if (gn == "")
             {
-                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id], CHECKMARK(id==type),
+                menu->addChild(rack::createMenuItem(sst::filters::filter_type_names[id],
+                                                    CHECKMARK(id == type),
                                                     [this, cid = id]() { setType(cid); }));
             }
             else if (gn != currentGroup)
@@ -417,7 +416,8 @@ struct WaveshaperSelector : widgets::ParamJogSelector
                 {
                     if (gnr == gn && ird == type)
                     {
-                        check = true;;
+                        check = true;
+                        ;
                     }
                 }
                 menu->addChild(rack::createSubmenuItem(

@@ -110,7 +110,8 @@ template <typename M, bool useAnimValues = true> struct DirtyHelper
 
     inline bool dirty()
     {
-        auto r = module->paramQuantities[par]->getValue();;
+        auto r = module->paramQuantities[par]->getValue();
+        ;
         if constexpr (useAnimValues)
         {
             if (isModulated)

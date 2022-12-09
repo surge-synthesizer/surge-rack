@@ -240,7 +240,8 @@ struct LFO : modules::XTModule
         configParamNoRand(BROADCAST_TRIG_TO_POLY, FOLLOW_TRIG_POLY, TAKE_CHANNEL_0,
                           FOLLOW_TRIG_POLY, "Trigger Broadcast Mode");
         configOnOff(UNTRIGGERED_ENV_NONZERO, 0, "Without connected trigger, output Envelope?");
-        configOnOff(RANDOMIZATION_CHANGES_SHAPES, 1, "Randomize changes curve shape outside Step?")->randomizeEnabled = false;
+        configOnOff(RANDOMIZATION_CHANGES_SHAPES, 1, "Randomize changes curve shape outside Step?")
+            ->randomizeEnabled = false;
 
         for (int i = 0; i < MAX_POLY; ++i)
         {

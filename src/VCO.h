@@ -70,7 +70,9 @@ template <int oscType> struct VCOConfig
     static constexpr int supportsCustomEditor() { return false; }
     static bool isCustomEditorActivatable(VCO<oscType> *m) { return false; }
     static rack::Widget *createCustomEditorAt(const rack::Vec &pos, const rack::Vec &size,
-                                   VCO<oscType> *m, std::function<void(rack::Widget *)> onClose) {
+                                              VCO<oscType> *m,
+                                              std::function<void(rack::Widget *)> onClose)
+    {
         return nullptr;
     }
 };
@@ -99,7 +101,8 @@ template <int oscType> struct VCO : public modules::XTModule
         DRIFT,
 
         ADDITIONAL_VCO_PARAMS,
-        FIXED_ATTENUATION = ADDITIONAL_VCO_PARAMS + VCOConfig<oscType>::additionalVCOParameterCount(),
+        FIXED_ATTENUATION =
+            ADDITIONAL_VCO_PARAMS + VCOConfig<oscType>::additionalVCOParameterCount(),
         NUM_PARAMS
     };
     enum InputIds
@@ -219,7 +222,8 @@ template <int oscType> struct VCO : public modules::XTModule
             }
             else
             {
-                configParamNoRand<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name)->baseName = name;
+                configParamNoRand<modules::SurgeParameterModulationQuantity>(i, -1, 1, 0, name)
+                    ->baseName = name;
             }
         }
 
@@ -228,7 +232,7 @@ template <int oscType> struct VCO : public modules::XTModule
         configParamNoRand(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
         configParam(CHARACTER, 0, 2, 1, "Character Filter");
         configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
-        configParam(FIXED_ATTENUATION, 0, 1, 1, "Output Attenuation" );
+        configParam(FIXED_ATTENUATION, 0, 1, 1, "Output Attenuation");
 
         VCOConfig<oscType>::configureVCOSpecificParameters(this);
         config_osc->~Oscillator();
@@ -271,7 +275,8 @@ template <int oscType> struct VCO : public modules::XTModule
     {
         for (int i = 0; i < MAX_POLY; ++i)
         {
-            halfbandOUT[i] = std::make_unique<sst::filters::HalfRate::HalfRateFilter>(halfbandM, halfbandSteep);
+            halfbandOUT[i] =
+                std::make_unique<sst::filters::HalfRate::HalfRateFilter>(halfbandM, halfbandSteep);
             halfbandOUT[i]->reset();
         }
     }
@@ -522,7 +527,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
             if (doDCBlock && !wasDoDCBlock)
             {
-                for (int i=0; i<MAX_POLY; ++i)
+                for (int i = 0; i < MAX_POLY; ++i)
                 {
                     blockers[0][i].reset();
                     blockers[1][i].reset();
@@ -635,10 +640,10 @@ template <int oscType> struct VCO : public modules::XTModule
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
                     halfbandOUT[c]->process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
-                                                    BLOCK_SIZE_OS);
+                                                     BLOCK_SIZE_OS);
 
                     auto fa = params[FIXED_ATTENUATION].getValue();
-                    for (int i=0; i<BLOCK_SIZE; ++i)
+                    for (int i = 0; i < BLOCK_SIZE; ++i)
                     {
                         osc_downsample[0][c][i] *= fa;
                         osc_downsample[1][c][i] *= fa;
@@ -781,7 +786,7 @@ template <int oscType> struct VCO : public modules::XTModule
             storage->waveTableDataMutex.lock();
             oscstorage->wt.BuildWT(data, wth, false);
             oscstorage_display->wt.BuildWT(data, wth, false);
-            wavetableLoads ++;
+            wavetableLoads++;
             storage->waveTableDataMutex.unlock();
 
             auto nm = json_object_get(wtJ, "display_name");
@@ -827,11 +832,13 @@ template <int oscType> struct VCO : public modules::XTModule
     }
 };
 
-template <int oscType> inline void VCOConfig<oscType>::configureVCOSpecificParameters(VCO<oscType> *m)
+template <int oscType>
+inline void VCOConfig<oscType>::configureVCOSpecificParameters(VCO<oscType> *m)
 {
     for (int i = 0; i < VCO<oscType>::n_arbitrary_switches; ++i)
     {
-        m->configParam(VCO<oscType>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, std::string("Unused Param ") + std::to_string(i+1) );
+        m->configParam(VCO<oscType>::ARBITRARY_SWITCH_0 + i, 0, 1, 0,
+                       std::string("Unused Param ") + std::to_string(i + 1));
     }
 }
 } // namespace sst::surgext_rack::vco

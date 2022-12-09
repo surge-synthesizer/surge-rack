@@ -28,7 +28,7 @@ template <> constexpr int FXConfig<fxt_reverb2>::numParams() { return 10; }
 template <> FXConfig<fxt_reverb2>::layout_t FXConfig<fxt_reverb2>::getLayout()
 {
     const auto col = FXLayoutHelper::standardColumns_MM();
-    
+
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
     const auto row1 = row2 - FXLayoutHelper::knobGap16_MM;

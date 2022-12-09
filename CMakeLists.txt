@@ -132,3 +132,23 @@ file(INSTALL surge/resources/surge-shared/configuration.xml
 
 install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
+
+
+add_custom_target(xt-rack-code-checks)
+
+# Clang Format checks
+find_program(CLANG_FORMAT_EXE NAMES clang-format-12 clang-format)
+set(CLANG_FORMAT_DIRS src)
+set(CLANG_FORMAT_EXTS cpp h)
+foreach(dir ${CLANG_FORMAT_DIRS})
+  foreach(ext ${CLANG_FORMAT_EXTS})
+    list(APPEND CLANG_FORMAT_GLOBS "':(glob)${dir}/**/*.${ext}'")
+  endforeach()
+endforeach()
+add_custom_command(TARGET xt-rack-code-checks
+        POST_BUILD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} -E echo About to check clang-format using ${CLANG_FORMAT_EXE}
+        COMMAND git ls-files -- ${CLANG_FORMAT_GLOBS} | xargs ${CLANG_FORMAT_EXE} --dry-run --Werror
+        )
+# }}}
