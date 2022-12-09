@@ -32,7 +32,7 @@ LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lSurgeXTRack -lsurge-common -ljuce_ds
            -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
 
 ifdef ARCH_MAC
-LDFLAGS += -framework CoreFoundation -framework CoreServices -lfilesystem
+LDFLAGS += -framework CoreFoundation -framework CoreServices
 endif
 
 ifdef ARCH_WIN
