@@ -148,7 +148,7 @@ endforeach()
 add_custom_command(TARGET xt-rack-code-checks
         POST_BUILD
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo About to check clang-format using clang-format-12
+        COMMAND ${CMAKE_COMMAND} -E echo About to check clang-format using ${CLANG_FORMAT_EXE}
         COMMAND git ls-files -- ${CLANG_FORMAT_GLOBS} | xargs ${CLANG_FORMAT_EXE} --dry-run --Werror
         )
 # }}}
