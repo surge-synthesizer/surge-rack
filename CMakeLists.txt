@@ -126,7 +126,7 @@ else ()
   install(TARGETS filesystem ARCHIVE DESTINATION lib/static)
 endif ()
 
-install(TARGETS ${LIB_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite eurorack airwindows
+install(TARGETS ${LIB_NAME} ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp sst-plugininfra fmt sqlite eurorack airwindows
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
