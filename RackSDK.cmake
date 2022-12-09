@@ -1,6 +1,6 @@
 # Mapping of plugin build definitions from the Rack-SDK arch.mk, compile.mk, dep.mk and plugin.mk to CMake.
 
-set(RACK_SDK_VERSION 2.2.0)
+set(RACK_SDK_VERSION 2.2.1)
 message(STATUS "load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
 include_directories(${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
@@ -21,6 +21,8 @@ add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
 set(CMAKE_CXX_STANDARD 11)
 
+add_link_options(-static-libstdc++)
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if (NOT MINGW)
     message(FATAL_ERROR "Rack plugin development environment is only supported for MSYS2/MinGW")
@@ -31,21 +33,20 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   # see also https://gcc.gnu.org/onlinedocs/gcc/x86-Windows-Options.html
   #add_compile_options(-municode)
   add_compile_options(-Wsuggest-override)
-  add_compile_options(-static-libstdc++)
   add_compile_options(-march=nehalem)
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   message(STATUS "Build Mac OSX Plugin for architecture ${CMAKE_OSX_ARCHITECTURES}")
   add_compile_definitions(ARCH_MAC)
-  add_link_options(-static-libstdc++)
-  if (${CMAKE_OSX_ARCHITECTURES} MATCHES "x86_64")
+if (${CMAKE_OSX_ARCHITECTURES} MATCHES "x86_64")
     add_compile_definitions(ARCH_X64)
     add_compile_options(-arch x86_64 -march=nehalem)
   endif ()
   if (${CMAKE_OSX_ARCHITECTURES} MATCHES "arm64")
     add_compile_definitions(ARCH_ARM64)
     add_compile_options(-arch arm64 -march=armv8-a+fp+simd)
+    add_compile_options(-faligned-allocation)
   endif ()
 endif ()
 
@@ -56,6 +57,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # When Rack loads a plugin, it symlinks /tmp/Rack2 to its system dir, so the plugin can link to libRack.
   add_compile_options(-Wl,-rpath=/tmp/Rack2)
   # Since the plugin's compiler could be a different version than Rack's compiler, link libstdc++ and libgcc statically to avoid ABI issues.
-  add_compile_options(-static-libstdc++ -static-libgcc)
+  add_link_options(-static-libgcc)
   add_compile_options(-march=nehalem)
 endif ()

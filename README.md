@@ -42,8 +42,8 @@ cd surge-rack-build
 cmake -DCMAKE_INSTALL_PREFIX=dist -DRACK_SDK_DIR=location-of-rack-SDK-or-source ../surge-rack
 make install
 ```
-To compile the plugin with CMake for Mac OSX `x86_64` platform append `-DCMAKE_OSX_ARCHITECTURES="x86_64"` to the cmake command,to
-for `arm64` platform use `-DCMAKE_OSX_ARCHITECTURES="arm64"`.
+To compile the plugin with CMake for Mac OSX `x86_64` platform append `-DCMAKE_OSX_ARCHITECTURES="x86_64"` to the cmake
+command, to compile for `arm64` platform use `-DCMAKE_OSX_ARCHITECTURES="arm64"`.
 
 ## License and Copyright
 
