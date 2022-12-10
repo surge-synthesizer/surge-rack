@@ -21,7 +21,8 @@ add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
 set(CMAKE_CXX_STANDARD 11)
 
-add_link_options(-static-libstdc++)
+# Since the plugin's compiler could be a different version than Rack's compiler, link libstdc++ and libgcc statically to avoid ABI issues.
+add_link_options($<$<CXX_COMPILER_ID:GNU>:-static-libstdc++> $<$<PLATFORM_ID:Linux>:-static-libgcc>)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if (NOT MINGW)
@@ -56,7 +57,5 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   add_compile_options(-fno-gnu-unique)
   # When Rack loads a plugin, it symlinks /tmp/Rack2 to its system dir, so the plugin can link to libRack.
   add_compile_options(-Wl,-rpath=/tmp/Rack2)
-  # Since the plugin's compiler could be a different version than Rack's compiler, link libstdc++ and libgcc statically to avoid ABI issues.
-  add_link_options(-static-libgcc)
   add_compile_options(-march=nehalem)
 endif ()
