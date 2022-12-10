@@ -1,0 +1,30 @@
+name: Build VCV Rack Plugin
+on: [pull_request]
+
+env:
+  rack-sdk-version: 2.2.1
+  rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-code-checks:
+    name: code-checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Get Rack-SDK
+        run: |
+          pushd $HOME
+          curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-lin-x64.zip
+          unzip Rack-SDK.zip
+      - name: Run Code Checks
+        run: |
+          cmake -Bbuild -DRACK_SDK_DIR=$HOME/Rack-SDK -DCMAKE_BUILD_TYPE=DEBUG
+          cmake --build build --target xt-rack-code-checks
