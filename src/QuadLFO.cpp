@@ -142,8 +142,8 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5,
-                module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString().c_str(),
+        auto dv = module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString();
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, dv.c_str(),
                 nullptr);
 
         float pushX = rack::mm2px(0.87);
@@ -203,11 +203,16 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         lfo->attackForDisplay(s);
         nvgBeginPath(vg);
 
-        if (idx != 0 && ip == 1)
+        if (idx != 0 && ip == QuadLFO::RATIO)
         {
             auto dph = QuadLFO::RateQuantity::phaseRateScale(
                 module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
             lfo->applyPhaseOffset(dph);
+        }
+        if (idx != 0 && ip == QuadLFO::QUADRATURE)
+        {
+            lfo->applyPhaseOffset(idx * 0.25);
+            lfo->setAmplitude(module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
         }
         lfo->process_block(r, d, s);
         if (zeroEndpoints)

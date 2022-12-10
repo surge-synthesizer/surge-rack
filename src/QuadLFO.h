@@ -20,10 +20,8 @@
  *
  * Module
  *    - Code Interwoven / Spread mode
- *    - Quadrature mode (amplitudes per)
  *    - Clock and tempoSync cases
  *    - Square and S&H get sample accurate transitions in block rather than interps
- *    - Square Wave sample transition sample accurate inside block
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
@@ -63,9 +61,8 @@ struct QuadLFO : modules::XTModule
     enum InputIds
     {
         TRIGGER_0,
-        CLOCK_IN = TRIGGER_0 + n_lfos,
 
-        MOD_INPUT_0,
+        MOD_INPUT_0 = TRIGGER_0 + n_lfos,
         NUM_INPUTS = MOD_INPUT_0 + n_mod_inputs,
     };
 
@@ -88,6 +85,7 @@ struct QuadLFO : modules::XTModule
         INDEPENDENT,
         PHASE_OFFSET,
         RATIO,
+        QUADRATURE,
         SPREAD
     };
 
@@ -226,6 +224,20 @@ struct QuadLFO : modules::XTModule
                     }
                 }
                 break;
+            case QUADRATURE:
+            {
+                if (off == 0)
+                {
+                    setRate(v);
+                }
+                else
+                {
+                    auto ilv = v / 100.0f;
+                    auto csv = std::clamp(ilv, minValue, maxValue);
+                    setValue(csv);
+                }
+            }
+            break;
             default:
                 setValue(0);
             }
@@ -279,6 +291,18 @@ struct QuadLFO : modules::XTModule
                 }
             }
             break;
+            case QUADRATURE:
+            {
+                if (off == 0)
+                {
+                    return fmtRate(v);
+                }
+                else
+                {
+                    return fmt::format("{}%", (int)(v * 100));
+                }
+            }
+            break;
             default:
                 return std::to_string(v);
             }
@@ -315,6 +339,15 @@ struct QuadLFO : modules::XTModule
                 {
                     return "Frequency Ratio " + std::to_string(off + 1);
                 }
+            case QUADRATURE:
+                if (off == 0)
+                {
+                    return "Rate";
+                }
+                else
+                {
+                    return "Amplitude " + std::to_string(off + 1);
+                }
             default:
                 return "FIXME";
             }
@@ -346,6 +379,15 @@ struct QuadLFO : modules::XTModule
                 {
                     return "RATIO";
                 }
+            case QUADRATURE:
+                if (off == 0)
+                {
+                    return "RATE";
+                }
+                else
+                {
+                    return "AMP";
+                }
             default:
                 return "FIXME";
             }
@@ -374,8 +416,8 @@ struct QuadLFO : modules::XTModule
         for (int i = 0; i < n_mod_inputs; ++i)
             configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
 
-        configSwitch(INTERPLAY_MODE, 0, 3, 0, "LFO Inter-operation Mode",
-                     {"Independent LFOs", "Quad Phase", "Ratio Rates", "Spread Rate"});
+        configSwitch(INTERPLAY_MODE, 0, 4, 0, "LFO Inter-operation Mode",
+                     {"Independent LFOs", "Phase Offset", "Ratio Rate", "Quadrature", "Spread"});
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -383,12 +425,14 @@ struct QuadLFO : modules::XTModule
 
         for (int i = 0; i < n_lfos; ++i)
         {
+            configOutput(OUTPUT_0 + i, "LFO " + std::to_string(i + 1));
             for (int c = 0; c < MAX_POLY; ++c)
             {
                 processors[i][c] = std::make_unique<dsp::modulators::SimpleLFO>(storage.get());
             }
         }
 
+        resetInteractionType(INDEPENDENT);
         snapCalculatedNames();
     }
 
@@ -491,18 +535,25 @@ struct QuadLFO : modules::XTModule
     float uniOffset[n_lfos]{0, 0, 0, 0};
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        if (inputs[CLOCK_IN].isConnected())
-            clockProc.process(this, CLOCK_IN);
-        else
-            clockProc.disconnect(this);
+        auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
 
+        if (ip == INDEPENDENT)
+        {
+            clockProc.disconnect(this);
+        }
+        else
+        {
+            if (inputs[TRIGGER_0 + 1].isConnected())
+                clockProc.process(this, TRIGGER_0 + 1);
+            else
+                clockProc.disconnect(this);
+        }
         if (processCount == BLOCK_SIZE)
         {
             processCount = 0;
-            auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
             if (ip != lastInteractionType)
             {
-                resetDefaultsForInteractionType(ip);
+                resetInteractionType(ip);
             }
             lastInteractionType = ip;
 
@@ -556,6 +607,9 @@ struct QuadLFO : modules::XTModule
                 break;
             case RATIO:
                 processRatioLFOs();
+                break;
+            case QUADRATURE:
+                processQuadratureLFOs();
                 break;
             case SPREAD:
                 processSpreadLFOs();
@@ -668,13 +722,22 @@ struct QuadLFO : modules::XTModule
     }
     void processRatioLFOs() { processQuadRelative<RatioRelOp>(); }
 
+    static float QuadratureRelOp(QuadLFO *that, float r, int i, int c)
+    {
+        auto dph = that->modAssist.values[RATE_0 + i][c];
+        that->processors[i][c]->setAmplitude(dph);
+        that->processors[i][c]->applyPhaseOffset(0.25 * i);
+        return r;
+    }
+    void processQuadratureLFOs() { processQuadRelative<QuadratureRelOp>(); }
+
     void processSpreadLFOs()
     {
         // FOR NOW
         processIndependentLFOs();
     }
 
-    void resetDefaultsForInteractionType(int ip)
+    void resetInteractionType(int ip)
     {
         for (int i = 0; i < n_lfos; ++i)
         {
@@ -695,8 +758,28 @@ struct QuadLFO : modules::XTModule
                 paramQuantities[RATE_0 + i]->defaultValue = 0.5;
             }
             break;
+
+        case QUADRATURE:
+            for (int i = 1; i < n_lfos; ++i)
+            {
+                paramQuantities[RATE_0 + i]->defaultValue = 1;
+            }
+            break;
         default:
             break;
+        }
+
+        if (ip == INDEPENDENT)
+        {
+            for (int i = 0; i < n_lfos; ++i)
+                inputInfos[TRIGGER_0 + i]->name = "Trigger " + std::to_string(i + 1);
+        }
+        else
+        {
+            inputInfos[TRIGGER_0]->name = "Trigger";
+            inputInfos[TRIGGER_0 + 1]->name = "Clock";
+            inputInfos[TRIGGER_0 + 2]->name = "Freeze";
+            inputInfos[TRIGGER_0 + 3]->name = "Reverse";
         }
     }
 
