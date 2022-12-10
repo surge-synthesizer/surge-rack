@@ -1129,7 +1129,7 @@ struct QuadLFO : modules::XTModule
         case PHASE_OFFSET:
             for (int i = 1; i < n_lfos; ++i)
             {
-                paramQuantities[RATE_0 + i]->defaultValue = 0.5;
+                paramQuantities[RATE_0 + i]->defaultValue = 0.25 * i;
             }
             break;
 

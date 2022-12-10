@@ -214,7 +214,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         lfo->attackForDisplay(s);
         nvgBeginPath(vg);
 
-        if (idx != 0 && ip == QuadLFO::RATIO)
+        if (idx != 0 && ip == QuadLFO::PHASE_OFFSET)
         {
             auto dph = QuadLFO::RateQuantity::phaseRateScale(
                 module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
