@@ -101,6 +101,17 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         res->dirtyChecks.back().module = module;
         res->dirtyChecks.back().par = QuadLFO::INTERPLAY_MODE;
 
+        for (int i = 0; i < QuadLFO::n_lfos; ++i)
+        {
+            for (auto b : {QuadLFO::RATE_0, QuadLFO::DEFORM_0})
+            {
+                res->spreadDirtyChecks.emplace_back(widgets::DirtyHelper<QuadLFO>());
+                res->spreadDirtyChecks.back().module = module;
+                res->spreadDirtyChecks.back().par = b + i;
+                res->spreadDirtyChecks.back().isModulated = true;
+            }
+        }
+
         if (module)
             res->lfo = std::make_unique<dsp::modulators::SimpleLFO>(module->storage.get());
         return res;
@@ -142,8 +153,8 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5,
-                module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString().c_str(),
+        auto dv = module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString();
+        nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, dv.c_str(),
                 nullptr);
 
         float pushX = rack::mm2px(0.87);
@@ -203,11 +214,24 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         lfo->attackForDisplay(s);
         nvgBeginPath(vg);
 
-        if (idx != 0 && ip == 1)
+        if (idx != 0 && ip == QuadLFO::PHASE_OFFSET)
         {
             auto dph = QuadLFO::RateQuantity::phaseRateScale(
                 module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
             lfo->applyPhaseOffset(dph);
+        }
+        if (idx != 0 && ip == QuadLFO::QUADRATURE)
+        {
+            lfo->applyPhaseOffset(idx * 0.25);
+            lfo->setAmplitude(module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
+        }
+        if (ip == QuadLFO::SPREAD)
+        {
+            d = module->spreadDeform(idx);
+            auto a = module->spreadAmp(idx);
+            auto p = module->spreadPhase(idx);
+            lfo->applyPhaseOffset(p);
+            lfo->setAmplitude(a);
         }
         lfo->process_block(r, d, s);
         if (zeroEndpoints)
@@ -235,6 +259,8 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
     }
 
     std::vector<widgets::DirtyHelper<QuadLFO>> dirtyChecks;
+    std::vector<widgets::DirtyHelper<QuadLFO>> spreadDirtyChecks;
+    std::string lastLab{"none"};
     void step() override
     {
         if (module)
@@ -242,6 +268,19 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
             auto isD = false;
             for (auto &d : dirtyChecks)
                 isD = isD || d.dirty();
+
+            auto ip = (int)std::round(module->paramQuantities[QuadLFO::INTERPLAY_MODE]->getValue());
+            if (ip == QuadLFO::SPREAD)
+            {
+                for (auto &d : spreadDirtyChecks)
+                {
+                    isD = isD || d.dirty();
+                }
+            }
+
+            auto dv = module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString();
+            isD = isD || (dv != lastLab);
+            lastLab = dv;
             if (isD)
             {
                 bdw->dirty = true;

@@ -19,11 +19,8 @@
  * ToDos
  *
  * Module
- *    - Code Interwoven / Spread mode
- *    - Quadrature mode (amplitudes per)
  *    - Clock and tempoSync cases
  *    - Square and S&H get sample accurate transitions in block rather than interps
- *    - Square Wave sample transition sample accurate inside block
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
@@ -63,9 +60,8 @@ struct QuadLFO : modules::XTModule
     enum InputIds
     {
         TRIGGER_0,
-        CLOCK_IN = TRIGGER_0 + n_lfos,
 
-        MOD_INPUT_0,
+        MOD_INPUT_0 = TRIGGER_0 + n_lfos,
         NUM_INPUTS = MOD_INPUT_0 + n_mod_inputs,
     };
 
@@ -86,10 +82,23 @@ struct QuadLFO : modules::XTModule
     enum QuadLFOModes
     {
         INDEPENDENT,
-        PHASE_OFFSET,
         RATIO,
+        QUADRATURE,
+        PHASE_OFFSET,
         SPREAD
     };
+
+    enum SpreadIndices
+    {
+        RATE_SPREAD,
+        PHASE_SPREAD,
+        DEFORM_SPREAD,
+        AMP_SPREAD
+    };
+
+    static constexpr int CLOCK_TRIGGER{1};
+    static constexpr int FREEZE_TRIGGER{2};
+    static constexpr int REVERSE_TRIGGER{3};
 
     struct RateQuantity : rack::engine::ParamQuantity, modules::CalculatedName
     {
@@ -220,12 +229,43 @@ struct QuadLFO : modules::XTModule
                             val = 1.f * ((ratioRates.size() - 1 - 1 - clIdx)) /
                                   ((ratioRates.size() - 1) * 2);
                         }
-                        std::cout << _D(clIdx) << " " << _D(ratioRates[clIdx]) << _D(val) << _D(s)
-                                  << std::endl;
                         setValue(std::clamp(val, 0.f, 1.f));
                     }
                 }
                 break;
+            case QUADRATURE:
+            {
+                if (off == 0)
+                {
+                    setRate(v);
+                }
+                else
+                {
+                    auto ilv = v / 100.0f;
+                    auto csv = std::clamp(ilv, minValue, maxValue);
+                    setValue(csv);
+                }
+            }
+            break;
+            case SPREAD:
+            {
+                switch (off)
+                {
+                case RATE_SPREAD:
+                    setRate(v);
+                    break;
+                case DEFORM_SPREAD:
+                    setValue(std::clamp((v + 1) * 0.5f, -1.f, 1.f));
+                    break;
+                case AMP_SPREAD:
+                    setValue(std::clamp(v, 0.f, 1.f));
+                    break;
+                case PHASE_SPREAD:
+                    setValue(std::clamp(v / 360.0f, 0.f, 1.f));
+                    break;
+                }
+            }
+            break;
             default:
                 setValue(0);
             }
@@ -233,6 +273,9 @@ struct QuadLFO : modules::XTModule
 
         std::string getDisplayValueString() override
         {
+            if (!qlfo())
+                return {"ERROR"};
+
             auto m = mode();
             int off = paramId - QuadLFO::RATE_0;
             auto v = getValue();
@@ -279,6 +322,47 @@ struct QuadLFO : modules::XTModule
                 }
             }
             break;
+            case QUADRATURE:
+            {
+                if (off == 0)
+                {
+                    return fmtRate(v);
+                }
+                else
+                {
+                    return fmt::format("{}%", (int)std::round(v * 100));
+                }
+            }
+            break;
+            case SPREAD:
+            {
+                if (off == RATE_SPREAD)
+                {
+                    auto sv = qlfo()->spreadRate(0);
+                    auto res = pow(2.0, sv);
+                    if (res < 10)
+                        return fmt::format("{:.2f} Hz", res);
+                    else
+                        return fmt::format("{:.1f} Hz", res);
+                }
+                if (off == PHASE_SPREAD)
+                {
+                    auto sv = qlfo()->spreadPhase(0);
+                    return fmt::format("{:.1f}{}", sv * 360.0, u8"\u00B0");
+                }
+                if (off == DEFORM_SPREAD)
+                {
+                    auto sv = qlfo()->spreadDeform(0);
+                    return fmt::format("{:.2f}", sv);
+                }
+                if (off == AMP_SPREAD)
+                {
+                    auto sv = qlfo()->spreadAmp(0);
+                    return fmt::format("{:.2f}", sv);
+                }
+                return {"ERROR"};
+            }
+            break;
             default:
                 return std::to_string(v);
             }
@@ -315,6 +399,29 @@ struct QuadLFO : modules::XTModule
                 {
                     return "Frequency Ratio " + std::to_string(off + 1);
                 }
+            case QUADRATURE:
+                if (off == 0)
+                {
+                    return "Rate";
+                }
+                else
+                {
+                    return "Amplitude " + std::to_string(off + 1);
+                }
+            case SPREAD:
+            {
+                switch (off)
+                {
+                case 0:
+                    return "Rate Base";
+                case 1:
+                    return "Phase Base";
+                case 2:
+                    return "Deform Base";
+                case 3:
+                    return "Amplitude Base";
+                }
+            }
             default:
                 return "FIXME";
             }
@@ -346,9 +453,164 @@ struct QuadLFO : modules::XTModule
                 {
                     return "RATIO";
                 }
+            case QUADRATURE:
+                if (off == 0)
+                {
+                    return "RATE";
+                }
+                else
+                {
+                    return "AMP";
+                }
+            case SPREAD:
+            {
+                switch (off)
+                {
+                case 0:
+                    return "RATE";
+                case 1:
+                    return "PHASE";
+                case 2:
+                    return "DEFORM";
+                case 3:
+                    return "AMP";
+                }
+            }
             default:
                 return "FIXME";
             }
+        }
+    };
+
+    struct DeformQuantity : rack::engine::ParamQuantity, modules::CalculatedName
+    {
+        QuadLFO *qlfo() { return static_cast<QuadLFO *>(module); }
+        QuadLFOModes mode()
+        {
+            if (!module)
+                return INDEPENDENT;
+            auto r =
+                (QuadLFOModes)(int)std::round(module->params[QuadLFO::INTERPLAY_MODE].getValue());
+            return r;
+        }
+
+        std::string getDisplayValueString() override
+        {
+            if (!qlfo())
+                return {"ERROR"};
+            auto m = mode();
+            int off = paramId - QuadLFO::DEFORM_0;
+
+            switch (m)
+            {
+            case SPREAD:
+                switch (off)
+                {
+                case RATE_SPREAD:
+                {
+                    auto v = pow(2.f, getValue() * 3.0);
+                    if (getValue() == 0)
+                        return "x 1";
+                    if (v > 1)
+                        return fmt::format("x {:.2f}", v);
+                    else
+                        return fmt::format("/ {:.2f}", 1 / v);
+                }
+                case PHASE_SPREAD:
+                    return fmt::format("{:.1f}{}", getValue() * 270, u8"\u00B0");
+                case DEFORM_SPREAD:
+                case AMP_SPREAD:
+                    return fmt::format("{:.2f}", getValue());
+                }
+            default:
+                return fmt::format("{:.2f}", getValue());
+            }
+        }
+
+        void setDisplayValueString(std::string s) override
+        {
+            auto m = mode();
+            int off = paramId - QuadLFO::DEFORM_0;
+
+            if (m == SPREAD && (off == RATE_SPREAD || off == PHASE_SPREAD))
+            {
+                if (off == RATE_SPREAD)
+                {
+                    // this is such a pain
+                    auto neg{false};
+                    auto val{1.f};
+
+                    if (s[0] == 'x')
+                    {
+                        val = std::atof(s.c_str() + 1);
+                    }
+                    else if (s[0] == '/')
+                    {
+                        val = std::atof(s.c_str() + 1);
+                        neg = true;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            val = std::stof(s);
+                        }
+                        catch (const std::invalid_argument &e)
+                        {
+                        }
+                    }
+                    auto l2v = log2(std::clamp(val, 1.f, 8.f));
+                    auto sv = (neg ? -1 : 1) * l2v / 3;
+                    setValue(sv);
+                }
+                if (off == PHASE_SPREAD)
+                {
+                    auto v{0.f};
+                    try
+                    {
+                        v = std::stof(s);
+                    }
+                    catch (const std::invalid_argument &e)
+                    {
+                    }
+                    setValue(std::clamp(v / 270.f, 0.f, 1.f));
+                }
+            }
+            else
+            {
+                rack::ParamQuantity::setDisplayValueString(s);
+            }
+        }
+
+        std::string getLabel() override
+        {
+            auto res = getCalculatedName();
+            return res;
+        }
+        std::string getCalculatedName() override
+        {
+            auto m = mode();
+            int off = paramId - QuadLFO::DEFORM_0;
+            switch (m)
+            {
+            case SPREAD:
+            {
+                switch (off)
+                {
+                case RATE_SPREAD:
+                    return "Rate Spread";
+                case PHASE_SPREAD:
+                    return "Phase Spread";
+                case DEFORM_SPREAD:
+                    return "Deform Spread";
+                case AMP_SPREAD:
+                    return "Amplitude Spread";
+                }
+            }
+            default:
+                return "Deform " + std::to_string(off + 1);
+            }
+            return "Error";
         }
     };
 
@@ -364,7 +626,7 @@ struct QuadLFO : modules::XTModule
         for (int i = 0; i < n_lfos; ++i)
         {
             configParam<RateQuantity>(RATE_0 + i, 0, 1, defaultRate0);
-            configParam(DEFORM_0 + i, -1, 1, 0);
+            configParam<DeformQuantity>(DEFORM_0 + i, -1, 1, 0);
             configSwitch(SHAPE_0 + i, 0, 5, 0, "Shape",
                          {"Sin", "Ramp", "Tri", "Pulse", "Rand", "S&H"});
             configSwitch(BIPOLAR_0 + i, 0, 1, 1, "Bipolar", {"Uni", "Bi"});
@@ -374,8 +636,8 @@ struct QuadLFO : modules::XTModule
         for (int i = 0; i < n_mod_inputs; ++i)
             configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
 
-        configSwitch(INTERPLAY_MODE, 0, 3, 0, "LFO Inter-operation Mode",
-                     {"Independent LFOs", "Quad Phase", "Ratio Rates", "Spread Rate"});
+        configSwitch(INTERPLAY_MODE, 0, 4, 0, "LFO Inter-operation Mode",
+                     {"Independent LFOs", "Rate Ratio", "Quadrature", "Offset Phase", "Entangled"});
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -383,12 +645,14 @@ struct QuadLFO : modules::XTModule
 
         for (int i = 0; i < n_lfos; ++i)
         {
+            configOutput(OUTPUT_0 + i, "LFO " + std::to_string(i + 1));
             for (int c = 0; c < MAX_POLY; ++c)
             {
                 processors[i][c] = std::make_unique<dsp::modulators::SimpleLFO>(storage.get());
             }
         }
 
+        resetInteractionType(INDEPENDENT);
         snapCalculatedNames();
     }
 
@@ -422,6 +686,22 @@ struct QuadLFO : modules::XTModule
 
     bool isBipolar(int paramId) override
     {
+        auto ip = (QuadLFOModes)std::round(params[INTERPLAY_MODE].getValue());
+
+        switch (ip)
+        {
+        case SPREAD:
+            if (paramId == RATE_0 + DEFORM_SPREAD)
+                return true;
+            break;
+        case RATIO:
+            if (paramId >= RATE_0 + 1 && paramId <= RATE_0 + n_lfos)
+                return true;
+            break;
+        default:
+            break;
+        }
+
         if (paramId >= DEFORM_0 && paramId < DEFORM_0 + n_lfos)
             return true;
         return false;
@@ -491,18 +771,25 @@ struct QuadLFO : modules::XTModule
     float uniOffset[n_lfos]{0, 0, 0, 0};
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        if (inputs[CLOCK_IN].isConnected())
-            clockProc.process(this, CLOCK_IN);
-        else
-            clockProc.disconnect(this);
+        auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
 
+        if (ip == INDEPENDENT)
+        {
+            clockProc.disconnect(this);
+        }
+        else
+        {
+            if (inputs[TRIGGER_0 + CLOCK_TRIGGER].isConnected())
+                clockProc.process(this, TRIGGER_0 + CLOCK_TRIGGER);
+            else
+                clockProc.disconnect(this);
+        }
         if (processCount == BLOCK_SIZE)
         {
             processCount = 0;
-            auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
             if (ip != lastInteractionType)
             {
-                resetDefaultsForInteractionType(ip);
+                resetInteractionType(ip);
             }
             lastInteractionType = ip;
 
@@ -557,6 +844,9 @@ struct QuadLFO : modules::XTModule
             case RATIO:
                 processRatioLFOs();
                 break;
+            case QUADRATURE:
+                processQuadratureLFOs();
+                break;
             case SPREAD:
                 processSpreadLFOs();
                 break;
@@ -606,11 +896,11 @@ struct QuadLFO : modules::XTModule
         bool ic = inputs[TRIGGER_0].isConnected();
         auto monoTrigger = ic && inputs[TRIGGER_0].getChannels() == 1;
 
-        bool fc = inputs[TRIGGER_0 + 2].isConnected();
-        auto monoFreeze = fc && inputs[TRIGGER_0 + 2].getChannels() == 1;
+        bool fc = inputs[TRIGGER_0 + FREEZE_TRIGGER].isConnected();
+        auto monoFreeze = fc && inputs[TRIGGER_0 + FREEZE_TRIGGER].getChannels() == 1;
 
-        bool rc = inputs[TRIGGER_0 + 3].isConnected();
-        auto monoRev = fc && inputs[TRIGGER_0 + 3].getChannels() == 1;
+        bool rc = inputs[TRIGGER_0 + REVERSE_TRIGGER].isConnected();
+        auto monoRev = fc && inputs[TRIGGER_0 + REVERSE_TRIGGER].getChannels() == 1;
 
         for (int i = 0; i < n_lfos; ++i)
         {
@@ -622,7 +912,8 @@ struct QuadLFO : modules::XTModule
                     retrig[c] = ic && triggers[i][c].process(
                                           inputs[TRIGGER_0].getVoltage(c * (!monoTrigger)));
                 }
-                bool frozen = fc && (inputs[TRIGGER_0 + 2].getVoltage(c * (!monoFreeze)) > 2);
+                bool frozen =
+                    fc && (inputs[TRIGGER_0 + FREEZE_TRIGGER].getVoltage(c * (!monoFreeze)) > 2);
 
                 if (frozen) [[unlikely]]
                 {
@@ -640,7 +931,8 @@ struct QuadLFO : modules::XTModule
                         processors[i][c]->attack(shape);
                     }
 
-                    bool reverse = rc && (inputs[TRIGGER_0 + 3].getVoltage(c * (!monoRev)) > 2);
+                    bool reverse =
+                        rc && (inputs[TRIGGER_0 + REVERSE_TRIGGER].getVoltage(c * (!monoRev)) > 2);
 
                     processors[i][c]->process_block(r, modAssist.values[DEFORM_0 + i][c], shape,
                                                     reverse);
@@ -668,13 +960,165 @@ struct QuadLFO : modules::XTModule
     }
     void processRatioLFOs() { processQuadRelative<RatioRelOp>(); }
 
-    void processSpreadLFOs()
+    static float QuadratureRelOp(QuadLFO *that, float r, int i, int c)
     {
-        // FOR NOW
-        processIndependentLFOs();
+        auto dph = that->modAssist.values[RATE_0 + i][c];
+        that->processors[i][c]->setAmplitude(dph);
+        that->processors[i][c]->applyPhaseOffset(0.25 * i);
+        return r;
+    }
+    void processQuadratureLFOs() { processQuadRelative<QuadratureRelOp>(); }
+
+    /*
+     * Helpers for the spread offsets
+     */
+    float spreadRate(int idx)
+    {
+        auto r0 = RateQuantity::independentRateScale(modAssist.basevalues[RATE_0 + RATE_SPREAD]);
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = (modAssist.basevalues[DEFORM_0 + RATE_SPREAD]) * idx; // (*3 * (idx/3)) really
+        return r0 + rs;
+    }
+    float spreadRate(int idx, int c)
+    {
+        auto r0 = RateQuantity::independentRateScale(modAssist.values[RATE_0 + RATE_SPREAD][c]);
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.values[DEFORM_0 + RATE_SPREAD][c] * idx;
+        return r0 + rs;
     }
 
-    void resetDefaultsForInteractionType(int ip)
+    float spreadPhase(int idx)
+    {
+        auto r0 = modAssist.basevalues[RATE_0 + PHASE_SPREAD];
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.basevalues[DEFORM_0 + PHASE_SPREAD] * 0.25 * idx;
+        if (rs > 1)
+            rs -= 1;
+        if (rs < 0)
+            rs += 1;
+        return r0 + rs;
+    }
+    float spreadPhase(int idx, int c)
+    {
+        auto r0 = modAssist.values[RATE_0 + PHASE_SPREAD][c];
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.values[DEFORM_0 + PHASE_SPREAD][c] * 0.25 * idx;
+        if (rs > 1)
+            rs -= 1;
+        if (rs < 0)
+            rs += 1;
+        return r0 + rs;
+    }
+
+    float spreadDeform(int idx)
+    {
+        auto r0 = modAssist.basevalues[RATE_0 + DEFORM_SPREAD] * 2 - 1;
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.basevalues[DEFORM_0 + DEFORM_SPREAD] * idx / 3;
+        return r0 + rs;
+    }
+    float spreadDeform(int idx, int c)
+    {
+        auto r0 = modAssist.values[RATE_0 + DEFORM_SPREAD][c] * 2 - 1;
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.values[DEFORM_0 + DEFORM_SPREAD][c] * idx / 3;
+        return r0 + rs;
+    }
+
+    float spreadAmp(int idx)
+    {
+        auto r0 = modAssist.basevalues[RATE_0 + AMP_SPREAD];
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.basevalues[DEFORM_0 + AMP_SPREAD] * idx / 3;
+        return std::clamp(r0 + rs, 0.f, 1.f);
+    }
+    float spreadAmp(int idx, int c)
+    {
+        auto r0 = modAssist.values[RATE_0 + AMP_SPREAD][c] * 2 - 1;
+
+        if (idx == 0)
+            return r0;
+
+        auto rs = modAssist.values[DEFORM_0 + AMP_SPREAD][c] * idx / 3;
+        return r0 + rs;
+    }
+
+    void processSpreadLFOs()
+    {
+        bool retrig[MAX_POLY];
+
+        // trigger is shared in this mode
+        bool ic = inputs[TRIGGER_0].isConnected();
+        auto monoTrigger = ic && inputs[TRIGGER_0].getChannels() == 1;
+
+        bool fc = inputs[TRIGGER_0 + FREEZE_TRIGGER].isConnected();
+        auto monoFreeze = fc && inputs[TRIGGER_0 + FREEZE_TRIGGER].getChannels() == 1;
+
+        bool rc = inputs[TRIGGER_0 + REVERSE_TRIGGER].isConnected();
+        auto monoRev = fc && inputs[TRIGGER_0 + REVERSE_TRIGGER].getChannels() == 1;
+
+        for (int i = 0; i < n_lfos; ++i)
+        {
+            auto shape = (int)std::round(params[SHAPE_0 + i].getValue());
+            for (int c = 0; c < chanByLFO[i]; ++c)
+            {
+                if (i == 0)
+                {
+                    retrig[c] = ic && triggers[i][c].process(
+                                          inputs[TRIGGER_0].getVoltage(c * (!monoTrigger)));
+                }
+                bool frozen =
+                    fc && (inputs[TRIGGER_0 + FREEZE_TRIGGER].getVoltage(c * (!monoFreeze)) > 2);
+
+                if (frozen) [[unlikely]]
+                {
+                    processors[i][c]->freeze();
+                }
+                else
+                {
+                    auto r0 = spreadRate(i, c);
+                    auto p0 = spreadPhase(i, c);
+                    auto d0 = spreadDeform(i, c);
+                    auto a0 = spreadAmp(i, c);
+
+                    bool reverse =
+                        rc && (inputs[TRIGGER_0 + REVERSE_TRIGGER].getVoltage(c * (!monoRev)) > 2);
+
+                    if (retrig[c])
+                    {
+                        processors[i][c]->attack(shape);
+                    }
+                    processors[i][c]->applyPhaseOffset(p0);
+                    processors[i][c]->setAmplitude(a0);
+
+                    processors[i][c]->process_block(r0, d0, shape, reverse);
+                }
+            }
+        }
+    }
+
+    void resetInteractionType(int ip)
     {
         for (int i = 0; i < n_lfos; ++i)
         {
@@ -685,7 +1129,7 @@ struct QuadLFO : modules::XTModule
         case PHASE_OFFSET:
             for (int i = 1; i < n_lfos; ++i)
             {
-                paramQuantities[RATE_0 + i]->defaultValue = 0.5;
+                paramQuantities[RATE_0 + i]->defaultValue = 0.25 * i;
             }
             break;
 
@@ -695,8 +1139,36 @@ struct QuadLFO : modules::XTModule
                 paramQuantities[RATE_0 + i]->defaultValue = 0.5;
             }
             break;
+
+        case QUADRATURE:
+            for (int i = 1; i < n_lfos; ++i)
+            {
+                paramQuantities[RATE_0 + i]->defaultValue = 1;
+            }
+            break;
+
+        case SPREAD:
+            paramQuantities[RATE_0 + RATE_SPREAD]->defaultValue =
+                RateQuantity::independentRateScaleInv(0);                // phase
+            paramQuantities[RATE_0 + PHASE_SPREAD]->defaultValue = 0;    // phase
+            paramQuantities[RATE_0 + DEFORM_SPREAD]->defaultValue = 0.5; // deform
+            paramQuantities[RATE_0 + AMP_SPREAD]->defaultValue = 1.0;    // amp
+            break;
         default:
             break;
+        }
+
+        if (ip == INDEPENDENT)
+        {
+            for (int i = 0; i < n_lfos; ++i)
+                inputInfos[TRIGGER_0 + i]->name = "Trigger " + std::to_string(i + 1);
+        }
+        else
+        {
+            inputInfos[TRIGGER_0]->name = "Trigger";
+            inputInfos[TRIGGER_0 + CLOCK_TRIGGER]->name = "Clock";
+            inputInfos[TRIGGER_0 + FREEZE_TRIGGER]->name = "Freeze";
+            inputInfos[TRIGGER_0 + REVERSE_TRIGGER]->name = "Reverse";
         }
     }
 

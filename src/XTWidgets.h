@@ -550,6 +550,7 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     }
 
     float priorMDA{0};
+    bool priorBip{false};
     void step() override
     {
         if (module)
@@ -559,6 +560,12 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
             {
                 bwValue->dirty = true;
                 priorMDA = mda;
+            }
+            auto bip = isBipolar();
+            if (bip != priorBip)
+            {
+                bwValue->dirty = true;
+                priorBip = bip;
             }
         }
         rack::componentlibrary::RoundKnob::step();
