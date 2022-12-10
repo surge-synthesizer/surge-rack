@@ -101,6 +101,17 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         res->dirtyChecks.back().module = module;
         res->dirtyChecks.back().par = QuadLFO::INTERPLAY_MODE;
 
+        for (int i = 0; i < QuadLFO::n_lfos; ++i)
+        {
+            for (auto b : {QuadLFO::RATE_0, QuadLFO::DEFORM_0})
+            {
+                res->spreadDirtyChecks.emplace_back(widgets::DirtyHelper<QuadLFO>());
+                res->spreadDirtyChecks.back().module = module;
+                res->spreadDirtyChecks.back().par = b + i;
+                res->spreadDirtyChecks.back().isModulated = true;
+            }
+        }
+
         if (module)
             res->lfo = std::make_unique<dsp::modulators::SimpleLFO>(module->storage.get());
         return res;
@@ -214,6 +225,14 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
             lfo->applyPhaseOffset(idx * 0.25);
             lfo->setAmplitude(module->modAssist.values[QuadLFO::RATE_0 + idx][0]);
         }
+        if (ip == QuadLFO::SPREAD)
+        {
+            d = module->spreadDeform(idx);
+            auto a = module->spreadAmp(idx);
+            auto p = module->spreadPhase(idx);
+            lfo->applyPhaseOffset(p);
+            lfo->setAmplitude(a);
+        }
         lfo->process_block(r, d, s);
         if (zeroEndpoints)
             nvgMoveTo(vg, xoff, (box.size.y - yshift - ypad - labelHeight) * 0.5 + yshift);
@@ -240,6 +259,8 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
     }
 
     std::vector<widgets::DirtyHelper<QuadLFO>> dirtyChecks;
+    std::vector<widgets::DirtyHelper<QuadLFO>> spreadDirtyChecks;
+    std::string lastLab{"none"};
     void step() override
     {
         if (module)
@@ -247,6 +268,19 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
             auto isD = false;
             for (auto &d : dirtyChecks)
                 isD = isD || d.dirty();
+
+            auto ip = (int)std::round(module->paramQuantities[QuadLFO::INTERPLAY_MODE]->getValue());
+            if (ip == QuadLFO::SPREAD)
+            {
+                for (auto &d : spreadDirtyChecks)
+                {
+                    isD = isD || d.dirty();
+                }
+            }
+
+            auto dv = module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString();
+            isD = isD || (dv != lastLab);
+            lastLab = dv;
             if (isD)
             {
                 bdw->dirty = true;
