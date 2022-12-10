@@ -116,6 +116,9 @@ struct SimpleLFO
         lastDPhase = dPhase;
     }
 
+    float amplitude{1.0};
+    inline void setAmplitude(float f) { amplitude = f; }
+
     inline void freeze()
     {
         for (auto &f : outputBlock)
@@ -177,9 +180,10 @@ struct SimpleLFO
             target = rngCurrent;
             break;
         default:
-            target = 0.1;
+            target = 0.0;
             break;
         }
+        target = target * amplitude;
         float dO = (target - lastTarget) * BLOCK_SIZE_INV;
         for (int i = 0; i < BLOCK_SIZE; ++i)
         {
