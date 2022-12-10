@@ -1122,6 +1122,10 @@ struct QuadLFO : modules::XTModule
     {
         for (int i = 0; i < n_lfos; ++i)
         {
+            for (int c = 0; c < MAX_POLY; ++c)
+            {
+                processors[i][c]->setAmplitude(1.0);
+            }
             paramQuantities[RATE_0 + i]->defaultValue = RateQuantity::independentRateScale(0.5);
         }
         switch (ip)

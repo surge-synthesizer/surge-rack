@@ -13,7 +13,7 @@ By far the easiest way to use these modules is
 to the entire plugin and not module by module, since the modules work as a suite
 4. Restart VCV rack and update your library.
 
-In addition to versions in the library, we provider user downloadable binaries
+In addition to versions in the library, we provide user downloadable binaries
 [here](https://github.com/surge-synthesizer/surge-rack/tags), including the Nightly
 which is our current beta.
 
