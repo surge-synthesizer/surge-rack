@@ -94,6 +94,7 @@ struct SimpleLFO
             rngHistory[3 - i] = rngCurrent;
         }
         lastDPhase = 0;
+        amplitude = 1;
     }
     // FIXME - make this work for proper attacks
     inline void attack(const int lshape)
