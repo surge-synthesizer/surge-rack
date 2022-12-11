@@ -195,6 +195,101 @@ struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
     void onStyleChanged() override {}
 };
 
+struct CurveSwitch : rack::Switch, style::StyleParticipant
+{
+    int direction{1}; // upslope or downslope
+    void draw(const DrawArgs &args) override
+    {
+        auto vg = args.vg;
+        auto val = 1;
+        if (getParamQuantity())
+            val = (int)std::round(getParamQuantity()->getValue());
+
+        switch (direction)
+        {
+        case 1:
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgStrokeWidth(vg, 0.75);
+            nvgMoveTo(vg, 0, box.size.y);
+            nvgLineTo(vg, box.size.x, 0);
+            nvgStroke(vg);
+            break;
+        case -1:
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            nvgStrokeWidth(vg, 0.75);
+            nvgMoveTo(vg, 0, 0);
+            nvgLineTo(vg, box.size.x, box.size.y);
+            nvgStroke(vg);
+        }
+
+        switch (val)
+        {
+        case 0:
+            // slower
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgMoveTo(vg, 0, direction > 0 ? box.size.y : 0);
+            for (int i = 0; i < box.size.x; ++i)
+            {
+                auto x0 = 1.f * i / box.size.x;
+                auto y0 = pow(x0, 1.0 / 3.0);
+                if (direction > 0)
+                    y0 = 1.0 - y0;
+                else
+                    y0 = x0 * x0 * x0;
+                nvgLineTo(vg, x0 * box.size.x, y0 * box.size.y);
+            }
+            nvgStrokeWidth(vg, 1.0);
+            nvgStroke(vg);
+            break;
+            break;
+        case 1:
+            switch (direction)
+            {
+            case 1:
+                nvgBeginPath(vg);
+                nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+                nvgStrokeWidth(vg, 0.75);
+                nvgMoveTo(vg, 0, box.size.y);
+                nvgLineTo(vg, box.size.x, 0);
+                nvgStroke(vg);
+                break;
+            case -1:
+                nvgBeginPath(vg);
+                nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+                nvgStrokeWidth(vg, 1.0);
+                nvgMoveTo(vg, 0, 0);
+                nvgLineTo(vg, box.size.x, box.size.y);
+                nvgStroke(vg);
+            }
+            break;
+        case 2:
+            // slower
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgMoveTo(vg, 0, direction > 0 ? box.size.y : 0);
+            for (int i = 0; i < box.size.x; ++i)
+            {
+                auto x0 = 1.f * i / box.size.x;
+                auto y0 = x0 * x0 * x0;
+                if (direction > 0)
+                    y0 = 1.0 - y0;
+                else
+                    y0 = pow(x0, 1.0 / 3.0);
+                nvgLineTo(vg, x0 * box.size.x, y0 * box.size.y);
+            }
+            nvgStrokeWidth(vg, 1.0);
+            nvgStroke(vg);
+            break;
+        }
+
+        ParamWidget::draw(args);
+    }
+    void onStyleChanged() override {}
+};
+
 QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *module)
 {
     setModule(module);
@@ -256,37 +351,46 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
         auto w = lcdw / 4.0;
 
         {
-            auto yAD = rack::mm2px(widgets::LCDBackground::posy_MM - 1.2);
+            auto yAD = widgets::LCDBackground::posy;
             auto x = widgets::LCDBackground::posx + w * i;
-            auto h = rack::mm2px(5);
-            auto mode = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(w, h),
-                                                             module, M::MODE_0 + i);
-            mode->align = widgets::PlotAreaToggleClick::CENTER;
-            addChild(mode);
-        }
-        {
-            auto yAD = rack::mm2px(widgets::LCDBackground::posy_MM - 1.2 + 5);
-            auto x = widgets::LCDBackground::posx + w * i;
-            auto h = rack::mm2px(5);
+            auto h = rack::mm2px(4.0);
             auto mode = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(w, h),
                                                              module, M::ADAR_0 + i);
             mode->align = widgets::PlotAreaToggleClick::CENTER;
             addChild(mode);
         }
-
         {
-            auto yAD = rack::mm2px(row3) - rack::mm2px(13);
+            auto yAD = rack::mm2px(row3) - rack::mm2px(12);
+            auto xpad = rack::mm2px(0.5);
             auto x = widgets::LCDBackground::posx + w * i;
-            auto lw = w * 0.5;
-            auto h = rack::mm2px(5.5);
-            auto A = widgets::PlotAreaToggleClick::create(rack::Vec(x, yAD), rack::Vec(lw, h),
-                                                          module, M::A_SHAPE_0 + i);
-            A->align = widgets::PlotAreaToggleClick::CENTER;
+            auto lw = rack::mm2px(3.5);
+            auto h = rack::mm2px(3.0);
+            auto A =
+                rack::createParam<CurveSwitch>(rack::Vec(x + xpad, yAD), module, M::A_SHAPE_0 + i);
+            A->box.size = rack::Vec(lw, h);
+            A->direction = 1;
             addChild(A);
-            auto D = widgets::PlotAreaToggleClick::create(rack::Vec(x + lw, yAD), rack::Vec(lw, h),
-                                                          module, M::D_SHAPE_0 + i);
-            D->align = widgets::PlotAreaToggleClick::CENTER;
+            auto D = rack::createParam<CurveSwitch>(rack::Vec(x + w - lw - xpad, yAD), module,
+                                                    M::D_SHAPE_0 + i);
+            D->box.size = rack::Vec(lw, h);
+            D->direction = -1;
             addChild(D);
+
+            auto mode = widgets::PlotAreaToggleClick::create(
+                rack::Vec(x + lw + xpad, yAD - rack::mm2px(1.0)),
+                rack::Vec(w - 2 * lw - 2 * xpad, h + rack::mm2px(1.5)), module, M::MODE_0 + i);
+            mode->align = widgets::PlotAreaToggleClick::CENTER;
+            mode->getDisplay = [](auto p) {
+                if (p->getValue() < 0.5)
+                {
+                    return "DI";
+                }
+                else
+                {
+                    return "AN";
+                }
+            };
+            addChild(mode);
         }
     }
 
