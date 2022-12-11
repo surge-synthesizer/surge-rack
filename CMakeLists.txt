@@ -64,11 +64,9 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
-add_compile_options(-fvisibility=hidden
-        -fvisibility-inlines-hidden
-        $<$<PLATFORM_ID:Darwin>:-Werror>
-        $<$<PLATFORM_ID:Darwin>:-Wno-unused-command-line-argument>
-        $<$<CONFIG:Debug>:-DSURGEXT_RACK_DEBUG>)
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden $<$<PLATFORM_ID:Darwin>:-Werror>)
+
+add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
