@@ -137,7 +137,10 @@ struct QuadAD : modules::XTModule
             {
                 processors[i][p] = std::make_unique<dsp::envelopes::ADAREnvelope>(storage.get());
                 accumulatedOutputs[i][p] = 0.f;
+                gated[i][p] = false;
+                eocFromAway[i][p] = 0;
             }
+            pushEOCOnto[i] = -1;
             isTriggerLinked[i] = false;
             isEnvLinked[i] = false;
             adPoly[i] = 1;
@@ -151,10 +154,10 @@ struct QuadAD : modules::XTModule
             configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"A <", "A -", "A >"});
             configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"D <", "D -", "D >"});
             configSwitch(ADAR_0 + i, 0, 1, 0, "AD vs AR", {"AD Trig", "AR Gate"});
-            configSwitch(LINK_TRIGGER_0 + i, 0, 1, 0,
+            configSwitch(LINK_TRIGGER_0 + i, -1, 1, 0,
                          "Link " + std::to_string(i + 1) + " EOC to " +
                              std::to_string((i + 1) % n_ads + 1) + " Attack",
-                         {"Off", "On"});
+                         {"Cycle", "Off", "On"});
             configSwitch(LINK_ENV_0 + i, 0, 1, 0,
                          "Sum " + std::to_string(i + 1) + " ENV to " +
                              std::to_string((i + 1) % n_ads + 1) + " Output",
@@ -222,11 +225,18 @@ struct QuadAD : modules::XTModule
 
     std::atomic<bool> attackFromZero{false};
     int processCount{BLOCK_SIZE};
-    rack::dsp::SchmittTrigger inputTriggers[n_ads][MAX_POLY];
+    rack::dsp::SchmittTrigger inputTriggers[n_ads][MAX_POLY], linkTriggers[n_ads][MAX_POLY];
+    bool gated[n_ads][MAX_POLY];
     float accumulatedOutputs[n_ads][MAX_POLY];
 
-    bool isTriggerLinked[n_ads], isEnvLinked[n_ads];
+    bool isEnvLinked[n_ads];
     int adPoly[n_ads];
+
+    bool isTriggerLinked[n_ads]; // this target is linked from away
+    int pushEOCOnto[n_ads];      // this target pushes to that source
+    bool anyLinked{false};
+    float eocFromAway[n_ads][MAX_POLY];
+    int lastTriggerLinkParaams[n_ads]{-1, -1, -1, -1};
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -236,36 +246,82 @@ struct QuadAD : modules::XTModule
 
             for (int i = 0; i < n_ads; ++i)
             {
-                int linkIdx = (i + n_ads - 1) & (n_ads - 1);
-                isTriggerLinked[i] = params[LINK_TRIGGER_0 + linkIdx].getValue() > 0.5;
-                isEnvLinked[i] = params[LINK_ENV_0 + linkIdx].getValue() > 0.5;
+                int envLinkIdx = (i + n_ads - 1) & (n_ads - 1);
+                isEnvLinked[i] = params[LINK_ENV_0 + envLinkIdx].getValue() > 0.5;
             }
 
+            // Only do this if the triggers have changed
+            bool recalc{false};
+            for (int i = 0; i < n_ads; ++i)
+            {
+                auto tn = (int)std::round(params[LINK_TRIGGER_0 + i].getValue());
+                if (tn != lastTriggerLinkParaams[i])
+                    recalc = true;
+                lastTriggerLinkParaams[i] = tn;
+            }
+            if (recalc)
+            {
+                // burn it down and start again
+                for (int i = 0; i < n_ads; ++i)
+                {
+                    pushEOCOnto[i] = -1;
+                    isTriggerLinked[i] = false;
+                    anyLinked = false;
+                }
+                for (int i = 0; i < n_ads; ++i)
+                {
+                    auto tn = (int)std::round(params[LINK_TRIGGER_0 + i].getValue());
+                    anyLinked = anyLinked || (tn != 0);
+                    if (tn == 1)
+                    {
+                        pushEOCOnto[i] = (i + 1) & (n_ads - 1);
+                        isTriggerLinked[pushEOCOnto[i]] = true;
+                    }
+                    if (tn == -1)
+                    {
+                        // Single cycle for now
+                        int q = (i - 1 + n_ads) & (n_ads - 1);
+                        int loopFrom{i};
+                        while (q != i)
+                        {
+                            auto qn = (int)std::round(params[LINK_TRIGGER_0 + q].getValue());
+                            if (qn != 1)
+                                break;
+                            loopFrom = q;
+                            q = (q - 1 + n_ads) & (n_ads - 1);
+                        }
+                        pushEOCOnto[i] = loopFrom;
+                        isTriggerLinked[i] = true;
+                        isTriggerLinked[loopFrom] = true;
+                    }
+                }
+            }
+            // TRIGGER POLY TODO
             nChan = 1;
             for (int i = 0; i < n_ads; ++i)
             {
-                if (isTriggerLinked[i])
-                {
-                    int chl = inputs[TRIGGER_0 + i].getChannels();
-                    int j = (i + n_ads - 1) & (n_ads - 1);
-                    while (j != i)
-                    {
-                        if (!isTriggerLinked[j])
-                        {
-                            chl = std::max(chl, inputs[TRIGGER_0 + j].getChannels());
-                            break;
-                        }
-                        j = (j + n_ads - 1) & (n_ads - 1);
-                    }
-                    adPoly[i] = std::max(1, chl);
-                }
-                else
-                {
-                    adPoly[i] = inputs[TRIGGER_0 + i].isConnected()
-                                    ? inputs[TRIGGER_0 + i].getChannels()
-                                    : 1;
-                }
+                adPoly[i] =
+                    inputs[TRIGGER_0 + i].isConnected() ? inputs[TRIGGER_0 + i].getChannels() : 1;
                 nChan = std::max(nChan, adPoly[i]);
+            }
+            if (anyLinked)
+            {
+                for (int i = 0; i < n_ads; ++i)
+                {
+                    adPoly[i] = nChan;
+                }
+            }
+
+            memset(eocFromAway, 0, n_ads * MAX_POLY * sizeof(float));
+            for (int i = 0; i < n_ads; ++i)
+            {
+                if (pushEOCOnto[i] >= 0)
+                {
+                    for (int c = 0; c < MAX_POLY; ++c)
+                    {
+                        eocFromAway[pushEOCOnto[i]][c] += processors[i][c]->eoc_output;
+                    }
+                }
             }
 
             modAssist.setupMatrix(this);
@@ -275,11 +331,11 @@ struct QuadAD : modules::XTModule
         int tnc = 1;
         for (int i = 0; i < n_ads; ++i)
         {
-            // who is my trigger neighbor?
-            int linkIdx = (i + n_ads - 1) & (n_ads - 1);
-            float linkMul = isTriggerLinked[i] * 10.f;
+            // who is my env neighbor?
+            int envLinkIdx = (i + n_ads - 1) & (n_ads - 1);
 
-            if (inputs[TRIGGER_0 + i].isConnected() || isTriggerLinked[i] || isEnvLinked[i])
+            if (inputs[TRIGGER_0 + i].isConnected() || isTriggerLinked[i] || isEnvLinked[i] ||
+                pushEOCOnto[i] >= 0)
             {
                 int ch = adPoly[i];
                 outputs[OUTPUT_0 + i].setChannels(ch);
@@ -288,21 +344,30 @@ struct QuadAD : modules::XTModule
                 for (int c = 0; c < ch; ++c)
                 {
                     auto iv = inputs[TRIGGER_0 + i].getVoltage(c);
-                    auto lv = processors[linkIdx][c]->eoc_output * linkMul;
+                    auto lv = (isTriggerLinked[i] && (eocFromAway[i][c] > 0)) ? 10.f : 0.f;
 
-                    if (inputTriggers[i][c].process(iv + lv))
+                    auto gl = std::clamp(iv + lv, 0.f, 10.f);
+
+                    if (inputTriggers[i][c].process(iv) || linkTriggers[i][c].process(lv))
                     {
+                        gated[i][c] = true;
                         processors[i][c]->attackFrom(attackFromZero ? 0 : processors[i][c]->output,
                                                      as, params[MODE_0 + i].getValue() < 0.5,
                                                      params[ADAR_0 + i].getValue() > 0.5);
                     }
+
+                    if (gated[i][c] && gl < 1.f) // that's the default trigger threshold
+                    {
+                        gated[i][c] = false;
+                    }
+
                     processors[i][c]->process(modAssist.values[ATTACK_0 + i][c],
                                               modAssist.values[DECAY_0 + i][c], as, ds,
-                                              (lv + iv) * 0.1);
+                                              gated[i][c]);
 
                     auto ov = processors[i][c]->output * 10;
                     if (isEnvLinked[i])
-                        ov += accumulatedOutputs[linkIdx][c];
+                        ov += accumulatedOutputs[envLinkIdx][c];
 
                     outputs[OUTPUT_0 + i].setVoltage(ov, c);
                     accumulatedOutputs[i][c] = ov;
