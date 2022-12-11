@@ -97,6 +97,23 @@ template <int oscType> struct WavetableMenuBuilder
         return menu;
     }
 
+    static void downloadExtraContent(VCO<oscType> *module)
+    {
+        auto t = std::thread([module]() {
+            float progress{0};
+            std::string archivePath = rack::asset::user("SurgeXTRack/SurgeXT_ExtraContent.tar.zst");
+            std::string url = "https://github.com/surge-synthesizer/surge-rack/releases/download/"
+                              "Content/SurgeXTRack_ExtraContent.tar.zst";
+            std::string dirPath = rack::asset::user("SurgeXTRack/");
+            rack::network::requestDownload(url, archivePath, &progress);
+            rack::system::unarchiveToDirectory(archivePath, dirPath);
+            rack::system::remove(archivePath);
+
+            module->forceRefreshWT = true;
+        });
+        t.detach();
+    }
+
     static void buildMenuOnto(rack::ui::Menu *menu, VCO<oscType> *module)
     {
         if (!module)
@@ -209,11 +226,16 @@ template <int oscType> struct WavetableMenuBuilder
             }
         }));
         menu->addChild(new rack::MenuSeparator);
+#if PROGRESS_ON_710
+        menu->addChild(rack::createMenuItem("Download Extra Wavetable Content", "",
+                                            [module]() { downloadExtraContent(module); }));
+#endif
+
         menu->addChild(rack::createMenuItem("Reveal User Wavetables Directory", "", [module]() {
             rack::system::openDirectory((module->storage->userDataPath / "Wavetables").u8string());
         }));
         menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
-                                            [module]() { module->storage->refresh_wtlist(); }));
+                                            [module]() { module->forceRefreshWT = true; }));
     }
 };
 template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
@@ -321,6 +343,20 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
                                                 [m]() { m->doDCBlock = !m->doDCBlock; }));
             VCOConfig<oscType>::addMenuItems(m, menu);
         }
+    }
+
+    void step() override
+    {
+        if constexpr (VCOConfig<oscType>::requiresWavetables())
+        {
+            auto vm = static_cast<VCO<oscType> *>(module);
+            if (vm && vm->forceRefreshWT)
+            {
+                vm->forceRefreshWT = false;
+                vm->storage->refresh_wtlist();
+            }
+        }
+        widgets::XTModuleWidget::step();
     }
 };
 
