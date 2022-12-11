@@ -11,7 +11,8 @@ link_libraries(Rack)
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
 add_compile_options(-fPIC)
 # Generate dependency files alongside the object files
-add_compile_options(-MMD -MP)
+add_compile_options($<$<NOT:$<CXX_COMPILER_ID:AppleClang>>:-MMD>)
+add_compile_options($<$<NOT:$<CXX_COMPILER_ID:AppleClang>>:-MP>)
 # Debugger symbols. These are removed with `strip`.
 add_compile_options(-g)
 # Optimization
