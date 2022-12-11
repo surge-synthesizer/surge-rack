@@ -1,4 +1,4 @@
-name: VCV Rack Code Checks
+name: Surge XT Rack Content Upload
 on: [push]
 
 env:
@@ -9,8 +9,8 @@ defaults:
     shell: bash
 
 jobs:
-  build-code-checks:
-    name: code-checks
+  build-content:
+    name: create-content
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
