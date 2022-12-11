@@ -52,6 +52,149 @@ struct QuadADWidget : public widgets::XTModuleWidget
     }
 };
 
+struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
+{
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwLight{nullptr};
+    float radius;
+
+    ThreeStateTriggerSwitch()
+    {
+        box.size = rack::mm2px(rack::Vec(3.5, 3.5));
+        radius = rack::mm2px(1.1);
+        bdw = new widgets::BufferedDrawFunctionWidget(rack::Vec(0, 0), box.size,
+                                                      [this](auto v) { this->drawBackground(v); });
+        bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(0, 0), box.size, [this](auto v) { this->drawLight(v); });
+        addChild(bdw);
+        addChild(bdwLight);
+    }
+
+    bool hovered{false};
+    void onHover(const HoverEvent &e) override
+    {
+        e.consume(this);
+        rack::app::Switch::onHover(e);
+    }
+    void onEnter(const EnterEvent &e) override
+    {
+        hovered = true;
+        bdw->dirty = true;
+        e.consume(this);
+
+        rack::app::Switch::onEnter(e);
+    }
+    void onLeave(const LeaveEvent &e) override
+    {
+        hovered = false;
+        bdw->dirty = true;
+        e.consume(this);
+
+        rack::app::Switch::onLeave(e);
+    }
+
+    int val()
+    {
+        if (!getParamQuantity())
+            return 0;
+        return std::round(getParamQuantity()->getValue());
+    }
+
+    void drawBackground(NVGcontext *vg)
+    {
+        auto state = val();
+        if (state == 0)
+        {
+            auto col = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_OFF);
+            if (hovered)
+            {
+                col.r *= 1.2;
+                col.g *= 1.2;
+                col.b *= 1.2;
+            }
+
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
+            nvgFillColor(vg, col);
+            nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius, radius);
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+        }
+        else
+        {
+        }
+    }
+
+    void drawLight(NVGcontext *vg)
+    {
+
+        const float halo = rack::settings::haloBrightness;
+        auto state = val();
+
+        if (state == 1)
+        {
+            auto col = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
+
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
+            nvgFillColor(vg, col);
+
+            auto cx = box.size.x * 0.5;
+            auto cy = box.size.y * 0.5;
+
+            auto r = radius * 1.25;
+            nvgMoveTo(vg, cx - r, cy - r);
+            nvgLineTo(vg, cx + r, cy);
+            nvgLineTo(vg, cx - r, cy + r);
+
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+        }
+        else if (state == -1)
+        {
+            auto col = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
+
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
+            nvgFillColor(vg, col);
+
+            auto cx = box.size.x * 0.5;
+            auto cy = box.size.y * 0.5;
+
+            auto r = radius * 1.25;
+            nvgMoveTo(vg, cx + r, cy - r);
+            nvgLineTo(vg, cx - r, cy);
+            nvgLineTo(vg, cx + r, cy + r);
+
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 0.75);
+            nvgStroke(vg);
+        }
+    }
+
+    void onChange(const ChangeEvent &e) override
+    {
+        bdw->dirty = true;
+        bdwLight->dirty = true;
+        Widget::onChange(e);
+    }
+
+    float phalo{0.f};
+    void step() override
+    {
+        const float halo = rack::settings::haloBrightness;
+        if (phalo != halo)
+        {
+            phalo = halo;
+            bdw->dirty = true;
+            bdwLight->dirty = true;
+        }
+        Switch::step();
+    }
+    void onStyleChanged() override {}
+};
+
 QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *module)
 {
     setModule(module);
@@ -105,8 +248,8 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
         }
 
         auto cp = rack::mm2px(rack::Vec(col + layout::LayoutConstants::columnWidth_MM * 0.5, row1));
-        auto trigLight = rack::createParamCentered<widgets::ActivateKnobSwitch>(
-            cp, module, M::LINK_TRIGGER_0 + i);
+        auto trigLight =
+            rack::createParamCentered<ThreeStateTriggerSwitch>(cp, module, M::LINK_TRIGGER_0 + i);
         addChild(trigLight);
 
         auto lcdw = rack::app::RACK_GRID_WIDTH * 12 - widgets::LCDBackground::posx * 2;

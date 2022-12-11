@@ -43,7 +43,7 @@ struct ADAREnvelope
 
     float phase{0}, start{0};
 
-    float output, eoc_output;
+    float output{0}, eoc_output{0};
     float outputCache[BLOCK_SIZE], outBlock0{0.f};
     int current{BLOCK_SIZE};
     int eoc_countdown{0};
@@ -81,7 +81,7 @@ struct ADAREnvelope
     }
 
     template <bool gated>
-    inline float stepDigital(const float a, const float d, const float gateLevel)
+    inline float stepDigital(const float a, const float d, const bool gateActive)
     {
         float target = 0;
         switch (stage)
@@ -100,7 +100,7 @@ struct ADAREnvelope
                     stage = s_decay;
             }
             if constexpr (gated)
-                if (gateLevel < 0.5)
+                if (!gateActive)
                     stage = s_decay;
             target = phase;
             break;
@@ -121,7 +121,7 @@ struct ADAREnvelope
     }
 
     inline void process(const float a, const float d, const int ashape, const int dshape,
-                        const float gateLevel)
+                        const bool gateActive)
     {
         if (stage == s_complete)
         {
@@ -156,7 +156,7 @@ struct ADAREnvelope
             {
                 target = 1;
 
-                if (gateLevel < 0.5)
+                if (!gateActive)
                 {
                     phase = 1;
                     stage = s_decay;
@@ -165,9 +165,9 @@ struct ADAREnvelope
             else if (isDigital)
             {
                 if (isGated)
-                    target = stepDigital<true>(a, d, gateLevel);
+                    target = stepDigital<true>(a, d, gateActive);
                 else
-                    target = stepDigital<false>(a, d, gateLevel);
+                    target = stepDigital<false>(a, d, gateActive);
             }
             else
             {
@@ -182,7 +182,7 @@ struct ADAREnvelope
 
                 if (isGated && !discharge)
                 {
-                    ndc = gateLevel < 0.5;
+                    ndc = !gateActive;
                 }
                 discharge = ndc || discharge;
                 v_c1_delayed = v_c1;
