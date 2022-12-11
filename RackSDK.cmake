@@ -9,10 +9,11 @@ link_libraries(Rack)
 
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
-add_compile_options(-fPIC)
+#add_compile_options(-fPIC) # handled already by CMake
 # Generate dependency files alongside the object files
-add_compile_options($<$<NOT:$<CXX_COMPILER_ID:AppleClang>>:-MMD>)
-add_compile_options($<$<NOT:$<CXX_COMPILER_ID:AppleClang>>:-MP>)
+# Not required with CMake
+#add_compile_options(-MMD -MP)
+
 # Debugger symbols. These are removed with `strip`.
 add_compile_options(-g)
 # Optimization
