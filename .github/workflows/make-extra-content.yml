@@ -1,5 +1,5 @@
+# We run this manually to update the content from time to time
 name: Surge XT Rack Content Upload
-on: [push]
 
 env:
   rack-sdk-version: 2.2.1
