@@ -64,11 +64,11 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
-add_compile_options(-fvisibility=hidden
-        -fvisibility-inlines-hidden
-        $<$<PLATFORM_ID:Darwin>:-Werror>
-        $<$<PLATFORM_ID:Darwin>:-Wno-unused-command-line-argument>
-        $<$<CONFIG:Debug>:-DSURGEXT_RACK_DEBUG>)
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden
+                    $<$<PLATFORM_ID:Darwin>:-Werror>
+                    $<$<PLATFORM_ID:Darwin>:-Wno-unused-command-line-argument>)
+
+add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
@@ -151,4 +151,3 @@ add_custom_command(TARGET xt-rack-code-checks
         COMMAND ${CMAKE_COMMAND} -E echo About to check clang-format using ${CLANG_FORMAT_EXE}
         COMMAND git ls-files -- ${CLANG_FORMAT_GLOBS} | xargs ${CLANG_FORMAT_EXE} --dry-run --Werror
         )
-# }}}
