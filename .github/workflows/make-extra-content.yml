@@ -1,0 +1,42 @@
+name: VCV Rack Code Checks
+on: [push]
+
+env:
+  rack-sdk-version: 2.2.1
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-code-checks:
+    name: code-checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Get Rack-SDK
+        run: |
+          pushd $HOME
+          curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-lin-x64.zip
+          unzip Rack-SDK.zip
+      - name: Run Code Checks
+        run: |
+          cmake -Bbuild -DRACK_SDK_DIR=$HOME/Rack-SDK -DCMAKE_BUILD_TYPE=DEBUG
+          cmake --build build --target xt-rack-extra-content
+      - name: Delete old release assets
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ github.token }}
+          tag: Content
+          assets: '*'
+      - name: Upload release assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/*ExtraContent.tar.zstd
+          tag: Content
+          file_glob: true
