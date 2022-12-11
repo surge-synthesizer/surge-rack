@@ -23,10 +23,10 @@ namespace sst::surgext_rack::dsp::modulators
 {
 struct SimpleLFO
 {
-    SurgeStorage *storage;
+    SurgeStorage *storage{nullptr};
     std::default_random_engine gen;
     std::uniform_real_distribution<float> distro;
-    std::function<float()> urng;
+    std::function<float()> urng = []() { return 0; };
 
     float rngState[2]{0, 0};
     float rngHistory[4]{0, 0, 0, 0};
@@ -64,7 +64,7 @@ struct SimpleLFO
 
     float lastTarget{0};
     float outputBlock[BLOCK_SIZE];
-    float phase;
+    float phase{0};
 
     inline float bend1(float x, float d)
     {

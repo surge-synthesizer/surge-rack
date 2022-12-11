@@ -20,7 +20,10 @@
  *
  * Module
  *    - Clock and tempoSync cases
+ *    - Animation under modulation of animation doesn't seem to happen
  *    - Square and S&H get sample accurate transitions in block rather than interps
+ *    - Mod Labels and Quantity Recalc on names and so on (basically 100% lintbuddy)
+ *    - Remove alpha label
  */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
