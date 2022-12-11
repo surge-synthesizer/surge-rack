@@ -130,6 +130,10 @@ file(INSTALL surge/resources/surge-shared/configuration.xml
              res/surge_extra_data/fx_presets
     DESTINATION ${PLUGIN_NAME}/build/surge-data)
 
+file(INSTALL
+        surge/resources/data/wavetables_3rdparty
+        DESTINATION ${PLUGIN_NAME}_ExtraContent)
+
 install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
 
@@ -152,3 +156,11 @@ add_custom_command(TARGET xt-rack-code-checks
         COMMAND git ls-files -- ${CLANG_FORMAT_GLOBS} | xargs ${CLANG_FORMAT_EXE} --dry-run --Werror
         )
 # }}}
+
+add_custom_target(xt-rack-extra-content)
+add_custom_command(TARGET xt-rack-extra-content
+  POST_BUILD
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  COMMAND tar cf ${PLUGIN_NAME}_ExtraContent.tar ${PLUGIN_NAME}_ExtraContent
+  COMMAND zstd -zf ${PLUGIN_NAME}_ExtraContent.tar
+)
