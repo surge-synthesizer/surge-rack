@@ -1653,13 +1653,16 @@ struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
         return res;
     }
 
+    std::function<std::string(rack::ParamQuantity *q)> getDisplay = [](auto *p) {
+        return p->getDisplayValueString();
+    };
     void drawWidget(NVGcontext *vg)
     {
         auto *pq = getParamQuantity();
         if (!pq)
             return;
 
-        auto pv = pq->getDisplayValueString();
+        auto pv = getDisplay(pq);
 
         nvgBeginPath(vg);
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));

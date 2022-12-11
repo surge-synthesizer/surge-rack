@@ -19,7 +19,7 @@
  *  DSP
  *     - Maybe a bit more profiling?
  *  Rack
- *     - Mod Param Param Quanities - display, typein, etc...
+ *     - Do we want non percentage mod typein values?
  *  UI
  *    - Slopes Glpyohs etc on the A=/A- etc...
  *    - Curves on the display
@@ -151,8 +151,8 @@ struct QuadAD : modules::XTModule
             configParam<ADParamQuantity>(ATTACK_0 + i, -8, 2, -5, "Attack " + std::to_string(i));
             configParam<ADParamQuantity>(DECAY_0 + i, -8, 2, -5, "Decay " + std::to_string(i));
             configSwitch(MODE_0 + i, 0, 1, 0, "Mode", {"Digital", "Analog"});
-            configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"A <", "A -", "A >"});
-            configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"D <", "D -", "D >"});
+            configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"Faster", "Standard", "Slower"});
+            configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
             configSwitch(ADAR_0 + i, 0, 1, 0, "AD vs AR", {"AD Trig", "AR Gate"});
             configSwitch(LINK_TRIGGER_0 + i, -1, 1, 0,
                          "Link " + std::to_string(i + 1) + " EOC to " +
@@ -165,7 +165,18 @@ struct QuadAD : modules::XTModule
         }
 
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
-            configParam(MOD_PARAM_0 + i, -1, 1, 0);
+        {
+            int modi = i % n_mod_inputs;
+            int pari = i / n_mod_inputs;
+            std::string tgt = "Attack";
+            if (pari >= DECAY_0)
+            {
+                tgt = "Decay";
+                pari -= n_ads;
+            }
+            auto name = fmt::format("Mod {} to {} {}", modi + 1, tgt, pari + 1);
+            configParam(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
+        }
 
         for (int i = 0; i < n_ads; ++i)
         {
