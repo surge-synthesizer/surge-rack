@@ -2,28 +2,17 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 project(SurgeXTRack VERSION 1.0 LANGUAGES C CXX)
 
-if ("${RACK_SDK_DIR}" STREQUAL "")
-  message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
-else ()
-  message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
-endif ()
-
-message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
-
-include(RackSDK.cmake)
-
 set(CMAKE_CXX_STANDARD 17)
 
 set(PLUGIN_NAME ${PROJECT_NAME})
+set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs patches presets README.md)
+include(RackSDK.cmake)
 
-# Do not change the LIB_NAME!
-set(LIB_NAME plugin)
+message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
 
 find_package(Git REQUIRED)
-
 execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE SURGE_RACK_PLUG_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/surge
         OUTPUT_VARIABLE SURGE_RACK_SURGE_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -79,7 +68,7 @@ endif ()
 
 target_link_libraries(Surge INTERFACE ${SURGE_LIBS} ${SURGE_WIN_LIBS})
 
-add_library(${PROJECT_NAME} STATIC
+add_library(${PLUGIN_NAME} STATIC
         src/Delay.cpp
         src/DelayLineByFreq.cpp
         src/EGxVCA.cpp
@@ -97,30 +86,23 @@ add_library(${PROJECT_NAME} STATIC
         src/XTStyle.cpp
         )
 
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC RackSDK Surge)
+target_link_libraries(${PLUGIN_NAME} LINK_PUBLIC RackSDK Surge)
 
-add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
-set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
+target_sources(${RACK_PLUGIN_LIB} PRIVATE src/SurgeXT.cpp)
+target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE ${PLUGIN_NAME})
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
-  set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-endif ()
 
-install(TARGETS ${LIB_NAME} ${PROJECT_NAME} ${SURGE_LIBS}
+install(TARGETS ${RACK_PLUGIN_LIB} ${PLUGIN_NAME} ${SURGE_LIBS}
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 
 add_custom_target(${PROJECT_NAME}_quick_install
-        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${LIB_NAME}.* ${CMAKE_INSTALL_PREFIX}/SurgeXTRack
-        COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/SurgeXTRack
+        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${LIB_NAME}.* ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
+        COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
-add_dependencies(${PROJECT_NAME}_quick_install ${PROJECT_NAME})
-add_dependencies(${PROJECT_NAME}_quick_install ${LIB_NAME})
+add_dependencies(${PROJECT_NAME}_quick_install ${PLUGIN_NAME})
+add_dependencies(${PROJECT_NAME}_quick_install ${RACK_PLUGIN_LIB})
 
-file(GLOB LICENSE LICENSE*)
-file(INSTALL plugin.json res docs patches presets ${LICENSE} README.md DESTINATION ${PLUGIN_NAME})
 file(INSTALL surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
              surge/resources/data/wavetables
@@ -132,10 +114,6 @@ file(INSTALL surge/resources/surge-shared/configuration.xml
 file(INSTALL
         surge/resources/data/wavetables_3rdparty
         DESTINATION ${PLUGIN_NAME}_ExtraContent)
-
-install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
-install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
-
 
 add_custom_target(xt-rack-code-checks)
 

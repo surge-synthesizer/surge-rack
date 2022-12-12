@@ -1,7 +1,33 @@
 # Mapping of plugin build definitions from the Rack-SDK arch.mk, compile.mk, dep.mk and plugin.mk to CMake.
 
 set(RACK_SDK_VERSION 2.2.1)
-message(STATUS "load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
+message(STATUS "Load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
+
+if ("${RACK_SDK_DIR}" STREQUAL "")
+  message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
+else ()
+  message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
+endif ()
+
+if ("${PLUGIN_NAME}" STREQUAL "")
+  message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists.txt before including RackSDK.cmake.\
+ The PLUGIN_NAME must correspond to the plugin slug, as defined in plugin.json.")
+else ()
+  message(STATUS "Using PLUGIN_NAME '${PLUGIN_NAME}'")
+endif ()
+
+if ("${ADDITIONAL_PLUGIN_DISTRIBUTABLES}" STREQUAL "")
+  message(WARNING "ADDITIONAL_PLUGIN_DISTRIBUTABLES variable not set. For installing additional files into '${PLUGIN_NAME}'\
+   folder add ADDITIONAL_PLUGIN_DISTRIBUTABLES variable to the project CMakeLists.txt before including RackSDK.cmake.")
+endif ()
+
+# Do not change the RACK_PLUGIN_LIB!
+set(RACK_PLUGIN_LIB plugin)
+
+file(GLOB LICENSE LICENSE*)
+set(PLUGIN_DISTRIBUTABLES plugin.json res ${LICENSE} ${ADDITIONAL_PLUGIN_DISTRIBUTABLES})
+
+message(STATUS "PLUGIN_DISTRIBUTABLES: ${PLUGIN_DISTRIBUTABLES}")
 
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
@@ -17,7 +43,15 @@ add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
+if (${CMAKE_CXX_STANDARD} AND (${CMAKE_CXX_STANDARD} GREATER_EQUAL 11))
+  message(STATUS "Retaining CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
+else()
+  message(STATUS "Defaulting CMAKE_CXX_STANDARD to 11")
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+
+add_library(${RACK_PLUGIN_LIB} MODULE)
+set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES PREFIX "")
 
 # Since the plugin's compiler could be a different version than Rack's compiler, link libstdc++ and libgcc statically to avoid ABI issues.
 add_link_options($<$<CXX_COMPILER_ID:GNU>:-static-libstdc++> $<$<PLATFORM_ID:Linux>:-static-libgcc>)
@@ -50,6 +84,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_compile_options(-arch arm64)
     add_compile_options(-faligned-allocation)
   endif ()
+  set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES SUFFIX ".dylib")
+  set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -59,3 +95,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # When Rack loads a plugin, it symlinks /tmp/Rack2 to its system dir, so the plugin can link to libRack.
   target_compile_options(RackSDK INTERFACE -Wl,-rpath=/tmp/Rack2)
 endif ()
+
+target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE ${RackSDK})
+
+install(TARGETS ${RACK_PLUGIN_LIB} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
+file(INSTALL ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
