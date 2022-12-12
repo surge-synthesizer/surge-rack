@@ -50,6 +50,41 @@ struct QuadADWidget : public widgets::XTModuleWidget
                                             CHECKMARK(!xtm->attackFromZero),
                                             [xtm]() { xtm->attackFromZero = false; }));
     }
+    widgets::BufferedDrawFunctionWidget *divWidget{nullptr};
+    void drawDividingLines(NVGcontext *vg)
+    {
+        if (!divWidget)
+            return;
+
+        auto col = style()->getColor(style::XTStyle::Colors::PLOT_MARKS);
+        auto sw = 0.75;
+        auto sz = divWidget->box.size;
+        auto dw = sz.x / QuadAD::n_ads;
+        for (int i=1; i<QuadAD::n_ads; ++i)
+        {
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, col);
+            nvgStrokeWidth(vg, sw);
+            nvgMoveTo(vg, dw * i, 1);
+            nvgLineTo(vg, dw * i, sz.y - 2);
+            nvgStroke(vg);
+        }
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, col);
+        nvgStrokeWidth(vg, sw);
+        nvgMoveTo(vg, 2, rack::mm2px(5));
+        nvgLineTo(vg, sz.x - 2, rack::mm2px(5));
+        nvgStroke(vg);
+
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, col);
+        nvgStrokeWidth(vg, sw);
+        nvgMoveTo(vg, 2, sz.y - rack::mm2px(5));
+        nvgLineTo(vg, sz.x - 2, sz.y - rack::mm2px(5));
+        nvgStroke(vg);
+    }
 };
 
 struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
@@ -312,6 +347,21 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
 
     typedef layout::LayoutItem li_t;
     engine_t::layoutItem(this, li_t::createLCDArea(row3 - rack::mm2px(2.5)), "QUAD AD");
+
+    {
+        auto lc = getFirstDescendantOfType<widgets::LCDBackground>();
+        if (lc)
+        {
+            divWidget = new widgets::BufferedDrawFunctionWidget(lc->box.pos,
+                                                                lc->box.size,
+                                                                [this](auto vg) { drawDividingLines(vg);});
+            addChild(divWidget);
+        }
+        else
+        {
+            std::cout << "NO LCD" << std::endl;
+        }
+    }
 
     for (int i = 0; i < M::n_ads; ++i)
     {
