@@ -5,7 +5,7 @@ message(STATUS "Load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION
 
 if ("${PLUGIN_NAME}" STREQUAL "")
   message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists.txt before including RackSDK.cmake.\
- The PLUGIN_NAME must correspond to the plugin slug, as defined in the plugin.json.")
+ The PLUGIN_NAME must correspond to the plugin slug, as defined in plugin.json.")
 else ()
   message(STATUS "Using PLUGIN_NAME '${PLUGIN_NAME}'")
 endif ()
