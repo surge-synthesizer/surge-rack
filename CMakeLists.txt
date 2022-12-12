@@ -2,12 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 project(SurgeXTRack VERSION 1.0 LANGUAGES C CXX)
 
-if ("${RACK_SDK_DIR}" STREQUAL "")
-  message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
-else ()
-  message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
-endif ()
-
 set(PLUGIN_NAME ${PROJECT_NAME})
 set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs patches presets README.md)
 

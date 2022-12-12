@@ -3,6 +3,12 @@
 set(RACK_SDK_VERSION 2.2.1)
 message(STATUS "Load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
+if ("${RACK_SDK_DIR}" STREQUAL "")
+  message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
+else ()
+  message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
+endif ()
+
 if ("${PLUGIN_NAME}" STREQUAL "")
   message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists.txt before including RackSDK.cmake.\
  The PLUGIN_NAME must correspond to the plugin slug, as defined in plugin.json.")
