@@ -18,6 +18,7 @@
  *
  *  DSP
  *     - Maybe a bit more profiling?
+ *     - Manaul trigger in a cycle stops a cycle
  *  Rack
  *     - Do we want non percentage mod typein values?
  *  UI
@@ -148,8 +149,9 @@ struct QuadAD : modules::XTModule
 
         for (int i = 0; i < n_ads; ++i)
         {
-            configParam<ADParamQuantity>(ATTACK_0 + i, -8, 2, -5, "Attack " + std::to_string(i));
-            configParam<ADParamQuantity>(DECAY_0 + i, -8, 2, -5, "Decay " + std::to_string(i));
+            auto maxv = log2(10.0);
+            configParam<ADParamQuantity>(ATTACK_0 + i, -8, maxv, -5, "Attack " + std::to_string(i));
+            configParam<ADParamQuantity>(DECAY_0 + i, -8, maxv, -5, "Decay " + std::to_string(i));
             configSwitch(MODE_0 + i, 0, 1, 0, "Mode", {"Digital", "Analog"});
             configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"Faster", "Standard", "Slower"});
             configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
@@ -357,8 +359,6 @@ struct QuadAD : modules::XTModule
                     auto iv = inputs[TRIGGER_0 + i].getVoltage(c);
                     auto lv = (isTriggerLinked[i] && (eocFromAway[i][c] > 0)) ? 10.f : 0.f;
 
-                    auto gl = std::clamp(iv + lv, 0.f, 10.f);
-
                     if (inputTriggers[i][c].process(iv) || linkTriggers[i][c].process(lv))
                     {
                         gated[i][c] = true;
@@ -367,7 +367,7 @@ struct QuadAD : modules::XTModule
                                                      params[ADAR_0 + i].getValue() > 0.5);
                     }
 
-                    if (gated[i][c] && gl < 1.f) // that's the default trigger threshold
+                    if (gated[i][c] && iv < 1.f) // that's the default trigger threshold
                     {
                         gated[i][c] = false;
                     }
@@ -382,8 +382,6 @@ struct QuadAD : modules::XTModule
 
                     outputs[OUTPUT_0 + i].setVoltage(ov, c);
                     accumulatedOutputs[i][c] = ov;
-                    // outputs[OUTPUT_0 + i].setVoltage(
-                    //     (processors[i][c]->output + processors[i][c]->eoc_output) * 10, c);
                 }
             }
             else
