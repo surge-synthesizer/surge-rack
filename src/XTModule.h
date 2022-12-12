@@ -410,7 +410,7 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
         bool valid{false};
         float v = par->calculate_modulation_value_from_string(s, emsg, valid);
         if (valid)
-            setValue(v * (par->val_max.f - par->val_min.f));
+            setValue(v);
     }
 
     std::string baseName{"MOD_ERROR"};
