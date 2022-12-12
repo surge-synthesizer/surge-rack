@@ -43,7 +43,12 @@ add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
+if (${CMAKE_CXX_STANDARD} AND (${CMAKE_CXX_STANDARD} GREATER_EQUAL 11))
+  message(STATUS "Retaining CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
+else()
+  message(STATUS "Defaulting CMAKE_CXX_STANDARD to 11")
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 
 add_library(${RACK_PLUGIN_LIB} MODULE)
 set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES PREFIX "")
