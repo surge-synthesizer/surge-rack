@@ -17,6 +17,7 @@
 #include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "SurgeXT.h"
+#include <unordered_map>
 
 namespace sst::surgext_rack::quadad::ui
 {
@@ -221,8 +222,10 @@ struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
         if (phalo != halo)
         {
             phalo = halo;
-            bdw->dirty = true;
-            bdwLight->dirty = true;
+            if (bdw)
+                bdw->dirty = true;
+            if (bdwLight)
+                bdwLight->dirty = true;
         }
         Switch::step();
     }
@@ -324,6 +327,120 @@ struct CurveSwitch : rack::Switch, style::StyleParticipant
     void onStyleChanged() override {}
 };
 
+struct ADARCurveDraw : public rack::Widget, style::StyleParticipant
+{
+    widgets::BufferedDrawFunctionWidget *bdw{nullptr};
+    QuadAD *module{nullptr};
+    int adIdx{0};
+
+    std::unordered_map<int, widgets::DirtyHelper<QuadAD>> dirtyChecks;
+
+    static ADARCurveDraw *create(const rack::Vec &pos, const rack::Vec &sz, QuadAD *m, int id)
+    {
+        auto res = new ADARCurveDraw();
+        res->box.pos = pos;
+        res->box.size = sz;
+        res->module = m;
+        res->adIdx = id;
+        res->setup();
+        return res;
+    }
+
+    void setup()
+    {
+        bdw = new widgets::BufferedDrawFunctionWidgetOnLayer(rack::Vec(0, 0), box.size,
+                                                             [this](auto vg) { drawCurves(vg); });
+        addChild(bdw);
+
+        auto su = [this](auto b, auto m) {
+            auto ac = widgets::DirtyHelper<QuadAD>();
+            ac.module = module;
+            ac.par = b + adIdx;
+            ac.isModulated = m;
+            dirtyChecks[b] = ac;
+        };
+        su(QuadAD::ATTACK_0, true);
+        su(QuadAD::DECAY_0, true);
+        su(QuadAD::MODE_0, false);
+        su(QuadAD::A_SHAPE_0, false);
+        su(QuadAD::D_SHAPE_0, false);
+        su(QuadAD::ADAR_0, false);
+    }
+
+    void step() override
+    {
+        if (module)
+            for (auto &[i, dc] : dirtyChecks)
+                if (dc.dirty())
+                    bdw->dirty = true;
+        Widget::step();
+    }
+
+    void drawCurves(NVGcontext *vg)
+    {
+        if (!module)
+            return;
+
+        auto a = dirtyChecks[QuadAD::ATTACK_0].lastValue;
+        auto d = dirtyChecks[QuadAD::DECAY_0].lastValue;
+        auto m = dirtyChecks[QuadAD::MODE_0].lastValue;
+        auto as = dirtyChecks[QuadAD::A_SHAPE_0].lastValue;
+        auto ds = dirtyChecks[QuadAD::D_SHAPE_0].lastValue;
+        auto adar = dirtyChecks[QuadAD::ADAR_0].lastValue;
+
+        auto gt = 0.f;
+        auto endt = pow(2, a) + pow(2, d);
+        if (adar > 0.5)
+        {
+            gt = pow(2.0, a) + endt * 0.5;
+            endt = gt + pow(2, d);
+        }
+
+        auto env = dsp::envelopes::ADAREnvelope(module->storage.get());
+        env.attackFrom(0, as, (m < 0.5), (adar > 0.5));
+
+        auto smp = endt * module->storage->samplerate;
+        auto runs = smp * BLOCK_SIZE_INV;
+        auto smpEvery = (int)std::floor(runs / (box.size.x * 4));
+        auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, 0, box.size.y); // that's the 0,0 point
+
+        for (int i = 0; i < runs; ++i)
+        {
+            env.process(a, d, as, ds, i < gtSmp);
+            if ((i % smpEvery) == 0)
+            {
+                auto v = env.output;
+                nvgLineTo(vg, box.size.x * i / runs, (1.0 - v) * box.size.y);
+            }
+            env.current = BLOCK_SIZE;
+        }
+        nvgLineTo(vg, box.size.x, box.size.y);
+
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        nvgStrokeWidth(vg, 1.25);
+        nvgStroke(vg);
+
+        auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+        auto gcp = col;
+        gcp.a = 0.5;
+        auto gcn = col;
+        gcn.a = 0.0;
+        nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y * 0.9, gcp, gcn));
+        nvgFill(vg);
+    }
+
+    void onStyleChanged() override
+    {
+        if (bdw)
+        {
+            bdw->dirty = true;
+        }
+    }
+};
+
 QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *module)
 {
     setModule(module);
@@ -354,6 +471,19 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
             divWidget = new widgets::BufferedDrawFunctionWidget(
                 lc->box.pos, lc->box.size, [this](auto vg) { drawDividingLines(vg); });
             addChild(divWidget);
+
+            float cw = lc->box.size.x * 0.25;
+            float ch = lc->box.size.y - rack::mm2px(10);
+            float cx0 = lc->box.pos.x;
+            float cy0 = lc->box.pos.y + rack::mm2px(5);
+            float pad = rack::mm2px(0.5);
+
+            for (int i = 0; i < QuadAD::n_ads; ++i)
+            {
+                auto adar = ADARCurveDraw::create(rack::Vec(cx0 + cw * i + pad, cy0 + pad),
+                                                  rack::Vec(cw - 2 * pad, ch - 2 * pad), module, i);
+                addChild(adar);
+            }
         }
         else
         {
