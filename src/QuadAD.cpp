@@ -60,7 +60,7 @@ struct QuadADWidget : public widgets::XTModuleWidget
         auto sw = 0.75;
         auto sz = divWidget->box.size;
         auto dw = sz.x / QuadAD::n_ads;
-        for (int i=1; i<QuadAD::n_ads; ++i)
+        for (int i = 1; i < QuadAD::n_ads; ++i)
         {
             nvgBeginPath(vg);
             nvgStrokeColor(vg, col);
@@ -76,7 +76,6 @@ struct QuadADWidget : public widgets::XTModuleWidget
         nvgMoveTo(vg, 2, rack::mm2px(5));
         nvgLineTo(vg, sz.x - 2, rack::mm2px(5));
         nvgStroke(vg);
-
 
         nvgBeginPath(vg);
         nvgStrokeColor(vg, col);
@@ -352,9 +351,8 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
         auto lc = getFirstDescendantOfType<widgets::LCDBackground>();
         if (lc)
         {
-            divWidget = new widgets::BufferedDrawFunctionWidget(lc->box.pos,
-                                                                lc->box.size,
-                                                                [this](auto vg) { drawDividingLines(vg);});
+            divWidget = new widgets::BufferedDrawFunctionWidget(
+                lc->box.pos, lc->box.size, [this](auto vg) { drawDividingLines(vg); });
             addChild(divWidget);
         }
         else
