@@ -8,14 +8,12 @@ else ()
   message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
 endif ()
 
-message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
-
 set(PLUGIN_NAME ${PROJECT_NAME})
-
-file(GLOB LICENSE LICENSE*)
-set(PLUGIN_DISTRIBUTABLES plugin.json res docs patches presets ${LICENSE} README.md)
+set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs patches presets README.md)
 
 include(RackSDK.cmake)
+
+message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
 
 set(CMAKE_CXX_STANDARD 17)
 

@@ -4,17 +4,24 @@ set(RACK_SDK_VERSION 2.2.1)
 message(STATUS "Load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
 if ("${PLUGIN_NAME}" STREQUAL "")
-  message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists before including RackSDK.cmake.")
+  message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists.txt before including RackSDK.cmake.\
+ The PLUGIN_NAME must correspond to the plugin slug, as defined in the plugin.json.")
 else ()
   message(STATUS "Using PLUGIN_NAME '${PLUGIN_NAME}'")
 endif ()
 
-if ("${PLUGIN_DISTRIBUTABLES}" STREQUAL "")
-  message(WARNING "PLUGIN_DISTRIBUTABLES variable not set. CMake will not install the PLUGIN_DISTRIBUTABLES into '${PLUGIN_NAME}' dir.")
+if ("${ADDITIONAL_PLUGIN_DISTRIBUTABLES}" STREQUAL "")
+  message(WARNING "ADDITIONAL_PLUGIN_DISTRIBUTABLES variable not set. For installing additional files into '${PLUGIN_NAME}'\
+   folder add ADDITIONAL_PLUGIN_DISTRIBUTABLES variable to the project CMakeLists.txt before including RackSDK.cmake.")
 endif ()
 
 # Do not change the RACK_PLUGIN_LIB!
 set(RACK_PLUGIN_LIB plugin)
+
+file(GLOB LICENSE LICENSE*)
+set(PLUGIN_DISTRIBUTABLES plugin.json res ${LICENSE} ${ADDITIONAL_PLUGIN_DISTRIBUTABLES})
+
+message(STATUS "PLUGIN_DISTRIBUTABLES: ${PLUGIN_DISTRIBUTABLES}")
 
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
