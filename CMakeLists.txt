@@ -65,8 +65,19 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
 add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden $<$<PLATFORM_ID:Darwin>:-Werror>)
-
 add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
+
+add_library(Surge INTERFACE)
+
+set(SURGE_LIBS surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate sst-plugininfra fmt sqlite eurorack airwindows)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(SURGE_WIN_LIBS winmm wsock32 shlwapi version wininet ws2_32)
+else ()
+  set(SURGE_LIBS ${SURGE_LIBS} filesystem)
+endif ()
+
+target_link_libraries(Surge INTERFACE ${SURGE_LIBS} ${SURGE_WIN_LIBS})
 
 add_library(${PROJECT_NAME} STATIC
         src/Delay.cpp
@@ -86,16 +97,20 @@ add_library(${PROJECT_NAME} STATIC
         src/XTStyle.cpp
         )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE surge-common)
+target_link_libraries(${PROJECT_NAME} LINK_PUBLIC RackSDK Surge)
 
 add_library(${LIB_NAME} MODULE src/SurgeXT.cpp)
-target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp
-  samplerate sst-plugininfra fmt sqlite eurorack airwindows)
+target_link_libraries(${LIB_NAME} PRIVATE ${PROJECT_NAME})
+set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(${LIB_NAME} PROPERTIES SUFFIX ".dylib")
   set_target_properties(${LIB_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif ()
+
+install(TARGETS ${LIB_NAME} ${PROJECT_NAME} ${SURGE_LIBS}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static)
 
 add_custom_target(${PROJECT_NAME}_quick_install
         COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${LIB_NAME}.* ${CMAKE_INSTALL_PREFIX}/SurgeXTRack
@@ -103,20 +118,6 @@ add_custom_target(${PROJECT_NAME}_quick_install
         )
 add_dependencies(${PROJECT_NAME}_quick_install ${PROJECT_NAME})
 add_dependencies(${PROJECT_NAME}_quick_install ${LIB_NAME})
-
-set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  target_link_libraries(${LIB_NAME} PRIVATE winmm uuid wsock32 shlwapi version wininet ole32 ws2_32)
-else ()
-  target_link_libraries(${LIB_NAME} PRIVATE filesystem)
-  install(TARGETS filesystem ARCHIVE DESTINATION lib/static)
-endif ()
-
-install(TARGETS ${LIB_NAME} ${PROJECT_NAME} surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate
-        sst-plugininfra fmt sqlite eurorack airwindows
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/static)
 
 file(GLOB LICENSE LICENSE*)
 file(INSTALL plugin.json res docs patches presets ${LICENSE} README.md DESTINATION ${PLUGIN_NAME})
