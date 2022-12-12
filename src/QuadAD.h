@@ -22,9 +22,6 @@
  *  Rack
  *     - Do we want non percentage mod typein values?
  *  UI
- *    - Slopes Glpyohs etc on the A=/A- etc...
- *    - Curves on the display
- *    - Layout D/A and Trig/Hold controls
  *    - Remove Alpha Label
  *
  */
