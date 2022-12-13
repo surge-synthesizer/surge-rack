@@ -56,7 +56,6 @@ build/surge-data:
 	cp surge/resources/surge-shared/windows.wt build/surge-data
 	cp surge/resources/surge-shared/configuration.xml build/surge-data
 	cp -R surge/resources/data/wavetables build/surge-data/wavetables
-	cp -R surge/resources/data/wavetables_3rdparty build/surge-data/wavetables_3rdparty
 	cp -R surge/resources/data/fx_presets build/surge-data/fx_presets
 	cp -R res/surge_extra_data/fx_presets build/surge-data
 

@@ -709,7 +709,8 @@ template <int oscType> struct VCO : public modules::XTModule
     std::array<std::unique_ptr<sst::filters::HalfRate::HalfRateFilter>, MAX_POLY> halfbandOUT;
     sst::filters::HalfRate::HalfRateFilter halfbandIN;
     float audioInBuffer[BLOCK_SIZE_OS];
-    std::atomic<bool> forceRefreshWT{false};
+    std::atomic<bool> forceRefreshWT{false}, downloadingContent{false};
+    float contentProgress{0};
 
     rack::dsp::SchmittTrigger reTrigger[MAX_POLY];
 

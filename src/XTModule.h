@@ -89,25 +89,23 @@ struct XTModule : public rack::Module
 
     void setupSurgeCommon(int NUM_PARAMS, bool loadWavetables)
     {
-        std::string dataPath = SurgeStorage::skipPatchLoadDataPathSentinel;
+        SurgeStorage::SurgeStorageConfig config;
+        config.suppliedDataPath = SurgeStorage::skipPatchLoadDataPathSentinel;
+        config.createUserDirectory = false;
 
         if (loadWavetables)
-            dataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
+        {
+            config.suppliedDataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
+            config.extraThirdPartyWavetablesPath =
+                fs::path{rack::asset::user("SurgeXTRack/SurgeXTRack_ExtraContent")};
+        }
 
         showBuildInfo();
-        storage = std::make_unique<SurgeStorage>(dataPath);
+        storage = std::make_unique<SurgeStorage>(config);
         storage->getPatch().init_default_values();
         storage->getPatch().copy_globaldata(storage->getPatch().globaldata);
         storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0], 0);
         storage->getPatch().copy_scenedata(storage->getPatch().scenedata[1], 1);
-
-        if (!showedPathsOnce)
-        {
-            showedPathsOnce = true;
-            INFO("[SurgeXTRack] storage::dataPath = '%s'", storage->datapath.u8string().c_str());
-            INFO("[SurgeXTRack] storage::userDataPath = '%s'",
-                 storage->userDataPath.u8string().c_str());
-        }
 
         onSampleRateChange();
     }

@@ -3,6 +3,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment ver
 project(SurgeXTRack VERSION 1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PLUGIN_NAME ${PROJECT_NAME})
 set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs patches presets README.md)
@@ -109,7 +110,6 @@ add_dependencies(${PROJECT_NAME}_quick_install ${RACK_PLUGIN_LIB})
 file(INSTALL surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
              surge/resources/data/wavetables
-             surge/resources/data/wavetables_3rdparty
              surge/resources/data/fx_presets
              res/surge_extra_data/fx_presets
     DESTINATION ${PLUGIN_NAME}/build/surge-data)
