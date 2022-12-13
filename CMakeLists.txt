@@ -97,7 +97,7 @@ install(TARGETS ${RACK_PLUGIN_LIB} ${PLUGIN_NAME} ${SURGE_LIBS}
         ARCHIVE DESTINATION lib/static)
 
 add_custom_target(${PROJECT_NAME}_quick_install
-        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${LIB_NAME}.* ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
+        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${RACK_PLUGIN_LIB}.* ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
 add_dependencies(${PROJECT_NAME}_quick_install ${PLUGIN_NAME})
