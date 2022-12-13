@@ -28,6 +28,11 @@ set(SURGE_SKIP_ALSA TRUE CACHE BOOL "skip surge Alsa build")
 set(SURGE_SKIP_STANDALONE TRUE CACHE BOOL "skip surge standalone build")
 set(SURGE_COMPILE_BLOCK_SIZE 8 CACHE STRING "surge compile block size")
 
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden
+        $<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>
+        $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
+add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
+
 add_subdirectory(surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
@@ -52,11 +57,6 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-lambda-capture>
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
-
-target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
-
-add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden $<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
-add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
 
