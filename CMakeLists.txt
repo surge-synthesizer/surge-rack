@@ -53,10 +53,13 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
                        $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
+target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
+
 add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden $<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
 add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
+target_compile_options(Surge INTERFACE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
 set(SURGE_LIBS surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate sst-plugininfra fmt sqlite eurorack airwindows)
 
@@ -97,7 +100,7 @@ install(TARGETS ${RACK_PLUGIN_LIB} ${PLUGIN_NAME} ${SURGE_LIBS}
         ARCHIVE DESTINATION lib/static)
 
 add_custom_target(${PROJECT_NAME}_quick_install
-        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${LIB_NAME}.* ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
+        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${RACK_PLUGIN_LIB}.* ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
 add_dependencies(${PROJECT_NAME}_quick_install ${PLUGIN_NAME})
