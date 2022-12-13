@@ -51,8 +51,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<$<PLATFORM_ID:Darwin>:-Wno-self-assign>
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-lambda-capture>
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
-                       $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>
-                       $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
+                       $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 
 target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
