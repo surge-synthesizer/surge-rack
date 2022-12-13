@@ -13,18 +13,6 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-/*
- * ToDos
- *
- *  DSP
- *     - Maybe a bit more profiling?
- *     - Manaul trigger in a cycle stops a cycle
- *  Rack
- *     - Do we want non percentage mod typein values?
- *  UI
- *    - Remove Alpha Label
- *
- */
 
 #ifndef SURGE_XT_RACK_QUADADHPP
 #define SURGE_XT_RACK_QUADADHPP

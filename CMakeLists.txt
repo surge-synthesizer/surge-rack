@@ -9,6 +9,7 @@ set(PLUGIN_NAME ${PROJECT_NAME})
 set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs patches presets README.md)
 include(RackSDK.cmake)
 
+message(STATUS "SurgeXT for Rack Build Process" )
 message(STATUS "Installing into '${CMAKE_INSTALL_PREFIX}'")
 
 find_package(Git REQUIRED)
