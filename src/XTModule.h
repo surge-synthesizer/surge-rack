@@ -933,6 +933,8 @@ template <typename T> struct ClockProcessor
 
     inline void process(T *m, int inputId)
     {
+        assert(sampleRate > 100);
+
         if (clockStyle == BPM_VOCT)
         {
             if (!bpmConnected)
