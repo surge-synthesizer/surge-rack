@@ -330,6 +330,11 @@ struct Delay : modules::XTModule
     }
 
     void readModuleSpecificJson(json_t *modJ) override { clockProc.fromJson(modJ); }
+
+    void moduleSpecificSampleRateChange() override
+    {
+        clockProc.setSampleRate(APP->engine->getSampleRate());
+    }
 };
 } // namespace sst::surgext_rack::delay
 #endif
