@@ -100,13 +100,6 @@ install(TARGETS ${RACK_PLUGIN_LIB} ${PLUGIN_NAME} ${SURGE_LIBS}
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 
-add_custom_target(${PROJECT_NAME}_quick_install
-        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${RACK_PLUGIN_LIB}.* ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
-        COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
-        )
-add_dependencies(${PROJECT_NAME}_quick_install ${PLUGIN_NAME})
-add_dependencies(${PROJECT_NAME}_quick_install ${RACK_PLUGIN_LIB})
-
 file(INSTALL surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
              surge/resources/data/wavetables

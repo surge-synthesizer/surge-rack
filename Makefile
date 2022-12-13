@@ -31,20 +31,11 @@ FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -std=c++17
 LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lSurgeXTRack -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp \
            -lsamplerate -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
 
-ifdef ARCH_MAC
-LDFLAGS += -framework CoreFoundation -framework CoreServices
-endif
-
 ifdef ARCH_WIN
 LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
 else
 LDFLAGS += -lfilesystem
 endif
-
-ifdef ARCH_LIN
-LDFLAGS += -pthread
-endif
-
 
 
 # Add files to the ZIP package when running `make dist`
