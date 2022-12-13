@@ -13,7 +13,6 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-
 #ifndef SURGE_XT_RACK_QUADADHPP
 #define SURGE_XT_RACK_QUADADHPP
 
