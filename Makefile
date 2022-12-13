@@ -18,7 +18,7 @@ else
 endif
 endif
 
-$(libsurge_xt_rack):
+$(libsurge_xt_rack): CMakeLists.txt
 	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(SURGE_BLD)/dist $(EXTRA_CMAKE)
 	cmake --build $(SURGE_BLD) -- -j $(shell getconf _NPROCESSORS_ONLN)
 	cmake --install $(SURGE_BLD)

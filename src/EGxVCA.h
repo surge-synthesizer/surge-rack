@@ -13,25 +13,6 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-/*
- * EGxVCA ToDos
- *
- * - Display area
- *    - Analog/Digital control as click-to-switch menu
- *    - Draw the waveform
- *    - Digital Shape Controls
- *    - Draw the meters
- * - DSP
- *    - Retrigger / Gate controls
- *    - Attach from 0 or Attach from current
- *    - DAHD mode v DASDR mode
- *    - Pan implementation (follow models from MixMaster probably)
- *    - SIMD for response etc... and be more parsimonious with cube etc...
- * - UI
- *    - LintBuddy/Label inputs outputs mods etc
- *    - Correct labels and param quantities for the modulator knobs
- */
-
 #ifndef SURGE_XT_RACK_EGVCAHPP
 #define SURGE_XT_RACK_EGVCAHPP
 

@@ -1,6 +1,6 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Pre-Beta Now (this as of c314e1e1f037 / Dec 2)
+## 2.1 - In Pre-Beta Now (this as of  7fcdcb30ecc1 / Dec 13)
 
 - New Modules
     - EGxVCA (still in development)
@@ -10,6 +10,9 @@
     - The *Waveshaper* has a DC Blocker. It is on by default in new instances but 
       waveshapers saved with 2.0 releases will laod with the blocker off to
       retain compatability.
+    - The plugin no longer ships with all the wavetables but instead only contains a basic
+      subset. To restore the third party wavetables use "download extra content" in the WT or
+      window wavetable menu.
 
 - Module UI Changes
     - The *LFO* step editor is substantially better, allowing cross bar
@@ -19,14 +22,19 @@
       never randomizes off of a step setting.
 
 - Bug Fixes
+    - The delay module Clock in pulse-clock mode had an incorrect sample rate leading to
+      incorrect temposyncing. (Temposync in BPM mode was correct).
     - The modulation arm button didn't consume events, leading it to work 
        inconsistently in module lock mode
+    - Modulation depth typeins for some surge quantities were scaled incorrectly.
 
 - Infrastructure and Code Cleanups
     - Skip the airwindows sub-library build in the surge dep phase since we dont use it in rack
     - Centralize some more implementations of clock UI and processing elements
     - Upgrade all our github actions to SDK 2.2 including an ARM cross compile
     - Add a blank module in docs and a little script to bring it to life with a name
+    - In a mis-installed SurgeXT with no wavetables, make wavetable VCO act as sine oscillator
+    - Move far more of the build to CMake
 
 ## 2.0.3 - Nov 26, 2022
 
