@@ -1076,4 +1076,87 @@ inline void XTModule::snapCalculatedNames()
         }
     }
 }
+
+struct TypeSwappingParameterQuantity : rack::ParamQuantity, modules::CalculatedName
+{
+    TypeSwappingParameterQuantity() {}
+
+    virtual int mode() = 0;
+    rack::ParamQuantity *under()
+    {
+        auto m = mode();
+        auto f = impls.find(m);
+        assert(f != imps.end());
+        if (f == impls.end())
+            return nullptr;
+        if (f->second->module != module)
+        {
+            f->second->module = module;
+            f->second->paramId = paramId;
+        }
+        return f->second.get();
+    }
+
+    std::unordered_map<int, std::unique_ptr<rack::ParamQuantity>> impls;
+    template <typename T> void addImplementer(int mode) { impls[mode] = std::make_unique<T>(); }
+
+    std::string getDisplayValueString() override
+    {
+        const auto u = under();
+        if (u)
+            return u->getDisplayValueString();
+        return {};
+    }
+
+    std::string getLabel() override
+    {
+        const auto u = under();
+        if (u)
+            return u->getLabel();
+        return {};
+    }
+
+    void randomize() override
+    {
+        const auto u = under();
+        if (u)
+            u->randomize();
+    }
+
+    void setDisplayValueString(std::string s) override
+    {
+        const auto u = under();
+        if (u)
+            u->setDisplayValueString(s);
+    }
+
+    std::string getCalculatedName() override
+    {
+        const auto u = under();
+        const auto cn = dynamic_cast<modules::CalculatedName *>(u);
+        if (cn)
+            return cn->getCalculatedName();
+        if (u)
+            return u->name;
+        return {};
+    }
+};
+
+struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
+{
+    std::string getLabel() override { return getCalculatedName(); }
+    std::string getDisplayValueString() override
+    {
+        auto v = getValue() * (8 + 5) - 8;
+        return fmt::format("{:.3f} s", pow(2, v));
+    }
+    void setDisplayValueString(std::string s) override
+    {
+        auto q = std::atof(s.c_str());
+        auto v = log2(std::clamp(q, 0.0001, 32.));
+        auto vn = (v + 8) / (8 + 5);
+        setValue(vn);
+    }
+};
+
 } // namespace sst::surgext_rack::modules

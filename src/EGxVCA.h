@@ -82,6 +82,40 @@ struct EGxVCA : modules::XTModule
 
     modules::ModulationAssistant<EGxVCA, n_mod_params, LEVEL, n_mod_inputs, MOD_INPUT_0> modAssist;
 
+    struct DAHDPQ : modules::CTEnvTimeParamQuantity
+    {
+        std::string getCalculatedName() override
+        {
+            switch (paramId)
+            {
+            case EG_A:
+                return "Delay";
+            case EG_D:
+                return "Attack";
+            case EG_S:
+                return "Hold";
+            case EG_R:
+                return "Release";
+            }
+            return {};
+        }
+    };
+
+    struct SurgeOrTimePQ : modules::TypeSwappingParameterQuantity
+    {
+        SurgeOrTimePQ()
+        {
+            addImplementer<modules::SurgeParameterParamQuantity>(0);
+            addImplementer<DAHDPQ>(1);
+        }
+        int mode() override
+        {
+            if (!module)
+                return 0;
+            return (int)std::round(module->paramQuantities[ADSR_OR_DAHD]->getValue());
+        }
+    };
+
     EGxVCA() : XTModule()
     {
         {
@@ -92,10 +126,10 @@ struct EGxVCA : modules::XTModule
 
         configParam<modules::DecibelParamQuantity>(LEVEL, 0, 2, 1, "Level");
         configParam(PAN, -1, 1, 0, "Pan", "%", 0, 100);
-        configParam<modules::SurgeParameterParamQuantity>(EG_A, 0, 1, 0.1, "Attack");
-        configParam<modules::SurgeParameterParamQuantity>(EG_D, 0, 1, 0.1, "Decay");
-        configParam<modules::SurgeParameterParamQuantity>(EG_S, 0, 1, 0.5, "Sustain");
-        configParam<modules::SurgeParameterParamQuantity>(EG_R, 0, 1, 0.1, "Release");
+        configParam<SurgeOrTimePQ>(EG_A, 0, 1, 0.1, "Attack");
+        configParam<SurgeOrTimePQ>(EG_D, 0, 1, 0.1, "Decay");
+        configParam<SurgeOrTimePQ>(EG_S, 0, 1, 0.5, "Sustain");
+        configParam<SurgeOrTimePQ>(EG_R, 0, 1, 0.1, "Release");
         configSwitch(ANALOG_OR_DIGITAL, 0, 1, 0, "Curve", {"Digital", "Analog"});
         configSwitch(ADSR_OR_DAHD, 0, 1, 0, "Mode", {"ADSR", "DAHD"});
 
