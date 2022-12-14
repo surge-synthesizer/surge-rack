@@ -100,8 +100,9 @@ file(INSTALL ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
 
 # A quick installation target to copy the plugin library and plugin.json into VCV Rack plugin folder for development.
 # CMAKE_INSTALL_PREFIX needs to point to the VCV Rack plugin folder in user documents.
+set (PLUGIN_SUFFIX $<IF:$<BOOL:$<TARGET_PROPERTY:${RACK_PLUGIN_LIB},SUFFIX>>,$<TARGET_PROPERTY:${RACK_PLUGIN_LIB},SUFFIX>,${CMAKE_SHARED_MODULE_SUFFIX}>)
 add_custom_target(${PROJECT_NAME}_quick_install
-        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${RACK_PLUGIN_LIB}$<TARGET_PROPERTY:${RACK_PLUGIN_LIB},SUFFIX> ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
+        COMMAND cmake -E copy ${CMAKE_BINARY_DIR}/${RACK_PLUGIN_LIB}${PLUGIN_SUFFIX} ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
 add_dependencies(${PROJECT_NAME}_quick_install ${PLUGIN_NAME})
