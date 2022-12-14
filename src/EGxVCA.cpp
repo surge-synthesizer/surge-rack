@@ -185,17 +185,61 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
         {li_t::PORT, "CLOCK", M::CLOCK_IN, col2, row1},
         {li_t::OUT_PORT, "ENV", M::ENV_OUT, col3, row1},
 
-        {li_t::VSLIDER_25, "A", M::EG_A, sliderStart + 1.f * dSlider, rowS},
-        {li_t::VSLIDER_25, "D", M::EG_D, sliderStart + 2.f * dSlider, rowS},
-        {li_t::VSLIDER_25, "S", M::EG_S, sliderStart + 3.f * dSlider, rowS},
-        {li_t::VSLIDER_25, "R", M::EG_R, sliderStart + 4.f * dSlider, rowS},
-
         li_t::createLCDArea(row3 - rack::mm2px(2.5))
     };
     // clang-format on
 
     for (const auto &lay : layout)
     {
+        engine_t::layoutItem(this, lay, "EGxVCA");
+    }
+
+    std::vector<li_t> sliderLayout = {
+        {li_t::VSLIDER_25, "A", M::EG_A, sliderStart + 1.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "D", M::EG_D, sliderStart + 2.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "S", M::EG_S, sliderStart + 3.f * dSlider, rowS},
+        {li_t::VSLIDER_25, "R", M::EG_R, sliderStart + 4.f * dSlider, rowS},
+    };
+
+    int i{0};
+    for (auto &lay : sliderLayout)
+    {
+        lay.dynamicLabel = true;
+        lay.dynLabelFn = [i](modules::XTModule *m) -> std::string {
+            auto mode = 0;
+            if (m)
+                mode = std::round(m->paramQuantities[EGxVCA::ADSR_OR_DAHD]->getValue());
+            if (mode == 0)
+            {
+                switch (i)
+                {
+                case 0:
+                    return "A";
+                case 1:
+                    return "D";
+                case 2:
+                    return "S";
+                case 3:
+                    return "R";
+                }
+            }
+            else
+            {
+                switch (i)
+                {
+                case 0:
+                    return "D";
+                case 1:
+                    return "A";
+                case 2:
+                    return "H";
+                case 3:
+                    return "D";
+                }
+            }
+            return {"ERR"};
+        };
+        i++;
         engine_t::layoutItem(this, lay, "EGxVCA");
     }
 
