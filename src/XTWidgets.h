@@ -2589,6 +2589,92 @@ struct OutputDecoration : rack::Widget, style::StyleParticipant
     }
 };
 
+struct CurveSwitch : rack::Switch, style::StyleParticipant
+{
+    enum Direction
+    {
+        ATTACK,
+        HALF_DECAY,
+        HALF_RELEASE,
+        FULL_RELEASE
+    } drawDirection{ATTACK};
+
+    std::pair<rack::Vec, rack::Vec> endpoints()
+    {
+        switch (drawDirection)
+        {
+        case ATTACK:
+            return {{0, box.size.y}, {box.size.x, 0}};
+        case HALF_DECAY:
+            return {{0, 0}, {box.size.x, box.size.y * 0.5f}};
+        case HALF_RELEASE:
+            return {{0, box.size.y * 0.5f}, {box.size.x, box.size.y}};
+        case FULL_RELEASE:
+            return {{0, 0}, {box.size.x, box.size.y}};
+        }
+        return {{}, {}};
+    }
+
+    void draw(const DrawArgs &args) override
+    {
+        auto vg = args.vg;
+
+        auto [start, end] = endpoints();
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+        nvgStrokeWidth(vg, 0.75);
+        nvgMoveTo(vg, start.x, start.y);
+        nvgLineTo(vg, end.x, end.y);
+        nvgStroke(vg);
+
+        auto val = 1;
+        if (getParamQuantity())
+            val = (int)std::round(getParamQuantity()->getValue());
+
+        switch (val)
+        {
+        case 0:
+        case 2:
+        { // faster - want the y smaller
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, start.x, start.y);
+            auto dy = end.y - start.y;
+            for (int i = 1; i < box.size.x; ++i)
+            {
+                float xn = i / box.size.x;
+                auto a = xn;
+                if ((val == 2 && dy < 0) || (val == 0 && dy > 0))
+                    a = 1 - sqrt(1 - xn * xn);
+                else
+                    a = sqrt(1 - (xn - 1) * (xn - 1));
+
+                float y = dy * a + start.y;
+                nvgLineTo(vg, xn * box.size.x, y);
+            }
+            nvgLineTo(vg, end.x, end.y);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgStrokeWidth(vg, 1.25);
+            nvgStroke(vg);
+        }
+
+        break;
+        case 1:
+        {
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgStrokeWidth(vg, 1.25);
+            nvgMoveTo(vg, start.x, start.y);
+            nvgLineTo(vg, end.x, end.y);
+            nvgStroke(vg);
+        }
+        break;
+        }
+        ParamWidget::draw(args);
+    }
+    void onStyleChanged() override {}
+};
+
 } // namespace sst::surgext_rack::widgets
 
 #endif // SURGEXT_RACK_XTWIDGETS_H

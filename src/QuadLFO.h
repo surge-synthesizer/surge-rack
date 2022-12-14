@@ -620,7 +620,7 @@ struct QuadLFO : modules::XTModule
             configParam<RateQuantity>(RATE_0 + i, 0, 1, defaultRate0);
             configParam<DeformQuantity>(DEFORM_0 + i, -1, 1, 0);
             configSwitch(SHAPE_0 + i, 0, 5, 0, "Shape",
-                         {"Sin", "Ramp", "Tri", "Pulse", "Rand", "S&H"});
+                         {"Sine", "Ramp", "Triangle", "Pulse", "Randon", "S&H"});
             configSwitch(BIPOLAR_0 + i, 0, 1, 1, "Bipolar", {"Uni", "Bi"});
         }
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
@@ -629,7 +629,7 @@ struct QuadLFO : modules::XTModule
             configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
 
         configSwitch(INTERPLAY_MODE, 0, 4, 0, "LFO Inter-operation Mode",
-                     {"Independent LFOs", "Rate Ratio", "Quadrature", "Offset Phase", "Entangled"});
+                     {"Independent", "Rate Ratio", "Quadrature", "Phase Offset", "Entangled"});
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);

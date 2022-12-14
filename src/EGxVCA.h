@@ -27,6 +27,7 @@
 
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
+#include "dsp/ADSRDAHDEnvelope.h"
 
 namespace sst::surgext_rack::egxvca
 {
@@ -48,7 +49,6 @@ struct EGxVCA : modules::XTModule
         A_SHAPE,
         D_SHAPE,
         R_SHAPE,
-        ENV_MODE,
 
         ADSR_OR_DAHD,
 
@@ -61,7 +61,6 @@ struct EGxVCA : modules::XTModule
         INPUT_L,
         INPUT_R,
         GATE_IN,
-        RETRIG_IN,
         CLOCK_IN,
         MOD_INPUT_0,
         NUM_INPUTS = MOD_INPUT_0 + n_mod_inputs,
@@ -72,6 +71,7 @@ struct EGxVCA : modules::XTModule
         OUTPUT_L,
         OUTPUT_R,
         ENV_OUT,
+        EOC_OUT,
         NUM_OUTPUTS
     };
 
@@ -81,6 +81,11 @@ struct EGxVCA : modules::XTModule
     };
 
     modules::ModulationAssistant<EGxVCA, n_mod_params, LEVEL, n_mod_inputs, MOD_INPUT_0> modAssist;
+
+    static_assert(modules::CTEnvTimeParamQuantity::etMin ==
+                  dsp::envelopes::ADSRDAHDEnvelope::etMin);
+    static_assert(modules::CTEnvTimeParamQuantity::etMax ==
+                  dsp::envelopes::ADSRDAHDEnvelope::etMax);
 
     struct DAHDPQ : modules::CTEnvTimeParamQuantity
     {
@@ -101,12 +106,50 @@ struct EGxVCA : modules::XTModule
         }
     };
 
-    struct SurgeOrTimePQ : modules::TypeSwappingParameterQuantity
+    struct ADSRPQ : modules::CTEnvTimeParamQuantity
     {
-        SurgeOrTimePQ()
+        std::string getCalculatedName() override
         {
-            addImplementer<modules::SurgeParameterParamQuantity>(0);
+            switch (paramId)
+            {
+            case EG_A:
+                return "Attach";
+            case EG_D:
+                return "Decay";
+            case EG_S:
+                return "Sustain";
+            case EG_R:
+                return "Release";
+            }
+            return {};
+        }
+    };
+
+    struct TimePQ : modules::TypeSwappingParameterQuantity
+    {
+        TimePQ()
+        {
+            addImplementer<ADSRPQ>(0);
             addImplementer<DAHDPQ>(1);
+        }
+        int mode() override
+        {
+            if (!module)
+                return 0;
+            return (int)std::round(module->paramQuantities[ADSR_OR_DAHD]->getValue());
+        }
+    };
+
+    struct SustainOrTimePQ : modules::TypeSwappingParameterQuantity
+    {
+        SustainOrTimePQ()
+        {
+            addImplementer<rack::ParamQuantity>(0);
+            addImplementer<DAHDPQ>(1);
+            impls[0]->name = "Sustain";
+            impls[0]->unit = "%"; // fixme - doesn't come through it seems?
+            impls[0]->defaultValue = 0.5;
+            impls[0]->displayMultiplier = 100.0;
         }
         int mode() override
         {
@@ -126,14 +169,18 @@ struct EGxVCA : modules::XTModule
 
         configParam<modules::DecibelParamQuantity>(LEVEL, 0, 2, 1, "Level");
         configParam(PAN, -1, 1, 0, "Pan", "%", 0, 100);
-        configParam<SurgeOrTimePQ>(EG_A, 0, 1, 0.1, "Attack");
-        configParam<SurgeOrTimePQ>(EG_D, 0, 1, 0.1, "Decay");
-        configParam<SurgeOrTimePQ>(EG_S, 0, 1, 0.5, "Sustain");
-        configParam<SurgeOrTimePQ>(EG_R, 0, 1, 0.1, "Release");
+        configParam<TimePQ>(EG_A, 0, 1, 0.1, "Attack");
+        configParam<TimePQ>(EG_D, 0, 1, 0.1, "Decay");
+        configParam<SustainOrTimePQ>(EG_S, 0, 1, 0.5, "Sustain");
+        configParam<TimePQ>(EG_R, 0, 1, 0.1, "Release");
         configSwitch(ANALOG_OR_DIGITAL, 0, 1, 0, "Curve", {"Digital", "Analog"});
         configSwitch(ADSR_OR_DAHD, 0, 1, 0, "Mode", {"ADSR", "DAHD"});
 
-        configParam(RESPONSE, 0, 1, 0, "Linear/Exponential");
+        configParam(RESPONSE, 0, 1, 0, "Linear/Exponential", "%", 0, 100);
+
+        configSwitch(A_SHAPE, 0, 2, 1, "Attack Curve", {"Faster", "Standard", "Slower"});
+        configSwitch(D_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
+        configSwitch(R_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
 
         // really need to configParam those mod params for this to work
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
@@ -171,46 +218,20 @@ struct EGxVCA : modules::XTModule
         snapCalculatedNames();
     }
 
-    ADSRStorage *adsr{nullptr}, *adsr_display{nullptr};
-    std::array<std::unique_ptr<ADSRModulationSource>, MAX_POLY> processors;
+    std::array<std::unique_ptr<dsp::envelopes::ADSRDAHDEnvelope>, MAX_POLY> processors;
     std::array<rack::dsp::SchmittTrigger, MAX_POLY> triggers;
     void setupSurge()
     {
         setupSurgeCommon(NUM_PARAMS, false);
 
-        adsr = &(storage->getPatch().scene[0].adsr[0]);
-        adsr_display = &(storage->getPatch().scene[0].adsr[1]);
-
-        setupStorageRanges(&(adsr->a), &(adsr->mode));
-        copyScenedataSubset(0, storage_id_start, storage_id_end);
         for (int i = 0; i < MAX_POLY; ++i)
         {
-            processors[i] = std::make_unique<ADSRModulationSource>();
-            processors[i]->init(storage.get(), adsr, storage->getPatch().scenedata[0], nullptr);
+            processors[i] = std::make_unique<dsp::envelopes::ADSRDAHDEnvelope>(storage.get());
             doAttack[i] = false;
-            doRelease[i] = false;
 
             level[i].target = 1.0;
-            output[i].target = 0.0;
+            response[i].target = 0.0;
         }
-    }
-
-    Parameter *surgeDisplayParameterForParamId(int paramId) override
-    {
-        switch (paramId)
-        {
-        case EG_A:
-            return &adsr_display->a;
-        case EG_D:
-            return &adsr_display->d;
-        case EG_S:
-            return &adsr_display->s;
-        case EG_R:
-            return &adsr_display->r;
-        case ANALOG_OR_DIGITAL:
-            return &adsr_display->mode;
-        }
-        return nullptr;
     }
 
     int polyChannelCount() { return nChan; }
@@ -258,7 +279,7 @@ struct EGxVCA : modules::XTModule
 
     int nChan{-1};
 
-    bool doAttack[MAX_POLY], doRelease[MAX_POLY];
+    bool doAttack[MAX_POLY];
 
     struct linterp
     {
@@ -268,7 +289,7 @@ struct EGxVCA : modules::XTModule
         inline void step() { target += dtarget; }
     };
 
-    linterp level[MAX_POLY], output[MAX_POLY], response[MAX_POLY];
+    linterp level[MAX_POLY], response[MAX_POLY];
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -282,82 +303,52 @@ struct EGxVCA : modules::XTModule
         if (currChan != nChan)
         {
             nChan = currChan;
+            outputs[OUTPUT_L].setChannels(nChan);
+            outputs[OUTPUT_R].setChannels(nChan);
+            outputs[EOC_OUT].setChannels(nChan);
+            outputs[ENV_OUT].setChannels(nChan);
         }
+
         for (int c = 0; c < nChan; ++c)
         {
-            processors[c]->correctAnalogMode = true; // use cprrected version
-
             if (triggers[c].process(inputs[GATE_IN].getVoltage(c)))
             {
                 doAttack[c] = true;
             }
-            if (inputs[GATE_IN].getVoltage(c) < 5 &&
-                processors[c]->getEnvState() < ADSRState::s_release)
-                doRelease[c] = true;
         }
         if (processCount == BLOCK_SIZE)
         {
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
-
-            outputs[OUTPUT_L].setChannels(nChan);
-            outputs[OUTPUT_R].setChannels(nChan);
-            outputs[ENV_OUT].setChannels(nChan);
-
-            for (auto as : {adsr, adsr_display})
-            {
-                as->mode.set_value_f01(params[ANALOG_OR_DIGITAL].getValue());
-
-                as->a.set_value_f01(modAssist.basevalues[EG_A]);
-                as->d.set_value_f01(modAssist.basevalues[EG_D]);
-                as->s.set_value_f01(modAssist.basevalues[EG_S]);
-                as->r.set_value_f01(modAssist.basevalues[EG_R]);
-            }
-            for (int c = 0; c < nChan; ++c)
-            {
-                copyScenedataSubset(0, storage_id_start, storage_id_end);
-
-                auto *oap = &adsr->a;
-                auto *eap = &adsr->r;
-                auto &pt = storage->getPatch().scenedata[0];
-                int idx = EG_A;
-                while (oap <= eap)
-                {
-                    if (oap->valtype == vt_float)
-                    {
-                        pt[oap->param_id_in_scene].f +=
-                            modAssist.modvalues[idx][c] * (oap->val_max.f - oap->val_min.f);
-                    }
-                    idx++;
-                    oap++;
-                }
-                processors[c]->correctAnalogMode = true;
-
-                if (doAttack[c])
-                {
-                    processors[c]->attackFrom(processors[c]->get_output(0));
-                    doAttack[c] = false;
-                }
-                if (doRelease[c])
-                {
-                    processors[c]->release();
-                    doRelease[c] = false;
-                }
-                processors[c]->process_block();
-                output[c].setTarget(processors[c]->get_output(0));
-
-                auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
-                level[c].setTarget(nl);
-
-                response[c].setTarget(modAssist.values[RESPONSE][c]);
-            }
             processCount = 0;
+        }
+        int as = (int)std::round(params[A_SHAPE].getValue());
+        int ds = (int)std::round(params[D_SHAPE].getValue());
+        int rs = (int)std::round(params[R_SHAPE].getValue());
+        for (int c = 0; c < nChan; ++c)
+        {
+            if (doAttack[c])
+            {
+                auto m = (dsp::envelopes::ADSRDAHDEnvelope::Mode)std::round(
+                    params[ADSR_OR_DAHD].getValue());
+                auto as = (int)std::round(params[EG_A].getValue());
+                auto dig = params[ANALOG_OR_DIGITAL].getValue() < 0.5;
+                processors[c]->attackFrom(m, processors[c]->output, as, dig);
+                doAttack[c] = false;
+            }
+            processors[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
+                                   modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
+                                   inputs[GATE_IN].getVoltage(0) > 2);
+
+            auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
+            level[c].setTarget(nl);
+            response[c].setTarget(modAssist.values[RESPONSE][c]);
         }
 
         // ToDo - SIMDize
         for (int c = 0; c < nChan; ++c)
         {
-            auto o1 = output[c].target;
+            auto o1 = processors[c]->output;
             auto o3 = o1 * o1 * o1;
             auto r = response[c].target;
             auto o = (1 - r) * o1 + r * o3;
@@ -366,42 +357,19 @@ struct EGxVCA : modules::XTModule
             auto ol = o * l;
 
             outputs[ENV_OUT].setVoltage(o1 * 10, c);
+            outputs[EOC_OUT].setVoltage(processors[c]->eoc_output * 10, c);
             outputs[OUTPUT_L].setVoltage(inputs[INPUT_L].getVoltage(c) * ol, c);
             outputs[OUTPUT_R].setVoltage(inputs[INPUT_R].getVoltage(c) * ol, c);
-            output[c].step();
+
             level[c].step();
             response[c].step();
         }
         processCount++;
     }
 
-    void activateTempoSync()
-    {
-        for (auto as : {adsr, adsr_display})
-        {
-            auto p = &(as->a);
-            while (p <= &(as->r))
-            {
-                if (p->can_temposync())
-                    p->temposync = true;
-                ++p;
-            }
-        }
-    }
+    void activateTempoSync() { std::cout << "WARNING: " << __func__ << std::endl; }
 
-    void deactivateTempoSync()
-    {
-        for (auto as : {adsr, adsr_display})
-        {
-            auto p = &(as->a);
-            while (p <= &(as->r))
-            {
-                if (p->can_temposync())
-                    p->temposync = false;
-                ++p;
-            }
-        }
-    }
+    void deactivateTempoSync() { std::cout << "WARNING: " << __func__ << std::endl; }
 
     json_t *makeModuleSpecificJson() override
     {
