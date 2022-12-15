@@ -73,7 +73,8 @@ endif ()
 
 target_link_libraries(Surge INTERFACE ${SURGE_LIBS} ${SURGE_WIN_LIBS})
 
-add_library(${PLUGIN_NAME} STATIC
+target_sources(${RACK_PLUGIN_LIB} PRIVATE
+        src/SurgeXT.cpp
         src/Delay.cpp
         src/DelayLineByFreq.cpp
         src/EGxVCA.cpp
@@ -88,18 +89,9 @@ add_library(${PLUGIN_NAME} STATIC
         src/Waveshaper.cpp
         src/XTModule.cpp
         src/XTModuleWidget.cpp
-        src/XTStyle.cpp
-        )
+        src/XTStyle.cpp)
 
-target_link_libraries(${PLUGIN_NAME} LINK_PUBLIC RackSDK Surge)
-
-target_sources(${RACK_PLUGIN_LIB} PRIVATE src/SurgeXT.cpp)
-target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE ${PLUGIN_NAME})
-
-
-install(TARGETS ${RACK_PLUGIN_LIB} ${PLUGIN_NAME} ${SURGE_LIBS}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/static)
+target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge)
 
 file(INSTALL surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
