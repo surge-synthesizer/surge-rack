@@ -29,6 +29,7 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
     std::array<widgets::ModulatableKnob *, M::n_mod_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 
+    widgets::CurveSwitch *aShape{nullptr}, *dShape{nullptr}, *rShape{nullptr};
     void selectModulator(int mod) override
     {
         if (toggles[mod])
@@ -46,12 +47,34 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
          */
         addClockMenu<EGxVCA>(menu);
     }
+
+    widgets::DirtyHelper<EGxVCA, false> modeDirty;
+    void step() override
+    {
+        if (modeDirty.dirty() && dShape && rShape)
+        {
+            auto type = modeDirty.lastValue;
+            if (type == 0)
+            {
+                dShape->visible = true;
+                rShape->drawDirection = widgets::CurveSwitch::HALF_RELEASE;
+            }
+            else
+            {
+                dShape->visible = false;
+                rShape->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
+            }
+        }
+        XTModuleWidget::step();
+    }
 };
 
 struct EnvCurveWidget : rack::Widget, style::StyleParticipant
 {
     widgets::BufferedDrawFunctionWidget *bdw{nullptr}, *bdwCurve{nullptr};
     EGxVCA *module{nullptr};
+    std::unordered_map<int, widgets::DirtyHelper<EGxVCA>> dirtyChecks;
+
     EnvCurveWidget(const rack::Vec &pos, const rack::Vec &size, EGxVCA *md)
     {
         box.pos = pos;
@@ -65,30 +88,117 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         bdwCurve = new widgets::BufferedDrawFunctionWidgetOnLayer(
             rack::Vec(0, 0), size, [this](auto vg) { drawCurve(vg); });
         addChild(bdwCurve);
+
+        auto su = [this](auto b, auto m) {
+            auto ac = widgets::DirtyHelper<EGxVCA>();
+            ac.module = module;
+            ac.par = b;
+            ac.isModulated = m;
+            dirtyChecks[b] = ac;
+        };
+        su(EGxVCA::EG_A, true);
+        su(EGxVCA::EG_D, true);
+        su(EGxVCA::EG_S, true);
+        su(EGxVCA::EG_R, true);
+        su(EGxVCA::A_SHAPE, false);
+        su(EGxVCA::D_SHAPE, false);
+        su(EGxVCA::R_SHAPE, false);
+        su(EGxVCA::ANALOG_OR_DIGITAL, false);
+        su(EGxVCA::ADSR_OR_DAHD, false);
     }
 
     void drawBg(NVGcontext *vg)
     {
         nvgBeginPath(vg);
-        nvgRect(vg, 0, 0, box.size.x, box.size.y);
-        nvgStrokeColor(vg, nvgRGB(255, 0, 0));
+        nvgMoveTo(vg, box.size.x, 0);
+        nvgLineTo(vg, box.size.x, box.size.y);
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
+        nvgStrokeWidth(vg, 0.75);
         nvgStroke(vg);
     }
     void drawCurve(NVGcontext *vg)
     {
-        nvgBeginPath(vg);
-        nvgFillColor(vg, nvgRGB(255, 0, 0));
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-        nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 10);
+        auto a = dirtyChecks[EGxVCA::EG_A].lastValue;
+        auto d = dirtyChecks[EGxVCA::EG_D].lastValue;
+        auto s = dirtyChecks[EGxVCA::EG_S].lastValue;
+        auto r = dirtyChecks[EGxVCA::EG_R].lastValue;
 
-        nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, "Curve Soon", nullptr);
+        auto as = dirtyChecks[EGxVCA::A_SHAPE].lastValue;
+        auto ds = dirtyChecks[EGxVCA::D_SHAPE].lastValue;
+        auto rs = dirtyChecks[EGxVCA::R_SHAPE].lastValue;
+
+        auto isDig = dirtyChecks[EGxVCA::ANALOG_OR_DIGITAL].lastValue < 0.5;
+        auto shp = dirtyChecks[EGxVCA::ADSR_OR_DAHD].lastValue;
+
+        auto mx = modules::CTEnvTimeParamQuantity::etMax;
+        auto mn = modules::CTEnvTimeParamQuantity::etMin;
+        auto sc = mx - mn;
+        auto gt = 0.f, endt = 0.f;
+        if (shp < 0.5)
+        {
+            // adsr
+            endt = pow(2, a * sc + mn) + pow(2, d * sc + mn) + pow(2, r * sc + mn);
+            auto dGate = 0.33 * endt;
+            endt += dGate;
+            gt = pow(2, a * sc + mn) + pow(2, d * sc + mn) + dGate;
+        }
+        else
+        {
+            endt = pow(2, a * sc + mn) + pow(2, d * sc + mn) + pow(2, s * sc + mn) +
+                   pow(2, r * sc + mn);
+        }
+
+        auto smp = endt * module->storage->samplerate;
+        auto runs = smp * BLOCK_SIZE_INV;
+        auto smpEvery = std::max((int)std::floor(runs / (box.size.x * 4)), 1);
+        auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
+
+        auto env = dsp::envelopes::ADSRDAHDEnvelope(module->storage.get());
+        env.attackFrom((dsp::envelopes::ADSRDAHDEnvelope::Mode)shp, 0, as, isDig);
+
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, 0, box.size.y - 2); // that's the 0,0 point
+
+        for (int i = 0; i < runs; ++i)
+        {
+            env.process(a, d, s, r, as, ds, rs, i < gtSmp);
+            if ((i % smpEvery) == 0)
+            {
+                auto v = env.output;
+                nvgLineTo(vg, box.size.x * i / runs, (1.0 - v) * (box.size.y - 4) + 2);
+            }
+            env.current = BLOCK_SIZE;
+        }
+        nvgLineTo(vg, box.size.x, box.size.y - 2);
+
+        nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+        nvgStrokeWidth(vg, 1.25);
         nvgStroke(vg);
+
+        auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+        auto gcp = col;
+        gcp.a = 0.5;
+        auto gcn = col;
+        gcn.a = 0.0;
+        nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y * 0.9, gcp, gcn));
+        nvgFill(vg);
     }
     void onStyleChanged() override
     {
         bdw->dirty = true;
         bdwCurve->dirty = true;
+    }
+
+    void step() override
+    {
+        if (module)
+            for (auto &[i, dc] : dirtyChecks)
+                if (dc.dirty())
+                {
+                    bdwCurve->dirty = true;
+                    bdw->dirty = true;
+                }
+        Widget::step();
     }
 };
 
@@ -111,13 +221,7 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
         addChild(bdwCurve);
     }
 
-    void drawBg(NVGcontext *vg)
-    {
-        nvgBeginPath(vg);
-        nvgRect(vg, 0, 0, box.size.x, box.size.y);
-        nvgStrokeColor(vg, nvgRGB(0, 255, 0));
-        nvgStroke(vg);
-    }
+    void drawBg(NVGcontext *vg) {}
     void drawCurve(NVGcontext *vg)
     {
         nvgBeginPath(vg);
@@ -138,12 +242,15 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
     }
 };
 
-EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *module)
+EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 {
-    setModule(module);
+    setModule(m);
     typedef layout::LayoutEngine<EGxVCAWidget, EGxVCAWidget::M::LEVEL, EGxVCAWidget::M::CLOCK_IN>
         engine_t;
     engine_t::initializeModulationToBlank(this);
+
+    modeDirty.module = m;
+    modeDirty.par = M::ADSR_OR_DAHD;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
 
@@ -181,16 +288,28 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
         {li_t::KNOB9, "RESP", M::RESPONSE, col1, row2},
 
         {li_t::PORT, "GATE", M::GATE_IN, col0, row1},
-        {li_t::PORT, "RETRIG", M::RETRIG_IN, col1, row1},
-        {li_t::PORT, "CLOCK", M::CLOCK_IN, col2, row1},
+        {li_t::PORT, "CLOCK", M::CLOCK_IN, col1, row1},
+        {li_t::OUT_PORT, "EOC", M::EOC_OUT, col2, row1},
         {li_t::OUT_PORT, "ENV", M::ENV_OUT, col3, row1},
 
         li_t::createLCDArea(row3 - rack::mm2px(2.5))
     };
     // clang-format on
 
-    for (const auto &lay : layout)
+    for (auto &lay : layout)
     {
+        if (lay.parId == M::GATE_IN && lay.type == li_t::PORT)
+        {
+            lay.dynamicLabel = true;
+            lay.dynLabelFn = [](modules::XTModule *m) -> std::string {
+                auto mode = 0;
+                if (m)
+                    mode = std::round(m->paramQuantities[EGxVCA::ADSR_OR_DAHD]->getValue());
+                if (mode == 0)
+                    return "GATE";
+                return "TRIG";
+            };
+        }
         engine_t::layoutItem(this, lay, "EGxVCA");
     }
 
@@ -243,35 +362,61 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *modul
         engine_t::layoutItem(this, lay, "EGxVCA");
     }
 
-    auto posx = widgets::LCDBackground::posx;
+    rack::Rect lcdB;
+    auto lc = getFirstDescendantOfType<widgets::LCDBackground>();
+    if (lc)
+        lcdB = lc->box;
+
     {
-        auto adp =
-            rack::Vec(rack::app::RACK_GRID_WIDTH * 6, rack::mm2px(widgets::LCDBackground::posy_MM));
-        auto ads = rack::Vec((rack::app::RACK_GRID_WIDTH * 12 - 2 * posx) * 0.5 - rack::mm2px(1.5),
-                             rack::mm2px(6));
+        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(4.5));
+        auto adp = rack::Vec(lcdB.pos.x + lcdB.size.x - ads.x - rack::mm2px(1.5), lcdB.pos.y);
         auto andig = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ANALOG_OR_DIGITAL);
         addChild(andig);
     }
     {
-        auto adp = rack::Vec(posx + rack::mm2px(1.5), rack::mm2px(widgets::LCDBackground::posy_MM));
-        auto ads = rack::Vec((rack::app::RACK_GRID_WIDTH * 12 - 2 * posx) * 0.5 - rack::mm2px(1.5),
-                             rack::mm2px(6));
+        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(4.5));
+        auto adp = rack::Vec(lcdB.pos.x + rack::mm2px(1.5), lcdB.pos.y);
         auto mode = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ADSR_OR_DAHD);
         mode->align = widgets::PlotAreaToggleClick::LEFT;
         addChild(mode);
     }
 
-    auto respWidth_MM = 14;
-    auto posyCurve = rack::mm2px(widgets::LCDBackground::posy_MM + 5);
-    auto w = rack::app::RACK_GRID_WIDTH * 12 - 2 * posx - rack::mm2px(respWidth_MM + 1);
-    auto h = row3 - rack::mm2px(1.5 + 4) + widgets::LCDBackground::posy;
+    {
+        auto cs = rack::mm2px(4.5);
+        auto ws = rack::mm2px(3.5);
+        auto off = rack::mm2px(0.5);
+        auto x0 = lcdB.pos.x + lcdB.size.x * 0.5 - 1.5 * cs + off;
+        auto y0 = lcdB.pos.y + off;
+
+        auto A = rack::createParam<widgets::CurveSwitch>(rack::Vec(x0, y0), module, M::A_SHAPE);
+        A->box.size = rack::Vec(ws, ws);
+        A->drawDirection = widgets::CurveSwitch::ATTACK;
+        addChild(A);
+        aShape = A;
+
+        auto D =
+            rack::createParam<widgets::CurveSwitch>(rack::Vec(x0 + cs, y0), module, M::D_SHAPE);
+        D->box.size = rack::Vec(ws, ws);
+        D->drawDirection = widgets::CurveSwitch::HALF_DECAY;
+        addChild(D);
+        dShape = D;
+
+        auto R =
+            rack::createParam<widgets::CurveSwitch>(rack::Vec(x0 + 2 * cs, y0), module, M::R_SHAPE);
+        R->box.size = rack::Vec(ws, ws);
+        R->drawDirection = widgets::CurveSwitch::HALF_RELEASE;
+        addChild(R);
+        rShape = R;
+    }
+
     auto envc =
-        new EnvCurveWidget(rack::Vec(posx + rack::mm2px(1), posyCurve), rack::Vec(w, h), module);
+        new EnvCurveWidget(rack::Vec(lcdB.pos.x + rack::mm2px(1), lcdB.pos.y + rack::mm2px(5)),
+                           rack::Vec(lcdB.size.x * .65, lcdB.size.y - rack::mm2px(6.5)), m);
     addChild(envc);
 
-    auto respc =
-        new ResponseMeterWidget(rack::Vec(posx + rack::mm2px(1) + w + rack::mm2px(0.5), posyCurve),
-                                rack::Vec(rack::mm2px(respWidth_MM), h), module);
+    auto respc = new ResponseMeterWidget(
+        rack::Vec(lcdB.pos.x + rack::mm2px(2) + lcdB.size.x * 0.65, lcdB.pos.y + rack::mm2px(5)),
+        rack::Vec(lcdB.size.x * .35 - rack::mm2px(3), lcdB.size.y - rack::mm2px(6.5)), m);
     addChild(respc);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);

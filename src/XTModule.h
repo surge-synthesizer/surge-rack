@@ -1144,17 +1144,21 @@ struct TypeSwappingParameterQuantity : rack::ParamQuantity, modules::CalculatedN
 
 struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
 {
+    static constexpr float etMin{-8}, etMax{3.32192809489}; // log2(10)
+
     std::string getLabel() override { return getCalculatedName(); }
     std::string getDisplayValueString() override
     {
-        auto v = getValue() * (8 + 5) - 8;
-        return fmt::format("{:.3f} s", pow(2, v));
+        auto v = getValue() * (etMax - etMin) + etMin;
+
+        auto rs = fmt::format("{:.4f} s", pow(2, v));
+        return rs;
     }
     void setDisplayValueString(std::string s) override
     {
         auto q = std::atof(s.c_str());
         auto v = log2(std::clamp(q, 0.0001, 32.));
-        auto vn = (v + 8) / (8 + 5);
+        auto vn = (v - etMin) / (etMax - etMin);
         setValue(vn);
     }
 };
