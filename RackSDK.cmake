@@ -43,7 +43,7 @@ add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
-if (${CMAKE_CXX_STANDARD} AND (${CMAKE_CXX_STANDARD} GREATER_EQUAL 11))
+if (DEFINED CMAKE_CXX_STANDARD)
   message(STATUS "Retaining CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
 else()
   set(CMAKE_CXX_STANDARD 11)
