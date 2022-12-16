@@ -14,24 +14,27 @@ ifdef ARCH_WIN
   RACK_PLUGIN := plugin.dll
 endif
 
-CMAKE_BUILD=dep/cmake-build
+CMAKE_BUILD ?= dep/cmake-build
 cmake_rack_plugin := $(CMAKE_BUILD)/$(RACK_PLUGIN)
 
 $(info cmake_rack_plugin target is '$(cmake_rack_plugin)')
+
+# create empty plugin lib to skip the make target execution
+$(shell touch $(RACK_PLUGIN))
 
 # trigger CMake build when running `make dep`
 DEPS += $(cmake_rack_plugin)
 
 $(cmake_rack_plugin): CMakeLists.txt
-	rm -rf $(RACK_PLUGIN)
-	$(CMAKE) -B$(CMAKE_BUILD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(CMAKE_BUILD)/dist $(EXTRA_CMAKE)
+	$(CMAKE) -B $(CMAKE_BUILD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(CMAKE_BUILD)/dist $(EXTRA_CMAKE)
 	cmake --build $(CMAKE_BUILD) -- -j $(shell getconf _NPROCESSORS_ONLN)
 	cmake --install $(CMAKE_BUILD)
+
+rack_plugin: $(cmake_rack_plugin)
 	cp -vf $(cmake_rack_plugin) .
 
-
 # Add files to the ZIP package when running `make dist`
-dist:	build/surge-data res
+dist: rack_plugin build/surge-data res
 
 build/surge-data:
 	mkdir -p build/surge-data
