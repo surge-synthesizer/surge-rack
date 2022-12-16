@@ -106,7 +106,7 @@ target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE RackSDK)
 
 install(TARGETS ${RACK_PLUGIN_LIB} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
-file(INSTALL ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
+file(COPY ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
 
 # A quick installation target to copy the plugin library and plugin.json into VCV Rack plugin folder for development.
 # CMAKE_INSTALL_PREFIX needs to point to the VCV Rack plugin folder in user documents.

@@ -93,14 +93,14 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
 
 target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge)
 
-file(INSTALL surge/resources/surge-shared/configuration.xml
+file(COPY surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
              surge/resources/data/wavetables
              surge/resources/data/fx_presets
              res/surge_extra_data/fx_presets
     DESTINATION ${PLUGIN_NAME}/build/surge-data)
 
-file(INSTALL
+file(COPY
         surge/resources/data/wavetables_3rdparty
         DESTINATION ${PLUGIN_NAME}_ExtraContent)
 
