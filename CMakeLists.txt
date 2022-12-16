@@ -57,7 +57,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
 
 target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
-add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden $<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
+add_compile_options($<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
 add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
@@ -73,7 +73,8 @@ endif ()
 
 target_link_libraries(Surge INTERFACE ${SURGE_LIBS} ${SURGE_WIN_LIBS})
 
-add_library(${PLUGIN_NAME} STATIC
+target_sources(${RACK_PLUGIN_LIB} PRIVATE
+        src/SurgeXT.cpp
         src/Delay.cpp
         src/DelayLineByFreq.cpp
         src/EGxVCA.cpp
@@ -88,27 +89,18 @@ add_library(${PLUGIN_NAME} STATIC
         src/Waveshaper.cpp
         src/XTModule.cpp
         src/XTModuleWidget.cpp
-        src/XTStyle.cpp
-        )
+        src/XTStyle.cpp)
 
-target_link_libraries(${PLUGIN_NAME} LINK_PUBLIC RackSDK Surge)
+target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge)
 
-target_sources(${RACK_PLUGIN_LIB} PRIVATE src/SurgeXT.cpp)
-target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE ${PLUGIN_NAME})
-
-
-install(TARGETS ${RACK_PLUGIN_LIB} ${PLUGIN_NAME} ${SURGE_LIBS}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/static)
-
-file(INSTALL surge/resources/surge-shared/configuration.xml
+file(COPY surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
              surge/resources/data/wavetables
              surge/resources/data/fx_presets
              res/surge_extra_data/fx_presets
     DESTINATION ${PLUGIN_NAME}/build/surge-data)
 
-file(INSTALL
+file(COPY
         surge/resources/data/wavetables_3rdparty
         DESTINATION ${PLUGIN_NAME}_ExtraContent)
 

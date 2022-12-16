@@ -28,12 +28,7 @@ git clone https://github.com/surge-synthesizer/surge-rack
 cd surge-rack
 git submodule update --init --recursive
 ```
-Build with Make:
-```
-export RACK_DIR=location-of-rack-SDK-or-source
-make dist
-```
-Build directly with CMake:
+Build with CMake:
 ```
 mkdir surge-rack-build
 cd surge-rack-build
@@ -43,6 +38,17 @@ make install
 To compile the plugin with CMake for Mac OSX `x86_64` platform append `-DCMAKE_OSX_ARCHITECTURES="x86_64"` to the cmake
 command, to compile for `arm64` platform use `-DCMAKE_OSX_ARCHITECTURES="arm64"`.
 
+Create a plugin release with Make:
+```
+export RACK_DIR=location-of-rack-SDK-or-source
+make dep
+make dist
+```
+
+Alternatively create a plugin release with Make and point to an existing cmake build location:
+```
+CMAKE_BUILD=location-of-cmake-build-dir make dist
+```
 ## License and Copyright
 
 This software is licensed under the Gnu General Public License v3 or later.

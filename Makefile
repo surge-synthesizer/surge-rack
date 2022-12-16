@@ -1,46 +1,42 @@
 RACK_DIR ?= ../..
 include $(RACK_DIR)/arch.mk
 
-SURGE_BLD=dep/surge-build
-libsurge_xt_rack := $(SURGE_BLD)/libSurgeXTRack.a
-
-OBJECTS += $(libsurge_xt_rack)
-
-# Trigger the surge-rack CMake build when running `make dep`
-DEPS += $(libsurge_xt_rack)
-
 EXTRA_CMAKE :=
-ifdef ARCH_MAC
-ifdef ARCH_ARM64
-    EXTRA_CMAKE += -DCMAKE_OSX_ARCHITECTURES="arm64"
-else
-    EXTRA_CMAKE += -DCMAKE_OSX_ARCHITECTURES="x86_64"
-endif
-endif
-
-$(libsurge_xt_rack): CMakeLists.txt
-	$(CMAKE) -B $(SURGE_BLD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(SURGE_BLD)/dist $(EXTRA_CMAKE)
-	cmake --build $(SURGE_BLD) -- -j $(shell getconf _NPROCESSORS_ONLN)
-	cmake --install $(SURGE_BLD)
-
-# Add .cpp and .c files to the build
-SOURCES += src/SurgeXT.cpp
-
-FLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -std=c++17
-
-LDFLAGS += -L$(SURGE_BLD)/dist/lib/static -lSurgeXTRack -lsurge-common -ljuce_dsp_rack_sub -ltinyxml -lstrnatcmp \
-           -lsamplerate -lsst-plugininfra -lfmt -lsqlite -leurorack -lairwindows
+RACK_PLUGIN := plugin.so
 
 ifdef ARCH_WIN
-LDFLAGS += -lwinmm -luuid -lwsock32 -lshlwapi -lversion -lwininet -lole32 -lws2_32
-else
-LDFLAGS += -lfilesystem
+  RACK_PLUGIN := plugin.dll
 endif
 
+ifdef ARCH_MAC
+  EXTRA_CMAKE := -DCMAKE_OSX_ARCHITECTURES="x86_64"
+  RACK_PLUGIN := plugin.dylib
+  ifdef ARCH_ARM64
+    EXTRA_CMAKE := -DCMAKE_OSX_ARCHITECTURES="arm64"
+  endif
+endif
+
+CMAKE_BUILD ?= dep/cmake-build
+cmake_rack_plugin := $(CMAKE_BUILD)/$(RACK_PLUGIN)
+
+$(info cmake_rack_plugin target is '$(cmake_rack_plugin)')
+
+# create empty plugin lib to skip the make target execution
+$(shell touch $(RACK_PLUGIN))
+
+# trigger CMake build when running `make dep`
+DEPS += $(cmake_rack_plugin)
+
+$(cmake_rack_plugin): CMakeLists.txt
+	$(CMAKE) -B $(CMAKE_BUILD) -DRACK_SDK_DIR=$(RACK_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(CMAKE_BUILD)/dist $(EXTRA_CMAKE)
+	cmake --build $(CMAKE_BUILD) -- -j $(shell getconf _NPROCESSORS_ONLN)
+	cmake --install $(CMAKE_BUILD)
+
+rack_plugin: $(cmake_rack_plugin)
+	cp -vf $(cmake_rack_plugin) .
 
 # Add files to the ZIP package when running `make dist`
-# The compiled plugin is automatically added.
-dist:	build/surge-data res
+dist: rack_plugin build/surge-data res
 
 build/surge-data:
 	mkdir -p build/surge-data
@@ -56,8 +52,6 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
 
-# undo the 11-ness
-CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
 
 COMMUNITY_ISSUE=https://github.com/VCVRack/community/issues/745
 

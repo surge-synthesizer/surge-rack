@@ -29,6 +29,7 @@ set(PLUGIN_DISTRIBUTABLES plugin.json res ${LICENSE} ${ADDITIONAL_PLUGIN_DISTRIB
 
 message(STATUS "PLUGIN_DISTRIBUTABLES: ${PLUGIN_DISTRIBUTABLES}")
 
+add_compile_options(-fvisibility=hidden $<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
 add_compile_options(-fPIC)
@@ -39,11 +40,16 @@ add_compile_options(-fPIC)
 # Debugger symbols. These are removed with `strip`.
 add_compile_options(-g)
 # Optimization
-add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "Skipping Optimizations for Debug Build")
+else()
+  message(STATUS "Skipping Optimizations for Debug Build")
+  add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
+endif()
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
-if (${CMAKE_CXX_STANDARD} AND (${CMAKE_CXX_STANDARD} GREATER_EQUAL 11))
+if (DEFINED CMAKE_CXX_STANDARD)
   message(STATUS "Retaining CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
 else()
   set(CMAKE_CXX_STANDARD 11)
@@ -92,17 +98,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   target_compile_options(RackSDK INTERFACE -Wl,-rpath=/tmp/Rack2)
 endif ()
 
-target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE ${RackSDK})
+target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE RackSDK)
 
 install(TARGETS ${RACK_PLUGIN_LIB} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${PLUGIN_NAME} OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
-file(INSTALL ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
+file(COPY ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
 
 # A quick installation target to copy the plugin library and plugin.json into VCV Rack plugin folder for development.
 # CMAKE_INSTALL_PREFIX needs to point to the VCV Rack plugin folder in user documents.
-add_custom_target(${PROJECT_NAME}_quick_install
+add_custom_target(${RACK_PLUGIN_LIB}_quick_install
         COMMAND cmake -E copy $<TARGET_FILE:${RACK_PLUGIN_LIB}> ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
-add_dependencies(${PROJECT_NAME}_quick_install ${PLUGIN_NAME})
-add_dependencies(${PROJECT_NAME}_quick_install ${RACK_PLUGIN_LIB})
+add_dependencies(${RACK_PLUGIN_LIB}_quick_install ${RACK_PLUGIN_LIB})
