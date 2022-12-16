@@ -118,6 +118,9 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
     }
     void drawCurve(NVGcontext *vg)
     {
+        if (!module)
+            return;
+
         auto a = dirtyChecks[EGxVCA::EG_A].lastValue;
         auto d = dirtyChecks[EGxVCA::EG_D].lastValue;
         auto s = dirtyChecks[EGxVCA::EG_S].lastValue;
