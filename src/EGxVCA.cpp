@@ -118,6 +118,9 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
     }
     void drawCurve(NVGcontext *vg)
     {
+        if (!module)
+            return;
+
         auto a = dirtyChecks[EGxVCA::EG_A].lastValue;
         auto d = dirtyChecks[EGxVCA::EG_D].lastValue;
         auto s = dirtyChecks[EGxVCA::EG_S].lastValue;
@@ -219,20 +222,64 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
         bdwCurve = new widgets::BufferedDrawFunctionWidgetOnLayer(
             rack::Vec(0, 0), size, [this](auto vg) { drawCurve(vg); });
         addChild(bdwCurve);
+        for (int i = 0; i < MAX_POLY; ++i)
+            meterValues[i] = 0;
     }
 
     void drawBg(NVGcontext *vg) {}
     void drawCurve(NVGcontext *vg)
     {
-        nvgBeginPath(vg);
-        nvgFillColor(vg, nvgRGB(0, 255, 0));
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-        nvgFontFaceId(vg, style()->fontIdBold(vg));
-        nvgFontSize(vg, 10);
+        auto dx = box.size.x / nChan;
+        for (int i = 0; i < nChan; ++i)
+        {
+            nvgBeginPath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+            auto v = meterValues[i];
 
-        nvgText(vg, box.size.x * 0.5, box.size.y * 0.4, "Meters", nullptr);
-        nvgText(vg, box.size.x * 0.5, box.size.y * 0.6, "Soon", nullptr);
-        nvgStroke(vg);
+            auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+            auto gcp = col;
+            gcp.a = 0.5;
+            auto gcn = col;
+            gcn.a = 0.0;
+            nvgFillPaint(vg,
+                         nvgLinearGradient(vg, 0, (1 - v) * box.size.y, 0, box.size.y, gcp, gcn));
+
+            nvgRect(vg, dx * i, (1 - v) * box.size.y, dx, v * box.size.y);
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
+
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, dx * i, (1 - v) * box.size.y);
+            nvgLineTo(vg, dx * (i + 1), (1 - v) * box.size.y);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
+            nvgStrokeWidth(vg, 1.25);
+            nvgStroke(vg);
+        }
+    }
+
+    float meterValues[MAX_POLY];
+    float nChan{1};
+
+    void step() override
+    {
+        if (module)
+        {
+            bool dirty{false};
+            dirty = (nChan != module->nChan);
+            nChan = module->nChan;
+            for (int i = 0; i < MAX_POLY; ++i)
+            {
+                dirty = dirty || (module->meterLevels[i] != meterValues[i]);
+                meterValues[i] = module->meterLevels[i];
+            }
+            if (dirty)
+            {
+                bdw->dirty = true;
+                bdwCurve->dirty = true;
+            }
+        }
+        rack::Widget::step();
     }
 
     void onStyleChanged() override

@@ -213,10 +213,15 @@ struct EGxVCA : modules::XTModule
         modAssist.setupMatrix(this);
         modAssist.updateValues(this);
 
+        for (int i = 0; i < MAX_POLY; ++i)
+            meterLevels[i] = 0.f;
+
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
         snapCalculatedNames();
     }
+
+    float meterLevels[MAX_POLY];
 
     std::array<std::unique_ptr<dsp::envelopes::ADSRDAHDEnvelope>, MAX_POLY> processors;
     std::array<rack::dsp::SchmittTrigger, MAX_POLY> triggers;
@@ -276,6 +281,7 @@ struct EGxVCA : modules::XTModule
 
     std::string getName() override { return std::string("EGxVCA"); }
     int processCount{BLOCK_SIZE};
+    int meterUpdateCount{0};
 
     int nChan{-1};
 
@@ -303,10 +309,8 @@ struct EGxVCA : modules::XTModule
         if (currChan != nChan)
         {
             nChan = currChan;
-            outputs[OUTPUT_L].setChannels(nChan);
-            outputs[OUTPUT_R].setChannels(nChan);
-            outputs[EOC_OUT].setChannels(nChan);
-            outputs[ENV_OUT].setChannels(nChan);
+            modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
         }
 
         for (int c = 0; c < nChan; ++c)
@@ -321,6 +325,11 @@ struct EGxVCA : modules::XTModule
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
             processCount = 0;
+
+            outputs[OUTPUT_L].setChannels(nChan);
+            outputs[OUTPUT_R].setChannels(nChan);
+            outputs[EOC_OUT].setChannels(nChan);
+            outputs[ENV_OUT].setChannels(nChan);
         }
         int as = (int)std::round(params[A_SHAPE].getValue());
         int ds = (int)std::round(params[D_SHAPE].getValue());
@@ -338,14 +347,24 @@ struct EGxVCA : modules::XTModule
             }
             processors[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
                                    modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
-                                   inputs[GATE_IN].getVoltage(0) > 2);
+                                   inputs[GATE_IN].getVoltage(c) > 2);
 
             auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
+
             level[c].setTarget(nl);
             response[c].setTarget(modAssist.values[RESPONSE][c]);
         }
 
         // ToDo - SIMDize
+        if (meterUpdateCount++ == BLOCK_SIZE * 128)
+        {
+            for (int i = 0; i < nChan; ++i)
+            {
+                meterLevels[i] = processors[i]->output;
+            }
+            meterUpdateCount = 0;
+        }
+
         for (int c = 0; c < nChan; ++c)
         {
             auto o1 = processors[c]->output;
