@@ -3,15 +3,17 @@ include $(RACK_DIR)/arch.mk
 
 EXTRA_CMAKE :=
 RACK_PLUGIN := plugin.so
+
+ifdef ARCH_WIN
+  RACK_PLUGIN := plugin.dll
+endif
+
 ifdef ARCH_MAC
   EXTRA_CMAKE := -DCMAKE_OSX_ARCHITECTURES="x86_64"
   RACK_PLUGIN := plugin.dylib
   ifdef ARCH_ARM64
     EXTRA_CMAKE := -DCMAKE_OSX_ARCHITECTURES="arm64"
   endif
-endif
-ifdef ARCH_WIN
-  RACK_PLUGIN := plugin.dll
 endif
 
 CMAKE_BUILD ?= dep/cmake-build
