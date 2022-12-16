@@ -309,6 +309,8 @@ struct EGxVCA : modules::XTModule
         if (currChan != nChan)
         {
             nChan = currChan;
+            modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
         }
 
         for (int c = 0; c < nChan; ++c)
