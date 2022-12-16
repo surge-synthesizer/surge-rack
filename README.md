@@ -37,11 +37,17 @@ make install
 ```
 To compile the plugin with CMake for Mac OSX `x86_64` platform append `-DCMAKE_OSX_ARCHITECTURES="x86_64"` to the cmake
 command, to compile for `arm64` platform use `-DCMAKE_OSX_ARCHITECTURES="arm64"`.
-Build with Make (only to create a release build) :
+
+Create a plugin release with Make:
 ```
 export RACK_DIR=location-of-rack-SDK-or-source
 make dep
 make dist
+```
+
+Alternatively create a plugin release with Make and point to an existing cmake build location:
+```
+CMAKE_BUILD=location-of-cmake-build-dir make dist
 ```
 ## License and Copyright
 
