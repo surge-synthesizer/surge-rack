@@ -213,10 +213,15 @@ struct EGxVCA : modules::XTModule
         modAssist.setupMatrix(this);
         modAssist.updateValues(this);
 
+        for (int i = 0; i < MAX_POLY; ++i)
+            meterLevels[i] = 0.f;
+
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
         snapCalculatedNames();
     }
+
+    float meterLevels[MAX_POLY];
 
     std::array<std::unique_ptr<dsp::envelopes::ADSRDAHDEnvelope>, MAX_POLY> processors;
     std::array<rack::dsp::SchmittTrigger, MAX_POLY> triggers;
@@ -276,6 +281,7 @@ struct EGxVCA : modules::XTModule
 
     std::string getName() override { return std::string("EGxVCA"); }
     int processCount{BLOCK_SIZE};
+    int meterUpdateCount{0};
 
     int nChan{-1};
 
@@ -346,6 +352,15 @@ struct EGxVCA : modules::XTModule
         }
 
         // ToDo - SIMDize
+        if (meterUpdateCount++ == BLOCK_SIZE * 128)
+        {
+            for (int i = 0; i < nChan; ++i)
+            {
+                meterLevels[i] = processors[i]->output;
+            }
+            meterUpdateCount = 0;
+        }
+
         for (int c = 0; c < nChan; ++c)
         {
             auto o1 = processors[c]->output;
