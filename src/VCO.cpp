@@ -28,6 +28,9 @@
 namespace sst::surgext_rack::vco::ui
 {
 
+static std::atomic<bool> downloadingContent{false};
+static float contentProgress{0};
+
 template <int oscType> struct WavetableMenuBuilder
 {
     static void sendLoadFor(VCO<oscType> *module, int nt)
@@ -99,17 +102,20 @@ template <int oscType> struct WavetableMenuBuilder
 
     static void downloadExtraContent(VCO<oscType> *module)
     {
+        if (downloadingContent)
+            return;
+
         auto t = std::thread([module]() {
-            module->downloadingContent = true;
+            downloadingContent = true;
             std::string archivePath = rack::asset::user("SurgeXTRack/SurgeXT_ExtraContent.tar.zst");
             std::string url = "https://github.com/surge-synthesizer/surge-rack/releases/download/"
                               "Content/SurgeXTRack_ExtraContent.tar.zst";
             std::string dirPath = rack::asset::user("SurgeXTRack/");
-            rack::network::requestDownload(url, archivePath, &module->contentProgress);
+            rack::network::requestDownload(url, archivePath, &contentProgress);
             rack::system::unarchiveToDirectory(archivePath, dirPath);
             rack::system::remove(archivePath);
 
-            module->downloadingContent = false;
+            downloadingContent = false;
             module->forceRefreshWT = true;
         });
         t.detach();
@@ -227,8 +233,9 @@ template <int oscType> struct WavetableMenuBuilder
             }
         }));
         menu->addChild(new rack::MenuSeparator);
-        menu->addChild(rack::createMenuItem("Download Extra Wavetable Content", "",
-                                            [module]() { downloadExtraContent(module); }));
+        menu->addChild(rack::createMenuItem(
+            "Download Extra Wavetable Content", "", [module]() { downloadExtraContent(module); },
+            downloadingContent));
 
         menu->addChild(rack::createMenuItem("Reveal User Wavetables Directory", "", [module]() {
             module->storage->createUserDirectory(); // fine if it exists
@@ -489,18 +496,18 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 bdwPlot->dirty = true;
             }
 
-            if (module->downloadingContent)
+            if (downloadingContent)
             {
                 bdw->dirty = true;
                 bdwPlot->dirty = true;
             }
 
-            if (module->downloadingContent != lastDownloadContent)
+            if (downloadingContent != lastDownloadContent)
             {
                 bdw->dirty = true;
                 bdwPlot->dirty = true;
             }
-            lastDownloadContent = module->downloadingContent;
+            lastDownloadContent = downloadingContent;
         }
 
         if constexpr (VCOConfig<oscType>::supportsCustomEditor())
@@ -1081,7 +1088,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 3, "VCO", nullptr);
         }
-        else if (module->downloadingContent)
+        else if (downloadingContent)
         {
             nvgBeginPath(vg);
             nvgFontFaceId(vg, style()->fontIdBold(vg));
@@ -1090,7 +1097,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 2, "Downloading", nullptr);
 
-            auto r = fmt::format("{} pct", (int)(module->contentProgress * 100));
+            auto r = fmt::format("{} pct", (int)(contentProgress * 100));
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
             nvgText(vg, box.size.x * 0.5, box.size.y * 0.5 + 3, r.c_str(), nullptr);
         }
