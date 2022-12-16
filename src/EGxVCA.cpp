@@ -261,7 +261,7 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
     float meterValues[MAX_POLY];
     float nChan{1};
 
-    void step()
+    void step() override
     {
         if (module)
         {

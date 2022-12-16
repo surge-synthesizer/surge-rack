@@ -309,10 +309,6 @@ struct EGxVCA : modules::XTModule
         if (currChan != nChan)
         {
             nChan = currChan;
-            outputs[OUTPUT_L].setChannels(nChan);
-            outputs[OUTPUT_R].setChannels(nChan);
-            outputs[EOC_OUT].setChannels(nChan);
-            outputs[ENV_OUT].setChannels(nChan);
         }
 
         for (int c = 0; c < nChan; ++c)
@@ -327,6 +323,11 @@ struct EGxVCA : modules::XTModule
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
             processCount = 0;
+
+            outputs[OUTPUT_L].setChannels(nChan);
+            outputs[OUTPUT_R].setChannels(nChan);
+            outputs[EOC_OUT].setChannels(nChan);
+            outputs[ENV_OUT].setChannels(nChan);
         }
         int as = (int)std::round(params[A_SHAPE].getValue());
         int ds = (int)std::round(params[D_SHAPE].getValue());
@@ -344,9 +345,10 @@ struct EGxVCA : modules::XTModule
             }
             processors[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
                                    modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
-                                   inputs[GATE_IN].getVoltage(0) > 2);
+                                   inputs[GATE_IN].getVoltage(c) > 2);
 
             auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
+
             level[c].setTarget(nl);
             response[c].setTarget(modAssist.values[RESPONSE][c]);
         }
