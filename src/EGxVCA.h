@@ -104,6 +104,13 @@ struct EGxVCA : modules::XTModule
             }
             return {};
         }
+        bool isTempoSync() override
+        {
+            auto m = dynamic_cast<EGxVCA *>(module);
+            if (m)
+                return m->tempoSynced;
+            return false;
+        }
     };
 
     struct ADSRPQ : modules::CTEnvTimeParamQuantity
@@ -122,6 +129,13 @@ struct EGxVCA : modules::XTModule
                 return "Release";
             }
             return {};
+        }
+        bool isTempoSync() override
+        {
+            auto m = dynamic_cast<EGxVCA *>(module);
+            if (m)
+                return m->tempoSynced;
+            return false;
         }
     };
 
@@ -275,6 +289,11 @@ struct EGxVCA : modules::XTModule
     void moduleSpecificSampleRateChange() override
     {
         clockProc.setSampleRate(APP->engine->getSampleRate());
+        for (int i = 0; i < MAX_POLY; ++i)
+        {
+            if (processors[i])
+                processors[i]->onSampleRateChanged();
+        }
     }
     typedef modules::ClockProcessor<EGxVCA> clockProcessor_t;
     clockProcessor_t clockProc;
@@ -296,6 +315,8 @@ struct EGxVCA : modules::XTModule
     };
 
     linterp level[MAX_POLY], response[MAX_POLY];
+
+    float aTS{0}, dTS{0}, sTS{0}, rTS{0};
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -330,10 +351,35 @@ struct EGxVCA : modules::XTModule
             outputs[OUTPUT_R].setChannels(nChan);
             outputs[EOC_OUT].setChannels(nChan);
             outputs[ENV_OUT].setChannels(nChan);
+
+            if (tempoSynced)
+            {
+                auto r = [this](auto i) {
+                    auto res = temposync_support::roundTemposync(
+                        modAssist.basevalues[i] * dsp::envelopes::ADSRDAHDEnvelope::etScale +
+                        dsp::envelopes::ADSRDAHDEnvelope::etMin);
+                    res = (res - dsp::envelopes::ADSRDAHDEnvelope::etMin) /
+                          dsp::envelopes::ADSRDAHDEnvelope::etScale;
+                    return res;
+                };
+
+                // OK so what do we want. If temposycn ratio is 2 we want the rate twice as fast
+                // so that means we subtract 1.
+                auto tsr = storage->temposyncratio;
+                auto diff = 1 - tsr;
+                // but remember this is all scaled by etScale
+                diff = diff / dsp::envelopes::ADSRDAHDEnvelope::etScale;
+
+                aTS = r(EG_A) + diff;
+                dTS = r(EG_D) + diff;
+                sTS = r(EG_S) + diff;
+                rTS = r(EG_R) + diff;
+            }
         }
         int as = (int)std::round(params[A_SHAPE].getValue());
         int ds = (int)std::round(params[D_SHAPE].getValue());
         int rs = (int)std::round(params[R_SHAPE].getValue());
+
         for (int c = 0; c < nChan; ++c)
         {
             if (doAttack[c])
@@ -345,12 +391,28 @@ struct EGxVCA : modules::XTModule
                 processors[c]->attackFrom(m, processors[c]->output, as, dig);
                 doAttack[c] = false;
             }
-            processors[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
-                                   modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
-                                   inputs[GATE_IN].getVoltage(c) > 2);
+            if (tempoSynced)
+            {
+                auto m = (dsp::envelopes::ADSRDAHDEnvelope::Mode)std::round(
+                    params[ADSR_OR_DAHD].getValue());
 
+                auto av = aTS + modAssist.modvalues[EG_A][c];
+                auto dv = dTS + modAssist.modvalues[EG_D][c];
+                auto sv = sTS + modAssist.modvalues[EG_S][c];
+                auto rv = rTS + modAssist.modvalues[EG_R][c];
+                processors[c]->process(av, dv,
+                                       m == dsp::envelopes::ADSRDAHDEnvelope::ADSR_MODE
+                                           ? modAssist.values[EG_S][c]
+                                           : sv,
+                                       rv, as, ds, rs, inputs[GATE_IN].getVoltage(c) > 2);
+            }
+            else
+            {
+                processors[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
+                                       modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds,
+                                       rs, inputs[GATE_IN].getVoltage(c) > 2);
+            }
             auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
-
             level[c].setTarget(nl);
             response[c].setTarget(modAssist.values[RESPONSE][c]);
         }
@@ -386,10 +448,10 @@ struct EGxVCA : modules::XTModule
         processCount++;
     }
 
-    void activateTempoSync() { std::cout << "WARNING: " << __func__ << std::endl; }
+    bool tempoSynced{false};
+    void activateTempoSync() { tempoSynced = true; }
 
-    void deactivateTempoSync() { std::cout << "WARNING: " << __func__ << std::endl; }
-
+    void deactivateTempoSync() { tempoSynced = false; }
     json_t *makeModuleSpecificJson() override
     {
         auto vc = json_object();

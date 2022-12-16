@@ -27,6 +27,7 @@ struct ADSRDAHDEnvelope
     {
         for (int i = 0; i < BLOCK_SIZE; ++i)
             outputCache[i] = 0;
+        onSampleRateChanged();
     }
 
     enum Mode
@@ -59,6 +60,12 @@ struct ADSRDAHDEnvelope
     // Analog Mode
     float v_c1{0}, v_c1_delayed{0.f};
     bool discharge{false};
+
+    float coeff_offset{0};
+    void onSampleRateChanged()
+    {
+        coeff_offset = 2.f - std::log2(storage->samplerate * BLOCK_SIZE_INV);
+    }
 
     void attackFrom(Mode m, float fv, int ashp, bool isdig)
     {
@@ -187,8 +194,6 @@ struct ADSRDAHDEnvelope
                                   const int ashape, const int dshape, const int rshape,
                                   const bool gateActive)
     {
-        const float coeff_offset = 2.f - std::log2(storage->samplerate * BLOCK_SIZE_INV);
-
         float coef_A = powf(2.f, std::min(0.f, coeff_offset - (a * etScale + etMin)));
         float coef_D = powf(2.f, std::min(0.f, coeff_offset - (d * etScale + etMin)));
         float coef_R =
@@ -359,9 +364,6 @@ struct ADSRDAHDEnvelope
     inline float targetAnalogDAHD(const float dly, const float a, const float h, const float d,
                                   const int ashape, const int dshape, const int rshape)
     {
-
-        const float coeff_offset = 2.f - std::log2(storage->samplerate * BLOCK_SIZE_INV);
-
         if (stage == s_delay)
         {
             phase += storage->envelope_rate_linear_nowrap(dly * etScale + etMin);

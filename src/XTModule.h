@@ -30,6 +30,7 @@
 #include <thread>
 
 #include <sst/plugininfra/cpufeatures.h>
+#include "TemposyncSupport.h"
 
 namespace logger = rack::logger;
 using rack::appGet;
@@ -1151,6 +1152,10 @@ struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
     {
         auto v = getValue() * (etMax - etMin) + etMin;
 
+        if (isTempoSync())
+        {
+            return temposync_support::temposyncLabel(v);
+        }
         auto rs = fmt::format("{:.4f} s", pow(2, v));
         return rs;
     }
@@ -1161,6 +1166,8 @@ struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
         auto vn = (v - etMin) / (etMax - etMin);
         setValue(vn);
     }
+
+    virtual bool isTempoSync() { return false; }
 };
 
 } // namespace sst::surgext_rack::modules

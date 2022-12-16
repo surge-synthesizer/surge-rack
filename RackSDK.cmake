@@ -43,7 +43,7 @@ add_compile_options(-g)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "Skipping Optimizations for Debug Build")
 else()
-  message(STATUS "Skipping Optimizations for Debug Build")
+  message(STATUS "Enabling Optimizations for Non-Debug Build")
   add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
 endif()
 # Warnings

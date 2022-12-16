@@ -25,6 +25,7 @@
 #include "BiquadFilter.h"
 
 #include "dsp/utilities/SSESincDelayLine.h"
+#include "TemposyncSupport.h"
 
 namespace sst::surgext_rack::delay
 {
@@ -86,31 +87,6 @@ struct Delay : modules::XTModule
     typedef modules::ClockProcessor<Delay> clockProcessor_t;
     clockProcessor_t clockProc;
 
-    float tsV(float f)
-    {
-        float a, b = modff(f, &a);
-        if (b < 0)
-        {
-            b += 1.f;
-            a -= 1.f;
-        }
-        b = powf(2.0f, b);
-
-        if (b > 1.41f)
-        {
-            b = log2(1.5f);
-        }
-        else if (b > 1.167f)
-        {
-            b = log2(1.3333333333f);
-        }
-        else
-        {
-            b = 0.f;
-        }
-        return a + b;
-    };
-
     struct DelayTimeParamQuantity : public rack::engine::ParamQuantity
     {
         inline Delay *dm() { return static_cast<Delay *>(module); }
@@ -123,9 +99,7 @@ struct Delay : modules::XTModule
             auto v = getValue();
             if (m->tempoSync)
             {
-                auto ts = m->tsV(v);
-                Parameter p;
-                return p.tempoSyncNotationValue(ts);
+                return temposync_support::temposyncLabel(v);
             }
             else
             {
@@ -264,11 +238,11 @@ struct Delay : modules::XTModule
 
             if (tempoSync)
             {
-                tsL = tsV(params[TIME_L].getValue());
+                tsL = temposync_support::roundTemposync(params[TIME_L].getValue());
                 /*Parameter p;
                 std::cout << tsL << " " << p.tempoSyncNotationValue(tsL) << std::endl;
                 */
-                tsR = tsV(params[TIME_R].getValue());
+                tsR = temposync_support::roundTemposync(params[TIME_R].getValue());
             }
         }
         modulationAssistant.updateValues(this);
