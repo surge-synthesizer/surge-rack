@@ -21,12 +21,6 @@ if ("${ADDITIONAL_PLUGIN_DISTRIBUTABLES}" STREQUAL "")
    folder add ADDITIONAL_PLUGIN_DISTRIBUTABLES variable to the project CMakeLists.txt before including RackSDK.cmake.")
 endif ()
 
-add_compile_options(
-        -fvisibility=hidden
-        # Inlines visibility is only relevant with C++
-        $<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>
-)
-
 # Do not change the RACK_PLUGIN_LIB!
 set(RACK_PLUGIN_LIB plugin)
 
@@ -35,6 +29,7 @@ set(PLUGIN_DISTRIBUTABLES plugin.json res ${LICENSE} ${ADDITIONAL_PLUGIN_DISTRIB
 
 message(STATUS "PLUGIN_DISTRIBUTABLES: ${PLUGIN_DISTRIBUTABLES}")
 
+add_compile_options(-fvisibility=hidden $<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
 add_compile_options(-fPIC)
