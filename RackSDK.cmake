@@ -21,6 +21,12 @@ if ("${ADDITIONAL_PLUGIN_DISTRIBUTABLES}" STREQUAL "")
    folder add ADDITIONAL_PLUGIN_DISTRIBUTABLES variable to the project CMakeLists.txt before including RackSDK.cmake.")
 endif ()
 
+add_compile_options(
+        -fvisibility=hidden
+        # Inlines visibility is only relevant with C++
+        $<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>
+)
+
 # Do not change the RACK_PLUGIN_LIB!
 set(RACK_PLUGIN_LIB plugin)
 
@@ -39,7 +45,11 @@ add_compile_options(-fPIC)
 # Debugger symbols. These are removed with `strip`.
 add_compile_options(-g)
 # Optimization
-add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  message(STATUS "Skipping Optimizations for Debug Build")
+else()
+  add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
+endif()
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
