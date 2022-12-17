@@ -18,6 +18,7 @@
 
 #include "SurgeStorage.h"
 #include "DSPUtils.h"
+#include "DebugHelpers.h"
 
 namespace sst::surgext_rack::dsp::modulators
 {
@@ -56,10 +57,12 @@ struct SimpleLFO
     {
         SINE,
         RAMP,
+        DOWN_RAMP,
         TRI,
         PULSE,
         SMOOTH_NOISE,
-        SH_NOISE
+        SH_NOISE,
+        RANDOM_TRIGGER
     };
 
     float lastTarget{0};
@@ -119,6 +122,7 @@ struct SimpleLFO
 
     float amplitude{1.0};
     inline void setAmplitude(float f) { amplitude = f; }
+    int rndTrigCountdown{0};
 
     inline void freeze()
     {
@@ -134,6 +138,8 @@ struct SimpleLFO
 
         auto frate = storage->envelope_rate_linear_nowrap(-r);
         phase += frate * (reverse ? -1 : 1);
+        int phaseMidpoint{0};
+        bool phaseTurned{false};
 
         if (phase > 1 || phase < 0)
         {
@@ -150,9 +156,16 @@ struct SimpleLFO
                 rngHistory[0] = rngCurrent;
             }
             if (phase > 1)
+            {
                 phase -= 1;
+                phaseMidpoint = std::clamp((int)std::round(frate / std::max(phase, 0.00001f)), 0,
+                                           BLOCK_SIZE - 1);
+                phaseTurned = true;
+            }
             else
+            {
                 phase += 1;
+            }
         }
         auto shp = (Shape)(lshape);
         switch (shp)
@@ -162,6 +175,9 @@ struct SimpleLFO
             break;
         case RAMP:
             target = bend1(2 * phase - 1, d);
+            break;
+        case DOWN_RAMP:
+            target = bend1(2 * (1 - phase) - 1, d);
             break;
         case TRI:
         {
@@ -180,15 +196,47 @@ struct SimpleLFO
         case SH_NOISE:
             target = rngCurrent;
             break;
+        case RANDOM_TRIGGER:
+        {
+            if (phaseTurned)
+            {
+                if (urng() > (-d))
+                {
+                    // 10 ms triggers according to spec so thats 1% of sample rate
+                    rndTrigCountdown = (int)std::round(0.01 * storage->samplerate * BLOCK_SIZE_INV);
+                }
+            }
+            if (rndTrigCountdown > 0)
+            {
+                rndTrigCountdown--;
+                target = 1;
+            }
+            else
+            {
+                target = -1;
+            }
+        }
+        break;
+
         default:
             target = 0.0;
             break;
         }
         target = target * amplitude;
-        float dO = (target - lastTarget) * BLOCK_SIZE_INV;
-        for (int i = 0; i < BLOCK_SIZE; ++i)
+        if (phaseMidpoint > 0 && (shp == PULSE || shp == SH_NOISE || shp == RANDOM_TRIGGER))
         {
-            outputBlock[i] = lastTarget + dO * i;
+            for (int i = 0; i < phaseMidpoint; ++i)
+                outputBlock[i] = lastTarget;
+            for (int i = phaseMidpoint; i < BLOCK_SIZE; ++i)
+                outputBlock[i] = target;
+        }
+        else
+        {
+            float dO = (target - lastTarget) * BLOCK_SIZE_INV;
+            for (int i = 0; i < BLOCK_SIZE; ++i)
+            {
+                outputBlock[i] = lastTarget + dO * i;
+            }
         }
         lastTarget = target;
     }

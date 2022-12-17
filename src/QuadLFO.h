@@ -619,8 +619,9 @@ struct QuadLFO : modules::XTModule
         {
             configParam<RateQuantity>(RATE_0 + i, 0, 1, defaultRate0);
             configParam<DeformQuantity>(DEFORM_0 + i, -1, 1, 0);
-            configSwitch(SHAPE_0 + i, 0, 5, 0, "Shape",
-                         {"Sine", "Ramp", "Triangle", "Pulse", "Randon", "S&H"});
+            configSwitch(SHAPE_0 + i, 0, 7, 0, "Shape",
+                         {"Sine", "Ramp", "Downward Ramp", "Triangle", "Pulse", "Randon", "S&H",
+                          "Random Trigger"});
             configSwitch(BIPOLAR_0 + i, 0, 1, 1, "Bipolar", {"Uni", "Bi"});
         }
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
@@ -820,6 +821,11 @@ struct QuadLFO : modules::XTModule
             {
                 outputs[OUTPUT_0 + i].setChannels(chanByLFO[i]);
                 uniOffset[i] = (params[BIPOLAR_0 + i].getValue() < 0.5 ? 1 : 0);
+                if ((int)std::round(params[SHAPE_0 + i].getValue()) ==
+                    dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+                {
+                    uniOffset[i] = 1;
+                }
             }
 
             modAssist.setupMatrix(this);
