@@ -192,7 +192,8 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
             s == dsp::modulators::SimpleLFO::SH_NOISE)
             cycles = 4;
 
-        if (s == dsp::modulators::SimpleLFO::PULSE)
+        if (s == dsp::modulators::SimpleLFO::PULSE ||
+            s == dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
             zeroEndpoints = true;
 
         float yshift = rack::mm2px(3.9);
@@ -240,9 +241,13 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         {
             lfo->process_block(r, d, s);
             auto v = lfo->outputBlock[0];
+            float x = i * dx + xoff;
+            if (s == dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+            {
+                v = ((x - xoff) < (box.size.x - xoff) * 0.25) ? 1 : -1;
+            }
             v = (v * 0.5 + 0.5);
 
-            float x = i * dx + xoff;
             float y = (1 - v) * (box.size.y - yshift - ypad - labelHeight) + yshift;
             if (i == 0 && !zeroEndpoints)
                 nvgMoveTo(vg, x, y);
@@ -312,14 +317,17 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
                                                         [pq, i]() { pq->setValue(i); }));
                 }
 
-                menu->addChild(new rack::ui::MenuSeparator);
-                auto bpq = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx];
-                auto bv = bpq->getValue() > 0.5;
-                menu->addChild(rack::createMenuItem("Unipolar (0/10v)", CHECKMARK(!bv),
-                                                    [bpq]() { bpq->setValue(0); }));
+                if (index != dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+                {
+                    menu->addChild(new rack::ui::MenuSeparator);
+                    auto bpq = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx];
+                    auto bv = bpq->getValue() > 0.5;
+                    menu->addChild(rack::createMenuItem("Unipolar (0/10v)", CHECKMARK(!bv),
+                                                        [bpq]() { bpq->setValue(0); }));
 
-                menu->addChild(rack::createMenuItem("Bipolar (-5/+5v)", CHECKMARK(bv),
-                                                    [bpq]() { bpq->setValue(1); }));
+                    menu->addChild(rack::createMenuItem("Bipolar (-5/+5v)", CHECKMARK(bv),
+                                                        [bpq]() { bpq->setValue(1); }));
+                }
             }
             e.consume(this);
         }
