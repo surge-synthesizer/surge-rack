@@ -28,6 +28,7 @@
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
 #include "dsp/ADSRDAHDEnvelope.h"
+#include "dsp/PanLaws.h"
 
 namespace sst::surgext_rack::egxvca
 {
@@ -250,6 +251,10 @@ struct EGxVCA : modules::XTModule
 
             level[i].target = 1.0;
             response[i].target = 0.0;
+            pan[i][0].target = 1.0; // L
+            pan[i][1].target = 1.0; // R
+            pan[i][2].target = 0.0; // R in L
+            pan[i][3].target = 0.0; // L in R
         }
     }
 
@@ -315,6 +320,7 @@ struct EGxVCA : modules::XTModule
     };
 
     linterp level[MAX_POLY], response[MAX_POLY];
+    linterp pan[MAX_POLY][4];
 
     float aTS{0}, dTS{0}, sTS{0}, rTS{0};
 
@@ -415,6 +421,27 @@ struct EGxVCA : modules::XTModule
             auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
             level[c].setTarget(nl);
             response[c].setTarget(modAssist.values[RESPONSE][c]);
+
+            if (inputs[INPUT_R].isConnected())
+            {
+                // Assume stereo
+                dsp::pan_laws::panmatrix_t pm;
+                dsp::pan_laws::stereoEqualPower(modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                for (int pl = 0; pl < 4; pl++)
+                {
+                    pan[c][pl].setTarget(pm[pl]);
+                }
+            }
+            else
+            {
+                // assume mono from L
+                dsp::pan_laws::panmatrix_t pm;
+                dsp::pan_laws::monoEqualPower(modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                for (int pl = 0; pl < 4; pl++)
+                {
+                    pan[c][pl].setTarget(pm[pl]);
+                }
+            }
         }
 
         // ToDo - SIMDize
@@ -437,13 +464,22 @@ struct EGxVCA : modules::XTModule
             auto l = level[c].target;
             auto ol = o * l;
 
+            auto lV = inputs[INPUT_L].getVoltage(c) * ol;
+            auto rV = inputs[INPUT_R].getVoltage(c) * ol;
+
+            auto nlV = lV * pan[c][0].target + rV * pan[c][2].target;
+            auto nrV = rV * pan[c][1].target + lV * pan[c][3].target;
+
             outputs[ENV_OUT].setVoltage(o1 * 10, c);
             outputs[EOC_OUT].setVoltage(processors[c]->eoc_output * 10, c);
-            outputs[OUTPUT_L].setVoltage(inputs[INPUT_L].getVoltage(c) * ol, c);
-            outputs[OUTPUT_R].setVoltage(inputs[INPUT_R].getVoltage(c) * ol, c);
+            outputs[OUTPUT_L].setVoltage(nlV, c);
+            outputs[OUTPUT_R].setVoltage(nrV, c);
 
             level[c].step();
             response[c].step();
+
+            for (int q = 0; q < 4; ++q)
+                pan[c][q].step();
         }
         processCount++;
     }
