@@ -620,7 +620,7 @@ struct QuadLFO : modules::XTModule
             configParam<RateQuantity>(RATE_0 + i, 0, 1, defaultRate0);
             configParam<DeformQuantity>(DEFORM_0 + i, -1, 1, 0);
             configSwitch(SHAPE_0 + i, 0, 7, 0, "Shape",
-                         {"Sine", "Ramp", "Downward Ramp", "Triangle", "Pulse", "Randon", "S&H",
+                         {"Sine", "Ramp", "Downward Ramp", "Triangle", "Pulse", "Random", "S&H",
                           "Random Trigger"});
             configSwitch(BIPOLAR_0 + i, 0, 1, 1, "Bipolar", {"Uni", "Bi"});
         }
@@ -1124,7 +1124,7 @@ struct QuadLFO : modules::XTModule
             {
                 processors[i][c]->setAmplitude(1.0);
             }
-            paramQuantities[RATE_0 + i]->defaultValue = RateQuantity::independentRateScale(0.5);
+            paramQuantities[RATE_0 + i]->defaultValue = RateQuantity::independentRateScaleInv(0);
         }
         switch (ip)
         {

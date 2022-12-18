@@ -576,12 +576,21 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             auto lSumDeact = 0, lSumAbs = 0;
             for (int i = 0; i < n_osc_params; i++)
             {
-                dval = dval || (tp[oscdata->p[i].param_id_in_scene].i != oscdata->p[i].val.i);
-                lSumDeact += oscdata->p[i].deactivated * (1 << i);
-                lSumAbs += oscdata->p[i].absolute * (1 << i);
+                auto *par = &(oscdata->p[i]);
+                auto idis = par->param_id_in_scene;
+                pdata tval;
+                tval.i = par->val.i;
+                if (par->valtype == vt_float && module->animateDisplayFromMod)
+                {
+                    tval.f +=
+                        module->modAssist.modvalues[i + 1][0] * (par->val_max.f - par->val_min.f);
+                }
+                dval = dval || (tp[par->param_id_in_scene].i != tval.i);
+                lSumDeact += par->deactivated * (1 << i);
+                lSumAbs += par->absolute * (1 << i);
 
-                dval = dval || (priorDeform[i] != oscdata->p[i].deform_type);
-                priorDeform[i] = oscdata->p[i].deform_type;
+                dval = dval || (priorDeform[i] != par->deform_type);
+                priorDeform[i] = par->deform_type;
             }
 
             if (lSumDeact != sumDeact || lSumAbs != sumAbs)
@@ -621,7 +630,14 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
         for (int i = 0; i < n_osc_params; i++)
         {
-            tp[oscdata->p[i].param_id_in_scene].i = oscdata->p[i].val.i;
+            auto *par = &(oscdata->p[i]);
+            auto idis = par->param_id_in_scene;
+            tp[idis].i = par->val.i;
+            if (par->valtype == vt_float && module->animateDisplayFromMod)
+            {
+                tp[idis].f +=
+                    module->modAssist.modvalues[i + 1][0] * (par->val_max.f - par->val_min.f);
+            }
         }
 
         auto res = spawn_osc(oscdata->type.val.i, storage, oscdata, tp, oscbuffer);

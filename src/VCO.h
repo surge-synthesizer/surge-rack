@@ -552,19 +552,9 @@ template <int oscType> struct VCO : public modules::XTModule
             VCOConfig<oscType>::processVCOSpecificParameters(this);
             reInitEveryOSC = reInitEveryOSC || VCOConfig<oscType>::getVCOSpecificReInit(this);
 
-            if (animateDisplayFromMod)
+            for (int i = 0; i < n_osc_params; ++i)
             {
-                for (int i = 0; i < n_osc_params; ++i)
-                {
-                    oscstorage_display->p[i].set_value_f01(modAssist.values[i + 1][0]);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < n_osc_params; ++i)
-                {
-                    oscstorage_display->p[i].set_value_f01(modAssist.basevalues[i + 1]);
-                }
+                oscstorage_display->p[i].set_value_f01(modAssist.basevalues[i + 1]);
             }
 
             // This is super gross and inefficient. Think about all of this
