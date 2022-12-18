@@ -123,6 +123,7 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
         box.pos = pos;
         box.size = sz;
     }
+    ~Label();
 
     modules::XTModule *module{nullptr};
     std::function<std::string(modules::XTModule *m)> dynamicLabel{};
@@ -668,6 +669,7 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
     float radius{1};
 
     ModRingKnob() { box.size = rack::Vec(45, 45); }
+    ~ModRingKnob();
 
     void drawWidget(NVGcontext *vg)
     {
@@ -2355,6 +2357,7 @@ struct VerticalSliderModulator : rack::SliderKnob, style::StyleParticipant, HasB
     int modIndex{0};
 
     VerticalSliderModulator() { box.size = rack::Vec(45, 45); }
+    ~VerticalSliderModulator();
 
     void drawWidget(NVGcontext *vg)
     {
