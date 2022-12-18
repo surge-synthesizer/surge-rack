@@ -129,6 +129,7 @@ struct QuadAD : modules::XTModule
             isTriggerLinked[i] = false;
             isEnvLinked[i] = false;
             adPoly[i] = 1;
+            coTriggersWith[i] = 0;
         }
 
         for (int i = 0; i < n_ads; ++i)
@@ -234,6 +235,7 @@ struct QuadAD : modules::XTModule
     bool anyLinked{false};
     float eocFromAway[n_ads][MAX_POLY];
     int lastTriggerLinkParaams[n_ads]{-1, -1, -1, -1};
+    int coTriggersWith[n_ads]; // a bitmask of people i co-trigger with
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
@@ -264,6 +266,7 @@ struct QuadAD : modules::XTModule
                     pushEOCOnto[i] = -1;
                     isTriggerLinked[i] = false;
                     anyLinked = false;
+                    coTriggersWith[i] = 0;
                 }
                 for (int i = 0; i < n_ads; ++i)
                 {
@@ -291,6 +294,36 @@ struct QuadAD : modules::XTModule
                         isTriggerLinked[i] = true;
                         isTriggerLinked[loopFrom] = true;
                     }
+                }
+
+                // I hate that this calculation is so convluted but I don't see a clever way
+                // If you do, we love PRs! Anyway this makes the bitmask of people in a cycle
+                for (int i = 0; i < n_ads; ++i)
+                {
+                    int iPushOnto{0};
+                    for (int j = 0; j < n_ads; ++j)
+                    {
+                        auto pos = (i + j) & (n_ads - 1);
+                        if (pushEOCOnto[pos] != (pos + 1) % n_ads)
+                            break;
+                        iPushOnto |= 1 << pushEOCOnto[pos];
+                    }
+                    int pushOntoMe{0};
+                    for (int j = 1; j < n_ads; ++j)
+                    {
+                        auto pos = i - j;
+                        if (pos < 0)
+                            pos += n_ads;
+                        if (pushEOCOnto[pos] != (pos + 1) % n_ads)
+                            break;
+                        pushOntoMe |= 1 << pos;
+                    }
+
+                    auto res = pushOntoMe | iPushOnto;
+                    if (res)
+                        res |= 1 << i;
+
+                    coTriggersWith[i] = res;
                 }
             }
             // TRIGGER POLY TODO
@@ -343,11 +376,27 @@ struct QuadAD : modules::XTModule
                     auto iv = inputs[TRIGGER_0 + i].getVoltage(c);
                     auto lv = (isTriggerLinked[i] && (eocFromAway[i][c] > 0)) ? 10.f : 0.f;
 
-                    if (inputTriggers[i][c].process(iv) || linkTriggers[i][c].process(lv))
+                    auto extTrig = inputTriggers[i][c].process(iv);
+                    auto linkTrig = linkTriggers[i][c].process(lv);
+                    float maxNukeValue{0.f};
+                    if (extTrig)
+                    {
+                        auto nukeThese = coTriggersWith[i];
+                        for (int k = 0; k < n_ads; ++k)
+                        {
+                            if (i != k && (nukeThese & (1 << k)))
+                            {
+                                maxNukeValue = std::max(maxNukeValue, processors[k][c]->output);
+                                processors[k][c]->immediatelyEnd();
+                            }
+                        }
+                    }
+                    if (extTrig || linkTrig)
                     {
                         gated[i][c] = true;
-                        processors[i][c]->attackFrom(attackFromZero ? 0 : processors[i][c]->output,
-                                                     as, params[MODE_0 + i].getValue() < 0.5,
+                        auto af =
+                            attackFromZero ? 0 : std::max(processors[i][c]->output, maxNukeValue);
+                        processors[i][c]->attackFrom(af, as, params[MODE_0 + i].getValue() < 0.5,
                                                      params[ADAR_0 + i].getValue() > 0.5);
                     }
 

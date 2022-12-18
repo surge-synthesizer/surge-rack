@@ -269,9 +269,9 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
             addChild(titleLabel);
         }
 
-        if (alphaWarning)
+        if (alphaBetaWarning)
         {
-            alphaWarning->dirty = true;
+            alphaBetaWarning->dirty = true;
         }
 
         if (debugWarning)
@@ -280,12 +280,18 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         }
     }
 
-    BufferedDrawFunctionWidget *alphaWarning{nullptr};
+    BufferedDrawFunctionWidget *alphaBetaWarning{nullptr};
     void addAlpha()
     {
-        alphaWarning = new BufferedDrawFunctionWidget(rack::Vec(0, 0), rack::Vec(100, 20),
-                                                      [this](auto vg) { drawAlpha(vg); });
-        addChild(alphaWarning);
+        alphaBetaWarning = new BufferedDrawFunctionWidget(rack::Vec(0, 0), rack::Vec(100, 20),
+                                                          [this](auto vg) { drawAlpha(vg); });
+        addChild(alphaBetaWarning);
+    }
+    void addBeta()
+    {
+        alphaBetaWarning = new BufferedDrawFunctionWidget(rack::Vec(0, 0), rack::Vec(100, 20),
+                                                          [this](auto vg) { drawBeta(vg); });
+        addChild(alphaBetaWarning);
     }
     void drawAlpha(NVGcontext *vg)
     {
@@ -297,6 +303,17 @@ struct Background : public rack::TransparentWidget, style::StyleParticipant
         nvgText(vg, 1.5, 1.5, "ALPHA", nullptr);
         nvgFillColor(vg, nvgRGB(255, 0, 0));
         nvgText(vg, 1, 1, "ALPHA", nullptr);
+    }
+    void drawBeta(NVGcontext *vg)
+    {
+        nvgBeginPath(vg);
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, 18);
+        nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::TEXT_LABEL));
+        nvgText(vg, 1.5, 1.5, "BETA", nullptr);
+        nvgFillColor(vg, nvgRGB(0, 255, 0));
+        nvgText(vg, 1, 1, "BETA", nullptr);
     }
 
     BufferedDrawFunctionWidget *debugWarning{nullptr};

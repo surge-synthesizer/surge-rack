@@ -356,7 +356,7 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
 
     auto bg = new widgets::Background(box.size, "QUAD AD", "other", "FourOuts");
     addChild(bg);
-    bg->addAlpha();
+    bg->addBeta();
 
     /*auto portSpacing = layout::LayoutConstants::inputRowCenter_MM -
                        layout::LayoutConstants::modulationRowCenters_MM[1];*/

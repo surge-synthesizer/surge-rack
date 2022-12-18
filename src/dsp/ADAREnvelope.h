@@ -70,6 +70,7 @@ struct ADAREnvelope
         phase = f;
         stage = s_attack;
         current = BLOCK_SIZE;
+        outBlock0 = f;
         isDigital = id;
         isGated = ig;
         eoc_output = 0;
@@ -120,6 +121,15 @@ struct ADAREnvelope
         return target;
     }
 
+    inline void immediatelyEnd()
+    {
+        stage = s_complete;
+        eoc_output = 0;
+        output = 0;
+        eoc_countdown = 0;
+        current = BLOCK_SIZE;
+        outBlock0 = 0;
+    }
     inline void process(const float a, const float d, const int ashape, const int dshape,
                         const bool gateActive)
     {
