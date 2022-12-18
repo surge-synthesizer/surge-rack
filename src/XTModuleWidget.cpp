@@ -18,6 +18,11 @@
 namespace sst::surgext_rack::widgets
 {
 
+/* fix mingw LTO build */
+Label::~Label() {}
+ModRingKnob::~ModRingKnob() {}
+VerticalSliderModulator::~VerticalSliderModulator() {}
+
 /*
 ** These are internal only classes
 */
