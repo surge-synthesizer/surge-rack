@@ -35,11 +35,11 @@ inline float roundTemposync(float f)
     return a + b;
 };
 
-inline std::string temposyncLabel(float f)
+inline std::string temposyncLabel(float f, bool minus = false)
 {
     auto ts = temposync_support::roundTemposync(f);
     Parameter p;
-    return p.tempoSyncNotationValue(ts);
+    return p.tempoSyncNotationValue((minus ? -1 : 1) * ts);
 }
 } // namespace sst::surgext_rack::temposync_support
 #endif // SURGEXTRACK_TEMPOSYNCSUPPORT_H

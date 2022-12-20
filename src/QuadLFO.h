@@ -30,6 +30,8 @@
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
 
+#include "TemposyncSupport.h"
+
 namespace sst::surgext_rack::quadlfo
 {
 struct QuadLFO : modules::XTModule
@@ -271,8 +273,17 @@ struct QuadLFO : modules::XTModule
             auto m = mode();
             int off = paramId - QuadLFO::RATE_0;
             auto v = getValue();
-            auto fmtRate = [](auto v) {
+            auto fmtRate = [this](auto v, bool considerTS = false) {
                 auto sv = independentRateScale(v);
+
+                if (considerTS)
+                {
+                    auto q = qlfo();
+                    if (q && q->tempoSynced)
+                    {
+                        return temposync_support::temposyncLabel(sv, true);
+                    }
+                }
                 auto res = pow(2.0, sv);
                 if (res < 10)
                     return fmt::format("{:.2f} Hz", res);
@@ -289,7 +300,7 @@ struct QuadLFO : modules::XTModule
             {
                 if (off == 0)
                 {
-                    return fmtRate(v);
+                    return fmtRate(v, true);
                 }
                 else
                 {
@@ -300,7 +311,7 @@ struct QuadLFO : modules::XTModule
             {
                 if (off == 0)
                 {
-                    return fmtRate(v);
+                    return fmtRate(v, true);
                 }
                 else
                 {
@@ -318,7 +329,7 @@ struct QuadLFO : modules::XTModule
             {
                 if (off == 0)
                 {
-                    return fmtRate(v);
+                    return fmtRate(v, true);
                 }
                 else
                 {
@@ -331,6 +342,11 @@ struct QuadLFO : modules::XTModule
                 if (off == RATE_SPREAD)
                 {
                     auto sv = qlfo()->spreadRate(0);
+
+                    if (qlfo()->tempoSynced)
+                    {
+                        return temposync_support::temposyncLabel(sv, true);
+                    }
                     auto res = pow(2.0, sv);
                     if (res < 10)
                         return fmt::format("{:.2f} Hz", res);
@@ -920,6 +936,11 @@ struct QuadLFO : modules::XTModule
                 else
                 {
                     auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0][c]);
+                    if (tempoSynced)
+                    {
+                        auto r0 = temposync_support::roundTemposync(r);
+                        r = r0 + log2(storage->temposyncratio);
+                    }
                     if (i != 0)
                     {
                         r = R(this, r, i, c);
@@ -1174,15 +1195,9 @@ struct QuadLFO : modules::XTModule
         }
     }
 
-    void activateTempoSync()
-    {
-        std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
-    }
-
-    void deactivateTempoSync()
-    {
-        std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
-    }
+    bool tempoSynced{false};
+    void activateTempoSync() { tempoSynced = true; }
+    void deactivateTempoSync() { tempoSynced = false; }
 
     json_t *makeModuleSpecificJson() override
     {
