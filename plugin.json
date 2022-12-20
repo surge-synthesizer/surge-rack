@@ -333,6 +333,16 @@
       ]
     },
     {
+      "slug": "SurgeXTDelayLineByFreqExpanded",
+      "name": "Modelling Delay",
+      "description": "An expanded version of the Tuned Delay, perfect for many physical modelling patches",
+      "tags": [
+        "Effect",
+        "Delay",
+        "Polyphonic"
+      ]
+    },
+    {
       "slug": "SurgeXTEGxVCA",
       "name": "EG x VCA",
       "description": "The Surge XT Envelope Generator VCA Combo",

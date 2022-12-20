@@ -40,6 +40,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeVCF);
     p->addModel(modelSurgeDelay);
     p->addModel(modelSurgeDelayLineByFreq);
+    p->addModel(modelSurgeDelayLineByFreqExpanded);
     p->addModel(modelSurgeWaveshaper);
     p->addModel(modelSurgeLFO);
     p->addModel(modelSurgeMixer);
