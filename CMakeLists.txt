@@ -77,6 +77,7 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
         src/SurgeXT.cpp
         src/Delay.cpp
         src/DelayLineByFreq.cpp
+        src/DelayLineByFreqExpanded.cpp
         src/EGxVCA.cpp
         src/FX.cpp
         src/LFO.cpp

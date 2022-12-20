@@ -52,6 +52,7 @@ struct LayoutItem
     float spanmm{0}; // for group label only
     float overrideColWidth_MM{layout::LayoutConstants::columnWidth_MM};
 
+    bool skipModulation{false};
     bool dynamicLabel{false};
     std::function<std::string(modules::XTModule *m)> dynLabelFn{nullptr};
 
@@ -279,7 +280,6 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             if (knob)
             {
                 w->addChild(knob->asWidget());
-
                 auto boxx0 = lay.xcmm - lc::columnWidth_MM * 0.5 - halfSize;
                 auto boxy0 = lay.ycmm + 8.573 + halfSize - 5;
 
@@ -295,6 +295,9 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 }
 
                 w->addChild(lab);
+            }
+            if (knob && !lay.skipModulation)
+            {
                 w->underKnobs[lay.parId] = knob;
 
                 if (diff < 4)
