@@ -486,8 +486,8 @@ struct EGxVCA : modules::XTModule
 
     bool tempoSynced{false};
     void activateTempoSync() { tempoSynced = true; }
-
     void deactivateTempoSync() { tempoSynced = false; }
+
     json_t *makeModuleSpecificJson() override
     {
         auto vc = json_object();
