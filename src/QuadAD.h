@@ -140,7 +140,7 @@ struct QuadAD : modules::XTModule
             configSwitch(MODE_0 + i, 0, 1, 0, "Mode", {"Digital", "Analog"});
             configSwitch(A_SHAPE_0 + i, 0, 2, 1, "Attack Curve", {"Faster", "Standard", "Slower"});
             configSwitch(D_SHAPE_0 + i, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
-            configSwitch(ADAR_0 + i, 0, 1, 0, "AD vs AR", {"AD Trig", "AR Gate"});
+            configSwitch(ADAR_0 + i, 0, 1, 0, "AD vs AR", {"AD", "AR"});
             configSwitch(LINK_TRIGGER_0 + i, -1, 1, 0,
                          "Link " + std::to_string(i + 1) + " EOC to " +
                              std::to_string((i + 1) % n_ads + 1) + " Attack",

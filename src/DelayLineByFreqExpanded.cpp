@@ -41,7 +41,7 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "TUNED DELAY +", "fx", "BlankNoDisplay");
-    bg->addAlpha();
+    bg->addBeta();
     addChild(bg);
 
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
@@ -79,6 +79,7 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
         li_t::createGrouplabel("FEEDBACK FILTER", cols[1], row2, 3).withExtra("SHORTLEFT", 1),
 
         {li_t::PORT, "EXCITE", M::INPUT_EXCITER_AMP, cols[0], row2 },
+        li_t::createLCDArea(row3 - rack::mm2px(3.75))
         // clang-format on
     };
     auto corr = li_t{li_t::KNOB9, "CORRECT", M::CORRECTION, cols[0], row3};

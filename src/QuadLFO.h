@@ -640,10 +640,17 @@ struct QuadLFO : modules::XTModule
                           "Random Trigger"});
             configSwitch(BIPOLAR_0 + i, 0, 1, 1, "Bipolar", {"Uni", "Bi"});
         }
-        for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
-            configParam(MOD_PARAM_0 + i, -1, 1, 0);
         for (int i = 0; i < n_mod_inputs; ++i)
             configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i));
+
+        for (int i = 0; i < n_mod_inputs * n_mod_params; ++i)
+        {
+            auto pid = paramModulatedBy(i + MOD_PARAM_0);
+            auto id = i % n_mod_inputs;
+            auto pq = configParamNoRand<modules::ModulateFromToParamQuantity>(
+                MOD_PARAM_0 + i, -1, 1, 0, "Mod", "%", 0, 100);
+            pq->setup(id, pid);
+        }
 
         configSwitch(INTERPLAY_MODE, 0, 4, 0, "LFO Inter-operation Mode",
                      {"Independent", "Rate Ratio", "Quadrature", "Phase Offset", "Entangled"});
@@ -672,8 +679,8 @@ struct QuadLFO : modules::XTModule
     int polyChannelCount() { return nChan; }
     static int paramModulatedBy(int modIndex)
     {
-        int offset = modIndex - RATE_0;
-        if (offset >= n_mod_inputs * (n_mod_params + 1) || offset < 0)
+        int offset = modIndex - MOD_PARAM_0;
+        if (offset >= n_mod_inputs * n_mod_params || offset < 0)
             return -1;
         return offset / n_mod_inputs;
     }

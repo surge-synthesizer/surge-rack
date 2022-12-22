@@ -198,31 +198,27 @@ struct EGxVCA : modules::XTModule
         configSwitch(R_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
 
         // really need to configParam those mod params for this to work
-        for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
+        for (int i = 0; i < n_mod_inputs * n_mod_params; ++i)
         {
-            std::string name = std::string("Mod ") + std::to_string(i % 4 + 1);
-
-            configParamNoRand(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
-
-#if 0
-            int tp = paramModulatedBy(i + MOD_PARAM_0);
-
-            auto lb = paramQuantities[tp]->getLabel();
-
-            if (tp == LEVEL || tp == PAN)
-            {
-                std::string name = std::string("Mod ") + std::to_string(i % 4 + 1) + " to " + lb;
-                configParamNoRand(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
-            }
-            else
-            {
-                std::string name = std::string("Mod ") + std::to_string(i % 4 + 1);
-                auto r = configParamNoRand<modules::SurgeParameterModulationQuantity>(
-                    MOD_PARAM_0 + i, -1, 1, 0, name);
-                r->baseName = name;
-            }
-#endif
+            auto pid = paramModulatedBy(i + MOD_PARAM_0);
+            auto id = i % n_mod_inputs;
+            auto pq = configParamNoRand<modules::ModulateFromToParamQuantity>(
+                MOD_PARAM_0 + i, -1, 1, 0, "Mod", "%", 0, 100);
+            pq->setup(id, pid);
         }
+
+        for (int i = 0; i < n_mod_inputs; ++i)
+            configInput(MOD_INPUT_0 + i, "Mod Input " + std::to_string(i + 1));
+
+        configInput(INPUT_L, "Left");
+        configInput(INPUT_R, "Right");
+        configInput(GATE_IN, "Gate/Trig");
+        configInput(CLOCK_IN, "Clock");
+
+        configOutput(OUTPUT_L, "Left");
+        configOutput(OUTPUT_R, "Right");
+        configOutput(ENV_OUT, "Envelope");
+        configOutput(EOC_OUT, "End of Cycle");
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -261,7 +257,7 @@ struct EGxVCA : modules::XTModule
     int polyChannelCount() { return nChan; }
     static int paramModulatedBy(int modIndex)
     {
-        int offset = modIndex - LEVEL;
+        int offset = modIndex - MOD_PARAM_0;
         if (offset >= n_mod_inputs * (n_mod_params + 1) || offset < 0)
             return -1;
         return offset / n_mod_inputs;
