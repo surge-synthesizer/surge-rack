@@ -1,10 +1,13 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Pre-Beta Now (this as of  7fcdcb30ecc1 / Dec 13)
+## 2.1 - In Pre-Beta Now (this as of 4ce179343adcfc / Dec 21)
 
 - New Modules
-    - EGxVCA (still in development)
-    - QuadAD (still very much in development)
+    - EGxVCA (alphpa)
+    - QuadAD (beta) - four AD / AR envelopes with various settings
+    - QuadLFO (beta) - four simple LFOs with various inter-relationships
+    - Tuned Delay + (beta) - an expanded version of the Tuned Delay
+       with feedback, filters, modulation targets, and more.
 
 - Module Changes
     - The *Waveshaper* has a DC Blocker. It is on by default in new instances but 
@@ -26,6 +29,9 @@
       incorrect temposyncing. (Temposync in BPM mode was correct).
     - The modulation arm button didn't consume events, leading it to work 
        inconsistently in module lock mode
+    - The modulatino display in VCO tooltips would change when modulated
+      which is obviously incorrect! Base modulatino depths off of base
+      value to correct, like all the other modules.
     - Modulation depth typeins for some surge quantities were scaled incorrectly.
 
 - Infrastructure and Code Cleanups
@@ -34,7 +40,8 @@
     - Upgrade all our github actions to SDK 2.2 including an ARM cross compile
     - Add a blank module in docs and a little script to bring it to life with a name
     - In a mis-installed SurgeXT with no wavetables, make wavetable VCO act as sine oscillator
-    - Move far more of the build to CMake
+    - Compile correctly if a build forces AVX flags
+    - Move the build to CMake
 
 ## 2.0.3 - Nov 26, 2022
 
