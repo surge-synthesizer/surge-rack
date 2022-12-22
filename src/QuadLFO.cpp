@@ -154,6 +154,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
         auto dv = module->paramQuantities[QuadLFO::RATE_0 + idx]->getDisplayValueString();
+        dv = temposync_support::abbreviateSurgeTemposyncLabel(dv);
         nvgText(vg, this->box.size.x * 0.5, this->box.size.y - labelHeight * 0.5, dv.c_str(),
                 nullptr);
 
@@ -228,9 +229,9 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         }
         if (ip == QuadLFO::SPREAD)
         {
-            d = module->spreadDeform(idx);
-            auto a = module->spreadAmp(idx);
-            auto p = module->spreadPhase(idx);
+            d = module->spreadDeform(idx, 0);
+            auto a = module->spreadAmp(idx, 0);
+            auto p = module->spreadPhase(idx, 0);
             lfo->applyPhaseOffset(p);
             lfo->setAmplitude(a);
         }
@@ -348,7 +349,7 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
 
     auto bg = new widgets::Background(box.size, "QUAD LFO", "other", "FourOuts");
     addChild(bg);
-    bg->addAlpha();
+    bg->addBeta();
 
     auto portSpacing = 0.f;
 

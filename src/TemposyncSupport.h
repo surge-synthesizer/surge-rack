@@ -41,5 +41,24 @@ inline std::string temposyncLabel(float f, bool minus = false)
     Parameter p;
     return p.tempoSyncNotationValue((minus ? -1 : 1) * ts);
 }
+
+inline std::string abbreviateSurgeTemposyncLabel(std::string s)
+{
+    std::list<std::pair<std::string, std::string>> replace = {
+        {"whole note", "wh"}, {"note", "nt"},   {"dotted", "dt"}, {"triplet", "tri"},
+        {"whole", "w"},       {"double", "2x"}, {"triple", "3x"}};
+
+    for (const auto &[from, to] : replace)
+    {
+        auto p = s.find(from);
+        if (p != std::string::npos)
+        {
+            auto pre = s.substr(0, p);
+            auto post = s.substr(p + from.size());
+            s = pre + to + post;
+        }
+    }
+    return s;
+}
 } // namespace sst::surgext_rack::temposync_support
 #endif // SURGEXTRACK_TEMPOSYNCSUPPORT_H

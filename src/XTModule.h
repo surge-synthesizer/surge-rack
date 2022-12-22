@@ -1170,4 +1170,22 @@ struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
     virtual bool isTempoSync() { return false; }
 };
 
+struct ModulateFromToParamQuantity : public rack::ParamQuantity, CalculatedName
+{
+    int modSource{0}, targetIndex{0};
+    void setup(int ms, int ti)
+    {
+        this->modSource = ms;
+        this->targetIndex = ti;
+        this->name = getCalculatedName();
+    }
+    std::string getLabel() override { return getCalculatedName(); }
+    std::string getCalculatedName() override
+    {
+        auto nm = "Mod " + std::to_string(modSource + 1) + " to " +
+                  module->paramQuantities[targetIndex]->getLabel();
+        return nm;
+    }
+};
+
 } // namespace sst::surgext_rack::modules
