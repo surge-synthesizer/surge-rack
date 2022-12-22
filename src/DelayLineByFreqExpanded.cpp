@@ -40,7 +40,7 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
     engine_t::initializeModulationToBlank(this);
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
-    auto bg = new widgets::Background(box.size, "MODELLING DECAY", "fx", "BlankNoDisplay");
+    auto bg = new widgets::Background(box.size, "TUNED DELAY +", "fx", "BlankNoDisplay");
     bg->addAlpha();
     addChild(bg);
 
