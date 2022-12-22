@@ -334,8 +334,8 @@
     },
     {
       "slug": "SurgeXTDelayLineByFreqExpanded",
-      "name": "Modelling Delay",
-      "description": "An expanded version of the Tuned Delay, perfect for many physical modelling patches",
+      "name": "Tuned Delay +",
+      "description": "An expanded version of the Tuned Delay, perfect for many physical modelling and flanging style patches",
       "tags": [
         "Effect",
         "Delay",
