@@ -306,7 +306,7 @@ struct ADARCurveDraw : public rack::Widget, style::StyleParticipant
 
         auto smp = endt * module->storage->samplerate;
         auto runs = smp * BLOCK_SIZE_INV;
-        auto smpEvery = (int)std::floor(runs / (box.size.x * 4));
+        auto smpEvery = std::max((int)std::floor(runs / (box.size.x * 4)), 1);
         auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
 
         nvgBeginPath(vg);
