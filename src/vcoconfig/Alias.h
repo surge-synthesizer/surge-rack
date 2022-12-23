@@ -43,6 +43,15 @@ template <> VCOConfig<ot_alias>::layout_t VCOConfig<ot_alias>::getLayout()
     };
 }
 template <> int VCOConfig<ot_alias>::rightMenuParamId() { return 0; }
+template <> bool VCOConfig<ot_alias>::showRightMenuChoice(int choiceIndex)
+{
+    if (choiceIndex >= AliasOscillator::aow_mem_alias &&
+        choiceIndex <= AliasOscillator::aow_mem_stepseqdata)
+        return false;
+
+    return true;
+}
+
 template <> constexpr bool VCOConfig<ot_alias>::supportsAudioIn() { return true; }
 
 template <> void VCOConfig<ot_alias>::configureVCOSpecificParameters(VCO<ot_alias> *m)
@@ -62,12 +71,32 @@ template <> void VCOConfig<ot_alias>::configureVCOSpecificParameters(VCO<ot_alia
 
 template <> void VCOConfig<ot_alias>::processVCOSpecificParameters(VCO<ot_alias> *m)
 {
+    // Push the extra config data on for the additives and stuff
     for (int i = 0; i < 16; ++i)
     {
         auto pv =
             std::clamp(m->params[VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i].getValue(), -1.f, 1.f);
         m->oscstorage->extraConfig.data[i] = pv;
         m->oscstorage_display->extraConfig.data[i] = pv;
+    }
+
+    // Block the modes we forbid here also
+    auto sp = &(m->oscstorage_display->p[AliasOscillator::ao_wave]);
+    auto mx = sp->val_max.i;
+    auto mn = sp->val_min.i;
+    auto rp = m->paramQuantities[VCO<ot_alias>::OSC_CTRL_PARAM_0 + AliasOscillator::ao_wave];
+
+    auto vl = Parameter::intUnscaledFromFloat(rp->getValue(), mx, mn);
+
+    if (vl == AliasOscillator::aow_mem_stepseqdata || vl == AliasOscillator::aow_mem_dawextra)
+    {
+        // We probably hit this with a drag from above so
+        rp->setValue(Parameter::intScaledToFloat(AliasOscillator::aow_noise, mx, mn));
+    }
+    else if (vl >= AliasOscillator::aow_mem_alias && vl <= AliasOscillator::aow_mem_stepseqdata)
+    {
+        // We probably hit this with a drag from below so
+        rp->setValue(Parameter::intScaledToFloat(AliasOscillator::aow_audiobuffer, mx, mn));
     }
 }
 

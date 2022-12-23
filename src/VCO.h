@@ -48,6 +48,7 @@ template <int oscType> struct VCOConfig
     {
         return [](auto &s) { return s; };
     }
+    static bool showRightMenuChoice(int choiceIndex) { return true; }
 
     static void oscillatorSpecificSetup(VCO<oscType> *) {}
     static void processVCOSpecificParameters(VCO<oscType> *m) {}

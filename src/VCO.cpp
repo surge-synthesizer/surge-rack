@@ -1313,6 +1313,8 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
             int step{1};
             for (int i = surgePar.val_min.i; i <= surgePar.val_max.i; i += step)
             {
+                if (!VCOConfig<oscType>::showRightMenuChoice(i))
+                    continue;
                 char txt[256];
                 auto fv = Parameter::intScaledToFloat(i, surgePar.val_max.i, surgePar.val_min.i);
                 surgePar.get_display(txt, true, fv);
