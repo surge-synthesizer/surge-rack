@@ -194,7 +194,7 @@ template <int fxType> struct FX : modules::XTModule
 
     void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS, true); // get those presets. FIXME skip wt later
+        setupSurgeCommon(NUM_PARAMS, false);
 
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
