@@ -206,6 +206,7 @@ template <> VCOConfig<ot_twist>::layout_t VCOConfig<ot_twist>::getLayout()
     };
 }
 
+template <> constexpr bool VCOConfig<ot_twist>::recreateOnSampleRateChange() { return true; }
 template <> int VCOConfig<ot_twist>::rightMenuParamId() { return 0; }
 template <> std::string VCOConfig<ot_twist>::retriggerLabel() { return "TRIG"; }
 

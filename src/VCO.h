@@ -39,6 +39,7 @@ template <int oscType> struct VCOConfig
     static constexpr int maximumUnison() { return 9; }
     static constexpr bool requiresWavetables() { return false; }
     static constexpr bool supportsAudioIn() { return false; }
+    static constexpr bool recreateOnSampleRateChange() { return false; }
 
     static int getMenuLightID() { return -1; }
     static std::string getMenuLightString() { return ""; }
@@ -370,7 +371,7 @@ template <int oscType> struct VCO : public modules::XTModule
     static constexpr int n_state_slots{4};
     int intStateForConfig[n_state_slots];
 
-    void moduleSpecificSampleRateChange() override { forceRespawnDueToExternality = true; }
+    void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
 
     struct WavetableMessage
     {
@@ -401,7 +402,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
     std::array<int, MAX_POLY> lastUnison{-1};
     int lastNChan{-1};
-    bool forceRespawnDueToExternality = false;
+    bool forceRespawnDueToSampleRate = false;
     static constexpr int checkWaveTableEvery{512};
     int checkedWaveTable{checkWaveTableEvery};
     static constexpr int calcModMatrixEvery{256};
@@ -479,7 +480,20 @@ template <int oscType> struct VCO : public modules::XTModule
             }
         }
 
-        if (nChan != lastNChan || forceRespawnDueToExternality)
+        if constexpr (VCOConfig<oscType>::recreateOnSampleRateChange())
+        {
+            if (forceRespawnDueToSampleRate)
+            {
+                for (int i = 0; i < MAX_POLY; ++i)
+                {
+                    if (surge_osc[i])
+                        surge_osc[i]->~Oscillator();
+                    surge_osc[i] = nullptr;
+                }
+            }
+        }
+
+        if (nChan != lastNChan || forceRespawnDueToSampleRate)
         {
             lastNChan = nChan;
             // Set up unmodulated values
@@ -508,7 +522,7 @@ template <int oscType> struct VCO : public modules::XTModule
                     surge_osc[c]->init(pitch0);
                 }
             }
-            forceRespawnDueToExternality = false;
+            forceRespawnDueToSampleRate = false;
             processPosition = BLOCK_SIZE + 1;
         }
 

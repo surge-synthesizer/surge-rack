@@ -85,13 +85,13 @@ template <> void VCOConfig<ot_string>::processVCOSpecificParameters(VCO<ot_strin
         {
             p->deform_type =
                 (p->deform_type & ~StringOscillator::os_all) | StringOscillator::os_twox;
-            m->forceRespawnDueToExternality = true;
+            m->forceRespawnDueToSampleRate = true;
         }
         else if (!l0 && dt != StringOscillator::os_onex)
         {
             p->deform_type =
                 (p->deform_type & ~StringOscillator::os_all) | StringOscillator::os_onex;
-            m->forceRespawnDueToExternality = true;
+            m->forceRespawnDueToSampleRate = true;
         }
     }
 }
