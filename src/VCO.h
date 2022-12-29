@@ -39,6 +39,7 @@ template <int oscType> struct VCOConfig
     static constexpr int maximumUnison() { return 9; }
     static constexpr bool requiresWavetables() { return false; }
     static constexpr bool supportsAudioIn() { return false; }
+    static constexpr bool recreateOnSampleRateChange() { return false; }
 
     static int getMenuLightID() { return -1; }
     static std::string getMenuLightString() { return ""; }
@@ -370,7 +371,19 @@ template <int oscType> struct VCO : public modules::XTModule
     static constexpr int n_state_slots{4};
     int intStateForConfig[n_state_slots];
 
-    void moduleSpecificSampleRateChange() override { forceRespawnDueToExternality = true; }
+    void moduleSpecificSampleRateChange() override
+    {
+        forceRespawnDueToExternality = true;
+        if (VCOConfig<oscType>::recreateOnSampleRateChange())
+        {
+            for (int i = 0; i < MAX_POLY; ++i)
+            {
+                if (surge_osc[i])
+                    surge_osc[i]->~Oscillator();
+                surge_osc[i] = nullptr;
+            }
+        }
+    }
 
     struct WavetableMessage
     {
