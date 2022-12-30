@@ -41,6 +41,8 @@ template <int oscType> struct VCOConfig
     static constexpr bool supportsAudioIn() { return false; }
     static constexpr bool recreateOnSampleRateChange() { return false; }
 
+    static void postSpawnOscillatorChange(Oscillator *o) {}
+
     static int getMenuLightID() { return -1; }
     static std::string getMenuLightString() { return ""; }
 
@@ -176,6 +178,7 @@ template <int oscType> struct VCO : public modules::XTModule
         copyScenedataSubset(0, storage_id_start, storage_id_end);
         auto config_osc = spawn_osc(spawnOscType, storage.get(), oscstorage,
                                     storage->getPatch().scenedata[0], oscdisplaybuffer[0]);
+        VCOConfig<oscType>::postSpawnOscillatorChange(config_osc);
         config_osc->init_ctrltypes();
         config_osc->init_default_values();
         config_osc->init_extra_config();
@@ -183,6 +186,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         auto display_osc = spawn_osc(spawnOscType, storage.get(), oscstorage_display,
                                      storage->getPatch().scenedata[0], oscdisplaybuffer[1]);
+        VCOConfig<oscType>::postSpawnOscillatorChange(display_osc);
         display_osc->init_ctrltypes();
         display_osc->init_default_values();
         display_osc->init_extra_config();
@@ -514,6 +518,7 @@ template <int oscType> struct VCO : public modules::XTModule
                 {
                     surge_osc[c] = spawn_osc(spawnOscType, storage.get(), oscstorage,
                                              storage->getPatch().scenedata[0], oscbuffer[c]);
+                    VCOConfig<oscType>::postSpawnOscillatorChange(surge_osc[c]);
 
                     surge_osc[c]->init(pitch0);
                 }
