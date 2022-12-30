@@ -263,6 +263,15 @@ template <> bool VCOConfig<ot_twist>::getVCOSpecificReInit(VCO<ot_twist> *m)
     m->intStateForConfig[1] = deact;
     return res;
 }
+
+template <> void VCOConfig<ot_twist>::postSpawnOscillatorChange(Oscillator *o)
+{
+    auto to = dynamic_cast<TwistOscillator *>(o);
+    if (to)
+    {
+        to->useCorrectLPGBlockSize = true;
+    }
+}
 } // namespace sst::surgext_rack::vco
 
 #endif
