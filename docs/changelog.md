@@ -1,12 +1,12 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Pre-Beta Now (this as of 4ce179343adcfc / Dec 21)
+## 2.1 - In Pre-Beta Now (this as of 93f8cab220dbd4f1c / Dec 30)
 
 - New Modules
     - EGxVCA (alphpa)
     - QuadAD (beta) - four AD / AR envelopes with various settings
     - QuadLFO (beta) - four simple LFOs with various inter-relationships
-    - Tuned Delay + (beta) - an expanded version of the Tuned Delay
+    - Tuned Delay + - an expanded version of the Tuned Delay
        with feedback, filters, modulation targets, and more.
 
 - Module Changes
@@ -29,10 +29,14 @@
       incorrect temposyncing. (Temposync in BPM mode was correct).
     - The modulation arm button didn't consume events, leading it to work 
        inconsistently in module lock mode
+    - Twist Oscillator didn't reset sample rate correctly on single process SR change
+    - Twist Oscillator LPG decay time was mis-callibrated by a factor of 1/12th
     - The modulatino display in VCO tooltips would change when modulated
       which is obviously incorrect! Base modulatino depths off of base
       value to correct, like all the other modules.
     - Modulation depth typeins for some surge quantities were scaled incorrectly.
+    - The Alias oscillator no longer allows selection of the memory locations, whic
+      are not useful in the rack context
 
 - Infrastructure and Code Cleanups
     - Skip the airwindows sub-library build in the surge dep phase since we dont use it in rack

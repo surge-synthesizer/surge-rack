@@ -31,6 +31,68 @@ struct DelayLineByFreqExpandedWidget : widgets::XTModuleWidget
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
 };
 
+struct DelayLineMeterWidget : public rack::Widget, public style::StyleParticipant
+{
+    DelayLineByFreqExpanded *module{nullptr};
+
+    void drawInnards(NVGcontext *vg, int layer)
+    {
+        auto off = rack::mm2px(0.5);
+        auto colGap = rack::mm2px(0.1);
+
+        auto mp = module->polyChannelCount();
+        auto dx = (box.size.x - 2 * off) / (mp);
+        auto col = style()->getColor(style::XTStyle::PLOT_CURVE);
+        auto gcp = col;
+        gcp.a = 0.8;
+        auto gcn = col;
+        gcn.a = 0.3;
+
+        for (int i = 0; i < mp; ++i)
+        {
+            auto v = module->vuLevel[i];
+            nvgBeginPath(vg);
+            auto h = std::clamp(v * 0.2, 0., 1.) * (box.size.y - off);
+            if (layer == 0)
+            {
+                nvgRect(vg, off + dx * i + colGap, box.pos.y - h, dx - 2 * colGap, h);
+                nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y * 0.9, gcp, gcn));
+                nvgFill(vg);
+            }
+            else
+            {
+                nvgRect(vg, off + dx * i, box.pos.y - h - 0.5, dx, 1);
+                nvgFillColor(vg, col);
+                nvgFill(vg);
+            }
+        }
+    }
+    void draw(const DrawArgs &args) override
+    {
+        auto vg = args.vg;
+
+        if (module)
+        {
+            nvgBeginPath(vg);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
+            nvgFontFaceId(vg, style()->fontIdBold(vg));
+            nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+            nvgTextAlign(vg, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+            auto s = "Chan: " + std::to_string(module->polyChannelCount());
+            nvgText(vg, 1, 2, s.c_str(), nullptr);
+            drawInnards(vg, 0);
+        }
+        Widget::draw(args);
+    }
+    void drawLayer(const DrawArgs &args, int layer) override
+    {
+        if (layer == 1)
+            drawInnards(args.vg, layer);
+    }
+
+    void onStyleChanged() override {}
+};
+
 DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
     DelayLineByFreqExpandedWidget::M *module)
     : XTModuleWidget()
@@ -41,7 +103,6 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
     auto bg = new widgets::Background(box.size, "TUNED DELAY +", "fx", "BlankNoDisplay");
-    bg->addBeta();
     addChild(bg);
 
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
@@ -88,7 +149,18 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
 
     for (const auto &lay : layout)
     {
-        engine_t::layoutItem(this, lay, "DealByFreqExpanded");
+        engine_t::layoutItem(this, lay, "TUNED DELAY +");
+    }
+
+    rack::Rect lcdB;
+    auto lc = getFirstDescendantOfType<widgets::LCDBackground>();
+    if (lc)
+    {
+        lcdB = lc->box;
+        auto w = rack::createWidget<DelayLineMeterWidget>(lcdB.pos);
+        w->box.size = lcdB.size;
+        w->module = module;
+        addChild(w);
     }
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);

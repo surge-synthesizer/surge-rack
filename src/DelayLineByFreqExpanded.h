@@ -152,6 +152,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
             lpFB[i]->suspend();
             hpFB[i] = std::make_unique<BiquadFilter>(storage.get());
             hpFB[i]->suspend();
+
+            vuLevel[i] = 0.f;
         }
 
         modAssist.initialize(this);
@@ -200,6 +202,9 @@ struct DelayLineByFreqExpanded : modules::XTModule
             return 0;
         return modAssist.animValues[idx];
     }
+
+    float vuLevel[MAX_POLY];
+    float vuFalloff{0.999};
 
     void process(const ProcessArgs &args) override
     {
@@ -349,11 +354,23 @@ struct DelayLineByFreqExpanded : modules::XTModule
             lineL[i]->write(il);
             lineR[i]->write(ir);
 
+            if (processCount == 0)
+            {
+                // every 8th sample for VU should be fine
+                vuLevel[i] = std::clamp(
+                    std::max(vuFalloff * vuLevel[i], (std::fabs(dl) + std::fabs(dr))), 0.f, 10.f);
+            }
+
             outputs[INPUT_L].setVoltage(dl, i);
             outputs[INPUT_R].setVoltage(dr, i);
         }
 
         processCount++;
+    }
+
+    void moduleSpecificSampleRateChange() override
+    {
+        vuFalloff = exp(-2.0 * M_PI * 8 / APP->engine->getSampleRate());
     }
 };
 } // namespace sst::surgext_rack::delay
