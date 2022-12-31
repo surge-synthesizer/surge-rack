@@ -86,8 +86,11 @@ struct DelayLineMeterWidget : public rack::Widget, public style::StyleParticipan
     }
     void drawLayer(const DrawArgs &args, int layer) override
     {
-        if (layer == 1)
-            drawInnards(args.vg, layer);
+        if (module)
+        {
+            if (layer == 1)
+                drawInnards(args.vg, layer);
+        }
     }
 
     void onStyleChanged() override {}
