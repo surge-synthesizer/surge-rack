@@ -194,8 +194,7 @@ template <int fxType> struct FX : modules::XTModule
 
     void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
-
+        setupSurgeCommon(NUM_PARAMS, true);
         fxstorage = &(storage->getPatch().fx[0]);
         fxstorage->type.val.i = fxType;
 
