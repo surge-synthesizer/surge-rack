@@ -90,7 +90,7 @@ jobs:
           export CROSS_COMPILE=$CROSS_COMPILE_TARGET_${{ matrix.platform }}
           make dep
           make dist
-          echo "Plugin architecture '$(lipo -archs plugin.dylib)'"
+          echo "Plugin architecture '$(lipo -archs plugin*.dylib)'"
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:

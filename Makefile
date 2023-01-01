@@ -13,6 +13,7 @@ ifdef ARCH_MAC
   RACK_PLUGIN := plugin.dylib
   ifdef ARCH_ARM64
     EXTRA_CMAKE := -DCMAKE_OSX_ARCHITECTURES="arm64"
+    RACK_PLUGIN := plugin-arm64.dylib
   endif
 endif
 
