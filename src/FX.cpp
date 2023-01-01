@@ -99,6 +99,9 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         id = i;
         if (!module)
             return;
+        if (module->presets.empty())
+            return;
+
         module->loadPreset(id);
         currentPreset = &module->presets[id];
         forceDirty = true;
@@ -106,6 +109,8 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
     void onPresetJog(int dir /* +/- 1 */) override
     {
         if (!module)
+            return;
+        if (module->presets.empty())
             return;
 
         id += dir;
@@ -135,6 +140,8 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
     {
         if (!module)
             return "";
+        if (module->presets.empty())
+            return "";
         if (module->maxPresets == 0)
             return "";
         if (module->maxPresets <= id || id < 0)
@@ -150,7 +157,8 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
     bool forceDirty{true};
     bool isDirty() override
     {
-        if (module && currentPreset && checkPresetEvery == 0 && !module->presetIsDirty)
+        if (module && !module->presets.empty() && currentPreset && checkPresetEvery == 0 &&
+            !module->presetIsDirty)
         {
             for (int i = 0; i < n_fx_params; ++i)
             {
@@ -180,7 +188,7 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         if (checkPresetEvery >= 8)
             checkPresetEvery = 0;
 
-        if (module)
+        if (module && !module->presets.empty())
         {
             if (module->loadedPreset >= 0 && module->loadedPreset != id)
             {
@@ -198,7 +206,12 @@ template <int fxType> struct FXPresetSelector : widgets::PresetJogSelector
         return false;
     }
 
-    bool hasPresets() override { return module != nullptr; }
+    bool hasPresets() override
+    {
+        if (module)
+            return !module->presets.empty();
+        return module != nullptr;
+    }
 };
 
 template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
