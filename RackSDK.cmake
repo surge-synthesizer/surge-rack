@@ -1,6 +1,6 @@
 # Mapping of plugin build definitions from the Rack-SDK arch.mk, compile.mk, dep.mk and plugin.mk to CMake.
 
-set(RACK_SDK_VERSION 2.2.1)
+set(RACK_SDK_VERSION 2.2.2)
 message(STATUS "Load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION})")
 
 if ("${RACK_SDK_DIR}" STREQUAL "")
@@ -22,15 +22,10 @@ if ("${ADDITIONAL_PLUGIN_DISTRIBUTABLES}" STREQUAL "")
 endif ()
 
 # Do not change the RACK_PLUGIN_LIB!
-if (APPLE)
-  if (${CMAKE_OSX_ARCHITECTURES} MATCHES "arm64")
-    set(RACK_PLUGIN_LIB plugin-arm64)
-  else()
-    set(RACK_PLUGIN_LIB plugin)
-  endif()
-else()
-  set(RACK_PLUGIN_LIB plugin)
-endif()
+if (${CMAKE_OSX_ARCHITECTURES} MATCHES "arm64")
+  set(RACK_PLUGIN_ARCH -arm64)
+endif ()
+set(RACK_PLUGIN_LIB plugin${RACK_PLUGIN_ARCH})
 
 file(GLOB LICENSE LICENSE*)
 set(PLUGIN_DISTRIBUTABLES plugin.json res ${LICENSE} ${ADDITIONAL_PLUGIN_DISTRIBUTABLES})
@@ -112,17 +107,10 @@ install(TARGETS ${RACK_PLUGIN_LIB} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${P
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
 file(COPY ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
 
-# Since the name of RACK_PLUGIN_LIB is no longer stable in SDK 2.2.1 add a stable
-# named target
-set(RACK_BUILD_TARGET build_plugin)
-add_custom_target(${RACK_BUILD_TARGET})
-add_dependencies(${RACK_BUILD_TARGET} ${RACK_PLUGIN_LIB})
-
 # A quick installation target to copy the plugin library and plugin.json into VCV Rack plugin folder for development.
 # CMAKE_INSTALL_PREFIX needs to point to the VCV Rack plugin folder in user documents.
-set(RACK_QUICK_INSTALL ${RACK_BUILD_TARGET}_quick_install)
-add_custom_target(${RACK_QUICK_INSTALL}
+add_custom_target(${RACK_PLUGIN_LIB}_quick_install
         COMMAND cmake -E copy $<TARGET_FILE:${RACK_PLUGIN_LIB}> ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
-add_dependencies(${RACK_QUICK_INSTALL} ${RACK_BUILD_TARGET})
+add_dependencies(${RACK_PLUGIN_LIB}_quick_install ${RACK_PLUGIN_LIB})
