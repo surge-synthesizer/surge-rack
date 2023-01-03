@@ -45,5 +45,12 @@ template <> FXConfig<fxt_exciter>::layout_t FXConfig<fxt_exciter>::getLayout()
         // clang-format on
     };
 }
+
+// The exciter is super input sensitive to overflows and can generate big spikes if it
+// gets them. In the VST the signal is attenuated by 6db by the half rate filter so take
+// most of that out here (I don't want to go all the way to a half because...) and add
+// a softclip to make sure outbound spikes dont emerge.
+template <> constexpr float FXConfig<fxt_exciter>::rescaleInputFactor() { return 0.666666f; }
+template <> constexpr bool FXConfig<fxt_exciter>::softclipOutput() { return true; }
 } // namespace sst::surgext_rack::fx
 #endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H

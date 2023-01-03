@@ -65,6 +65,9 @@ template <int fxType> struct FXConfig
     static constexpr bool usesPresets() { return true; }
     static constexpr int numParams() { return n_fx_params; }
     static constexpr bool allowsPolyphony() { return true; }
+
+    static constexpr float rescaleInputFactor() { return 1.0; }
+    static constexpr bool softclipOutput() { return false; }
 };
 
 template <int fxType> struct FX : modules::XTModule
@@ -442,8 +445,10 @@ template <int fxType> struct FX : modules::XTModule
     }
     void processMono(const typename rack::Module::ProcessArgs &args)
     {
-        float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
-        float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+        static constexpr float scaleFac{FXConfig<fxType>::rescaleInputFactor()},
+            unscaleFac{1.0f / scaleFac};
+        float inl = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL * scaleFac;
+        float inr = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL * scaleFac;
 
         outputs[OUTPUT_L].setChannels(1);
         outputs[OUTPUT_R].setChannels(1);
@@ -527,9 +532,19 @@ template <int fxType> struct FX : modules::XTModule
             bufferPos = 0;
         }
 
-        float outl = processedL[0][bufferPos] * SURGE_TO_RACK_OSC_MUL;
-        float outr = processedR[0][bufferPos] * SURGE_TO_RACK_OSC_MUL;
+        float outl = processedL[0][bufferPos] * unscaleFac;
+        float outr = processedR[0][bufferPos] * unscaleFac;
 
+        if constexpr (FXConfig<fxType>::softclipOutput())
+        {
+            // FIXME we can do this simd-wise of course
+            outl = std::clamp(outl, -1.5f, 1.5f);
+            outr = std::clamp(outr, -1.5f, 1.5f);
+            outl = outl - 4.0 / 27.0 * outl * outl * outl;
+            outr = outr - 4.0 / 27.0 * outr * outr * outr;
+        }
+        outl *= SURGE_TO_RACK_OSC_MUL;
+        outr *= SURGE_TO_RACK_OSC_MUL;
         if (outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected())
         {
             outputs[OUTPUT_L].setVoltage(0.5 * (outl + outr));
@@ -571,6 +586,9 @@ template <int fxType> struct FX : modules::XTModule
 
     void processPoly(const typename rack::Module::ProcessArgs &args)
     {
+        static constexpr float scaleFac{FXConfig<fxType>::rescaleInputFactor()},
+            unscaleFac{1.0f / scaleFac};
+
         auto chan = std::max({1, inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels()});
 
         if (chan != lastNChan)
@@ -588,8 +606,8 @@ template <int fxType> struct FX : modules::XTModule
 
         for (int c = 0; c < chan; ++c)
         {
-            float inl = inputs[INPUT_L].getVoltage(c) * RACK_TO_SURGE_OSC_MUL;
-            float inr = inputs[INPUT_R].getVoltage(c) * RACK_TO_SURGE_OSC_MUL;
+            float inl = inputs[INPUT_L].getVoltage(c) * RACK_TO_SURGE_OSC_MUL * scaleFac;
+            float inr = inputs[INPUT_R].getVoltage(c) * RACK_TO_SURGE_OSC_MUL * scaleFac;
 
             if (inputs[INPUT_L].isConnected() && !inputs[INPUT_R].isConnected())
             {
@@ -674,8 +692,19 @@ template <int fxType> struct FX : modules::XTModule
         bool mono = outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected();
         for (int c = 0; c < chan; ++c)
         {
-            float outl = processedL[c][bufferPos] * SURGE_TO_RACK_OSC_MUL;
-            float outr = processedR[c][bufferPos] * SURGE_TO_RACK_OSC_MUL;
+            float outl = processedL[c][bufferPos] * unscaleFac;
+            float outr = processedR[c][bufferPos] * unscaleFac;
+
+            if constexpr (FXConfig<fxType>::softclipOutput())
+            {
+                // FIXME we can do this simd-wise of course
+                outl = std::clamp(outl, -1.5f, 1.5f);
+                outr = std::clamp(outr, -1.5f, 1.5f);
+                outl = outl - 4.0 / 27.0 * outl * outl * outl;
+                outr = outr - 4.0 / 27.0 * outr * outr * outr;
+            }
+            outl *= SURGE_TO_RACK_OSC_MUL;
+            outr *= SURGE_TO_RACK_OSC_MUL;
 
             if (mono)
             {
