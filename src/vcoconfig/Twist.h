@@ -272,6 +272,21 @@ template <> void VCOConfig<ot_twist>::postSpawnOscillatorChange(Oscillator *o)
         to->useCorrectLPGBlockSize = true;
     }
 }
+
+template <>
+void VCOConfig<ot_twist>::oscillatorReInit(VCO<ot_twist> *m, Oscillator *o, float pitch0)
+{
+    // Twist is special in that it doesn't phase lock and has a warmup
+    // for voice on which for surge single voice means it makes sense
+    // but here the re-init when triggered (which is the LPG gesture)
+    // doesn't make sense. So just do nothing here if LPG is on and
+    // trigger is connected
+    auto deact = m->oscstorage->p[TwistOscillator::twist_lpg_response].deactivated;
+    if (deact || !m->inputs[VCO<ot_twist>::RETRIGGER].isConnected())
+    {
+        o->init(pitch0);
+    }
+}
 } // namespace sst::surgext_rack::vco
 
 #endif

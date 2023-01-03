@@ -79,6 +79,8 @@ template <int oscType> struct VCOConfig
     {
         return nullptr;
     }
+
+    static void oscillatorReInit(VCO<oscType> *m, Oscillator *o, float pitch0) { o->init(pitch0); }
 };
 
 template <int oscType> struct VCO : public modules::XTModule
@@ -520,11 +522,13 @@ template <int oscType> struct VCO : public modules::XTModule
                                              storage->getPatch().scenedata[0], oscbuffer[c]);
                     VCOConfig<oscType>::postSpawnOscillatorChange(surge_osc[c]);
 
+                    // We want to make sure the correct init is always called here not the override
                     surge_osc[c]->init(pitch0);
                 }
                 else
                 {
-                    surge_osc[c]->init(pitch0);
+                    // But this oscillator has already been initialized so let the override in
+                    VCOConfig<oscType>::oscillatorReInit(this, surge_osc[c], pitch0);
                 }
             }
             forceRespawnDueToSampleRate = false;
@@ -582,7 +586,8 @@ template <int oscType> struct VCO : public modules::XTModule
 
             int retrigChans = inputs[RETRIGGER].getChannels();
             bool monoRetriggerOn{false};
-            if (inputs[RETRIGGER].isConnected() && retrigChans == 1)
+            bool triggerConnected = inputs[RETRIGGER].isConnected();
+            if (triggerConnected && retrigChans == 1)
             {
                 monoRetriggerOn = reTrigger[0].process(inputs[RETRIGGER].getVoltage());
             }
@@ -596,6 +601,14 @@ template <int oscType> struct VCO : public modules::XTModule
             for (int c = 0; c < nChan; ++c)
             {
                 bool needsReInit{reInitEveryOSC};
+                bool gated{true};
+                if (triggerConnected)
+                {
+                    if (retrigChans == 1)
+                        gated = inputs[RETRIGGER].getVoltage(0) > 2;
+                    else
+                        gated = inputs[RETRIGGER].getVoltage(c) > 2;
+                }
 
                 if (monoRetriggerOn)
                 {
@@ -644,8 +657,10 @@ template <int oscType> struct VCO : public modules::XTModule
                     copyScenedataSubset(0, storage_id_start, storage_id_end);
                     if (needsReInit)
                     {
-                        surge_osc[c]->init(pitch0);
+                        // surge_osc[c]->init(pitch0);
+                        VCOConfig<oscType>::oscillatorReInit(this, surge_osc[c], pitch0);
                     }
+                    surge_osc[c]->setGate(gated);
                     surge_osc[c]->process_block(pitch0, driftVal, true);
                     copy_block(surge_osc[c]->output, osc_downsample[0][c], BLOCK_SIZE_OS_QUAD);
                     copy_block(surge_osc[c]->outputR, osc_downsample[1][c], BLOCK_SIZE_OS_QUAD);
