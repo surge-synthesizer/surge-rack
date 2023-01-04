@@ -674,7 +674,7 @@ struct QuadLFO : modules::XTModule
 
     std::array<std::array<std::unique_ptr<dsp::modulators::SimpleLFO>, MAX_POLY>, n_lfos>
         processors;
-    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false); }
+    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false, false); }
 
     int polyChannelCount() { return nChan; }
     static int paramModulatedBy(int modIndex)

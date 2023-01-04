@@ -150,7 +150,7 @@ template <int oscType> struct VCO : public modules::XTModule
         lastUnison.fill(-1);
 
         memset(audioInBuffer, 0, BLOCK_SIZE_OS * sizeof(float));
-        setupSurgeCommon(NUM_PARAMS, VCOConfig<oscType>::requiresWavetables());
+        setupSurgeCommon(NUM_PARAMS, VCOConfig<oscType>::requiresWavetables(), false);
 
         wavetableCount = storage->wt_list.size();
 

@@ -58,7 +58,7 @@ struct DelayLineByFreq : modules::XTModule
 
     DelayLineByFreq() : XTModule()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(VOCT, -5, 5, 0, "V/Oct Center");
         auto pq = configParam(CORRECTION, 0, 20, 0, "Sample Correction");

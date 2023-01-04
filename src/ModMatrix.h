@@ -59,7 +59,7 @@ struct ModMatrix : modules::XTModule
     {
         std::lock_guard<std::mutex> ltg(xtSurgeCreateMutex);
 
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         for (int i = TARGET0; i <= TARGET0 + n_matrix_params; ++i)
