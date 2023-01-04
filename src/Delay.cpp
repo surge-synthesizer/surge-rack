@@ -42,6 +42,7 @@ struct DelayWidget : widgets::XTModuleWidget
             menu, module->paramQuantities[M::CLIP_MODE_PARAM],
             {{"No Clipper (Potentially Unbounded)", M::ClipMode::TRANSPARENT},
              {"Softclip @+/-5V (Surge VST Behavior)", M::ClipMode::SOFTCLIP_DELAYLINE_5V},
+             {"Softclip @+/-10V", M::ClipMode::SOFTCLIP_DELAYLINE_10V},
              {"Hardclip @+/-10V", M::ClipMode::HARDCLIP_DELAYLINE_10V}});
     }
 

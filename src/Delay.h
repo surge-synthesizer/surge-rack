@@ -92,6 +92,7 @@ struct Delay : modules::XTModule
     {
         TRANSPARENT,
         SOFTCLIP_DELAYLINE_5V,
+        SOFTCLIP_DELAYLINE_10V,
         HARDCLIP_DELAYLINE_10V
     };
 
@@ -310,10 +311,19 @@ struct Delay : modules::XTModule
             break;
         case SOFTCLIP_DELAYLINE_5V:
             // Write the clean signal softclip the output
-            dl = std::clamp(dl, -1.5f, 1.5f); // 10V
+            dl = std::clamp(dl, -1.5f, 1.5f); // 5V since this yields +/- 1
             dr = std::clamp(dr, -1.5f, 1.5f);
             dl = dl - 4.0f / 27.0f * dl * dl * dl;
             dr = dr - 4.0f / 27.0f * dr * dr * dr;
+            break;
+        case SOFTCLIP_DELAYLINE_10V:
+            // Write the clean signal softclip the output
+            dl = std::clamp(dl, -3.f, 3.f); // 10V since this yields +/- 2
+            dr = std::clamp(dr, -3.f, 3.f);
+            dl = dl * 0.5;
+            dr = dr * 0.5;
+            dl = 2.0f * dl - 8.0f / 27.0f * dl * dl * dl;
+            dr = 2.0f * dr - 8.0f / 27.0f * dr * dr * dr;
             break;
         }
 
