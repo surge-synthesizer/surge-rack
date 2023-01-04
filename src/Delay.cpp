@@ -38,10 +38,11 @@ struct DelayWidget : widgets::XTModuleWidget
 
         menu->addChild(new rack::ui::MenuSeparator);
         menu->addChild(rack::createMenuLabel("Delay Line Clipping"));
-        addSelectionMenu(menu, module->paramQuantities[M::CLIP_MODE_PARAM],
-                         {{"No Clipper (Potentially Unbounded)", M::ClipMode::TRANSPARENT},
-                          {"Softclip @+/-5V (Surge Default)", M::ClipMode::SOFTCLIP_DELAYLINE_5V},
-                          {"Hardclip @+/-10V", M::ClipMode::HARDCLIP_DELAYLINE_10V}});
+        addSelectionMenu(
+            menu, module->paramQuantities[M::CLIP_MODE_PARAM],
+            {{"No Clipper (Potentially Unbounded)", M::ClipMode::TRANSPARENT},
+             {"Softclip @+/-5V (Surge VST Behavior)", M::ClipMode::SOFTCLIP_DELAYLINE_5V},
+             {"Hardclip @+/-10V", M::ClipMode::HARDCLIP_DELAYLINE_10V}});
     }
 
     void selectModulator(int mod) override
