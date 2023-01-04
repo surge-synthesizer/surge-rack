@@ -91,10 +91,8 @@ struct Delay : modules::XTModule
     enum ClipMode
     {
         TRANSPARENT,
-        SOFTCLIP_FEEDBACK,
-        SOFTCLIP_FULL_SIGNAL,
-        SOFTCLIP_OUTPUT,
-        HARDCLIP_OUTPUT
+        SOFTCLIP_DELAYLINE_5V,
+        HARDCLIP_DELAYLINE_10V
     };
 
     struct DelayTimeParamQuantity : public rack::engine::ParamQuantity
@@ -168,8 +166,8 @@ struct Delay : modules::XTModule
             configParamNoRand(DELAY_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
-        configParamNoRand(CLIP_MODE_PARAM, TRANSPARENT, HARDCLIP_OUTPUT, SOFTCLIP_FEEDBACK,
-                          "Clip Mode");
+        configParamNoRand(CLIP_MODE_PARAM, TRANSPARENT, HARDCLIP_DELAYLINE_10V,
+                          HARDCLIP_DELAYLINE_10V, "Clip Mode");
 
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
@@ -222,7 +220,7 @@ struct Delay : modules::XTModule
     int blockPos{0};
     float tsL{0}, tsR{0};
     float modVal{0}, dMod{0}, modPhase{0};
-    ClipMode currentClipMode{SOFTCLIP_FEEDBACK};
+    ClipMode currentClipMode{HARDCLIP_DELAYLINE_10V};
 
     void process(const ProcessArgs &args) override
     {
@@ -304,49 +302,23 @@ struct Delay : modules::XTModule
         switch (currentClipMode)
         {
         case TRANSPARENT:
-            // write the clean signal output whatever we read
-            wl = il + fb * dl + cf * dr;
-            wr = ir + fb * dr + cf * dl;
             break;
-        case HARDCLIP_OUTPUT:
+        case HARDCLIP_DELAYLINE_10V:
             // write the clean signal, clamp the output at 10v
-            wl = il + fb * dl + cf * dr;
-            wr = ir + fb * dr + cf * dl;
             dl = std::clamp(dl, -2.f, 2.f); // 10V
             dr = std::clamp(dr, -2.f, 2.f);
             break;
-        case SOFTCLIP_OUTPUT:
+        case SOFTCLIP_DELAYLINE_5V:
             // Write the clean signal softclip the output
-            wl = il + fb * dl + cf * dr;
-            wr = ir + fb * dr + cf * dl;
-
             dl = std::clamp(dl, -1.5f, 1.5f); // 10V
             dr = std::clamp(dr, -1.5f, 1.5f);
-            dl = dl - 4.0 / 27.0 * dl * dl * dl;
-            dr = dr - 4.0 / 27.0 * dr * dr * dr;
-            break;
-        case SOFTCLIP_FEEDBACK:
-            // Write the signal with the feedback path softclipped. This is the surge VST default
-            dl = std::clamp(dl, -1.5f, 1.5f);
-            dr = std::clamp(dr, -1.5f, 1.5f);
-
-            dl = dl - 4.0 / 27.0 * dl * dl * dl;
-            dr = dr - 4.0 / 27.0 * dr * dr * dr;
-
-            wl = il + fb * dl + cf * dr;
-            wr = ir + fb * dr + cf * dl;
-            break;
-        case SOFTCLIP_FULL_SIGNAL:
-            // softclip the entire feedback path, output whatever we read
-            wl = il + fb * dl + cf * dr;
-            wr = ir + fb * dr + cf * dl;
-            wl = std::clamp(wl, -1.5f, 1.5f);
-            wr = std::clamp(wr, -1.5f, 1.5f);
-
-            wl = wl - 4.0 / 27.0 * wl * wl * wl;
-            wr = wr - 4.0 / 27.0 * wr * wr * wr;
+            dl = dl - 4.0f / 27.0f * dl * dl * dl;
+            dr = dr - 4.0f / 27.0f * dr * dr * dr;
             break;
         }
+
+        wl = il + fb * dl + cf * dr;
+        wr = ir + fb * dr + cf * dl;
 
         lpPost->process_sample(wl, wr, wl, wr);
         hpPost->process_sample(wl, wr, wl, wr);
