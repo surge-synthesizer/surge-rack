@@ -3,7 +3,7 @@ name: Surge XT Rack Content Upload
 on: workflow_dispatch
 
 env:
-  rack-sdk-version: 2.2.1
+  rack-sdk-version: 2.2.2
 
 defaults:
   run:

@@ -2,7 +2,7 @@ name: VCV Rack Code Checks
 on: [pull_request]
 
 env:
-  rack-sdk-version: 2.2.1
+  rack-sdk-version: 2.2.2
 
 defaults:
   run:
