@@ -299,12 +299,49 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
     {
         if (module && e.action == GLFW_PRESS)
         {
+            if (e.pos.y > box.size.y - labelHeight)
+            {
+                if (module->tempoSynced && idx == 0 &&
+                    module->paramQuantities[QuadLFO::INTERPLAY_MODE]->getValue() !=
+                        QuadLFO::INDEPENDENT)
+                {
+                    auto min =
+                        QuadLFO::RateQuantity::independentRateScale(0) + QuadLFO::temposyncOffset;
+                    auto max =
+                        QuadLFO::RateQuantity::independentRateScale(1) + QuadLFO::temposyncOffset;
+
+                    auto subm = [min, max, this](auto *menu, float off) {
+                        for (float f = min; f <= max; ++f)
+                        {
+                            auto tsv = f + off;
+                            auto l = temposync_support::temposyncLabel(tsv, true);
+                            menu->addChild(rack::createMenuItem(l, "", [this, tsv]() {
+                                auto v = tsv - QuadLFO::temposyncOffset;
+                                module->paramQuantities[QuadLFO::RATE_0]->setValue(
+                                    QuadLFO::RateQuantity::independentRateScaleInv(v));
+                            }));
+                        }
+                    };
+
+                    auto menu = rack::createMenu();
+                    menu->addChild(rack::createMenuLabel("TempoSync Value"));
+                    menu->addChild(new rack::MenuSeparator);
+                    menu->addChild(
+                        rack::createSubmenuItem("Notes", "", [=](auto *x) { subm(x, 0); }));
+                    menu->addChild(rack::createSubmenuItem(
+                        "Dotted", "", [=](auto *x) { subm(x, log2(1.333333333)); }));
+                    menu->addChild(rack::createSubmenuItem("Triplets", "",
+                                                           [=](auto *x) { subm(x, log2(1.5)); }));
+                }
+                e.consume(this);
+                return;
+            }
+
             auto pq = module->paramQuantities[QuadLFO::SHAPE_0 + idx];
             auto *sq = dynamic_cast<rack::engine::SwitchQuantity *>(pq);
 
             if (sq)
             {
-
                 auto menu = rack::createMenu();
                 menu->addChild(rack::createMenuLabel("Shape"));
                 menu->addChild(new rack::ui::MenuSeparator);
@@ -372,7 +409,7 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
           {li_t::KNOB9, "RATE", M::RATE_0 + i, col, row3},
           {li_t::KNOB9, "DEFORM", M::DEFORM_0 + i, col, row2},
 
-          {li_t::PORT, "TRIG", M::TRIGGER_0 + i, col, row1},
+          {li_t::PORT, "RESET", M::TRIGGER_0 + i, col, row1},
         };
         // clang-format on
 
