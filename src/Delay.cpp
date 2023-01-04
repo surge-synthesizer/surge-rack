@@ -35,6 +35,15 @@ struct DelayWidget : widgets::XTModuleWidget
         if (!module)
             return;
         addClockMenu<Delay>(menu);
+
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createMenuLabel("Feedback Clipping"));
+        addSelectionMenu(menu, module->paramQuantities[M::CLIP_MODE_PARAM],
+                         {{"Transparent (Potentially Unbounded)", M::ClipMode::TRANSPARENT},
+                          {"Softclip Feedback (Surge Default)", M::ClipMode::SOFTCLIP_FEEDBACK},
+                          {"Softclip Input + Feedback", M::ClipMode::SOFTCLIP_FULL_SIGNAL},
+                          {"Softclip Output", M::ClipMode::SOFTCLIP_OUTPUT},
+                          {"Hardclip Output @ 10V", M::ClipMode::HARDCLIP_OUTPUT}});
     }
 
     void selectModulator(int mod) override

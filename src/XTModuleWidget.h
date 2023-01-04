@@ -94,6 +94,18 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
             rack::createMenuItem("Clock in BPM CV", CHECKMARK(t == cp_t::BPM_VOCT),
                                  [xtm]() { xtm->clockProc.clockStyle = cp_t::BPM_VOCT; }));
     }
+
+    // Adds each selection with checkmark and a lambda to set the PA
+    void addSelectionMenu(rack::ui::Menu *menu, rack::ParamQuantity *pq,
+                          std::vector<std::pair<std::string, int>> values)
+    {
+        auto pqv = (int)std::round(pq->getValue());
+        for (const auto &[l, v] : values)
+        {
+            menu->addChild(rack::createMenuItem(l, CHECKMARK(v == pqv),
+                                                [pq, val = v]() { pq->setValue(val); }));
+        }
+    }
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 
   protected:
