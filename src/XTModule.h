@@ -88,17 +88,18 @@ struct XTModule : public rack::Module
 
     static std::atomic<bool> showedPathsOnce;
 
-    void setupSurgeCommon(int NUM_PARAMS, bool loadWavetables)
+    void setupSurgeCommon(int NUM_PARAMS, bool loadWavetables, bool loadFX)
     {
         SurgeStorage::SurgeStorageConfig config;
         config.suppliedDataPath = SurgeStorage::skipPatchLoadDataPathSentinel;
         config.createUserDirectory = false;
 
-        if (loadWavetables)
+        if (loadWavetables || loadFX)
         {
             config.suppliedDataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
             config.extraThirdPartyWavetablesPath =
                 fs::path{rack::asset::user("SurgeXTRack/SurgeXTRack_ExtraContent")};
+            config.scanWavetableAndPatches = loadWavetables;
         }
 
         showBuildInfo();

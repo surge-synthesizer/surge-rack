@@ -238,7 +238,7 @@ struct EGxVCA : modules::XTModule
     std::array<rack::dsp::SchmittTrigger, MAX_POLY> triggers;
     void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
 
         for (int i = 0; i < MAX_POLY; ++i)
         {

@@ -107,7 +107,7 @@ struct Mixer : modules::XTModule
     {
         std::lock_guard<std::mutex> ltg(xtSurgeCreateMutex);
 
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         // Config

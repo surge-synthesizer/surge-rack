@@ -138,7 +138,7 @@ struct LFO : modules::XTModule
 
     void setupSurge()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
         for (int i = 0; i < MAX_POLY; ++i)
             surge_lfo[i] = std::make_unique<LFOModulationSource>();
 

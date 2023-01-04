@@ -92,7 +92,7 @@ struct Waveshaper : public modules::XTModule
         std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
 
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
 
         // FIXME attach formatters here
         configParam(DRIVE, -24, 24, 0, "Drive", "dB"); // UNITS

@@ -134,7 +134,7 @@ struct Delay : modules::XTModule
     };
     Delay() : XTModule()
     {
-        setupSurgeCommon(NUM_PARAMS, false);
+        setupSurgeCommon(NUM_PARAMS, false, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         configParam<DelayTimeParamQuantity>(TIME_L, log2(0.01), log2(10.0), 0, "Left Delay");

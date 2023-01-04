@@ -182,7 +182,7 @@ struct QuadAD : modules::XTModule
         snapCalculatedNames();
     }
 
-    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false); }
+    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false, false); }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
