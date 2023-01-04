@@ -52,7 +52,8 @@ struct Delay : modules::XTModule
 
         DELAY_MOD_PARAM_0,
 
-        NUM_PARAMS = DELAY_MOD_PARAM_0 + n_delay_params * n_mod_inputs,
+        CLIP_MODE_PARAM = DELAY_MOD_PARAM_0 + n_delay_params * n_mod_inputs,
+        NUM_PARAMS
     };
     enum InputIds
     {
@@ -86,6 +87,15 @@ struct Delay : modules::XTModule
         modulationAssistant;
     typedef modules::ClockProcessor<Delay> clockProcessor_t;
     clockProcessor_t clockProc;
+
+    enum ClipMode
+    {
+        TRANSPARENT,
+        SOFTCLIP_FEEDBACK,
+        SOFTCLIP_FULL_SIGNAL,
+        SOFTCLIP_OUTPUT,
+        HARDCLIP_OUTPUT
+    };
 
     struct DelayTimeParamQuantity : public rack::engine::ParamQuantity
     {
@@ -158,6 +168,9 @@ struct Delay : modules::XTModule
             configParamNoRand(DELAY_MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
+        configParamNoRand(CLIP_MODE_PARAM, TRANSPARENT, HARDCLIP_OUTPUT, SOFTCLIP_FEEDBACK,
+                          "Clip Mode");
+
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
         configInput(INPUT_CLOCK, "Clock/BPM Input");
@@ -209,6 +222,8 @@ struct Delay : modules::XTModule
     int blockPos{0};
     float tsL{0}, tsR{0};
     float modVal{0}, dMod{0}, modPhase{0};
+    ClipMode currentClipMode{SOFTCLIP_FEEDBACK};
+
     void process(const ProcessArgs &args) override
     {
         // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
@@ -222,6 +237,8 @@ struct Delay : modules::XTModule
         {
             modulationAssistant.setupMatrix(this);
             blockPos = 0;
+
+            currentClipMode = (ClipMode)std::round(params[CLIP_MODE_PARAM].getValue());
 
             lpPost->coeff_LP2B(lpPost->calc_omega(modulationAssistant.values[HICUT] / 12.0), 0.707);
             hpPost->coeff_HP(lpPost->calc_omega(modulationAssistant.values[LOCUT] / 12.0), 0.707);
@@ -249,6 +266,9 @@ struct Delay : modules::XTModule
         auto il = inputs[INPUT_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
         auto ir = inputs[INPUT_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
 
+        if (!inputs[INPUT_R].isConnected())
+            ir = il;
+
         modVal += dMod;
 
         auto wobble = 1.0 + 0.02 * modulationAssistant.values[TIME_S] +
@@ -273,17 +293,60 @@ struct Delay : modules::XTModule
         }
         tl = std::clamp(tl, 0.f, delayLineLength * 1.f);
         tr = std::clamp(tr, 0.f, delayLineLength * 1.f);
-        auto dl = std::clamp(lineL->read(tl), -1.5f, 1.5f);
-        auto dr = std::clamp(lineR->read(tr), -1.5f, 1.5f);
 
-        // softclip
-        dl = dl - 4.0 / 27.0 * dl * dl * dl;
-        dr = dr - 4.0 / 27.0 * dr * dr * dr;
+        auto dl = lineL->read(tl);
+        auto dr = lineR->read(tr);
+        auto wl{0.f}, wr{0.f};
 
         float fb = modulationAssistant.values[FEEDBACK];
         float cf = modulationAssistant.values[CROSSFEED];
-        float wl = il + fb * dl + cf * dr;
-        float wr = ir + fb * dr + cf * dl;
+
+        switch (currentClipMode)
+        {
+        case TRANSPARENT:
+            // write the clean signal output whatever we read
+            wl = il + fb * dl + cf * dr;
+            wr = ir + fb * dr + cf * dl;
+            break;
+        case HARDCLIP_OUTPUT:
+            // write the clean signal, clamp the output at 10v
+            wl = il + fb * dl + cf * dr;
+            wr = ir + fb * dr + cf * dl;
+            dl = std::clamp(dl, -2.f, 2.f); // 10V
+            dr = std::clamp(dr, -2.f, 2.f);
+            break;
+        case SOFTCLIP_OUTPUT:
+            // Write the clean signal softclip the output
+            wl = il + fb * dl + cf * dr;
+            wr = ir + fb * dr + cf * dl;
+
+            dl = std::clamp(dl, -1.5f, 1.5f); // 10V
+            dr = std::clamp(dr, -1.5f, 1.5f);
+            dl = dl - 4.0 / 27.0 * dl * dl * dl;
+            dr = dr - 4.0 / 27.0 * dr * dr * dr;
+            break;
+        case SOFTCLIP_FEEDBACK:
+            // Write the signal with the feedback path softclipped. This is the surge VST default
+            dl = std::clamp(dl, -1.5f, 1.5f);
+            dr = std::clamp(dr, -1.5f, 1.5f);
+
+            dl = dl - 4.0 / 27.0 * dl * dl * dl;
+            dr = dr - 4.0 / 27.0 * dr * dr * dr;
+
+            wl = il + fb * dl + cf * dr;
+            wr = ir + fb * dr + cf * dl;
+            break;
+        case SOFTCLIP_FULL_SIGNAL:
+            // softclip the entire feedback path, output whatever we read
+            wl = il + fb * dl + cf * dr;
+            wr = ir + fb * dr + cf * dl;
+            wl = std::clamp(wl, -1.5f, 1.5f);
+            wr = std::clamp(wr, -1.5f, 1.5f);
+
+            wl = wl - 4.0 / 27.0 * wl * wl * wl;
+            wr = wr - 4.0 / 27.0 * wr * wr * wr;
+            break;
+        }
 
         lpPost->process_sample(wl, wr, wl, wr);
         hpPost->process_sample(wl, wr, wl, wr);
