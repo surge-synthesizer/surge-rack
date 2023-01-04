@@ -45,8 +45,8 @@ inline std::string temposyncLabel(float f, bool minus = false)
 inline std::string abbreviateSurgeTemposyncLabel(std::string s)
 {
     std::list<std::pair<std::string, std::string>> replace = {
-        {"whole note", "wh"}, {"note", "nt"},   {"dotted", "dt"}, {"triplet", "tri"},
-        {"whole", "w"},       {"double", "2x"}, {"triple", "3x"}};
+        {"whole note", "W"}, {"note", ""},     {" dotted", "D"}, {" triplet", "T"},
+        {"whole", "W"},      {"double", "2x"}, {"triple", "3x"}};
 
     for (const auto &[from, to] : replace)
     {

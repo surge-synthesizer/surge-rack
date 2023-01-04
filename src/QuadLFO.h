@@ -39,6 +39,7 @@ struct QuadLFO : modules::XTModule
     static constexpr int n_mod_params{8};
     static constexpr int n_mod_inputs{4};
     static constexpr int n_lfos{4};
+    static constexpr float temposyncOffset{-1};
 
     enum ParamIds
     {
@@ -281,7 +282,7 @@ struct QuadLFO : modules::XTModule
                     auto q = qlfo();
                     if (q && q->tempoSynced)
                     {
-                        return temposync_support::temposyncLabel(sv, true);
+                        return temposync_support::temposyncLabel(sv + temposyncOffset, true);
                     }
                 }
                 auto res = pow(2.0, sv);
@@ -341,12 +342,13 @@ struct QuadLFO : modules::XTModule
             {
                 if (off == RATE_SPREAD)
                 {
-                    auto sv = qlfo()->spreadRate(0);
-
                     if (qlfo()->tempoSynced)
                     {
-                        return temposync_support::temposyncLabel(sv, true);
+                        auto r0 = RateQuantity::independentRateScale(
+                            qlfo()->params[RATE_0 + RATE_SPREAD].getValue());
+                        return temposync_support::temposyncLabel(r0 + temposyncOffset, true);
                     }
+                    auto sv = qlfo()->spreadRate(0);
                     auto res = pow(2.0, sv);
                     if (res < 10)
                         return fmt::format("{:.2f} Hz", res);
@@ -636,7 +638,7 @@ struct QuadLFO : modules::XTModule
             configParam<RateQuantity>(RATE_0 + i, 0, 1, defaultRate0);
             configParam<DeformQuantity>(DEFORM_0 + i, -1, 1, 0);
             configSwitch(SHAPE_0 + i, 0, 7, 0, "Shape",
-                         {"Sine", "Ramp", "Downward Ramp", "Triangle", "Pulse", "Random", "S&H",
+                         {"Sine", "Ramp Up", "Ramp Down", "Triangle", "Pulse", "Random", "S&H",
                           "Random Trigger"});
             configSwitch(BIPOLAR_0 + i, 0, 1, 1, "Bipolar", {"Uni", "Bi"});
         }
@@ -746,16 +748,17 @@ struct QuadLFO : modules::XTModule
         return {"DEFORM"};
     }
 
+    static constexpr const char *trigLabel{"RESET"};
     std::string getTriggerPanelLabel(int idx)
     {
         auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
         if (ip == INDEPENDENT)
-            return "TRIG";
+            return trigLabel;
 
         switch (idx)
         {
         case 0:
-            return "TRIG";
+            return trigLabel;
         case 1:
         {
             if (clockProc.clockStyle == clockProcessor_t::BPM_VOCT)
@@ -945,7 +948,7 @@ struct QuadLFO : modules::XTModule
                     auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0][c]);
                     if (tempoSynced)
                     {
-                        auto r0 = temposync_support::roundTemposync(r);
+                        auto r0 = temposync_support::roundTemposync(r + temposyncOffset);
                         r = r0 + log2(storage->temposyncratio);
                     }
                     if (i != 0)
@@ -1002,6 +1005,12 @@ struct QuadLFO : modules::XTModule
     {
         auto r0 = RateQuantity::independentRateScale(modAssist.basevalues[RATE_0 + RATE_SPREAD]);
 
+        if (tempoSynced)
+        {
+            r0 = temposync_support::roundTemposync(r0 + temposyncOffset);
+            r0 = r0 + log2(storage->temposyncratio);
+        }
+
         if (idx == 0)
             return r0;
 
@@ -1012,6 +1021,11 @@ struct QuadLFO : modules::XTModule
     {
         auto r0 = RateQuantity::independentRateScale(modAssist.values[RATE_0 + RATE_SPREAD][c]);
 
+        if (tempoSynced)
+        {
+            r0 = temposync_support::roundTemposync(r0 + temposyncOffset);
+            r0 = r0 + log2(storage->temposyncratio);
+        }
         if (idx == 0)
             return r0;
 
@@ -1153,6 +1167,11 @@ struct QuadLFO : modules::XTModule
                 processors[i][c]->setAmplitude(1.0);
             }
             paramQuantities[RATE_0 + i]->defaultValue = RateQuantity::independentRateScaleInv(0);
+            if (tempoSynced && ip != INDEPENDENT)
+            {
+                paramQuantities[RATE_0 + i]->defaultValue =
+                    RateQuantity::independentRateScaleInv(1 - temposyncOffset);
+            }
         }
         switch (ip)
         {
@@ -1179,7 +1198,7 @@ struct QuadLFO : modules::XTModule
 
         case SPREAD:
             paramQuantities[RATE_0 + RATE_SPREAD]->defaultValue =
-                RateQuantity::independentRateScaleInv(0);                // phase
+                RateQuantity::independentRateScaleInv(tempoSynced ? 1 - temposyncOffset : 0);
             paramQuantities[RATE_0 + PHASE_SPREAD]->defaultValue = 0;    // phase
             paramQuantities[RATE_0 + DEFORM_SPREAD]->defaultValue = 0.5; // deform
             paramQuantities[RATE_0 + AMP_SPREAD]->defaultValue = 1.0;    // amp
@@ -1203,8 +1222,18 @@ struct QuadLFO : modules::XTModule
     }
 
     bool tempoSynced{false};
-    void activateTempoSync() { tempoSynced = true; }
-    void deactivateTempoSync() { tempoSynced = false; }
+    void activateTempoSync()
+    {
+        tempoSynced = true;
+        auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
+        resetInteractionType(ip);
+    }
+    void deactivateTempoSync()
+    {
+        tempoSynced = false;
+        auto ip = (int)std::round(params[INTERPLAY_MODE].getValue());
+        resetInteractionType(ip);
+    }
 
     json_t *makeModuleSpecificJson() override
     {
