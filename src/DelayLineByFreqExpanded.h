@@ -61,7 +61,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
         MOD_PARAM_0,
 
-        NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
+        CLAMP_BEHAVIOR = MOD_PARAM_0 + n_mod_params * n_mod_inputs,
+        NUM_PARAMS
     };
     enum InputIds
     {
@@ -85,6 +86,14 @@ struct DelayLineByFreqExpanded : modules::XTModule
     {
         NUM_LIGHTS
     };
+
+    enum ClampBehavior
+    {
+        HARD_20 = 0,
+        HARD_10,
+        HARD_5
+    } clampBehavior{HARD_10};
+    float clampLevel{10.f};
 
     struct FBAttenPQ : rack::ParamQuantity
     {
@@ -158,6 +167,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
         configSwitch(FB_EXTEND, 0, 1, 0, "Feedback Range",
                      {"Compact Range (90-100% for Waveguide)", "Full range (0-100%)"});
+        configSwitch(CLAMP_BEHAVIOR, HARD_20, HARD_5, HARD_10, "Clamp Beeavior",
+                     {"Hard Clamp @ +/-20V", "Hard Clamp @ +/- 10V", "Hard Clamp @ +/- 5V"});
 
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
         {
@@ -269,6 +280,20 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
+
+            auto cv = (ClampBehavior)params[CLAMP_BEHAVIOR].getValue();
+            switch (cv)
+            {
+            case HARD_20:
+                clampLevel = 20;
+                break;
+            case HARD_10:
+                clampLevel = 10;
+                break;
+            case HARD_5:
+                clampLevel = 5;
+                break;
+            }
 
             // Filter Coefficients go here
             auto tLP = params[FILTER_LP_ON].getValue() > 0.5;
@@ -399,8 +424,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
             }
 
             // avoid feedback blowouts with a hard clamp
-            lineL[i]->write(std::clamp(il, -10.f, 10.f));
-            lineR[i]->write(std::clamp(ir, -10.f, 10.f));
+            lineL[i]->write(std::clamp(il, -clampLevel, clampLevel));
+            lineR[i]->write(std::clamp(ir, -clampLevel, clampLevel));
 
             if (processCount == 0)
             {
