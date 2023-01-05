@@ -9,6 +9,12 @@ else ()
   message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
 endif ()
 
+if (EXISTS "${RACK_SDK_DIR}/include/rack.hpp")
+  message(STATUS "Found include/rack.hpp")
+else()
+  message(FATAL_ERROR "Rack SDK in ${RACK_SDK_DIR} missing include/rack.hpp")
+endif()
+
 if ("${PLUGIN_NAME}" STREQUAL "")
   message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists.txt before including RackSDK.cmake.\
  The PLUGIN_NAME must correspond to the plugin slug, as defined in plugin.json.")
@@ -109,8 +115,11 @@ file(COPY ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
 
 # A quick installation target to copy the plugin library and plugin.json into VCV Rack plugin folder for development.
 # CMAKE_INSTALL_PREFIX needs to point to the VCV Rack plugin folder in user documents.
-add_custom_target(${RACK_PLUGIN_LIB}_quick_install
+add_custom_target(build_plugin)
+add_dependencies(build_plugin ${RACK_PLUGIN_LIB})
+
+add_custom_target(build_plugin_quick_install
         COMMAND cmake -E copy $<TARGET_FILE:${RACK_PLUGIN_LIB}> ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
-add_dependencies(${RACK_PLUGIN_LIB}_quick_install ${RACK_PLUGIN_LIB})
+add_dependencies(build_plugin_quick_install ${RACK_PLUGIN_LIB})
