@@ -169,7 +169,6 @@ struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
         if (state == 1)
         {
             auto col = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
-
             nvgBeginPath(vg);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
             nvgFillColor(vg, col);
@@ -177,10 +176,12 @@ struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
             auto cx = box.size.x * 0.5;
             auto cy = box.size.y * 0.5;
 
-            auto r = radius * 1.25;
-            nvgMoveTo(vg, cx - r, cy - r);
-            nvgLineTo(vg, cx + r, cy);
-            nvgLineTo(vg, cx - r, cy + r);
+            auto r = radius;
+            auto rp = radius * 1.25;
+            nvgMoveTo(vg, cx - r, cy - rp);
+            nvgLineTo(vg, cx + rp, cy);
+            nvgLineTo(vg, cx - r, cy + rp);
+            nvgLineTo(vg, cx - r, cy - rp);
 
             nvgFill(vg);
             nvgStrokeWidth(vg, 0.75);
@@ -197,10 +198,12 @@ struct ThreeStateTriggerSwitch : rack::app::Switch, style::StyleParticipant
             auto cx = box.size.x * 0.5;
             auto cy = box.size.y * 0.5;
 
-            auto r = radius * 1.25;
-            nvgMoveTo(vg, cx + r, cy - r);
-            nvgLineTo(vg, cx - r, cy);
-            nvgLineTo(vg, cx + r, cy + r);
+            auto r = radius;
+            auto rp = radius * 1.25;
+            nvgMoveTo(vg, cx + r, cy - rp);
+            nvgLineTo(vg, cx - rp, cy);
+            nvgLineTo(vg, cx + r, cy + rp);
+            nvgLineTo(vg, cx + r, cy - rp);
 
             nvgFill(vg);
             nvgStrokeWidth(vg, 0.75);
@@ -310,7 +313,10 @@ struct ADARCurveDraw : public rack::Widget, style::StyleParticipant
         auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
 
         nvgBeginPath(vg);
-        nvgMoveTo(vg, 0, box.size.y); // that's the 0,0 point
+        auto xe = rack::mm2px(0.5);
+        auto sx = box.size.x - xe;
+        auto sy = box.size.y - rack::mm2px(0.5);
+        nvgMoveTo(vg, xe * 0.5, sy); // that's the 0,0 point
 
         for (int i = 0; i < runs; ++i)
         {
@@ -318,11 +324,11 @@ struct ADARCurveDraw : public rack::Widget, style::StyleParticipant
             if ((i % smpEvery) == 0)
             {
                 auto v = env.output;
-                nvgLineTo(vg, box.size.x * i / runs, (1.0 - v) * box.size.y);
+                nvgLineTo(vg, xe * 0.5 + sx * i / runs, (1.0 - v) * sy + rack::mm2px(0.25));
             }
             env.current = BLOCK_SIZE;
         }
-        nvgLineTo(vg, box.size.x, box.size.y);
+        nvgLineTo(vg, sx + sx * 0.5, sy);
 
         nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
         nvgStrokeWidth(vg, 1.25);
@@ -356,7 +362,6 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
 
     auto bg = new widgets::Background(box.size, "QUAD AD", "other", "FourOuts");
     addChild(bg);
-    bg->addBeta();
 
     /*auto portSpacing = layout::LayoutConstants::inputRowCenter_MM -
                        layout::LayoutConstants::modulationRowCenters_MM[1];*/
@@ -385,8 +390,11 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
 
             for (int i = 0; i < QuadAD::n_ads; ++i)
             {
-                auto adar = ADARCurveDraw::create(rack::Vec(cx0 + cw * i + pad, cy0 + pad),
-                                                  rack::Vec(cw - 2 * pad, ch - 2 * pad), module, i);
+                auto rbox = rack::math::Rect();
+                rbox.pos = rack::Vec(cx0 + cw * i + pad, cy0 + pad);
+                rbox.size = rack::Vec(cw - 2 * pad, ch - 2 * pad);
+                rbox = rbox.shrink(rack::mm2px(rack::Vec(0.75, 0.75)));
+                auto adar = ADARCurveDraw::create(rbox.pos, rbox.size, module, i);
                 addChild(adar);
             }
         }
@@ -443,7 +451,7 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
             addChild(mode);
         }
         {
-            auto yAD = rack::mm2px(row3) - rack::mm2px(12);
+            auto yAD = rack::mm2px(row3) - rack::mm2px(11.5);
             auto xpad = rack::mm2px(0.5);
             auto x = widgets::LCDBackground::posx + w * i;
             auto lw = rack::mm2px(3.5);
@@ -451,11 +459,13 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
             auto A = rack::createParam<widgets::CurveSwitch>(rack::Vec(x + xpad, yAD), module,
                                                              M::A_SHAPE_0 + i);
             A->box.size = rack::Vec(lw, h);
+            A->box = A->box.shrink(rack::mm2px(rack::Vec(0.5, 0.25)));
             A->drawDirection = widgets::CurveSwitch::ATTACK;
             addChild(A);
             auto D = rack::createParam<widgets::CurveSwitch>(rack::Vec(x + w - lw - xpad, yAD),
                                                              module, M::D_SHAPE_0 + i);
             D->box.size = rack::Vec(lw, h);
+            D->box = D->box.shrink(rack::mm2px(rack::Vec(0.5, 0.25)));
             D->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
             addChild(D);
 
