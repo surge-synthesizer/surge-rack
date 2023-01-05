@@ -125,7 +125,7 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
         {li_t::PORT, "V/OCT", M::INPUT_VOCT, cols[0], row1 },
         {li_t::PORT, "LEFT", M::INPUT_FBL, cols[1], row1 },
         {li_t::PORT, "RIGHT", M::INPUT_FBR, cols[2], row1 },
-        {li_t::KNOB9, "ATTEN", M::FB_ATTENUATION, cols[3], row1 },
+        {li_t::KNOB9, "LEVEL", M::FB_ATTENUATION, cols[3], row1 },
         {li_t::EXTEND_LIGHT, "", M::FB_EXTEND, cols[3], row1, +1 },
         li_t::createGrouplabel("FEEDBACK INPUT", cols[1], row1, 3).withExtra("SHORTRIGHT", 1),
 
@@ -173,6 +173,7 @@ DelayLineByFreqExpandedWidget::DelayLineByFreqExpandedWidget(
     resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::delay::ui
+// namespace sst::surgext_rack::delay::ui
 
 // namespace sst::surgext_rack::vcf::ui
 
