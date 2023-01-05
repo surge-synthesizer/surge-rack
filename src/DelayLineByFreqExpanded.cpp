@@ -29,6 +29,19 @@ struct DelayLineByFreqExpandedWidget : widgets::XTModuleWidget
     std::array<std::array<rack::Widget *, M::n_mod_inputs>, n_fx_params> overlays;
     std::array<widgets::ModulatableKnob *, n_fx_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+
+    void appendModuleSpecificMenu(rack::ui::Menu *menu) override
+    {
+        if (!module)
+            return;
+
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createMenuLabel("Delay Line Limiter"));
+        addSelectionMenu(menu, module->paramQuantities[M::CLAMP_BEHAVIOR],
+                         {{"Hardclip @+/- 20V", M::ClampBehavior::HARD_20},
+                          {"Hardclip @+/- 10V", M::ClampBehavior::HARD_10},
+                          {"Hardclip @+/-  5V", M::ClampBehavior::HARD_5}});
+    }
 };
 
 struct DelayLineMeterWidget : public rack::Widget, public style::StyleParticipant
