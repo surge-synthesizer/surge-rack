@@ -37,6 +37,7 @@
 
 namespace sst::surgext_rack::delay
 {
+
 struct DelayLineByFreqExpanded : modules::XTModule
 {
     static constexpr int n_mod_inputs{4};
@@ -85,6 +86,50 @@ struct DelayLineByFreqExpanded : modules::XTModule
         NUM_LIGHTS
     };
 
+    struct FBAttenPQ : rack::ParamQuantity
+    {
+        std::string getDisplayValueString() override
+        {
+            auto m = module;
+            auto p = getParam();
+            if (!m || !p)
+                return {};
+
+            auto rbr = m->params[FB_EXTEND].getValue() > 0.5;
+            auto v = getValue();
+            if (!rbr)
+            {
+                v = v * 0.1 + 0.9;
+            }
+            if (v < 0.0001)
+                return "-inf dB";
+            auto dbv = 6.02 * std::log2(v);
+            return fmt::format("{:.4} dB", dbv);
+        }
+
+        void setDisplayValueString(std::string s) override
+        {
+            if (s.find("-inf") != std::string::npos)
+            {
+                setValue(0.f);
+                return;
+            }
+
+            auto q = std::atof(s.c_str());
+            auto v = pow(2.f, q / 6.0);
+
+            auto m = module;
+            if (!m)
+                return;
+
+            auto rbr = m->params[FB_EXTEND].getValue() > 0.5;
+            if (!rbr)
+            {
+                v = (v - 0.9) * 10;
+            }
+            setValue(v);
+        }
+    };
     DelayLineByFreqExpanded() : XTModule()
     {
         setupSurgeCommon(NUM_PARAMS, false, false);
@@ -102,7 +147,7 @@ struct DelayLineByFreqExpanded : modules::XTModule
         configParam(VOCT_FINE_LEFT, -100, 100, 0, "Fine Left Tune", " Cents");
         configParam(VOCT_FINE_RIGHT, -100, 100, 0, "Fine Left Tune", " Cents");
 
-        configParam(FB_ATTENUATION, 0, 1, 0.98, "Feedback Attenuation");
+        configParam<FBAttenPQ>(FB_ATTENUATION, 0, 1, 0.98, "Feedback Level");
         configParam(FILTER_LP_CUTOFF_DIFF, -110, 0, 0, "LP Cutoff to Pitch Offset", " Semitones");
         configParam(FILTER_HP_CUTOFF_DIFF, -110, 0, -110, "HP Cutoff to Pitch Offset",
                     " Semitones");
@@ -112,7 +157,7 @@ struct DelayLineByFreqExpanded : modules::XTModule
         configOnOff(FILTER_HP_ON, 0, "HighPass Filter Active");
 
         configSwitch(FB_EXTEND, 0, 1, 0, "Feedback Range",
-                     {"Useful Waveguide Range", "Full Range"});
+                     {"Compact Range (90-100% for Waveguide)", "Full range (0-100%)"});
 
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
         {
