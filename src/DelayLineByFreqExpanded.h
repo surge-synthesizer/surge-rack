@@ -217,14 +217,6 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
         auto fbr = params[FB_EXTEND].getValue() > 0.5;
 
-        auto lcon = inputs[INPUT_L].isConnected();
-        auto rcon = inputs[INPUT_R].isConnected();
-
-        auto fblcon = inputs[INPUT_FBL].isConnected();
-        auto fbrcon = inputs[INPUT_FBR].isConnected();
-
-        auto vocon = inputs[INPUT_VOCT].isConnected();
-
         if (processCount == BLOCK_SIZE)
         {
             int cc = std::max({lc, rc, inputs[INPUT_VOCT].getChannels(), 1});
@@ -259,8 +251,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
             for (int i = 0; i < nChan; ++i)
             {
-                float pitch0 = (modAssist.values[VOCT][i] + 5) * 12 +
-                               vocon * inputs[INPUT_VOCT].getVoltage(i) * 12;
+                float pitch0 =
+                    (modAssist.values[VOCT][i] + 5) * 12 + inputs[INPUT_VOCT].getVoltage(i) * 12;
 
                 if (useLP)
                 {
@@ -299,8 +291,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
         for (int i = 0; i < nChan; ++i)
         {
-            float pitch0 = (modAssist.values[VOCT][i] + 5) * 12 +
-                           vocon * inputs[INPUT_VOCT].getVoltage(i) * 12;
+            float pitch0 =
+                (modAssist.values[VOCT][i] + 5) * 12 + inputs[INPUT_VOCT].getVoltage(i) * 12;
 
             auto n2pL = storage->note_to_pitch_inv_ignoring_tuning(
                             pitch0 + modAssist.values[VOCT_FINE_LEFT][i] * 0.01) /
@@ -326,8 +318,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
                 fba = std::clamp(fba * 0.1 + 0.9, 0.0, 1.0);
             }
 
-            auto fbl = fblcon ? fba * inputs[INPUT_FBL].getVoltage(lfm * i) : 0;
-            auto fbr = fbrcon ? fba * inputs[INPUT_FBR].getVoltage(rfm * i) : 0;
+            auto fbl = fba * inputs[INPUT_FBL].getVoltage(lfm * i);
+            auto fbr = fba * inputs[INPUT_FBR].getVoltage(rfm * i);
 
             if (useHP || useLP)
             {
@@ -351,8 +343,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
                 fbr = mv * fvr + (1 - mv) * fbr;
             }
 
-            auto il = (lcon ? inputs[INPUT_L].getVoltage(lm * i) : 0) + fbl;
-            auto ir = (rcon ? inputs[INPUT_R].getVoltage(rm * i) : 0) + fbr;
+            auto il = inputs[INPUT_L].getVoltage(lm * i) + fbl;
+            auto ir = inputs[INPUT_R].getVoltage(rm * i) + fbr;
 
             float ex = inputs[INPUT_EXCITER_AMP].getVoltage(i) * 0.1;
             if (ex > 1e-5 && inputs[INPUT_EXCITER_AMP].isConnected())
