@@ -209,7 +209,6 @@ struct DelayLineByFreqExpanded : modules::XTModule
     void process(const ProcessArgs &args) override
     {
         // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
-
         int lc = inputs[INPUT_L].getChannels();
         int rc = inputs[INPUT_R].getChannels();
 
@@ -218,12 +217,13 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
         auto fbr = params[FB_EXTEND].getValue() > 0.5;
 
-        int cc = std::max({lc, rc, inputs[INPUT_VOCT].getChannels(), 1});
-        nChan = cc;
-
         if (processCount == BLOCK_SIZE)
         {
+            int cc = std::max({lc, rc, inputs[INPUT_VOCT].getChannels(), 1});
+            nChan = cc;
+
             modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
 
             // Filter Coefficients go here
             auto tLP = params[FILTER_LP_ON].getValue() > 0.5;
@@ -272,9 +272,11 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
             processCount = 0;
         }
-
-        // Do this every one so we can do like voct fm and stuff
-        modAssist.updateValues(this);
+        else
+        {
+            // Do this every one so we can do like voct fm and stuff
+            modAssist.updateValues(this);
+        }
 
         // If LC or RC are 1 we want to braodcast that input to all poly channels
         // so set up a multiplier for channel in the get below
@@ -284,10 +286,10 @@ struct DelayLineByFreqExpanded : modules::XTModule
         auto lfm = (lf == 1 ? 0 : 1);
         auto rfm = (rf == 1 ? 0 : 1);
 
-        outputs[OUTPUT_L].setChannels(cc);
-        outputs[OUTPUT_R].setChannels(cc);
+        outputs[OUTPUT_L].setChannels(nChan);
+        outputs[OUTPUT_R].setChannels(nChan);
 
-        for (int i = 0; i < cc; ++i)
+        for (int i = 0; i < nChan; ++i)
         {
             float pitch0 =
                 (modAssist.values[VOCT][i] + 5) * 12 + inputs[INPUT_VOCT].getVoltage(i) * 12;
@@ -301,8 +303,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
             float tmL = storage->samplerate * n2pL - params[CORRECTION].getValue();
             float tmR = storage->samplerate * n2pR - params[CORRECTION].getValue();
 
-            tmL = std::clamp(tmL, FIRipol_N * 1.f, delayLineLength * 1.f);
-            tmR = std::clamp(tmR, FIRipol_N * 1.f, delayLineLength * 1.f);
+            tmL = std::clamp(tmL, FIRipol_N * 1.f, (delayLineLength - FIRipol_N) * 1.f);
+            tmR = std::clamp(tmR, FIRipol_N * 1.f, (delayLineLength - FIRipol_N) * 1.f);
 
             auto dl = lineL[i]->read(tmL);
             auto dr = lineR[i]->read(tmR);
@@ -345,14 +347,15 @@ struct DelayLineByFreqExpanded : modules::XTModule
             auto ir = inputs[INPUT_R].getVoltage(rm * i) + fbr;
 
             float ex = inputs[INPUT_EXCITER_AMP].getVoltage(i) * 0.1;
-            if (ex > 1e-5)
+            if (ex > 1e-5 && inputs[INPUT_EXCITER_AMP].isConnected())
             {
                 il += ex * distro(gen);
                 ir += ex * distro(gen);
             }
 
-            lineL[i]->write(il);
-            lineR[i]->write(ir);
+            // avoid feedback blowouts with a hard clamp
+            lineL[i]->write(std::clamp(il, -10.f, 10.f));
+            lineR[i]->write(std::clamp(ir, -10.f, 10.f));
 
             if (processCount == 0)
             {
