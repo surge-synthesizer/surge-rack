@@ -158,6 +158,9 @@ struct HarmEd : public rack::Widget, style::StyleParticipant
         float w = (box.size.x - 2 * xpad);
         auto bed =
             widgets::NBarWidget<16>::create(rack::Vec(xpad, y0), rack::Vec(w, h), module, par);
+        bed->barLabel = "Harmonic";
+        bed->makeAdditionalMenu = [this](auto w, auto m) { makeAdditionalAdditivePresetMenu(m); };
+
         addChild(bed);
     }
 
@@ -177,6 +180,58 @@ struct HarmEd : public rack::Widget, style::StyleParticipant
     }
 
     void onStyleChanged() override { bdwClose->dirty = true; }
+
+    void makeAdditionalAdditivePresetMenu(rack::Menu *m)
+    {
+        if (!module)
+            return;
+        m->addChild(new rack::MenuSeparator);
+        m->addChild(rack::createMenuLabel("Presets"));
+        m->addChild(rack::createMenuItem("Sine", "", [this]() {
+            for (int i = 0; i < AliasOscillator::n_additive_partials; ++i)
+            {
+                auto v = (i == 0 ? 1.f : 0.f);
+                module->paramQuantities[VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i]->setValue(v);
+            }
+        }));
+
+        m->addChild(rack::createMenuItem("Triangle", "", [this]() {
+            for (int i = 0; i < AliasOscillator::n_additive_partials; ++i)
+            {
+                auto qq = i;
+                auto v = (qq % 2 == 0) * 1.f / ((qq + 1) * (qq + 1));
+                if (qq % 4 == 2)
+                    v = -v;
+
+                module->paramQuantities[VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i]->setValue(v);
+            }
+        }));
+
+        m->addChild(rack::createMenuItem("Sawtooth", "", [this]() {
+            for (int i = 0; i < AliasOscillator::n_additive_partials; ++i)
+            {
+                auto v = 1.0 / (i + 1);
+                module->paramQuantities[VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i]->setValue(v);
+            }
+        }));
+
+        m->addChild(rack::createMenuItem("Square", "", [this]() {
+            for (int i = 0; i < AliasOscillator::n_additive_partials; ++i)
+            {
+                auto v = (i % 2 == 0) * 1.f / (i + 1);
+                module->paramQuantities[VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i]->setValue(v);
+            }
+        }));
+
+        m->addChild(rack::createMenuItem("Random", "", [this]() {
+            for (int i = 0; i < AliasOscillator::n_additive_partials; ++i)
+            {
+                auto v = 1.f * rand() / (float)RAND_MAX;
+                v = v * 2 - 1;
+                module->paramQuantities[VCO<ot_alias>::ADDITIONAL_VCO_PARAMS + i]->setValue(v);
+            }
+        }));
+    }
 };
 } // namespace alias_ed
 

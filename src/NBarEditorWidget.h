@@ -38,6 +38,7 @@ template <int bars> struct NBarWidget : public rack::Widget, style::StylePartici
         return true;
     };
     std::string barLabel = "Step";
+    std::function<void(NBarWidget *w, rack::Menu *m)> makeAdditionalMenu = [](auto w, auto m) {};
 
     NBarWidget()
     {
@@ -294,6 +295,8 @@ template <int bars> struct NBarWidget : public rack::Widget, style::StylePartici
 
     void createRightMouseMenu(float xp)
     {
+        if (!module)
+            return;
         auto dx = box.size.x / bars;
         auto b = std::clamp((int)(xp / dx), 0, bars - 1);
         auto menu = rack::createMenu();
@@ -304,7 +307,23 @@ template <int bars> struct NBarWidget : public rack::Widget, style::StylePartici
         tc->setStep(this, module, par0, b);
         menu->addChild(tc);
 
+        menu->addChild(new rack::MenuSeparator);
+        menu->addChild(rack::createMenuLabel("Set to..."));
         menu->addChild(rack::createMenuItem("Zero", "", [this, b]() { setBarTo(b, 0.f); }));
+        if (module->paramQuantities[par0 + b]->getDefaultValue() != 0)
+        {
+            menu->addChild(rack::createMenuItem("Default", "", [this, b]() {
+                setBarTo(b, module->paramQuantities[par0 + b]->getDefaultValue());
+            }));
+        }
+        menu->addChild(rack::createMenuItem("Max", "", [this, b]() {
+            setBarTo(b, module->paramQuantities[par0 + b]->getMaxValue());
+        }));
+        menu->addChild(rack::createMenuItem("Min", "", [this, b]() {
+            setBarTo(b, module->paramQuantities[par0 + b]->getMinValue());
+        }));
+
+        makeAdditionalMenu(this, menu);
     }
 
     void setTooltipText(int bar)
@@ -360,7 +379,9 @@ template <int bars> struct NBarWidget : public rack::Widget, style::StylePartici
             auto dx = box.size.x / bars;
             auto bi = std::clamp((int)(currentEditPos.x / dx), 0, bars - 1);
 
-            setBarTo(bi, 0);
+            auto pq = module->paramQuantities[par0 + bi];
+
+            setBarTo(bi, pq->getDefaultValue());
             e.consume(this);
 
             bdw->dirty = true;
