@@ -96,7 +96,9 @@ struct DelayLineByFreqExpanded : modules::XTModule
     float clampLevel{10.f};
 
     // (2^(-2/6.02))^(1/3) so a 2db range when attenuated
-    static constexpr float attenBase{0.92611164457}, attenScale{1.0f - attenBase};
+    // static constexpr float attenBase{0.92611164457}, attenScale{1.0f - attenBase};
+    // x = 1-sqrt(1-(2^(-1/6.02))) so a 2db range when attenuated
+    static constexpr float attenBase{0.67021327021}, attenScale{1.0f - attenBase};
 
     struct FBAttenPQ : rack::ParamQuantity
     {
@@ -114,7 +116,9 @@ struct DelayLineByFreqExpanded : modules::XTModule
             {
                 v = v * attenScale + attenBase;
             }
-            v = v * v * v;
+            // v = v * v * v;
+            v = 1 - v;
+            v = 1 - v * v;
             if (v < 0.0001)
                 return "-inf dB";
             auto dbv = 6.02 * std::log2(v);
@@ -131,17 +135,19 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
             auto q = std::atof(s.c_str());
             auto v = pow(2.f, q / 6.02);
-            v = pow(v, 1.0 / 3.0);
+
+            // v = pow(v, 1.0 / 3.0);
+            v = 1 - sqrt(1 - v);
 
             auto m = module;
             if (!m)
                 return;
-
             auto rbr = m->params[FB_EXTEND].getValue() > 0.5;
             if (!rbr)
             {
                 v = (v - attenBase) / attenScale;
             }
+
             setValue(v);
         }
     };
@@ -393,7 +399,9 @@ struct DelayLineByFreqExpanded : modules::XTModule
                 // fba * 0.1 + 0.9
                 fba = std::clamp(fba * attenScale + attenBase, 0.0f, 1.0f);
             }
-            fba = fba * fba * fba;
+            // fba = fba * fba * fba
+            auto omfba = 1.f - fba;
+            fba = 1.f - omfba * omfba;
 
             auto fbl = fba * inputs[INPUT_FBL].getVoltage(lfm * i);
             auto fbr = fba * inputs[INPUT_FBR].getVoltage(rfm * i);
