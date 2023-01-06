@@ -95,6 +95,9 @@ struct DelayLineByFreqExpanded : modules::XTModule
     } clampBehavior{HARD_10};
     float clampLevel{10.f};
 
+    // (2^(-2/6.02))^(1/3) so a 2db range when attenuated
+    static constexpr float attenBase{0.92611164457}, attenScale{1.0f - attenBase};
+
     struct FBAttenPQ : rack::ParamQuantity
     {
         std::string getDisplayValueString() override
@@ -106,10 +109,12 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
             auto rbr = m->params[FB_EXTEND].getValue() > 0.5;
             auto v = getValue();
+
             if (!rbr)
             {
-                v = v * 0.1 + 0.9;
+                v = v * attenScale + attenBase;
             }
+            v = v * v * v;
             if (v < 0.0001)
                 return "-inf dB";
             auto dbv = 6.02 * std::log2(v);
@@ -125,7 +130,8 @@ struct DelayLineByFreqExpanded : modules::XTModule
             }
 
             auto q = std::atof(s.c_str());
-            auto v = pow(2.f, q / 6.0);
+            auto v = pow(2.f, q / 6.02);
+            v = pow(v, 1.0 / 3.0);
 
             auto m = module;
             if (!m)
@@ -134,7 +140,7 @@ struct DelayLineByFreqExpanded : modules::XTModule
             auto rbr = m->params[FB_EXTEND].getValue() > 0.5;
             if (!rbr)
             {
-                v = (v - 0.9) * 10;
+                v = (v - attenBase) / attenScale;
             }
             setValue(v);
         }
@@ -385,11 +391,19 @@ struct DelayLineByFreqExpanded : modules::XTModule
                 // 0 -> .9
                 // 1 -> 1
                 // fba * 0.1 + 0.9
-                fba = std::clamp(fba * 0.1 + 0.9, 0.0, 1.0);
+                fba = std::clamp(fba * attenScale + attenBase, 0.0f, 1.0f);
             }
+            fba = fba * fba * fba;
 
             auto fbl = fba * inputs[INPUT_FBL].getVoltage(lfm * i);
             auto fbr = fba * inputs[INPUT_FBR].getVoltage(rfm * i);
+
+            float ex = inputs[INPUT_EXCITER_AMP].getVoltage(i) * 0.1;
+            if (ex > 1e-5 && inputs[INPUT_EXCITER_AMP].isConnected())
+            {
+                fbl += ex * distro(gen);
+                fbr += ex * distro(gen);
+            }
 
             if (useHP || useLP)
             {
@@ -415,13 +429,6 @@ struct DelayLineByFreqExpanded : modules::XTModule
 
             auto il = inputs[INPUT_L].getVoltage(lm * i) + fbl;
             auto ir = inputs[INPUT_R].getVoltage(rm * i) + fbr;
-
-            float ex = inputs[INPUT_EXCITER_AMP].getVoltage(i) * 0.1;
-            if (ex > 1e-5 && inputs[INPUT_EXCITER_AMP].isConnected())
-            {
-                il += ex * distro(gen);
-                ir += ex * distro(gen);
-            }
 
             // avoid feedback blowouts with a hard clamp
             lineL[i]->write(std::clamp(il, -clampLevel, clampLevel));
