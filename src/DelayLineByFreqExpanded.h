@@ -169,7 +169,7 @@ struct DelayLineByFreqExpanded : modules::XTModule
         configParam(VOCT_FINE_RIGHT, -100, 100, 0, "Fine Left Tune", " Cents");
 
         configParam<FBAttenPQ>(FB_ATTENUATION, 0, 1, 0.98, "Feedback Level");
-        configParam(FILTER_LP_CUTOFF_DIFF, -110, 0, 0, "LP Cutoff to Pitch Offset", " Semitones");
+        configParam(FILTER_LP_CUTOFF_DIFF, -80, 30, 30, "LP Cutoff to Pitch Offset", " Semitones");
         configParam(FILTER_HP_CUTOFF_DIFF, -110, 0, -110, "HP Cutoff to Pitch Offset",
                     " Semitones");
         configParam(FILTER_MIX, 0, 1, 1, "Signal/Filter Wet/Dry Mix");
