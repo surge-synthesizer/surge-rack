@@ -366,6 +366,7 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
             auto ev = m->params[LFO::STEP_SEQUENCER_END].getValue();
             return b < ev;
         };
+        sliders->makeAdditionalMenu = [this](auto w, auto m) { makeAdditionalLFOPresetMenu(m); };
         addChild(sliders);
 
         for (int i = 0; i < LFO::n_steps; ++i)
@@ -383,6 +384,58 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
     }
     void drawEditorBG(NVGcontext *vg) {}
     void drawEditorLights(NVGcontext *vg) {}
+
+    void makeAdditionalLFOPresetMenu(rack::Menu *m)
+    {
+        if (!module)
+            return;
+        m->addChild(new rack::MenuSeparator);
+        m->addChild(rack::createMenuLabel("Presets"));
+        m->addChild(rack::createMenuItem("Positive Saw", "", [this]() {
+            for (int i = 0; i < LFO::n_steps; ++i)
+            {
+                auto v = 1.f * i / (LFO::n_steps - 1);
+                module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->setValue(v);
+            }
+        }));
+        m->addChild(rack::createMenuItem("Bipolar Saw", "", [this]() {
+            for (int i = 0; i < LFO::n_steps; ++i)
+            {
+                auto v = 1.f * i / (LFO::n_steps - 1);
+                v = v * 2 - 1;
+                module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->setValue(v);
+            }
+        }));
+        m->addChild(rack::createMenuItem("Triangle", "", [this]() {
+            for (int i = 0; i < LFO::n_steps; ++i)
+            {
+                auto v = 2.f * i / (LFO::n_steps - 1) - 0.5f / (LFO::n_steps - 1);
+                if (v > 1)
+                {
+                    std::cout << v;
+                    v = 2 - v + 1.f / (LFO::n_steps - 1);
+                    std::cout << " -> " << v << " " << 1.f / (LFO::n_steps - 1) << std::endl;
+                }
+                v = v * 2 - 1;
+                auto pos = (i + 4) % LFO::n_steps;
+                module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + pos]->setValue(-v);
+            }
+        }));
+        m->addChild(rack::createMenuItem("All Zeroes", "", [this]() {
+            for (int i = 0; i < LFO::n_steps; ++i)
+            {
+                module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->setValue(0);
+            }
+        }));
+        m->addChild(rack::createMenuItem("Random", "", [this]() {
+            for (int i = 0; i < LFO::n_steps; ++i)
+            {
+                auto v = 1.f * rand() / (float)RAND_MAX;
+                v = v * 2 - 1;
+                module->paramQuantities[LFO::STEP_SEQUENCER_STEP_0 + i]->setValue(v);
+            }
+        }));
+    }
 };
 
 struct LFOTypeWidget : rack::app::ParamWidget, style::StyleParticipant
