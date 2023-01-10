@@ -2595,7 +2595,7 @@ struct OutputDecoration : rack::Widget, style::StyleParticipant
     void drawRegion(NVGcontext *vg)
     {
         nvgBeginPath(vg);
-        nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 4.7);
+        nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 2.5);
         nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y,
                                            style()->getColor(style::XTStyle::OUTPUTBG_START),
                                            style()->getColor(style::XTStyle::OUTPUTBG_END)));

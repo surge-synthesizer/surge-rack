@@ -489,6 +489,8 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0, -portSpacing);
 
+    engine_t::addSingleOutputStripBackground(this, 0, 4);
+
     int kc = 0;
     for (int i = M::OUTPUT_0; i < M::OUTPUT_0 + M::n_ads; ++i)
     {
@@ -513,6 +515,7 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
         addChild(lab);
         kc++;
     }
+
     resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::quadad::ui

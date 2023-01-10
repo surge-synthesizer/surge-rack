@@ -246,6 +246,22 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MATRIX_MOD_INPUT, -portSpacing);
 
+    {
+        auto od = new widgets::OutputDecoration;
+        auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
+        auto pd_MM = 0.5;
+        auto nc = 4;
+        auto c0 = 0;
+        od->box.size = rack::Vec(
+            rack::mm2px((nc - 0.2) * layout::LayoutConstants::columnWidth_MM + 2 * pd_MM), 84);
+        od->box.pos =
+            rack::Vec(rack::mm2px(layout::LayoutConstants::firstColumnCenter_MM +
+                                  (c0 - 0.4) * layout::LayoutConstants::columnWidth_MM - pd_MM),
+                      rack::mm2px(bl - portSpacing - pd_MM) - 7.2 * 96 / 72);
+        od->setup();
+        addChild(od);
+    }
+
     kr = 0;
     kc = 0;
     for (int i = M::OUTPUT_0; i < M::OUTPUT_0 + M::n_matrix_params; ++i)
@@ -268,6 +284,7 @@ ModMatrixWidget::ModMatrixWidget(ModMatrixWidget::M *module) : XTModuleWidget()
             kc = 0;
         }
     }
+
     resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::modmatrix::ui

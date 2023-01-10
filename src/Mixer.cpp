@@ -245,6 +245,8 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
         }
     }
 
+    engine_t::addSingleOutputStripBackground(this);
+
     auto yp = layout::LayoutConstants::inputRowCenter_MM;
     auto xp =
         layout::LayoutConstants::firstColumnCenter_MM + layout::LayoutConstants::columnWidth_MM * 2;
