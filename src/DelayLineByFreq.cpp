@@ -106,6 +106,21 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
         col++;
     }
 
+    {
+        auto od = new widgets::OutputDecoration;
+        auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
+
+        auto pd_MM = 0.5;
+
+        auto c0 = 0, nc = 2;
+        od->box.size = rack::Vec(
+            rack::mm2px((nc - 0.2) * layout::LayoutConstants::columnWidth_MM + 2 * pd_MM), 42);
+        od->box.pos = rack::Vec(
+            cols[0] + rack::mm2px((c0 - 0.4) * layout::LayoutConstants::columnWidth_MM - pd_MM),
+            rack::mm2px(bl - pd_MM) - 7.2 * 96 / 72);
+        od->setup();
+        addChild(od);
+    }
     col = 0;
     for (auto p : {M::OUTPUT_L, M::OUTPUT_R})
     {

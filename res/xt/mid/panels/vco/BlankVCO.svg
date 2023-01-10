@@ -5,10 +5,6 @@
       <stop id="stop2728" stop-opacity="0" stop-color="#000" offset="0"/>
       <stop id="stop2730" stop-color="#000" offset="1"/>
     </linearGradient>
-    <linearGradient gradientUnits="userSpaceOnUse" y2="299.05545" x2="126.099" y1="339.16571" x1="126.099" id="linear-gradient-2">
-      <stop id="stop2733" stop-color="#1e1e20" offset="0"/>
-      <stop id="stop2735" stop-color="#272729" offset="1"/>
-    </linearGradient>
   </defs>
   <g transform="scale(1.3333333)" id="PANELS">
     <rect y="0" x="0" id="rect2740" style="fill:#525252" height="364.25198" width="172.8"/>
@@ -27,7 +23,6 @@
       <path id="path2758" style="fill:#111111" d="m 12.74891,24.41602 h 147.30322 c 0.36624,0 0.66357,0.29734 0.66357,0.66357 v 104.89453 c 0,0.36705 -0.29799,0.66504 -0.66504,0.66504 H 12.74842 c -0.36624,0 -0.66357,-0.29734 -0.66357,-0.66357 V 25.08008 c 0,-0.36651 0.29756,-0.66406 0.66406,-0.66406 z"/>
       <path id="path2760" d="M 159.96872,25.162 V 129.89311 H 12.83133 V 25.162 h 147.13739 m 0.0823,-1.49272 H 12.74903 c -0.77576,0 -1.41043,0.6347 -1.41043,1.41043 v 104.89567 c 0,0.77574 0.63467,1.41043 1.41043,1.41043 H 160.051 c 0.77573,0 1.41043,-0.63469 1.41043,-1.41043 V 25.07972 c 0,-0.77574 -0.6347,-1.41043 -1.41043,-1.41043 v 0 z"/>
     </g>
-    <rect id="rect2764" style="fill:url(#linear-gradient-2)" ry="4.41927" rx="4.41927" height="40.110241" width="73.702057" y="299.05545" x="89.247971"/>
   </g>
   <g transform="scale(1.3333333)" data-name="Labels Modern (outline)" id="Labels_Modern__outline_">
     <line id="line2787" style="fill:none;stroke:#292929;stroke-miterlimit:10" y2="259.47842" x2="26.97431" y1="253.2422" x1="26.97431"/>

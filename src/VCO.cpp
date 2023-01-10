@@ -1341,9 +1341,9 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::OSC_MOD_INPUT);
 
+    engine_t ::createLeftRightInputLabels(this, "V/OCT", "");
     engine_t::createInputOutputPorts(this, M::PITCH_CV, M::RETRIGGER, M::OUTPUT_L, M::OUTPUT_R);
 
-    engine_t ::createLeftRightInputLabels(this, "V/OCT", "");
     // Special input 2 label is dynamic for WT. This is a wee bit of a generatlization
     // breakage but not too bad.
     {

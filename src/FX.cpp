@@ -256,9 +256,9 @@ template <int fxType> FXWidget<fxType>::FXWidget(FXWidget<fxType>::M *module)
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
 
+    engine_t::createLeftRightInputLabels(this);
     engine_t::createInputOutputPorts(this, M::INPUT_L, M::INPUT_R, M::OUTPUT_L, M::OUTPUT_R);
 
-    engine_t::createLeftRightInputLabels(this);
     resetStyleCouplingToModule();
 }
 } // namespace sst::surgext_rack::fx::ui

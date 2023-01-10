@@ -1338,6 +1338,22 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
     gutterX += 35 + 3;
 
     {
+        auto od = new widgets::OutputDecoration;
+        auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
+        auto pd_MM = 0.5;
+        auto nc = 3;
+        auto c0 = 0;
+        od->box.size = rack::Vec(
+            rack::mm2px((nc - 0.2) * layout::LayoutConstants::lfoColumnWidth_MM + 2 * pd_MM), 84);
+        od->box.pos = rack::Vec(
+            rack::mm2px(layout::LayoutConstants::firstColumnCenter_MM +
+                        (4 + c0 - 0.4) * layout::LayoutConstants::lfoColumnWidth_MM - pd_MM),
+            rack::mm2px(layout::LayoutConstants::modulationRowCenters_MM[1] - 5.1 - pd_MM) -
+                7.2 * 96 / 72);
+        od->setup();
+        addChild(od);
+    }
+    {
         int col = 0;
         std::vector<std::string> labv{"LFO", "EG", "LFOxEG"};
         for (auto p : {M::OUTPUT_WAVE, M::OUTPUT_ENV, M::OUTPUT_MIX})

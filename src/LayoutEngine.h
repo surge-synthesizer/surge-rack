@@ -687,11 +687,28 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         }
     }
 
+    static void addSingleOutputStripBackground(W *w, int c0 = 2, int nc = 2)
+    {
+        auto od = new widgets::OutputDecoration;
+        auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
+
+        auto pd_MM = 0.5;
+
+        od->box.size = rack::Vec(
+            rack::mm2px((nc - 0.2) * layout::LayoutConstants::columnWidth_MM + 2 * pd_MM), 42);
+        od->box.pos =
+            rack::Vec(rack::mm2px(layout::LayoutConstants::firstColumnCenter_MM +
+                                  (c0 - 0.4) * layout::LayoutConstants::columnWidth_MM - pd_MM),
+                      rack::mm2px(bl - pd_MM) - 7.2 * 96 / 72);
+        od->setup();
+        w->addChild(od);
+    }
     static void createLeftRightInputLabels(W *w, const std::string &in0 = "LEFT",
                                            const std::string &in1 = "RIGHT")
     {
         int col = 0;
 
+        addSingleOutputStripBackground(w);
         for (const std::string &s : {in0, in1, std::string("LEFT"), std::string("RIGHT")})
         {
             auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
