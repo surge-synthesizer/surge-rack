@@ -285,21 +285,23 @@ struct LFOStepWidget : rack::Widget, style::StyleParticipant
         void drawButton(NVGcontext *vg)
         {
             // > in top half < in bottom
+            auto sc = 0.6;
             auto tq = box.size.y * 0.25;
             auto bq = box.size.y * 0.75;
-            auto ts = box.size.x;
+            auto ts = box.size.x * sc;
+            auto xp = box.size.x * (1 - sc) * 0.5;
 
             nvgBeginPath(vg);
-            nvgMoveTo(vg, 0, tq - ts * 0.5);
-            nvgLineTo(vg, box.size.x, tq);
-            nvgLineTo(vg, 0, tq + ts * 0.5);
+            nvgMoveTo(vg, xp, tq - ts * 0.5);
+            nvgLineTo(vg, box.size.x - xp, tq);
+            nvgLineTo(vg, xp, tq + ts * 0.5);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
             nvgFill(vg);
 
             nvgBeginPath(vg);
-            nvgMoveTo(vg, box.size.x, bq - ts * 0.5);
-            nvgLineTo(vg, 0, bq);
-            nvgLineTo(vg, box.size.x, bq + ts * 0.5);
+            nvgMoveTo(vg, box.size.x - xp, bq - ts * 0.5);
+            nvgLineTo(vg, xp, bq);
+            nvgLineTo(vg, box.size.x - xp, bq + ts * 0.5);
             nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
             nvgFill(vg);
         }
