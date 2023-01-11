@@ -980,7 +980,7 @@ struct QuadLFO : modules::XTModule
 
     static float RatioRelOp(QuadLFO *that, float r, int i, int c)
     {
-        auto dph = RateQuantity::ratioRateScale(that->modAssist.basevalues[RATE_0 + i]);
+        auto dph = RateQuantity::ratioRateScale(that->modAssist.values[RATE_0 + i][c]);
         auto s = (dph < 0 ? -1 : 1);
         if (dph == 0)
             return r;
