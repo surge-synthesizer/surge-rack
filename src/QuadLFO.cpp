@@ -386,7 +386,6 @@ QuadLFOWidget::QuadLFOWidget(sst::surgext_rack::quadlfo::ui::QuadLFOWidget::M *m
 
     auto bg = new widgets::Background(box.size, "QUAD LFO", "other", "FourOuts");
     addChild(bg);
-    bg->addBeta();
 
     auto portSpacing = 0.f;
 
