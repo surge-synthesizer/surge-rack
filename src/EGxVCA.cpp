@@ -46,6 +46,10 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
          * Clock entries
          */
         addClockMenu<EGxVCA>(menu);
+        menu->addChild(new rack::ui::MenuSeparator);
+
+        addSelectionMenu(menu, module->paramQuantities[M::ATTACK_FROM],
+                         {{"Attack from Zero", 0}, {"Attack from Current (Legato)", 1}});
     }
 
     widgets::DirtyHelper<EGxVCA, false> modeDirty;
@@ -303,7 +307,7 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 
     auto bg = new widgets::Background(box.size, "EG x VCA", "fx", "BlankNoDisplay");
     addChild(bg);
-    bg->addAlpha();
+    bg->addBeta();
 
     auto col = std::vector<float>();
     for (int i = 0; i < 4; ++i)

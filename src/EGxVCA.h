@@ -54,7 +54,8 @@ struct EGxVCA : modules::XTModule
         ADSR_OR_DAHD,
 
         MOD_PARAM_0,
-        NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
+        ATTACK_FROM = MOD_PARAM_0 + n_mod_params * n_mod_inputs,
+        NUM_PARAMS
     };
 
     enum InputIds
@@ -220,6 +221,9 @@ struct EGxVCA : modules::XTModule
         configOutput(ENV_OUT, "Envelope");
         configOutput(EOC_OUT, "End of Cycle");
 
+        configSwitch(ATTACK_FROM, 0, 1, 1, "Attack From", {"Zero", "Current Value"})
+            ->randomizeEnabled = false;
+
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
         modAssist.updateValues(this);
@@ -327,24 +331,14 @@ struct EGxVCA : modules::XTModule
         else
             clockProc.disconnect(this);
 
-        auto currChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
-                                  inputs[GATE_IN].getChannels(), 1});
-        if (currChan != nChan)
-        {
-            nChan = currChan;
-            modAssist.setupMatrix(this);
-            modAssist.updateValues(this);
-        }
-
-        for (int c = 0; c < nChan; ++c)
-        {
-            if (triggers[c].process(inputs[GATE_IN].getVoltage(c)))
-            {
-                doAttack[c] = true;
-            }
-        }
         if (processCount == BLOCK_SIZE)
         {
+            /*
+             * Over the block is modulation, pan, level etc....
+             */
+            nChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
+                              inputs[GATE_IN].getChannels(), 1});
+
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
             processCount = 0;
@@ -377,7 +371,44 @@ struct EGxVCA : modules::XTModule
                 sTS = r(EG_S) + diff;
                 rTS = r(EG_R) + diff;
             }
+
+            for (int c = 0; c < nChan; ++c)
+            {
+                auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
+                level[c].setTarget(nl);
+                response[c].setTarget(modAssist.values[RESPONSE][c]);
+
+                if (inputs[INPUT_R].isConnected())
+                {
+                    // Assume stereo
+                    dsp::pan_laws::panmatrix_t pm;
+                    dsp::pan_laws::stereoEqualPower(modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                    for (int pl = 0; pl < 4; pl++)
+                    {
+                        pan[c][pl].setTarget(pm[pl]);
+                    }
+                }
+                else
+                {
+                    // assume mono from L
+                    dsp::pan_laws::panmatrix_t pm;
+                    dsp::pan_laws::monoEqualPower(modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                    for (int pl = 0; pl < 4; pl++)
+                    {
+                        pan[c][pl].setTarget(pm[pl]);
+                    }
+                }
+            }
         }
+
+        for (int c = 0; c < nChan; ++c)
+        {
+            if (triggers[c].process(inputs[GATE_IN].getVoltage(c)))
+            {
+                doAttack[c] = true;
+            }
+        }
+
         int as = (int)std::round(params[A_SHAPE].getValue());
         int ds = (int)std::round(params[D_SHAPE].getValue());
         int rs = (int)std::round(params[R_SHAPE].getValue());
@@ -388,9 +419,10 @@ struct EGxVCA : modules::XTModule
             {
                 auto m = (dsp::envelopes::ADSRDAHDEnvelope::Mode)std::round(
                     params[ADSR_OR_DAHD].getValue());
-                auto as = (int)std::round(params[EG_A].getValue());
+                auto as = (int)std::round(params[A_SHAPE].getValue());
                 auto dig = params[ANALOG_OR_DIGITAL].getValue() < 0.5;
-                processors[c]->attackFrom(m, processors[c]->output, as, dig);
+                auto az = (int)std::round(params[ATTACK_FROM].getValue());
+                processors[c]->attackFrom(m, az * processors[c]->output, as, dig);
                 doAttack[c] = false;
             }
             if (tempoSynced)
@@ -414,30 +446,6 @@ struct EGxVCA : modules::XTModule
                                        modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds,
                                        rs, inputs[GATE_IN].getVoltage(c) > 2);
             }
-            auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
-            level[c].setTarget(nl);
-            response[c].setTarget(modAssist.values[RESPONSE][c]);
-
-            if (inputs[INPUT_R].isConnected())
-            {
-                // Assume stereo
-                dsp::pan_laws::panmatrix_t pm;
-                dsp::pan_laws::stereoEqualPower(modAssist.values[PAN][c] * 0.5 + 0.5, pm);
-                for (int pl = 0; pl < 4; pl++)
-                {
-                    pan[c][pl].setTarget(pm[pl]);
-                }
-            }
-            else
-            {
-                // assume mono from L
-                dsp::pan_laws::panmatrix_t pm;
-                dsp::pan_laws::monoEqualPower(modAssist.values[PAN][c] * 0.5 + 0.5, pm);
-                for (int pl = 0; pl < 4; pl++)
-                {
-                    pan[c][pl].setTarget(pm[pl]);
-                }
-            }
         }
 
         // ToDo - SIMDize
@@ -453,7 +461,7 @@ struct EGxVCA : modules::XTModule
         for (int c = 0; c < nChan; ++c)
         {
             auto o1 = processors[c]->output;
-            auto o3 = o1 * o1 * o1;
+            auto o3 = processors[c]->outputCubed;
             auto r = response[c].target;
             auto o = (1 - r) * o1 + r * o3;
 
@@ -471,6 +479,8 @@ struct EGxVCA : modules::XTModule
             outputs[OUTPUT_L].setVoltage(nlV, c);
             outputs[OUTPUT_R].setVoltage(nrV, c);
 
+            // even at 16-way egxvca this takes 1% of the cpu but still we could probably
+            // make these steps simd operations to save a smidge one day
             level[c].step();
             response[c].step();
 
