@@ -26,7 +26,10 @@ struct ADSRDAHDEnvelope
     ADSRDAHDEnvelope(SurgeStorage *s) : storage(s)
     {
         for (int i = 0; i < BLOCK_SIZE; ++i)
+        {
             outputCache[i] = 0;
+            outputCacheCubed[0] = 0;
+        }
         onSampleRateChanged();
     }
 
@@ -52,8 +55,9 @@ struct ADSRDAHDEnvelope
 
     float phase{0}, start{0};
 
-    float output{0}, eoc_output{0};
+    float output{0}, outputCubed{0}, eoc_output{0};
     float outputCache alignas(16)[BLOCK_SIZE], outBlock0{0.f};
+    float outputCacheCubed alignas(16)[BLOCK_SIZE];
     int current{BLOCK_SIZE};
     int eoc_countdown{0};
 
@@ -530,12 +534,14 @@ struct ADSRDAHDEnvelope
             for (int i = 0; i < BLOCK_SIZE; ++i)
             {
                 outputCache[i] = outBlock0 + dO * i;
+                outputCacheCubed[i] = outputCache[i] * outputCache[i] * outputCache[i];
             }
             outBlock0 = target;
             current = 0;
         }
 
         output = outputCache[current];
+        outputCubed = outputCacheCubed[current];
         current++;
     }
 };
