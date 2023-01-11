@@ -162,7 +162,7 @@ struct MatrixDisplay : rack::Widget, style::StyleParticipant
                     {
                         nvgBeginPath(vg);
                         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
-                        nvgRect(vg, (j + 1.5) * dx + dx * d * 0.5, (i + 1) * dy, dx * d * 0.5, dy);
+                        nvgRect(vg, (j + 1.5) * dx + dx * d * 0.5, (i + 1) * dy, -dx * d * 0.5, dy);
                         nvgFill(vg);
                     }
                     else
