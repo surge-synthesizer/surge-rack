@@ -61,7 +61,7 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
             if (type == 0)
             {
                 dShape->visible = true;
-                rShape->drawDirection = widgets::CurveSwitch::HALF_RELEASE;
+                rShape->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
             }
             else
             {
@@ -70,6 +70,31 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
             }
         }
         XTModuleWidget::step();
+    }
+
+    widgets::BufferedDrawFunctionWidget *divWidget{nullptr};
+    void drawDividingLines(NVGcontext *vg)
+    {
+        if (!divWidget)
+            return;
+
+        auto col = style()->getColor(style::XTStyle::Colors::PLOT_MARKS);
+        auto sw = 0.75;
+        auto sz = divWidget->box.size;
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, col);
+        nvgStrokeWidth(vg, sw);
+        nvgMoveTo(vg, 2, rack::mm2px(5));
+        nvgLineTo(vg, sz.x - 2, rack::mm2px(5));
+        nvgStroke(vg);
+
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, col);
+        nvgStrokeWidth(vg, sw);
+        nvgMoveTo(vg, sz.x * 0.65 + rack::mm2px(1), rack::mm2px(5));
+        nvgLineTo(vg, sz.x * 0.65 + rack::mm2px(1), sz.y - rack::mm2px(1));
+        nvgStroke(vg);
     }
 };
 
@@ -113,12 +138,12 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
 
     void drawBg(NVGcontext *vg)
     {
+        /*
         nvgBeginPath(vg);
-        nvgMoveTo(vg, box.size.x, 0);
-        nvgLineTo(vg, box.size.x, box.size.y);
-        nvgStrokeColor(vg, style()->getColor(style::XTStyle::Colors::PLOT_MARKS));
-        nvgStrokeWidth(vg, 0.75);
+        nvgStrokeColor(vg, nvgRGB(255,0,0));
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
         nvgStroke(vg);
+         */
     }
     void drawCurve(NVGcontext *vg)
     {
@@ -230,10 +255,19 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
             meterValues[i] = 0;
     }
 
-    void drawBg(NVGcontext *vg) {}
+    void drawBg(NVGcontext *vg)
+    {
+        /*
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, nvgRGB(255,0,0));
+        nvgRect(vg, 0, 0, box.size.x, box.size.y);
+        nvgStroke(vg);
+         */
+    }
     void drawCurve(NVGcontext *vg)
     {
         auto dx = box.size.x / nChan;
+        auto sy = box.size.y - 2;
         for (int i = 0; i < nChan; ++i)
         {
             nvgBeginPath(vg);
@@ -245,17 +279,16 @@ struct ResponseMeterWidget : rack::Widget, style::StyleParticipant
             gcp.a = 0.5;
             auto gcn = col;
             gcn.a = 0.0;
-            nvgFillPaint(vg,
-                         nvgLinearGradient(vg, 0, (1 - v) * box.size.y, 0, box.size.y, gcp, gcn));
+            nvgFillPaint(vg, nvgLinearGradient(vg, 0, (1 - v) * sy, 0, sy, gcp, gcn));
 
-            nvgRect(vg, dx * i, (1 - v) * box.size.y, dx, v * box.size.y);
+            nvgRect(vg, dx * i, (1 - v) * sy, dx, v * sy);
             nvgFill(vg);
             nvgStrokeWidth(vg, 1);
             nvgStroke(vg);
 
             nvgBeginPath(vg);
-            nvgMoveTo(vg, dx * i, (1 - v) * box.size.y);
-            nvgLineTo(vg, dx * (i + 1), (1 - v) * box.size.y);
+            nvgMoveTo(vg, dx * i, (1 - v) * sy);
+            nvgLineTo(vg, dx * (i + 1), (1 - v) * sy);
             nvgStrokeColor(vg, style()->getColor(style::XTStyle::PLOT_CURVE));
             nvgStrokeWidth(vg, 1.25);
             nvgStroke(vg);
@@ -307,7 +340,6 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 
     auto bg = new widgets::Background(box.size, "EG x VCA", "fx", "BlankNoDisplay");
     addChild(bg);
-    bg->addBeta();
 
     auto col = std::vector<float>();
     for (int i = 0; i < 4; ++i)
@@ -419,14 +451,20 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
         lcdB = lc->box;
 
     {
-        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(4.5));
-        auto adp = rack::Vec(lcdB.pos.x + lcdB.size.x - ads.x - rack::mm2px(1.5), lcdB.pos.y);
+        divWidget = new widgets::BufferedDrawFunctionWidget(
+            lc->box.pos, lc->box.size, [this](auto vg) { drawDividingLines(vg); });
+        addChild(divWidget);
+    }
+    {
+        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(5.0));
+        auto adp = rack::Vec(lcdB.pos.x + lcdB.size.x - ads.x - rack::mm2px(1.5),
+                             lcdB.pos.y - rack::mm2px(0.5));
         auto andig = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ANALOG_OR_DIGITAL);
         addChild(andig);
     }
     {
-        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(4.5));
-        auto adp = rack::Vec(lcdB.pos.x + rack::mm2px(1.5), lcdB.pos.y);
+        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(5.0));
+        auto adp = rack::Vec(lcdB.pos.x + rack::mm2px(1.5), lcdB.pos.y - rack::mm2px(0.5));
         auto mode = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ADSR_OR_DAHD);
         mode->align = widgets::PlotAreaToggleClick::LEFT;
         addChild(mode);
@@ -434,10 +472,10 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 
     {
         auto cs = rack::mm2px(4.5);
-        auto ws = rack::mm2px(3.5);
+        auto ws = rack::mm2px(3.0);
         auto off = rack::mm2px(0.5);
         auto x0 = lcdB.pos.x + lcdB.size.x * 0.5 - 1.5 * cs + off;
-        auto y0 = lcdB.pos.y + off;
+        auto y0 = lcdB.pos.y + off + rack::mm2px(0.5);
 
         auto A = rack::createParam<widgets::CurveSwitch>(rack::Vec(x0, y0), module, M::A_SHAPE);
         A->box.size = rack::Vec(ws, ws);
@@ -448,26 +486,26 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
         auto D =
             rack::createParam<widgets::CurveSwitch>(rack::Vec(x0 + cs, y0), module, M::D_SHAPE);
         D->box.size = rack::Vec(ws, ws);
-        D->drawDirection = widgets::CurveSwitch::HALF_DECAY;
+        D->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
         addChild(D);
         dShape = D;
 
         auto R =
             rack::createParam<widgets::CurveSwitch>(rack::Vec(x0 + 2 * cs, y0), module, M::R_SHAPE);
         R->box.size = rack::Vec(ws, ws);
-        R->drawDirection = widgets::CurveSwitch::HALF_RELEASE;
+        R->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
         addChild(R);
         rShape = R;
     }
 
-    auto envc =
-        new EnvCurveWidget(rack::Vec(lcdB.pos.x + rack::mm2px(1), lcdB.pos.y + rack::mm2px(5)),
-                           rack::Vec(lcdB.size.x * .65, lcdB.size.y - rack::mm2px(6.5)), m);
+    auto envc = new EnvCurveWidget(
+        rack::Vec(lcdB.pos.x + rack::mm2px(1), lcdB.pos.y + rack::mm2px(6)),
+        rack::Vec(lcdB.size.x * .65 - rack::mm2px(1), lcdB.size.y - rack::mm2px(7.5)), m);
     addChild(envc);
 
     auto respc = new ResponseMeterWidget(
-        rack::Vec(lcdB.pos.x + rack::mm2px(2) + lcdB.size.x * 0.65, lcdB.pos.y + rack::mm2px(5)),
-        rack::Vec(lcdB.size.x * .35 - rack::mm2px(3), lcdB.size.y - rack::mm2px(6.5)), m);
+        rack::Vec(lcdB.pos.x + rack::mm2px(2) + lcdB.size.x * 0.65, lcdB.pos.y + rack::mm2px(6)),
+        rack::Vec(lcdB.size.x * .35 - rack::mm2px(4), lcdB.size.y - rack::mm2px(7.5)), m);
     addChild(respc);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
