@@ -442,7 +442,7 @@ struct ADSRDAHDEnvelope
                 eoc_countdown = 0;
             }
         }
-        return res;
+        return (stage == s_sustain ? 1 : res);
     }
 
     inline void process(const float a, const float d, const float s, const float r,
