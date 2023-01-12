@@ -409,6 +409,8 @@ struct SurgeParameterModulationQuantity : public rack::engine::ParamQuantity, Ca
         std::string emsg;
         bool valid{false};
         float v = par->calculate_modulation_value_from_string(s, emsg, valid);
+        if (valid && par->extend_range)
+            v = par->get_extended(v);
         if (valid)
             setValue(v);
     }
