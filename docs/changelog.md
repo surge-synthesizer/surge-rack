@@ -1,6 +1,6 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Beta Now (As of Jan 11, 2022 / 4d2133d)
+## 2.1 - In Beta Now (As of Jan 11, 2023 / 4d2133d)
 
 - New Modules
     - *EGxVCA* - a combined ADSR or DAHD envelope with a panning stereo VCA
