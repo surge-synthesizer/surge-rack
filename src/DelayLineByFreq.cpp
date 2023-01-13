@@ -80,7 +80,7 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
                                                           M::INPUT_VOCT));
         auto bl = layout::LayoutConstants::inputLabelBaseline_MM - 26.5;
         auto lab = widgets::Label::createWithBaselineBox(
-            rack::Vec(0, rack::mm2px(bl - 5)), rack::Vec(box.size.x, rack::mm2px(5)), "PITCH");
+            rack::Vec(0, rack::mm2px(bl - 5)), rack::Vec(box.size.x, rack::mm2px(5)), "V/OCT");
         addChild(lab);
     }
 
