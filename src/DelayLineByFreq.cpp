@@ -56,7 +56,7 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
         auto bl = cy + rack::mm2px(7 + 4);
         auto lab = widgets::Label::createWithBaselineBox(rack::Vec(0, bl - rack::mm2px(5)),
                                                          rack::Vec(box.size.x, rack::mm2px(5)),
-                                                         "V/OCT OFFSET");
+                                                         "V/OCT CENTER");
         addChild(lab);
     }
     {
@@ -69,7 +69,7 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
         auto bl = cy + rack::mm2px(7 + 4);
         auto lab = widgets::Label::createWithBaselineBox(rack::Vec(0, bl - rack::mm2px(5)),
                                                          rack::Vec(box.size.x, rack::mm2px(5)),
-                                                         "SAMPLE OFFSET");
+                                                         "SAMPLE CORRECT");
         addChild(lab);
     }
 
