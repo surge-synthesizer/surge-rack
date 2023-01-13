@@ -1070,7 +1070,7 @@ struct QuadLFO : modules::XTModule
             return r0;
 
         auto rs = modAssist.basevalues[DEFORM_0 + DEFORM_SPREAD] * idx / 3;
-        return r0 + rs;
+        return std::clamp(r0 + rs, -1.f, 1.f);
     }
     float spreadDeform(int idx, int c)
     {
@@ -1080,7 +1080,7 @@ struct QuadLFO : modules::XTModule
             return r0;
 
         auto rs = modAssist.values[DEFORM_0 + DEFORM_SPREAD][c] * idx / 3;
-        return r0 + rs;
+        return std::clamp(r0 + rs, -1.f, 1.f);
     }
 
     float spreadAmp(int idx)
@@ -1091,7 +1091,7 @@ struct QuadLFO : modules::XTModule
             return r0;
 
         auto rs = modAssist.basevalues[DEFORM_0 + AMP_SPREAD] * idx / 3;
-        return std::clamp(r0 + rs, 0.f, 1.f);
+        return std::clamp(r0 + rs, -1.f, 1.f);
     }
     float spreadAmp(int idx, int c)
     {
@@ -1101,7 +1101,7 @@ struct QuadLFO : modules::XTModule
             return r0;
 
         auto rs = modAssist.values[DEFORM_0 + AMP_SPREAD][c] * idx / 3;
-        return r0 + rs;
+        return std::clamp(r0 + rs, -1.f, 1.f);
     }
 
     void processSpreadLFOs()
