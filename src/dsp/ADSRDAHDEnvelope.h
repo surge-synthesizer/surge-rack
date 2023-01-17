@@ -76,16 +76,19 @@ struct ADSRDAHDEnvelope
         mode = m;
         float f = fv;
 
-        switch (ashp)
+        if (isdig)
         {
-        case 0:
-            // target = sqrt(target);
-            f = f * f;
-            break;
-        case 2:
-            // target = target * target * target;
-            f = pow(f, 1.0 / 3.0);
-            break;
+            switch (ashp)
+            {
+            case 0:
+                // target = sqrt(target);
+                f = f * f;
+                break;
+            case 2:
+                // target = target * target * target;
+                f = pow(f, 1.0 / 3.0);
+                break;
+            }
         }
         phase = f;
         if (m == DAHD_MODE)
@@ -483,50 +486,53 @@ struct ADSRDAHDEnvelope
                 if (isDigital)
                     target = targetDigitalADSR(a, d, s, r, ashape, dshape, rshape, gateActive);
                 else
-                    target = targetAnalogADSR(a, d, s, r, ashape, dshape, rshape, gateActive);
+                    target = targetAnalogADSR(a, d, s, r, 1, 1, 1, gateActive);
                 break;
             case DAHD_MODE:
                 if (isDigital)
                     target = targetDigitalDAHD(a, d, s, r, ashape, dshape, rshape);
                 else
-                    target = targetAnalogDAHD(a, d, s, r, ashape, dshape, rshape);
+                    target = targetAnalogDAHD(a, d, s, r, 1, 1, 1);
                 break;
             }
 
-            if (stage == s_attack)
+            if (isDigital)
             {
-                switch (ashape)
+                if (stage == s_attack)
                 {
-                case 0:
-                    target = sqrt(target);
-                    break;
-                case 2:
-                    target = target * target * target;
-                    break;
+                    switch (ashape)
+                    {
+                    case 0:
+                        target = sqrt(target);
+                        break;
+                    case 2:
+                        target = target * target * target;
+                        break;
+                    }
                 }
-            }
-            else if (stage == s_decay)
-            {
-                switch (dshape)
+                else if (stage == s_decay)
                 {
-                case 0:
-                    target = sqrt(target);
-                    break;
-                case 2:
-                    target = target * target * target;
-                    break;
+                    switch (dshape)
+                    {
+                    case 0:
+                        target = sqrt(target);
+                        break;
+                    case 2:
+                        target = target * target * target;
+                        break;
+                    }
                 }
-            }
-            else if (stage == s_release || stage == s_analog_residual_release)
-            {
-                switch (rshape)
+                else if (stage == s_release || stage == s_analog_residual_release)
                 {
-                case 0:
-                    target = sqrt(target);
-                    break;
-                case 2:
-                    target = target * target * target;
-                    break;
+                    switch (rshape)
+                    {
+                    case 0:
+                        target = sqrt(target);
+                        break;
+                    case 2:
+                        target = target * target * target;
+                        break;
+                    }
                 }
             }
 

@@ -52,23 +52,37 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
                          {{"Attack from Zero", 0}, {"Attack from Current (Legato)", 1}});
     }
 
-    widgets::DirtyHelper<EGxVCA, false> modeDirty;
+    widgets::DirtyHelper<EGxVCA, false> modeDirty, analogDigitalDirty;
     void step() override
     {
-        if (modeDirty.dirty() && dShape && rShape)
+        if ((modeDirty.dirty() ||analogDigitalDirty.dirty() ) && aShape && dShape && rShape)
         {
             auto type = modeDirty.lastValue;
-            if (type == 0)
+            auto isDig = analogDigitalDirty.lastValue == 0;
+
+            if (!isDig)
             {
-                dShape->visible = true;
-                rShape->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
+                aShape->visible = false;
+                dShape->visible = false;
+                rShape->visible = false;
             }
             else
             {
-                dShape->visible = false;
-                rShape->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
+                aShape->visible = true;
+                rShape->visible = true;
+                if (type == 0)
+                {
+                    dShape->visible = true;
+                    rShape->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
+                }
+                else
+                {
+                    dShape->visible = false;
+                    rShape->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
+                }
             }
         }
+
         XTModuleWidget::step();
     }
 
@@ -335,6 +349,9 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 
     modeDirty.module = m;
     modeDirty.par = M::ADSR_OR_DAHD;
+
+    analogDigitalDirty.module = m;
+    analogDigitalDirty.par = M::ANALOG_OR_DIGITAL;
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
 
