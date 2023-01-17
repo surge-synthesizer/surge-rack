@@ -87,14 +87,14 @@ struct QuadADWidget : public widgets::XTModuleWidget
         nvgStroke(vg);
     }
 
-    std::array<int, M::n_ads> modeCache{-1,-1,-1,-1};
+    std::array<int, M::n_ads> modeCache{-1, -1, -1, -1};
     void step() override
     {
         if (module)
         {
-            for (int i=0; i<M::n_ads; ++i)
+            for (int i = 0; i < M::n_ads; ++i)
             {
-                auto md= (int)std::round(module->paramQuantities[M::MODE_0 + i]->getValue());
+                auto md = (int)std::round(module->paramQuantities[M::MODE_0 + i]->getValue());
                 if (md != modeCache[i])
                 {
                     bool show = (md == 0);

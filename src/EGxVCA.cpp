@@ -55,7 +55,7 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
     widgets::DirtyHelper<EGxVCA, false> modeDirty, analogDigitalDirty;
     void step() override
     {
-        if ((modeDirty.dirty() ||analogDigitalDirty.dirty() ) && aShape && dShape && rShape)
+        if ((modeDirty.dirty() || analogDigitalDirty.dirty()) && aShape && dShape && rShape)
         {
             auto type = modeDirty.lastValue;
             auto isDig = analogDigitalDirty.lastValue == 0;
