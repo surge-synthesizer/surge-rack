@@ -56,16 +56,19 @@ struct ADAREnvelope
     {
         float f = fv;
 
-        switch (ashp)
+        if (id)
         {
-        case 0:
-            // target = sqrt(target);
-            f = f * f;
-            break;
-        case 2:
-            // target = target * target * target;
-            f = pow(f, 1.0 / 3.0);
-            break;
+            switch (ashp)
+            {
+            case 0:
+                // target = sqrt(target);
+                f = f * f;
+                break;
+            case 2:
+                // target = target * target * target;
+                f = pow(f, 1.0 / 3.0);
+                break;
+            }
         }
         phase = f;
         stage = s_attack;
@@ -239,31 +242,33 @@ struct ADAREnvelope
                 }
             }
 
-            if (stage == s_attack)
+            if (isDigital)
             {
-                switch (ashape)
+                if (stage == s_attack)
                 {
-                case 0:
-                    target = sqrt(target);
-                    break;
-                case 2:
-                    target = target * target * target;
-                    break;
+                    switch (ashape)
+                    {
+                    case 0:
+                        target = sqrt(target);
+                        break;
+                    case 2:
+                        target = target * target * target;
+                        break;
+                    }
+                }
+                else
+                {
+                    switch (dshape)
+                    {
+                    case 0:
+                        target = sqrt(target);
+                        break;
+                    case 2:
+                        target = target * target * target;
+                        break;
+                    }
                 }
             }
-            else
-            {
-                switch (dshape)
-                {
-                case 0:
-                    target = sqrt(target);
-                    break;
-                case 2:
-                    target = target * target * target;
-                    break;
-                }
-            }
-
             float dO = (target - outBlock0) * BLOCK_SIZE_INV;
             for (int i = 0; i < BLOCK_SIZE; ++i)
             {

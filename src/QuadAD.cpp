@@ -29,6 +29,7 @@ struct QuadADWidget : public widgets::XTModuleWidget
     std::array<std::array<rack::Widget *, M::n_mod_inputs>, M::n_mod_params> overlays;
     std::array<widgets::ModulatableKnob *, M::n_mod_params> underKnobs;
     std::array<widgets::ModToggleButton *, M::n_mod_inputs> toggles;
+    std::array<widgets::CurveSwitch *, M::n_ads> attackCurves, decayCurves;
 
     void selectModulator(int mod) override
     {
@@ -84,6 +85,29 @@ struct QuadADWidget : public widgets::XTModuleWidget
         nvgMoveTo(vg, 2, sz.y - rack::mm2px(5));
         nvgLineTo(vg, sz.x - 2, sz.y - rack::mm2px(5));
         nvgStroke(vg);
+    }
+
+    std::array<int, M::n_ads> modeCache{-1, -1, -1, -1};
+    void step() override
+    {
+        if (module)
+        {
+            for (int i = 0; i < M::n_ads; ++i)
+            {
+                auto md = (int)std::round(module->paramQuantities[M::MODE_0 + i]->getValue());
+                if (md != modeCache[i])
+                {
+                    bool show = (md == 0);
+                    if (attackCurves[i])
+                        attackCurves[i]->setVisible(show);
+
+                    if (decayCurves[i])
+                        decayCurves[i]->setVisible(show);
+                }
+                modeCache[i] = md;
+            }
+        }
+        rack::ModuleWidget::step();
     }
 };
 
@@ -462,12 +486,15 @@ QuadADWidget::QuadADWidget(sst::surgext_rack::quadad::ui::QuadADWidget::M *modul
             A->box = A->box.shrink(rack::mm2px(rack::Vec(0.5, 0.25)));
             A->drawDirection = widgets::CurveSwitch::ATTACK;
             addChild(A);
+            attackCurves[i] = A;
+
             auto D = rack::createParam<widgets::CurveSwitch>(rack::Vec(x + w - lw - xpad, yAD),
                                                              module, M::D_SHAPE_0 + i);
             D->box.size = rack::Vec(lw, h);
             D->box = D->box.shrink(rack::mm2px(rack::Vec(0.5, 0.25)));
             D->drawDirection = widgets::CurveSwitch::FULL_RELEASE;
             addChild(D);
+            decayCurves[i] = D;
 
             auto mode = widgets::PlotAreaToggleClick::create(
                 rack::Vec(x + lw + xpad, yAD - rack::mm2px(1.0)),
