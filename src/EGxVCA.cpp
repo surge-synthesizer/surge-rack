@@ -186,7 +186,8 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
             endt = pow(2, a * sc + mn) + pow(2, d * sc + mn) + pow(2, r * sc + mn);
             auto dGate = 0.33 * endt;
             endt += dGate;
-            gt = pow(2, a * sc + mn) + pow(2, d * sc + mn) + dGate;
+            endt = std::max(0.25f, endt);
+            gt = endt - pow(2, r * sc + mn);
         }
         else
         {

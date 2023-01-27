@@ -122,7 +122,7 @@ struct EGxVCA : modules::XTModule
             switch (paramId)
             {
             case EG_A:
-                return "Attach";
+                return "Attack";
             case EG_D:
                 return "Decay";
             case EG_S:
