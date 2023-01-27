@@ -431,7 +431,7 @@ struct QuadAD : modules::XTModule
     json_t *makeModuleSpecificJson() override
     {
         auto qv = json_object();
-        json_object_set(qv, "attackFromZero", json_boolean(attackFromZero));
+        json_object_set_new(qv, "attackFromZero", json_boolean(attackFromZero));
         return qv;
     }
 

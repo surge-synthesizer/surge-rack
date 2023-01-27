@@ -1240,7 +1240,7 @@ struct QuadLFO : modules::XTModule
         auto vc = json_object();
 
         clockProc.toJson(vc);
-        json_object_set(vc, "forcePolyphony", json_integer(forcePolyphony));
+        json_object_set_new(vc, "forcePolyphony", json_integer(forcePolyphony));
 
         return vc;
     }
