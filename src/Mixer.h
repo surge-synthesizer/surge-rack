@@ -400,7 +400,7 @@ struct Mixer : modules::XTModule
     json_t *makeModuleSpecificJson() override
     {
         auto vco = json_object();
-        json_object_set(vco, "vuChannel", json_integer(vuChannel));
+        json_object_set_new(vco, "vuChannel", json_integer(vuChannel));
         return vco;
     }
     void readModuleSpecificJson(json_t *modJ) override

@@ -762,9 +762,10 @@ template <int fxType> struct FX : modules::XTModule
         {
             if (loadedPreset >= 0)
             {
-                json_object_set(fx, "loadedPreset", json_integer(loadedPreset));
-                json_object_set(fx, "presetName", json_string(presets[loadedPreset].name.c_str()));
-                json_object_set(fx, "presetIsDirty", json_boolean(presetIsDirty));
+                json_object_set_new(fx, "loadedPreset", json_integer(loadedPreset));
+                json_object_set_new(fx, "presetName",
+                                    json_string(presets[loadedPreset].name.c_str()));
+                json_object_set_new(fx, "presetIsDirty", json_boolean(presetIsDirty));
             }
         }
         if (FXConfig<fxType>::usesClock())
@@ -774,7 +775,7 @@ template <int fxType> struct FX : modules::XTModule
 
         if (FXConfig<fxType>::allowsPolyphony())
         {
-            json_object_set(fx, "polyphonicMode", json_boolean(polyphonicMode));
+            json_object_set_new(fx, "polyphonicMode", json_boolean(polyphonicMode));
         }
         return fx;
     }

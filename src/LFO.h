@@ -739,8 +739,8 @@ struct LFO : modules::XTModule
     {
         auto fx = json_object();
         clockProc.toJson(fx);
-        json_object_set(fx, "retriggerFromZero", json_boolean(retriggerFromZero));
-        json_object_set(fx, "onepoleFactor", json_real(onepoleFactor));
+        json_object_set_new(fx, "retriggerFromZero", json_boolean(retriggerFromZero));
+        json_object_set_new(fx, "onepoleFactor", json_real(onepoleFactor));
         return fx;
     }
 

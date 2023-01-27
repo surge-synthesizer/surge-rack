@@ -744,14 +744,15 @@ template <int oscType> struct VCO : public modules::XTModule
         if (VCOConfig<oscType>::requiresWavetables() && wavetableCount > 0)
         {
             auto *wtT = json_object();
-            json_object_set(wtT, "draw3D", json_boolean(draw3DWavetable));
+            json_object_set_new(wtT, "draw3D", json_boolean(draw3DWavetable));
 
-            json_object_set(wtT, "display_name", json_string(oscstorage->wavetable_display_name));
+            json_object_set_new(wtT, "display_name",
+                                json_string(oscstorage->wavetable_display_name));
 
             auto &wt = oscstorage->wt;
-            json_object_set(wtT, "n_tables", json_integer(wt.n_tables));
-            json_object_set(wtT, "n_samples", json_integer(wt.size));
-            json_object_set(wtT, "flags", json_integer(wt.flags));
+            json_object_set_new(wtT, "n_tables", json_integer(wt.n_tables));
+            json_object_set_new(wtT, "n_samples", json_integer(wt.size));
+            json_object_set_new(wtT, "flags", json_integer(wt.flags));
 
             wt_header wth;
             memset(wth.tag, 0, 4);
@@ -774,13 +775,14 @@ template <int oscType> struct VCO : public modules::XTModule
             }
             auto b64 = rack::string::toBase64(odata, wtsize);
             delete[] odata;
-            json_object_set(wtT, "data", json_string(b64.c_str()));
-            json_object_set(vco, "wavetable", wtT);
+            json_object_set_new(wtT, "data", json_string(b64.c_str()));
+            json_object_set_new(vco, "wavetable", wtT);
+            wtT = nullptr;
         }
 
-        json_object_set(vco, "halfbandM", json_integer(halfbandM));
-        json_object_set(vco, "halfbandSteep", json_boolean(halfbandSteep));
-        json_object_set(vco, "doDCBlock", json_boolean(doDCBlock));
+        json_object_set_new(vco, "halfbandM", json_integer(halfbandM));
+        json_object_set_new(vco, "halfbandSteep", json_boolean(halfbandSteep));
+        json_object_set_new(vco, "doDCBlock", json_boolean(doDCBlock));
         return vco;
     }
     void readModuleSpecificJson(json_t *modJ) override

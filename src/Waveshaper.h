@@ -569,7 +569,7 @@ struct Waveshaper : public modules::XTModule
     json_t *makeModuleSpecificJson() override
     {
         auto ws = json_object();
-        json_object_set(ws, "doDCBlock", json_boolean(doDCBlock));
+        json_object_set_new(ws, "doDCBlock", json_boolean(doDCBlock));
         return ws;
     }
 
