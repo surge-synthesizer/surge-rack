@@ -85,7 +85,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
                                                            [res](auto v) { res->drawBG(v); });
         res->addChild(res->bdw);
 
-        res->bdwLight = new widgets::BufferedDrawFunctionWidget(
+        res->bdwLight = new widgets::BufferedDrawFunctionWidgetOnLayer(
             rack::Vec(0, 0), size, [res](auto v) { res->drawLight(v); });
         res->addChild(res->bdwLight);
 
