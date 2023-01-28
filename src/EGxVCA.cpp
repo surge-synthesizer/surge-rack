@@ -374,7 +374,7 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 
     const auto dSlider = layout::LayoutConstants::columnWidth_MM * 0.5f;
 
-    const auto sliderStart = col1 + layout::LayoutConstants::columnWidth_MM * 0.25f;
+    const auto sliderStart = col0 - layout::LayoutConstants::columnWidth_MM * 0.75f;
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
     const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0];
     const auto row3 = layout::LayoutConstants::vcoRowCenters_MM[0] - (row1 - row2);
@@ -384,9 +384,9 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
     // fixme use the enums
     // clang-format off
     std::vector<li_t> layout = {
-        {li_t::KNOB12, "LEVEL", M::LEVEL, col0, rowS},
-        {li_t::KNOB9, "PAN", M::PAN, col1, row3},
-        {li_t::KNOB9, "RESP", M::RESPONSE, col1, row2},
+        {li_t::KNOB12, "LEVEL", M::LEVEL, col3, rowS},
+        {li_t::KNOB9, "PAN", M::PAN, col2, row3},
+        {li_t::KNOB9, "RESP", M::RESPONSE, col2, row2},
 
         {li_t::PORT, "GATE", M::GATE_IN, col0, row1},
         {li_t::PORT, "CLOCK", M::CLOCK_IN, col1, row1},
