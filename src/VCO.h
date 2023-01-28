@@ -430,8 +430,8 @@ template <int oscType> struct VCO : public modules::XTModule
         }
         else
         {
-            strncpy(oscstorage->wt.queue_filename, msg.filename, 256);
-            strncpy(oscstorage_display->wt.queue_filename, msg.filename, 256);
+            oscstorage->wt.queue_filename = msg.filename;
+            oscstorage_display->wt.queue_filename = msg.filename;
             oscstorage->wt.frame_size_if_absent = msg.defaultSize;
             oscstorage_display->wt.frame_size_if_absent = msg.defaultSize;
 
@@ -747,7 +747,7 @@ template <int oscType> struct VCO : public modules::XTModule
             json_object_set_new(wtT, "draw3D", json_boolean(draw3DWavetable));
 
             json_object_set_new(wtT, "display_name",
-                                json_string(oscstorage->wavetable_display_name));
+                                json_string(oscstorage->wavetable_display_name.c_str()));
 
             auto &wt = oscstorage->wt;
             json_object_set_new(wtT, "n_tables", json_integer(wt.n_tables));
@@ -834,10 +834,10 @@ template <int oscType> struct VCO : public modules::XTModule
                 }
 
                 oscstorage->wt.current_id = supposedIdx;
-                strncpy(oscstorage->wavetable_display_name, dname.c_str(), 255);
+                oscstorage->wavetable_display_name = dname;
 
                 oscstorage_display->wt.current_id = supposedIdx;
-                strncpy(oscstorage_display->wavetable_display_name, dname.c_str(), 255);
+                oscstorage_display->wavetable_display_name = dname;
 
                 wavetableIndex = supposedIdx;
             }
