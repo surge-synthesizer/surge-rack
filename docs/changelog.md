@@ -1,6 +1,17 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1 - In Beta Now (As of Jan 11, 2023 / 4d2133d)
+## 2.1.1 - February 2023
+
+2.1.1 provides a few small bugfixes. 
+
+- Supress some memory leaks in 2.1 due to mis-using `json_set_object` vs
+  `json_set_object_new`. This leak motivated the point release even
+  though the memory leaked was small.
+- EGxVCA UI tweaks for control positions, gate time drawing, and labels
+- If you have both 2.0.3 and extra wavetables installed, only scan the
+  'extra' downloads copy
+
+## 2.1 - Januar 2023
 
 - New Modules
     - *EGxVCA* - a combined ADSR or DAHD envelope with a panning stereo VCA
