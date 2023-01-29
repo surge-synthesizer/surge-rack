@@ -201,7 +201,7 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
 
         auto env = dsp::envelopes::ADSRDAHDEnvelope(module->storage.get());
-        env.attackFrom((dsp::envelopes::ADSRDAHDEnvelope::Mode)shp, 0, as, isDig);
+        env.attackFrom((dsp::envelopes::ADSRDAHDEnvelope::Mode)shp, 0, a, as, isDig);
 
         nvgBeginPath(vg);
         nvgMoveTo(vg, 0, box.size.y - 2); // that's the 0,0 point
