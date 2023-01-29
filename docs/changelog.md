@@ -7,6 +7,11 @@
 - Supress some memory leaks in 2.1 due to mis-using `json_set_object` vs
   `json_set_object_new`. This leak motivated the point release even
   though the memory leaked was small.
+- EGxVCA in DAHD Mode changes retrigger semantics slightly. If you have
+  delay set at minimum the delay phase is skipped, so there is no zero
+  segment at the outset; in this case a retrigger of the DAHD will
+  follow the same legato controls as the ADSR. (This basically means
+  "The DAHD works as you would exect in AHD mode with D at min")
 - EGxVCA UI tweaks for control positions, gate time drawing, and labels
 - If you have both 2.0.3 and extra wavetables installed, only scan the
   'extra' downloads copy

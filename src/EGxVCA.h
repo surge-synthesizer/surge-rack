@@ -113,6 +113,15 @@ struct EGxVCA : modules::XTModule
                 return m->tempoSynced;
             return false;
         }
+        bool getMinString(std::string &s) override
+        {
+            if (paramId == EG_A)
+            {
+                s = "Delay Skipped";
+                return true;
+            }
+            return false;
+        }
     };
 
     struct ADSRPQ : modules::CTEnvTimeParamQuantity
@@ -422,7 +431,12 @@ struct EGxVCA : modules::XTModule
                 auto as = (int)std::round(params[A_SHAPE].getValue());
                 auto dig = params[ANALOG_OR_DIGITAL].getValue() < 0.5;
                 auto az = (int)std::round(params[ATTACK_FROM].getValue());
-                processors[c]->attackFrom(m, az * processors[c]->output, as, dig);
+                auto av = modAssist.values[EG_A][c];
+                if (tempoSynced)
+                {
+                    av = aTS + modAssist.modvalues[EG_A][c];
+                }
+                processors[c]->attackFrom(m, az * processors[c]->output, av, as, dig);
                 doAttack[c] = false;
             }
             if (tempoSynced)

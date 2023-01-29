@@ -71,7 +71,7 @@ struct ADSRDAHDEnvelope
         coeff_offset = 2.f - std::log2(storage->samplerate * BLOCK_SIZE_INV);
     }
 
-    void attackFrom(Mode m, float fv, int ashp, bool isdig)
+    void attackFrom(Mode m, float fv, float attack, int ashp, bool isdig)
     {
         mode = m;
         float f = fv;
@@ -92,7 +92,16 @@ struct ADSRDAHDEnvelope
         }
         phase = f;
         if (m == DAHD_MODE)
-            stage = s_delay;
+        {
+            if (attack > 0.0001)
+            {
+                stage = s_delay;
+            }
+            else
+            {
+                stage = s_attack;
+            }
+        }
         else
             stage = s_attack;
         current = BLOCK_SIZE;

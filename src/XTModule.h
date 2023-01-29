@@ -1157,6 +1157,14 @@ struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
     {
         auto v = getValue() * (etMax - etMin) + etMin;
 
+        if (getValue() < 0.0001)
+        {
+            std::string mv;
+            if (getMinString(mv))
+            {
+                return mv;
+            }
+        }
         if (isTempoSync())
         {
             return temposync_support::temposyncLabel(v);
@@ -1172,6 +1180,7 @@ struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
         setValue(vn);
     }
 
+    virtual bool getMinString(std::string &s) { return false; }
     virtual bool isTempoSync() { return false; }
 };
 
