@@ -97,6 +97,33 @@ jobs:
           path: dist/*.vcvplugin
           name: mac-${{ matrix.platform }}
 
+  build-linux-outside-toolchain:
+    name: linux-outside-toolchain
+    needs: modify-plugin-version
+    runs-on: linux-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions/cache@v3
+        id: plugin-version-cache
+        with:
+          path: plugin.json
+          key: ${{ github.sha }}-${{ github.run_id }}
+      - name: Get Rack-SDK
+        run: |
+          pushd $HOME
+          curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-lin-${{ matrix.platform }}.zip
+          unzip Rack-SDK.zip
+      - name: Build plugin
+        run: |
+          make dep
+          make dist
+
   publish:
     name: Publish Release
     # only create a release if a tag was created that is called e.g. v1.2.3
