@@ -100,7 +100,7 @@ jobs:
   build-linux-outside-toolchain:
     name: linux-outside-toolchain
     needs: modify-plugin-version
-    runs-on: linux-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
