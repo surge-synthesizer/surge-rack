@@ -121,6 +121,7 @@ jobs:
           unzip Rack-SDK.zip
       - name: Build plugin
         run: |
+          export RACK_DIR=$HOME/Rack-SDK
           make dep
           make dist
 
