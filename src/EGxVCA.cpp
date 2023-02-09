@@ -148,18 +148,15 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         su(EGxVCA::R_SHAPE, false);
         su(EGxVCA::ANALOG_OR_DIGITAL, false);
         su(EGxVCA::ADSR_OR_DAHD, false);
+        su(EGxVCA::FAST_OR_SLOW, false);
     }
 
     void drawBg(NVGcontext *vg)
     {
-        /*
-        nvgBeginPath(vg);
-        nvgStrokeColor(vg, nvgRGB(255,0,0));
-        nvgRect(vg, 0, 0, box.size.x, box.size.y);
-        nvgStroke(vg);
-         */
     }
-    void drawCurve(NVGcontext *vg)
+
+    template<typename env_t>
+    void drawCurveForMode(NVGcontext *vg)
     {
         if (!module)
             return;
@@ -176,11 +173,28 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         auto isDig = dirtyChecks[EGxVCA::ANALOG_OR_DIGITAL].lastValue < 0.5;
         auto shp = dirtyChecks[EGxVCA::ADSR_OR_DAHD].lastValue;
 
-        // TODO - fix this
-        auto mx = modules::CTEnvTimeParamQuantity::defaultEtMax;
-        auto mn = modules::CTEnvTimeParamQuantity::defaultEtMin;
+        auto env = env_t(module->storage.get());
+
+        auto mx = env.etMax;
+        auto mn = env.etMin;
         auto sc = mx - mn;
         auto gt = 0.f, endt = 0.f;
+
+        // OK do a little rescaling. There's really no reason to do all those samples
+        // and the algorithms are all scale invarient under uniform time transform
+        auto totalScale = [&]()
+        {
+            return a * sc + d * sc + r * sc + 3 * mn + (shp > 0.5 ? s * sc + mn : 0);
+        };
+        while (totalScale() > 9)
+        {
+            a -= 1 / sc;
+            d -= 1 / sc;
+            r -= 1 / sc;
+            if (shp > 0.5)
+                s -= 1 / sc;
+        }
+
         if (shp < 0.5)
         {
             // adsr
@@ -201,10 +215,7 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         auto smpEvery = std::max((int)std::floor(runs / (box.size.x * 4)), 1);
         auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
 
-        // TODO: Fast/Slow
-        auto env = EGxVCA::envelope_t(module->storage.get());
-        env.attackFrom((EGxVCA::envelope_t::Mode)shp, 0, a, as, isDig);
-
+        env.attackFrom(0, a, as, isDig);
         nvgBeginPath(vg);
         nvgMoveTo(vg, 0, box.size.y - 2); // that's the 0,0 point
 
@@ -232,6 +243,29 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         nvgFillPaint(vg, nvgLinearGradient(vg, 0, 0, 0, box.size.y * 0.9, gcp, gcn));
         nvgFill(vg);
     }
+
+    void drawCurve(NVGcontext *vg)
+    {
+        if (!module)
+            return;
+        auto slow = module->isSlow();
+        auto mode = module->getMode();
+        if (mode == 0)
+        {
+            if (slow)
+                drawCurveForMode<EGxVCA::envelopeAdsrSlow_t>(vg);
+            else
+                drawCurveForMode<EGxVCA::envelopeAdsr_t>(vg);
+        }
+        else
+        {
+            if (slow)
+                drawCurveForMode<EGxVCA::envelopeDahdSlow_t>(vg);
+            else
+                drawCurveForMode<EGxVCA::envelopeDahd_t>(vg);
+        }
+    }
+
     void onStyleChanged() override
     {
         bdw->dirty = true;

@@ -1176,7 +1176,7 @@ struct CTEnvTimeParamQuantity : rack::ParamQuantity, modules::CalculatedName
     void setDisplayValueString(std::string s) override
     {
         auto q = std::atof(s.c_str());
-        auto v = log2(std::clamp(q, 0.0001, 32.));
+        auto v = log2(std::clamp(q, pow(2., etMin), pow(2., etMax)));
         auto vn = (v - etMin) / (etMax - etMin);
         setValue(vn);
     }
