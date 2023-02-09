@@ -406,8 +406,8 @@ struct QuadAD : modules::XTModule
                     }
 
                     processors[i][c]->processScaledAD(modAssist.values[ATTACK_0 + i][c],
-                                                modAssist.values[DECAY_0 + i][c], as, ds,
-                                                gated[i][c]);
+                                                      modAssist.values[DECAY_0 + i][c], as, ds,
+                                                      gated[i][c]);
 
                     auto ov = processors[i][c]->output * 10;
                     if (isEnvLinked[i])

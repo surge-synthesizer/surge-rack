@@ -41,7 +41,7 @@ struct EGxVCA : modules::XTModule
 
     typedef basic_blocks::modulators::ADSREnvelope<SurgeStorage, BLOCK_SIZE> envelopeAdsr_t;
     typedef basic_blocks::modulators::ADSREnvelope<SurgeStorage, BLOCK_SIZE,
-                                                       basic_blocks::modulators::TwoMinuteRange>
+                                                   basic_blocks::modulators::TwoMinuteRange>
         envelopeAdsrSlow_t;
     typedef basic_blocks::modulators::DAHDEnvelope<SurgeStorage, BLOCK_SIZE> envelopeDahd_t;
     typedef basic_blocks::modulators::DAHDEnvelope<SurgeStorage, BLOCK_SIZE,
@@ -496,8 +496,8 @@ struct EGxVCA : modules::XTModule
                 auto dv = dTS + modAssist.modvalues[EG_D][c];
                 auto sv = sTS + modAssist.modvalues[EG_S][c];
                 auto rv = rTS + modAssist.modvalues[EG_R][c];
-                procs[c]->process(av, dv, getMode() == 0 ? modAssist.values[EG_S][c] : sv, rv,
-                                  as, ds, rs, inputs[GATE_IN].getVoltage(c) > 2);
+                procs[c]->process(av, dv, getMode() == 0 ? modAssist.values[EG_S][c] : sv, rv, as,
+                                  ds, rs, inputs[GATE_IN].getVoltage(c) > 2);
             }
             else
             {

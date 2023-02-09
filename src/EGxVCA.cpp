@@ -151,12 +151,9 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         su(EGxVCA::FAST_OR_SLOW, false);
     }
 
-    void drawBg(NVGcontext *vg)
-    {
-    }
+    void drawBg(NVGcontext *vg) {}
 
-    template<typename env_t>
-    void drawCurveForMode(NVGcontext *vg)
+    template <typename env_t> void drawCurveForMode(NVGcontext *vg)
     {
         if (!module)
             return;
@@ -182,8 +179,7 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
 
         // OK do a little rescaling. There's really no reason to do all those samples
         // and the algorithms are all scale invarient under uniform time transform
-        auto totalScale = [&]()
-        {
+        auto totalScale = [&]() {
             return a * sc + d * sc + r * sc + 3 * mn + (shp > 0.5 ? s * sc + mn : 0);
         };
         while (totalScale() > 9)
