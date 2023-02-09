@@ -28,7 +28,8 @@
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
 
-#include "sst/basic-blocks/modulators/ADSRDAHDEnvelope.h"
+#include "sst/basic-blocks/modulators/ADSREnvelope.h"
+#include "sst/basic-blocks/modulators/DAHDEnvelope.h"
 #include "sst/basic-blocks/dsp/PanLaws.h"
 
 namespace sst::surgext_rack::egxvca
@@ -38,10 +39,14 @@ struct EGxVCA : modules::XTModule
     static constexpr int n_mod_params{7};
     static constexpr int n_mod_inputs{4};
 
-    typedef basic_blocks::modulators::ADSRDAHDEnvelope<SurgeStorage, BLOCK_SIZE> envelope_t;
-    typedef basic_blocks::modulators::ADSRDAHDEnvelope<SurgeStorage, BLOCK_SIZE,
-                                                       basic_blocks::modulators::HundredSecondRange>
-        envelopeSlow_t;
+    typedef basic_blocks::modulators::ADSREnvelope<SurgeStorage, BLOCK_SIZE> envelopeAdsr_t;
+    typedef basic_blocks::modulators::ADSREnvelope<SurgeStorage, BLOCK_SIZE,
+                                                   basic_blocks::modulators::TwoMinuteRange>
+        envelopeAdsrSlow_t;
+    typedef basic_blocks::modulators::DAHDEnvelope<SurgeStorage, BLOCK_SIZE> envelopeDahd_t;
+    typedef basic_blocks::modulators::DAHDEnvelope<SurgeStorage, BLOCK_SIZE,
+                                                   basic_blocks::modulators::TwoMinuteRange>
+        envelopeDahdSlow_t;
 
     enum ParamIds
     {
@@ -281,8 +286,10 @@ struct EGxVCA : modules::XTModule
 
     float meterLevels[MAX_POLY];
 
-    std::array<std::unique_ptr<envelope_t>, MAX_POLY> processors;
-    std::array<std::unique_ptr<envelopeSlow_t>, MAX_POLY> processorsSlow;
+    std::array<std::unique_ptr<envelopeAdsr_t>, MAX_POLY> processorsAdsr;
+    std::array<std::unique_ptr<envelopeAdsrSlow_t>, MAX_POLY> processorsAdsrSlow;
+    std::array<std::unique_ptr<envelopeDahd_t>, MAX_POLY> processorsDahd;
+    std::array<std::unique_ptr<envelopeDahdSlow_t>, MAX_POLY> processorsDahdSlow;
     std::array<rack::dsp::SchmittTrigger, MAX_POLY> triggers;
     void setupSurge()
     {
@@ -290,8 +297,10 @@ struct EGxVCA : modules::XTModule
 
         for (int i = 0; i < MAX_POLY; ++i)
         {
-            processors[i] = std::make_unique<envelope_t>(storage.get());
-            processorsSlow[i] = std::make_unique<envelopeSlow_t>(storage.get());
+            processorsAdsr[i] = std::make_unique<envelopeAdsr_t>(storage.get());
+            processorsAdsrSlow[i] = std::make_unique<envelopeAdsrSlow_t>(storage.get());
+            processorsDahd[i] = std::make_unique<envelopeDahd_t>(storage.get());
+            processorsDahdSlow[i] = std::make_unique<envelopeDahdSlow_t>(storage.get());
             doAttack[i] = false;
 
             level[i].target = 1.0;
@@ -341,8 +350,14 @@ struct EGxVCA : modules::XTModule
         clockProc.setSampleRate(APP->engine->getSampleRate());
         for (int i = 0; i < MAX_POLY; ++i)
         {
-            if (processors[i])
-                processors[i]->onSampleRateChanged();
+            if (processorsAdsr[i])
+                processorsAdsr[i]->onSampleRateChanged();
+            if (processorsDahd[i])
+                processorsDahd[i]->onSampleRateChanged();
+            if (processorsAdsrSlow[i])
+                processorsAdsrSlow[i]->onSampleRateChanged();
+            if (processorsDahdSlow[i])
+                processorsDahdSlow[i]->onSampleRateChanged();
         }
     }
     typedef modules::ClockProcessor<EGxVCA> clockProcessor_t;
@@ -464,7 +479,6 @@ struct EGxVCA : modules::XTModule
         {
             if (doAttack[c])
             {
-                auto m = (typename ENVT::Mode)std::round(params[ADSR_OR_DAHD].getValue());
                 auto as = (int)std::round(params[A_SHAPE].getValue());
                 auto dig = params[ANALOG_OR_DIGITAL].getValue() < 0.5;
                 auto az = (int)std::round(params[ATTACK_FROM].getValue());
@@ -473,19 +487,17 @@ struct EGxVCA : modules::XTModule
                 {
                     av = aTS + modAssist.modvalues[EG_A][c];
                 }
-                procs[c]->attackFrom(m, az * procs[c]->output, av, as, dig);
+                procs[c]->attackFrom(az * procs[c]->output, av, as, dig);
                 doAttack[c] = false;
             }
             if (tempoSynced)
             {
-                auto m = (typename ENVT::Mode)std::round(params[ADSR_OR_DAHD].getValue());
-
                 auto av = aTS + modAssist.modvalues[EG_A][c];
                 auto dv = dTS + modAssist.modvalues[EG_D][c];
                 auto sv = sTS + modAssist.modvalues[EG_S][c];
                 auto rv = rTS + modAssist.modvalues[EG_R][c];
-                procs[c]->process(av, dv, m == ENVT::ADSR_MODE ? modAssist.values[EG_S][c] : sv, rv,
-                                  as, ds, rs, inputs[GATE_IN].getVoltage(c) > 2);
+                procs[c]->process(av, dv, getMode() == 0 ? modAssist.values[EG_S][c] : sv, rv, as,
+                                  ds, rs, inputs[GATE_IN].getVoltage(c) > 2);
             }
             else
             {
@@ -543,30 +555,61 @@ struct EGxVCA : modules::XTModule
         auto s = (bool)std::round(getParam(FAST_OR_SLOW).getValue());
         return s;
     }
+    bool lastMode{0};
+    bool getMode()
+    {
+        auto s = (bool)std::round(getParam(ADSR_OR_DAHD).getValue());
+        return s;
+    }
     void process(const typename rack::Module::ProcessArgs &args) override
     {
         auto s = isSlow();
         if (s != lastSlow)
         {
-            resetFastSlow(s);
+            resetEnvelopes();
+            lastSlow = s;
         }
-        if (s)
-            processFastSlow<envelopeSlow_t>(args, processorsSlow);
+        auto m = getMode();
+        if (m != lastMode)
+        {
+            resetEnvelopes();
+            lastMode = m;
+        }
+        if (m == 0)
+        {
+            if (s)
+                processFastSlow(args, processorsAdsrSlow);
+            else
+                processFastSlow(args, processorsAdsr);
+        }
         else
-            processFastSlow<envelope_t>(args, processors);
+        {
+            if (s)
+                processFastSlow(args, processorsDahdSlow);
+            else
+                processFastSlow(args, processorsDahd);
+        }
     }
 
-    void resetFastSlow(bool s)
+    void resetEnvelopes()
     {
-        for (const auto &p : processors)
+        for (const auto &p : processorsAdsr)
         {
             p->immediatelySilence();
         }
-        for (const auto &p : processorsSlow)
+        for (const auto &p : processorsAdsrSlow)
         {
             p->immediatelySilence();
         }
-        lastSlow = s;
+        for (const auto &p : processorsDahd)
+        {
+            p->immediatelySilence();
+        }
+        for (const auto &p : processorsDahdSlow)
+        {
+            p->immediatelySilence();
+        }
+        auto s = isSlow();
         for (auto pqi : {EG_A, EG_D, EG_S, EG_R})
         {
             auto mm = dynamic_cast<SetMinMaxPQFeature *>(paramQuantities[pqi]);
@@ -574,16 +617,12 @@ struct EGxVCA : modules::XTModule
             {
                 if (s)
                 {
-                    mm->setMinMax(envelopeSlow_t::etMin, envelopeSlow_t::etMax);
+                    mm->setMinMax(envelopeAdsrSlow_t::etMin, envelopeAdsrSlow_t::etMax);
                 }
                 else
                 {
-                    mm->setMinMax(envelope_t::etMin, envelope_t::etMax);
+                    mm->setMinMax(envelopeAdsr_t::etMin, envelopeAdsr_t::etMax);
                 }
-            }
-            else
-            {
-                std::cout << "ZOINKS" << std::endl;
             }
         }
     }

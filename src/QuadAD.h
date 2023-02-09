@@ -387,7 +387,7 @@ struct QuadAD : modules::XTModule
                             if (i != k && (nukeThese & (1 << k)))
                             {
                                 maxNukeValue = std::max(maxNukeValue, processors[k][c]->output);
-                                processors[k][c]->immediatelyEnd();
+                                processors[k][c]->immediatelySilence();
                             }
                         }
                     }
@@ -405,9 +405,9 @@ struct QuadAD : modules::XTModule
                         gated[i][c] = false;
                     }
 
-                    processors[i][c]->process(modAssist.values[ATTACK_0 + i][c],
-                                              modAssist.values[DECAY_0 + i][c], as, ds,
-                                              gated[i][c]);
+                    processors[i][c]->processScaledAD(modAssist.values[ATTACK_0 + i][c],
+                                                      modAssist.values[DECAY_0 + i][c], as, ds,
+                                                      gated[i][c]);
 
                     auto ov = processors[i][c]->output * 10;
                     if (isEnvLinked[i])

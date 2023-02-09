@@ -344,7 +344,7 @@ struct ADARCurveDraw : public rack::Widget, style::StyleParticipant
 
         for (int i = 0; i < runs; ++i)
         {
-            env.process(a, d, as, ds, i < gtSmp);
+            env.processScaledAD(a, d, as, ds, i < gtSmp);
             if ((i % smpEvery) == 0)
             {
                 auto v = env.output;
