@@ -63,7 +63,9 @@ add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 add_library(Surge INTERFACE)
 target_compile_options(Surge INTERFACE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
-set(SURGE_LIBS surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate sst-plugininfra fmt sqlite eurorack airwindows)
+add_subdirectory(libs/sst/sst-basic-blocks)
+
+set(SURGE_LIBS surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate sst-plugininfra fmt sqlite eurorack airwindows sst-basic-blocks)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(SURGE_WIN_LIBS winmm wsock32 shlwapi version wininet ws2_32)

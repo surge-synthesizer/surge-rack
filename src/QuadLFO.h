@@ -13,13 +13,10 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-#include "dsp/SimpleLFO.h"
-
 #ifndef SURGE_XT_RACK_QUADADHPP
 #define SURGE_XT_RACK_QUADADHPP
 
 #include "SurgeXT.h"
-#include "dsp/Effect.h"
 #include "XTModule.h"
 #include "rack.hpp"
 #include <cstring>
@@ -28,9 +25,9 @@
 #include "FxPresetAndClipboardManager.h"
 
 #include "LayoutEngine.h"
-#include "ADSRModulationSource.h"
-
 #include "TemposyncSupport.h"
+
+#include "sst/basic-blocks/modulators/SimpleLFO.h"
 
 namespace sst::surgext_rack::quadlfo
 {
@@ -40,6 +37,8 @@ struct QuadLFO : modules::XTModule
     static constexpr int n_mod_inputs{4};
     static constexpr int n_lfos{4};
     static constexpr float temposyncOffset{-1};
+
+    typedef basic_blocks::modulators::SimpleLFO<SurgeStorage, BLOCK_SIZE> lfoSource_t;
 
     enum ParamIds
     {
@@ -666,7 +665,8 @@ struct QuadLFO : modules::XTModule
             configOutput(OUTPUT_0 + i, "LFO " + std::to_string(i + 1));
             for (int c = 0; c < MAX_POLY; ++c)
             {
-                processors[i][c] = std::make_unique<dsp::modulators::SimpleLFO>(storage.get());
+                processors[i][c] =
+                    std::make_unique<lfoSource_t>(storage.get(), storage->rand_u32());
             }
         }
 
@@ -674,8 +674,7 @@ struct QuadLFO : modules::XTModule
         snapCalculatedNames();
     }
 
-    std::array<std::array<std::unique_ptr<dsp::modulators::SimpleLFO>, MAX_POLY>, n_lfos>
-        processors;
+    std::array<std::array<std::unique_ptr<lfoSource_t>, MAX_POLY>, n_lfos> processors;
     void setupSurge() { setupSurgeCommon(NUM_PARAMS, false, false); }
 
     int polyChannelCount() { return nChan; }
@@ -848,7 +847,7 @@ struct QuadLFO : modules::XTModule
                 outputs[OUTPUT_0 + i].setChannels(chanByLFO[i]);
                 uniOffset[i] = (params[BIPOLAR_0 + i].getValue() < 0.5 ? 1 : 0);
                 if ((int)std::round(params[SHAPE_0 + i].getValue()) ==
-                    dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+                    lfoSource_t::SimpleLFO::RANDOM_TRIGGER)
                 {
                     uniOffset[i] = 1;
                 }

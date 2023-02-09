@@ -176,8 +176,9 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         auto isDig = dirtyChecks[EGxVCA::ANALOG_OR_DIGITAL].lastValue < 0.5;
         auto shp = dirtyChecks[EGxVCA::ADSR_OR_DAHD].lastValue;
 
-        auto mx = modules::CTEnvTimeParamQuantity::etMax;
-        auto mn = modules::CTEnvTimeParamQuantity::etMin;
+        // TODO - fix this
+        auto mx = modules::CTEnvTimeParamQuantity::defaultEtMax;
+        auto mn = modules::CTEnvTimeParamQuantity::defaultEtMin;
         auto sc = mx - mn;
         auto gt = 0.f, endt = 0.f;
         if (shp < 0.5)
@@ -200,8 +201,9 @@ struct EnvCurveWidget : rack::Widget, style::StyleParticipant
         auto smpEvery = std::max((int)std::floor(runs / (box.size.x * 4)), 1);
         auto gtSmp = gt * module->storage->samplerate * BLOCK_SIZE_INV;
 
-        auto env = dsp::envelopes::ADSRDAHDEnvelope(module->storage.get());
-        env.attackFrom((dsp::envelopes::ADSRDAHDEnvelope::Mode)shp, 0, a, as, isDig);
+        // TODO: Fast/Slow
+        auto env = EGxVCA::envelope_t(module->storage.get());
+        env.attackFrom((EGxVCA::envelope_t::Mode)shp, 0, a, as, isDig);
 
         nvgBeginPath(vg);
         nvgMoveTo(vg, 0, box.size.y - 2); // that's the 0,0 point
@@ -482,6 +484,15 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
     }
     {
         auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(5.0));
+        auto adp = rack::Vec(lcdB.pos.x + lcdB.size.x * 0.75 - ads.x * 0.5 - rack::mm2px(1.5),
+                             lcdB.pos.y - rack::mm2px(0.5));
+        auto fastslow = widgets::PlotAreaToggleClick::create(adp, ads, module, M::FAST_OR_SLOW);
+        fastslow->align = widgets::PlotAreaToggleClick::CENTER;
+
+        addChild(fastslow);
+    }
+    {
+        auto ads = rack::Vec(lcdB.size.x * 0.25, rack::mm2px(5.0));
         auto adp = rack::Vec(lcdB.pos.x + rack::mm2px(1.5), lcdB.pos.y - rack::mm2px(0.5));
         auto mode = widgets::PlotAreaToggleClick::create(adp, ads, module, M::ADSR_OR_DAHD);
         mode->align = widgets::PlotAreaToggleClick::LEFT;
@@ -492,7 +503,7 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
         auto cs = rack::mm2px(4.5);
         auto ws = rack::mm2px(3.0);
         auto off = rack::mm2px(0.5);
-        auto x0 = lcdB.pos.x + lcdB.size.x * 0.5 - 1.5 * cs + off;
+        auto x0 = lcdB.pos.x + lcdB.size.x * 0.42 - 1.5 * cs + off;
         auto y0 = lcdB.pos.y + off + rack::mm2px(0.5);
 
         auto A = rack::createParam<widgets::CurveSwitch>(rack::Vec(x0, y0), module, M::A_SHAPE);

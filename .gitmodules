@@ -1,3 +1,6 @@
 [submodule "surge"]
 	path = surge
 	url = https://github.com/surge-synthesizer/surge.git
+[submodule "libs/sst/sst-basic-blocks"]
+	path = libs/sst/sst-basic-blocks
+	url = https://github.com/surge-synthesizer/sst-basic-blocks.git
