@@ -328,7 +328,7 @@ struct ADARCurveDraw : public rack::Widget, style::StyleParticipant
             endt = gt + pow(2, d);
         }
 
-        auto env = dsp::envelopes::ADAREnvelope(module->storage.get());
+        auto env = QuadAD::envelope_t(module->storage.get());
         env.attackFrom(0, as, (m < 0.5), (adar > 0.5));
 
         auto smp = endt * module->storage->samplerate;

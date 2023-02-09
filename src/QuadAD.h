@@ -26,8 +26,8 @@
 #include "FxPresetAndClipboardManager.h"
 
 #include "LayoutEngine.h"
-#include "ADSRModulationSource.h"
-#include "dsp/ADAREnvelope.h"
+
+#include "sst/basic-blocks/modulators/ADAREnvelope.h"
 
 namespace sst::surgext_rack::quadad
 {
@@ -105,8 +105,8 @@ struct QuadAD : modules::XTModule
         }
     };
 
-    std::array<std::array<std::unique_ptr<dsp::envelopes::ADAREnvelope>, MAX_POLY>, n_ads>
-        processors;
+    typedef basic_blocks::modulators::ADAREnvelope<SurgeStorage, BLOCK_SIZE> envelope_t;
+    std::array<std::array<std::unique_ptr<envelope_t>, MAX_POLY>, n_ads> processors;
 
     QuadAD() : XTModule()
     {
@@ -120,7 +120,7 @@ struct QuadAD : modules::XTModule
         {
             for (int p = 0; p < MAX_POLY; ++p)
             {
-                processors[i][p] = std::make_unique<dsp::envelopes::ADAREnvelope>(storage.get());
+                processors[i][p] = std::make_unique<envelope_t>(storage.get());
                 accumulatedOutputs[i][p] = 0.f;
                 gated[i][p] = false;
                 eocFromAway[i][p] = 0;

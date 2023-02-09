@@ -113,7 +113,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         }
 
         if (module)
-            res->lfo = std::make_unique<dsp::modulators::SimpleLFO>(module->storage.get());
+            res->lfo = std::make_unique<QuadLFO::lfoSource_t>(module->storage.get());
         return res;
     }
 
@@ -173,7 +173,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
         nvgStroke(vg);
     }
 
-    std::unique_ptr<dsp::modulators::SimpleLFO> lfo;
+    std::unique_ptr<QuadLFO::lfoSource_t> lfo;
     void drawLight(NVGcontext *vg)
     {
         if (!module)
@@ -189,12 +189,10 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
          */
         int cycles = 1;
         bool zeroEndpoints{false};
-        if (s == dsp::modulators::SimpleLFO::SMOOTH_NOISE ||
-            s == dsp::modulators::SimpleLFO::SH_NOISE)
+        if (s == QuadLFO::lfoSource_t::SMOOTH_NOISE || s == QuadLFO::lfoSource_t::SH_NOISE)
             cycles = 4;
 
-        if (s == dsp::modulators::SimpleLFO::PULSE ||
-            s == dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+        if (s == QuadLFO::lfoSource_t::PULSE || s == QuadLFO::lfoSource_t::RANDOM_TRIGGER)
             zeroEndpoints = true;
 
         float yshift = rack::mm2px(3.9);
@@ -243,7 +241,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
             lfo->process_block(r, d, s);
             auto v = lfo->outputBlock[0];
             float x = i * dx + xoff;
-            if (s == dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+            if (s == QuadLFO::lfoSource_t::RANDOM_TRIGGER)
             {
                 v = ((x - xoff) < (box.size.x - xoff) * 0.25) ? 1 : -1;
             }
@@ -355,7 +353,7 @@ struct QuadWavePicker : rack::Widget, style::StyleParticipant
                                                         [pq, i]() { pq->setValue(i); }));
                 }
 
-                if (index != dsp::modulators::SimpleLFO::RANDOM_TRIGGER)
+                if (index != QuadLFO::lfoSource_t::RANDOM_TRIGGER)
                 {
                     menu->addChild(new rack::ui::MenuSeparator);
                     auto bpq = module->paramQuantities[QuadLFO::BIPOLAR_0 + idx];
