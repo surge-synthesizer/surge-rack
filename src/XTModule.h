@@ -1092,7 +1092,7 @@ struct TypeSwappingParameterQuantity : rack::ParamQuantity, modules::CalculatedN
     {
         auto m = mode();
         auto f = impls.find(m);
-        assert(f != imps.end());
+        assert(f != impls.end());
         if (f == impls.end())
             return nullptr;
         if (f->second->module != module)
