@@ -368,6 +368,7 @@ struct EGxVCA : modules::XTModule
     int meterUpdateCount{0};
 
     int nChan{-1};
+    bool polyGate{false};
 
     bool doAttack[MAX_POLY];
 
@@ -400,6 +401,7 @@ struct EGxVCA : modules::XTModule
              */
             nChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
                               inputs[GATE_IN].getChannels(), 1});
+            polyGate = inputs[GATE_IN].getChannels() > 1;
 
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);
@@ -465,7 +467,7 @@ struct EGxVCA : modules::XTModule
 
         for (int c = 0; c < nChan; ++c)
         {
-            if (triggers[c].process(inputs[GATE_IN].getVoltage(c)))
+            if (triggers[c].process(inputs[GATE_IN].getVoltage(polyGate * c)))
             {
                 doAttack[c] = true;
             }
@@ -497,13 +499,13 @@ struct EGxVCA : modules::XTModule
                 auto sv = sTS + modAssist.modvalues[EG_S][c];
                 auto rv = rTS + modAssist.modvalues[EG_R][c];
                 procs[c]->process(av, dv, getMode() == 0 ? modAssist.values[EG_S][c] : sv, rv, as,
-                                  ds, rs, inputs[GATE_IN].getVoltage(c) > 2);
+                                  ds, rs, inputs[GATE_IN].getVoltage(polyGate * c) > 2);
             }
             else
             {
                 procs[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
                                   modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
-                                  inputs[GATE_IN].getVoltage(c) > 2);
+                                  inputs[GATE_IN].getVoltage(polyGate * c) > 2);
             }
         }
 
