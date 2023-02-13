@@ -1,5 +1,13 @@
 # Surge XT VCV Modules Changelog
 
+## 2.1.2 - February 2023
+
+- Add a 'slow' mode to the EGxVCA which allows ADSR times up to 120 seconds
+- Fix an EGxVCA problem where monophonic gates with polyphonic signals would
+  mot broadcast correctly
+- Refactor some of the code for sharing with other surge team properties; fix
+  a few small technical make and build issues for disparate environments.
+
 ## 2.1.1 - February 2023
 
 2.1.1 provides a few small bugfixes. 
