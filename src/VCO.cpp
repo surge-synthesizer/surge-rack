@@ -675,9 +675,17 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             {
             case ot_wavetable:
             case ot_window:
-                pos = oscdata->p[0].val.f;
-                off = oscdata->p[0].extend_range;
-                break;
+            {
+                auto par = &(oscdata->p[0]);
+                pos = par->val.f;
+                if (module->animateDisplayFromMod)
+                {
+                    pos +=
+                        module->modAssist.modvalues[0 + 1][0] * (par->val_max.f - par->val_min.f);
+                }
+                off = par->extend_range;
+            }
+            break;
             default:
                 pos = 0.f;
                 break;
