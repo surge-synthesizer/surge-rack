@@ -1,6 +1,10 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1.2 - February 2023
+## 2.1.3
+
+- Fix for wavetable 3d position display when modulating Morph parameter
+
+## 2.1.2 - February 2023 (Skipped in library)
 
 - Add a 'slow' mode to the EGxVCA which allows ADSR times up to 120 seconds
 - Fix an EGxVCA problem where monophonic gates with polyphonic signals would
