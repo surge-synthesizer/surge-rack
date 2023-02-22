@@ -410,6 +410,11 @@ struct Mixer : modules::XTModule
             vuChannel = 0;
         else
             vuChannel = json_integer_value(v);
+
+        // If we unstream from json let the json win and turn of the
+        // auto-unmute-on-first-connect feature
+        for (auto &ev : everConnected)
+            ev = true;
     }
 };
 } // namespace sst::surgext_rack::mixer
