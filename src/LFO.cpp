@@ -128,7 +128,7 @@ struct LFOWidget : widgets::XTModuleWidget
                 m->paramQuantities[LFO::SCALE_RAW_OUTPUTS]->setValue(v ? 0 : 1);
             }));
         menu->addChild(rack::createMenuItem(
-            "Set EG to Zero when No Trigger Connected",
+            "Set EG Output to Zero if Gate Absent",
             CHECKMARK(m->params[LFO::UNTRIGGERED_ENV_NONZERO].getValue() < 0.5), [m]() {
                 auto v = m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->getValue() > 0.5;
                 m->paramQuantities[LFO::UNTRIGGERED_ENV_NONZERO]->setValue(v ? 0 : 1);
