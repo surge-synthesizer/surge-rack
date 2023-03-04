@@ -47,9 +47,12 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
          */
         addClockMenu<EGxVCA>(menu);
         menu->addChild(new rack::ui::MenuSeparator);
-
         addSelectionMenu(menu, module->paramQuantities[M::ATTACK_FROM],
                          {{"Attack from Zero", 0}, {"Attack from Current (Legato)", 1}});
+
+        menu->addChild(new rack::ui::MenuSeparator);
+        addSelectionMenu(menu, module->paramQuantities[M::STEREO_PAN_LAW],
+                         {{"Stereo Equal Power Panning", 0}, {"Stereo True Panning", 1}});
     }
 
     widgets::DirtyHelper<EGxVCA, false> modeDirty, analogDigitalDirty;
