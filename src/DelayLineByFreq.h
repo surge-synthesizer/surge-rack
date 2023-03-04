@@ -107,10 +107,12 @@ struct DelayLineByFreq : modules::XTModule
         outputs[OUTPUT_L].setChannels(cc);
         outputs[OUTPUT_R].setChannels(cc);
 
+        auto rInp = inputs[INPUT_R].isConnected() ? INPUT_R : INPUT_L;
+
         for (int i = 0; i < cc; ++i)
         {
             auto il = inputs[INPUT_L].getVoltage(lm * i);
-            auto ir = inputs[INPUT_R].getVoltage(rm * i);
+            auto ir = inputs[rInp].getVoltage(rm * i);
 
             float pitch0 =
                 (params[VOCT].getValue() + 5) * 12 + inputs[INPUT_VOCT].getVoltage(i) * 12;

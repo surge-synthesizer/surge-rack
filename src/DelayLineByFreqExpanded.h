@@ -371,6 +371,14 @@ struct DelayLineByFreqExpanded : modules::XTModule
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
 
+        auto rInput = inputs[INPUT_R].isConnected() ? INPUT_R : INPUT_L;
+        if (rInput == INPUT_L)
+            rm = lm;
+
+        auto rFbInput = inputs[INPUT_FBR].isConnected() ? INPUT_FBR : INPUT_FBL;
+        if (rFbInput == INPUT_FBL)
+            rfm = lfm;
+
         for (int i = 0; i < nChan; ++i)
         {
             float pitch0 =
@@ -404,7 +412,7 @@ struct DelayLineByFreqExpanded : modules::XTModule
             fba = 1.f - omfba * omfba;
 
             auto fbl = fba * inputs[INPUT_FBL].getVoltage(lfm * i);
-            auto fbr = fba * inputs[INPUT_FBR].getVoltage(rfm * i);
+            auto fbr = fba * inputs[rFbInput].getVoltage(rfm * i);
 
             float ex = inputs[INPUT_EXCITER_AMP].getVoltage(i) * 0.1;
             if (ex > 1e-5 && inputs[INPUT_EXCITER_AMP].isConnected())
@@ -436,7 +444,7 @@ struct DelayLineByFreqExpanded : modules::XTModule
             }
 
             auto il = inputs[INPUT_L].getVoltage(lm * i) + fbl;
-            auto ir = inputs[INPUT_R].getVoltage(rm * i) + fbr;
+            auto ir = inputs[rInput].getVoltage(rm * i) + fbr;
 
             // avoid feedback blowouts with a hard clamp
             lineL[i]->write(std::clamp(il, -clampLevel, clampLevel));
