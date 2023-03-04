@@ -67,6 +67,7 @@ struct EGxVCA : modules::XTModule
         MOD_PARAM_0,
         ATTACK_FROM = MOD_PARAM_0 + n_mod_params * n_mod_inputs,
         FAST_OR_SLOW,
+        STEREO_PAN_LAW,
         NUM_PARAMS
     };
 
@@ -92,6 +93,12 @@ struct EGxVCA : modules::XTModule
     enum LightIds
     {
         NUM_LIGHTS
+    };
+
+    enum StereoPanLaw
+    {
+        EQUAL_POWER,
+        TRUE_PANNING
     };
 
     modules::ModulationAssistant<EGxVCA, n_mod_params, LEVEL, n_mod_inputs, MOD_INPUT_0> modAssist;
@@ -271,6 +278,9 @@ struct EGxVCA : modules::XTModule
             ->randomizeEnabled = false;
         configSwitch(FAST_OR_SLOW, 0, 1, 0, "Fast or Slow", {"Fast", "Slow"})->randomizeEnabled =
             false;
+        configSwitch(STEREO_PAN_LAW, EQUAL_POWER, TRUE_PANNING, EQUAL_POWER, "Stereo Pan Law",
+                     {"Equal Power", "True Panning"})
+            ->randomizeEnabled = false;
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -434,6 +444,8 @@ struct EGxVCA : modules::XTModule
                 rTS = r(EG_R) + diff;
             }
 
+            auto pl = (StereoPanLaw)std::round(params[STEREO_PAN_LAW].getValue());
+
             for (int c = 0; c < nChan; ++c)
             {
                 auto nl = modules::DecibelParamQuantity::ampToLinear(modAssist.values[LEVEL][c]);
@@ -444,8 +456,17 @@ struct EGxVCA : modules::XTModule
                 {
                     // Assume stereo
                     basic_blocks::dsp::pan_laws::panmatrix_t pm;
-                    basic_blocks::dsp::pan_laws::stereoEqualPower(
-                        modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                    switch (pl)
+                    {
+                    case EQUAL_POWER:
+                        basic_blocks::dsp::pan_laws::stereoEqualPower(
+                            modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                        break;
+                    case TRUE_PANNING:
+                        basic_blocks::dsp::pan_laws::stereoTruePanning(
+                            modAssist.values[PAN][c] * 0.5 + 0.5, pm);
+                        break;
+                    }
                     for (int pl = 0; pl < 4; pl++)
                     {
                         pan[c][pl].setTarget(pm[pl]);
