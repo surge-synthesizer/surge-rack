@@ -1203,6 +1203,17 @@ LFOWidget::LFOWidget(LFOWidget::M *module) : XTModuleWidget()
          };
         // clang-format on
 
+        auto &lo = layout[1];
+        lo.dynamicLabel = true;
+        lo.dynLabelFn = [](auto *m) -> std::string {
+            if (!m)
+                return "PHASE";
+            auto pq = m->paramQuantities[LFO::PHASE];
+            if (!pq)
+                return "PHASE";
+
+            return rack::string::uppercase(pq->getLabel());
+        };
         for (const auto &lay : layout)
         {
             engine_t::layoutItem(this, lay, "LFO");
