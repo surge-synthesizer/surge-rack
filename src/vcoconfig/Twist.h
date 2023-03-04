@@ -252,7 +252,13 @@ template <> void VCOConfig<ot_twist>::processVCOSpecificParameters(VCO<ot_twist>
 
     for (auto s : {m->oscstorage, m->oscstorage_display})
     {
-        s->p[TwistOscillator::twist_lpg_response].deactivated = !l0;
+        auto deact = !l0;
+        /*
+         * Never paint the LPG on the display
+         */
+        if (s == m->oscstorage_display)
+            deact = true;
+        s->p[TwistOscillator::twist_lpg_response].deactivated = deact;
     }
 }
 
