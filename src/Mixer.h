@@ -248,6 +248,7 @@ struct Mixer : modules::XTModule
 
     int polyDepth{1}, polyDepthBy4{1};
     int polyDepthPerOsc[n_osc];
+    int rightInputFrom[n_osc];
 
     int polyChannelCount() { return polyDepth; }
 
@@ -276,6 +277,17 @@ struct Mixer : modules::XTModule
                 auto pd = inputs[i].getChannels();
                 polyDepth = std::max(polyDepth, pd);
                 polyDepthPerOsc[(i - INPUT_OSC1_L) / 2] = pd;
+            }
+            for (int i=0; i<n_osc; ++i)
+            {
+                if (inputs[INPUT_OSC1_R + i * 2].isConnected())
+                {
+                    rightInputFrom[i] = INPUT_OSC1_R;
+                }
+                else
+                {
+                    rightInputFrom[i] = INPUT_OSC1_L;
+                }
             }
             polyDepthBy4 = (polyDepth - 1) / 4 + 1;
 
@@ -306,7 +318,7 @@ struct Mixer : modules::XTModule
                         rack::simd::float_4::load(inputs[INPUT_OSC1_L + i * 2].getVoltages(p * 4)) *
                         RACK_TO_SURGE_OSC_MUL;
                     osc[i][1][p] =
-                        rack::simd::float_4::load(inputs[INPUT_OSC1_R + i * 2].getVoltages(p * 4)) *
+                        rack::simd::float_4::load(inputs[rightInputFrom[i] + i * 2].getVoltages(p * 4)) *
                         RACK_TO_SURGE_OSC_MUL;
                 }
             }
@@ -318,7 +330,7 @@ struct Mixer : modules::XTModule
                     osc[i][0][p] =
                         RACK_TO_SURGE_OSC_MUL * inputs[INPUT_OSC1_L + i * 2].getVoltage();
                     osc[i][1][p] =
-                        RACK_TO_SURGE_OSC_MUL * inputs[INPUT_OSC1_R + i * 2].getVoltage();
+                        RACK_TO_SURGE_OSC_MUL * inputs[rightInputFrom[i] + i * 2].getVoltage();
                 }
             }
 
