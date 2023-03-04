@@ -279,7 +279,8 @@ struct EGxVCA : modules::XTModule
         configSwitch(FAST_OR_SLOW, 0, 1, 0, "Fast or Slow", {"Fast", "Slow"})->randomizeEnabled =
             false;
         configSwitch(STEREO_PAN_LAW, EQUAL_POWER, TRUE_PANNING, EQUAL_POWER, "Stereo Pan Law",
-                     {"Equal Power", "True Panning"})->randomizeEnabled = false;
+                     {"Equal Power", "True Panning"})
+            ->randomizeEnabled = false;
 
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
@@ -455,7 +456,7 @@ struct EGxVCA : modules::XTModule
                 {
                     // Assume stereo
                     basic_blocks::dsp::pan_laws::panmatrix_t pm;
-                    switch(pl)
+                    switch (pl)
                     {
                     case EQUAL_POWER:
                         basic_blocks::dsp::pan_laws::stereoEqualPower(
