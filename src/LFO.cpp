@@ -747,11 +747,11 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         float valScale = 100.0;
         int susCountdown = -1;
 
-        float priorval = 0.f;
+        float priorval = 0.f, priorwval = 0.f;
 
         std::string invalidMessage;
 
-        std::vector<std::pair<float, float>> pathV, eupathV, edpathV;
+        std::vector<std::pair<float, float>> pathV, wavpathV, eupathV, edpathV;
 
         float scaleComp = 0.9;
         float scaleOff = (1.0 - scaleComp) * 0.5;
@@ -782,9 +782,12 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 }
 
                 val += tlfo->get_output(0);
+                wval += tlfo->get_output(1);
 
                 minval = std::min(tlfo->get_output(0), minval);
                 maxval = std::max(tlfo->get_output(0), maxval);
+                minwval = std::min(tlfo->get_output(1), minwval);
+                maxwval = std::max(tlfo->get_output(1), maxwval);
                 eval += tlfo->env_val * lfodata->magnitude.get_extended(lfodata->magnitude.val.f);
             }
 
@@ -803,6 +806,7 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             if (i == 0)
             {
                 pathV.emplace_back(xc, val);
+                wavpathV.emplace_back(xc, wval);
                 eupathV.emplace_back(xc, euval);
                 edpathV.emplace_back(xc, edval);
 
@@ -826,7 +830,20 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
                 pathV.emplace_back(xc - scaleOff * valScale / totalSamples, firstval);
                 pathV.emplace_back(xc + scaleOff * valScale / totalSamples, secondval);
 
+                firstval = minwval;
+                secondval = maxwval;
+
+                if (priorwval - minval < maxval - priorwval)
+                {
+                    firstval = maxwval;
+                    secondval = minwval;
+                }
+
+                wavpathV.emplace_back(xc - scaleOff * valScale / totalSamples, firstval);
+                wavpathV.emplace_back(xc + scaleOff * valScale / totalSamples, secondval);
+
                 priorval = val;
+                priorwval = wval;
                 eupathV.emplace_back(xc, euval);
                 edpathV.emplace_back(xc, edval);
             }
@@ -939,6 +956,34 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
             }
         }
 
+        {
+            bool first{true};
+            nvgBeginPath(vg);
+
+            for (const auto &[x, yorig] : wavpathV)
+            {
+                auto y = yorig;
+                if (isuni)
+                {
+                }
+                if (first)
+                {
+                    nvgMoveTo(vg, sx * x, sy * y);
+                }
+                else
+                {
+                    nvgLineTo(vg, sx * x, sy * y);
+                }
+                first = false;
+            }
+            auto wcol = style()->getColor(style::XTStyle::PLOT_CURVE);
+            wcol.a = 0.4;
+            nvgStrokeColor(vg, wcol);
+            nvgStrokeWidth(vg, 0.5);
+            nvgLineJoin(vg, NVG_ROUND);
+            nvgLineCap(vg, NVG_BUTT);
+            nvgStroke(vg);
+        }
 #if 0
         if (tFullWave)
         {

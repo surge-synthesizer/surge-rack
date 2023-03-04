@@ -337,6 +337,15 @@ struct LFO : modules::XTModule
 
     int polyChannelCount() { return std::max(1, lastNChan); }
 
+    bool isBipolar(int paramId) override
+    {
+        if (paramId == DEFORM)
+        {
+            return true;
+        }
+        return false;
+    }
+
     int lastStep = BLOCK_SIZE;
     int lastNChan = -1;
     bool firstProcess{true};
