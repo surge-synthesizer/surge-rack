@@ -1,5 +1,23 @@
 # Surge XT VCV Modules Changelog
 
+## 2.1.4 (Coming March 2023)
+
+- EGxVCA: Pan Law is now an option of either the MixMaster
+Stereo Equal Power or True Panning. Stereo Equal Power is
+the new default, matching MixMaster. *This will change the
+behavior of EGxVCA pan in saved patches unless you explicitly
+restore the True Panning mode in the menu*.
+- Mixer, TunedDelays: Left/Mono normalize properly.
+- Mixer: Turn of the 'unmute-on-connect' mixer behavior when unstreaming, allowing
+mute to save correctly
+- Twist: Don't paint the Twist waveform with the LPG on
+- LFOxEG: Imporove wording on "Set EG to Zero" on LFO
+- LFOxEG: Paint the raw wave as a 'ghost' wave in the LFO display
+- LFOxEG: Adjust the Phase/Shuffle label on the LFO front pane
+- WaveTable/Window: Fix several problems with loading incomplete wavetables and
+painting the resulting wavetable display.
+- Infrastructure: Make Surge's use of SIMDE compile time selectable; use rack SIMDE
+
 ## 2.1.3
 
 - Fix for wavetable 3d position display when modulating Morph parameter
