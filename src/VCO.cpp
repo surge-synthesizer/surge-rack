@@ -480,6 +480,9 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         {
             recalcPath();
             bdwPlot->dirty = true;
+            // Oh dirty can also change the background not just the plot
+            // if features like oneshot changes
+            bdw->dirty = true;
         }
 
         if constexpr (VCOConfig<oscType>::requiresWavetables())
@@ -648,8 +651,11 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
         if (VCOConfig<oscType>::requiresWavetables())
         {
-            if (module->wavetableCount == 0)
+            if (module && module->wavetableCount == 0)
                 return;
+
+            if (module)
+                isOneShot = module->isWTOneShot();
         }
 
         if (module && module->draw3DWavetable)
