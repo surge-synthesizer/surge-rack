@@ -1829,8 +1829,6 @@ typedef GenericPresetJogSelector<rack::ParamWidget> ParamJogSelector;
 
 struct SteppedParamAsPresetJog : GenericPresetJogSelector<rack::ParamWidget>
 {
-    modules::XTModule *module{nullptr};
-    int paramId;
     int lastValue{-1};
     void setup() override
     {
