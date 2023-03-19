@@ -1,6 +1,17 @@
 # Surge XT VCV Modules Changelog
 
-## 2.1.4 (Coming March 2023)
+## 2.1.5
+
+A few minor fixes causing crashes and mis-streams
+
+- The Modern SINE 'other' shape didn't properly unstream when saved
+- In some situations stormelder strip could cause the QuadLFO to crash when 
+  randomizing; change the semi-incorrect surge behaviro which trips up
+  the semi-incorrect stormelder randomizer
+- Don't append 'Input' and 'Output' to input and output port names, leading
+  to nicer tooltips
+
+## 2.1.4 
 
 - EGxVCA: Pan Law is now an option of either the MixMaster
 Stereo Equal Power or True Panning. Stereo Equal Power is
