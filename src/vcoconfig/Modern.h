@@ -78,7 +78,7 @@ template <> void VCOConfig<ot_modern>::oscillatorSpecificSetup(VCO<ot_modern> *m
 template <> void VCOConfig<ot_modern>::configureVCOSpecificParameters(VCO<ot_modern> *m)
 {
     auto bs = VCO<ot_modern>::ARBITRARY_SWITCH_0;
-    m->configParam(bs, ModernOscillator::momt_triangle, ModernOscillator::momt_square,
+    m->configParam(bs, ModernOscillator::momt_triangle, ModernOscillator::momt_sine,
                    ModernOscillator::momt_triangle, "Shape");
     m->configParam(bs + 1, 0, 1, 0, "Sub");
     m->configParam(bs + 2, 0, 1, 0, "SubSync");
