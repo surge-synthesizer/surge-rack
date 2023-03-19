@@ -191,17 +191,17 @@ struct DelayLineByFreqExpanded : modules::XTModule
             configParamNoRand(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
-        configInput(INPUT_L, "In Left");
-        configInput(INPUT_R, "In Right");
+        configInput(INPUT_L, "Left");
+        configInput(INPUT_R, "Right");
         configInput(INPUT_VOCT, "Delay Time as Frequency in v/oct");
 
-        configInput(INPUT_FBL, "Feedback Input Left");
-        configInput(INPUT_FBR, "Feedback Input RIGHT");
+        configInput(INPUT_FBL, "Feedback Left");
+        configInput(INPUT_FBR, "Feedback Right");
         configInput(INPUT_EXCITER_AMP, "Noise Source Amplitude");
 
         for (int i = 0; i < n_mod_inputs; ++i)
         {
-            configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i + 1) + " Input");
+            configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i + 1));
         }
 
         configOutput(OUTPUT_L, "Out Left");

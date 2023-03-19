@@ -252,7 +252,7 @@ template <int oscType> struct VCO : public modules::XTModule
 
         configInput(PITCH_CV, "V/Oct");
         configInput(RETRIGGER, "Reset/Retrigger");
-        configInput(AUDIO_INPUT, "Audio Input");
+        configInput(AUDIO_INPUT, "Audio");
         for (int m = 0; m < n_mod_inputs; ++m)
         {
             auto s = std::string("Modulation Signal ") + std::to_string(m + 1);

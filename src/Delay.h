@@ -172,7 +172,7 @@ struct Delay : modules::XTModule
 
         configInput(INPUT_L, "Left");
         configInput(INPUT_R, "Right");
-        configInput(INPUT_CLOCK, "Clock/BPM Input");
+        configInput(INPUT_CLOCK, "Clock/BPM");
         for (int i = 0; i < n_mod_inputs; ++i)
             configInput(DELAY_MOD_INPUT + i, std::string("Mod ") + std::to_string(i + 1));
         configOutput(OUTPUT_L, "Left");
