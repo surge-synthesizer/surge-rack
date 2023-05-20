@@ -270,6 +270,13 @@ struct XTModule : public rack::Module
     {
         return configSwitch<T>(paramId, 0, 1, defaultValue, name, {"Off", "On"});
     }
+    template <typename T = rack::SwitchQuantity>
+    T *configOnOffNoRand(int paramId, float defaultValue, const std::string &name)
+    {
+        auto r = configSwitch<T>(paramId, 0, 1, defaultValue, name, {"Off", "On"});
+        r->randomizeEnabled = false;
+        return r;
+    }
 
     void snapCalculatedNames();
 
