@@ -240,7 +240,7 @@ template <int oscType> struct VCO : public modules::XTModule
         configParamNoRand(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
         configParam(CHARACTER, 0, 2, 1, "Character Filter");
         configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
-        configParam(FIXED_ATTENUATION, 0, 1, 1, "Output Attenuation");
+        configParam(FIXED_ATTENUATION, 0, 1, 1, "Output Level", "%", 0, 100);
 
         VCOConfig<oscType>::configureVCOSpecificParameters(this);
         config_osc->~Oscillator();

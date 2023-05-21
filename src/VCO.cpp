@@ -1373,7 +1373,6 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
                     return "TRIG";
             }
             return VCOConfig<oscType>::retriggerLabel();
-            ;
         };
         addChild(lab);
     }
