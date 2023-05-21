@@ -279,7 +279,7 @@ struct EGxVCA : modules::XTModule
         configSwitch(FAST_OR_SLOW, 0, 1, 0, "Fast or Slow", {"Fast", "Slow"})->randomizeEnabled =
             false;
         configSwitch(STEREO_PAN_LAW, EQUAL_POWER, TRUE_PANNING, EQUAL_POWER, "Stereo Pan Law",
-                     {"Equal Power", "True Panning"})
+                     {"Stereo Balance", "Stereo Pan"})
             ->randomizeEnabled = false;
 
         modAssist.initialize(this);

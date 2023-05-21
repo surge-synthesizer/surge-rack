@@ -52,7 +52,7 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
 
         menu->addChild(new rack::ui::MenuSeparator);
         addSelectionMenu(menu, module->paramQuantities[M::STEREO_PAN_LAW],
-                         {{"Stereo Equal Power Panning", 0}, {"Stereo True Panning", 1}});
+                         {{"Stereo Pan: Balance", 0}, {"Stereo Pan: True Panning", 1}});
     }
 
     widgets::DirtyHelper<EGxVCA, false> modeDirty, analogDigitalDirty;
