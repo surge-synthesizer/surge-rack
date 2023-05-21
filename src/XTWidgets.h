@@ -2219,6 +2219,17 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         return res;
     }
 
+    float modDepthForAnimation()
+    {
+        auto xtm = dynamic_cast<modules::XTModule *>(module);
+        if (!style::XTStyle::getShowModulationAnimationOnKnobs())
+            return 0;
+
+        if (xtm)
+            return xtm->modulationDisplayValue(paramId);
+        return 0;
+    }
+
     void setup()
     {
         baseFB = new rack::widget::FramebufferWidget();
@@ -2277,6 +2288,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
     }
 
     float priorV{-103241.f};
+    float priorModV{-13824.f};
     void step() override
     {
         auto pq = getParamQuantity();
@@ -2289,6 +2301,13 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
             bdwLight->dirty = true;
 
             priorV = pq->getValue();
+        }
+
+        auto v = modDepthForAnimation();
+        if (v != priorModV)
+        {
+            priorModV = v;
+            bdwLight->dirty = true;
         }
 
         rack::app::SliderKnob::step();
@@ -2331,6 +2350,7 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto np = (1 - nv) * span;
 
         auto sp = handle->box.pos.y + handle->box.size.y;
+        nvgSave(vg);
         nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
 
         nvgBeginPath(vg);
@@ -2339,6 +2359,50 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         nvgFill(vg);
         nvgStrokeWidth(vg, 0.5);
         nvgStroke(vg);
+        nvgRestore(vg);
+
+        if (style::XTStyle::getShowModulationAnimationOnKnobs())
+        {
+            auto v = modDepthForAnimation(); // this is units -1..1 in scale
+            if (v == 0.f)
+                return;
+
+            float startY, endY;
+            startY = np + 1.0;
+            endY = startY - (v * box.getHeight());
+            if (startY > endY)
+                std::swap(startY, endY);
+
+            // Draw above the handle
+            auto hp = handle->box.pos;
+            auto hs = handle->box.size;
+
+            auto c = style()->getColor(style::XTStyle::KNOB_MOD_PLUS);
+
+            auto inset = box.size.x * 0.5 - rwidth * 0.5;
+            auto height = endY - startY;
+            nvgSave(vg);
+            if (v > 0)
+                nvgScissor(vg, 0, 0, box.size.x, hp.y);
+            else
+                nvgScissor(vg, 0, hp.y + hs.y, box.size.x, box.size.y - hp.y - hs.y);
+
+            nvgBeginPath(vg);
+            nvgRect(vg, inset, startY, rwidth, height);
+            nvgFillColor(vg, c);
+            nvgFill(vg);
+            nvgRestore(vg);
+
+            // And on transparently
+            nvgSave(vg);
+            nvgScissor(vg, 0, hp.y, box.size.x, hs.y);
+            nvgBeginPath(vg);
+            nvgRect(vg, inset, startY, rwidth, height);
+            c.a = 0.3;
+            nvgFillColor(vg, c);
+            nvgFill(vg);
+            nvgRestore(vg);
+        }
     }
     void onStyleChanged() override
     {
