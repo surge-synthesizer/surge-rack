@@ -48,6 +48,10 @@ struct WaveshaperWidget : widgets::XTModuleWidget
 
             menu->addChild(rack::createMenuItem("Apply DC Blocker", CHECKMARK(m->doDCBlock),
                                                 [m]() { m->doDCBlock = !m->doDCBlock; }));
+
+            menu->addChild(rack::createMenuItem(
+                "Show Transform and Response", CHECKMARK(m->showTransformCurve),
+                [m]() { m->showTransformCurve = !m->showTransformCurve; }));
         }
     }
 };
@@ -57,9 +61,11 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
     typename WaveshaperWidget::M *module{nullptr};
     widgets::BufferedDrawFunctionWidget *bdw{nullptr};
     widgets::BufferedDrawFunctionWidget *bdwPlot{nullptr};
+    widgets::BufferedDrawFunctionWidget *bdwResponse{nullptr};
 
     std::vector<std::pair<float, float>> inputSignal;
     std::vector<std::pair<float, float>> outputSignal;
+    std::vector<std::pair<float, float>> responseSignal;
     void setup(typename WaveshaperWidget::M *m)
     {
         module = m;
@@ -75,13 +81,24 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             rack::Vec(0, 0), box.size, [this](auto *vg) { drawPlot(vg); });
         addChild(bdwPlot);
 
+        bdwResponse = new widgets::BufferedDrawFunctionWidgetOnLayer(
+            rack::Vec(box.size.x * 0.666 - rack::mm2px(0), rack::mm2px(0)),
+            rack::Vec(box.size.x * 0.333, box.size.y - rack::mm2px(0)),
+            [this](auto *vg) { drawResponse(vg); });
+        addChild(bdwResponse);
+        calculateInputSignal();
+    }
+    void calculateInputSignal()
+    {
+        inputSignal.clear();
         auto fac = 2.0;
         auto inputRes = (int)box.size.x * fac;
         auto dx = 1.0 / inputRes;
+        auto cmul = module ? (module->showTransformCurve ? 6.0 : 4.0) : 4.0;
         for (int i = 0; i < inputRes; ++i)
         {
             auto x = dx * i;
-            auto y = std::sin(x * 4.0 * M_PI);
+            auto y = std::sin(x * cmul * M_PI);
             inputSignal.emplace_back(x * box.size.x, y);
         }
     }
@@ -99,6 +116,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         {
             recalcPath();
             bdwPlot->dirty = true;
+            bdwResponse->dirty = true;
         }
 
         rack::widget::Widget::step();
@@ -108,6 +126,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
     {
         bdw->dirty = true;
         bdwPlot->dirty = true;
+        bdwResponse->dirty = true;
     }
 
     static WaveshaperPlotWidget *create(rack::Vec pos, rack::Vec size,
@@ -127,6 +146,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
     int dirtyCount{0};
     int sumDeact{-1};
     int sumAbs{-1};
+    bool stc{false};
     uint32_t wtloadCompare{842932918};
 
     bool isDirty()
@@ -156,6 +176,14 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             }
 
             dval = wstype != lastType || ddb != lastDrive || bias != lastBias;
+
+            if (module->showTransformCurve != stc)
+            {
+                dval = true;
+                calculateInputSignal();
+                stc = module->showTransformCurve;
+                bdw->dirty = true; // special - gotta redo the background
+            }
         }
         return dval;
     }
@@ -168,55 +196,88 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         if (!module)
             return;
 
+        responseSignal.clear();
         outputSignal.clear();
         auto wstype = (sst::waveshapers::WaveshaperType)std::round(
             module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
         sst::waveshapers::QuadWaveshaperState wss;
         float R[4];
 
-        initializeWaveshaperRegister(wstype, R);
-
-        for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
         {
-            wss.R[i] = _mm_set1_ps(R[i]);
-        }
+            initializeWaveshaperRegister(wstype, R);
 
-        wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
-
-        float ddb{0.f}, bias{0.f};
-        if (style::XTStyle::getShowModulationAnimationOnDisplay())
-        {
-            ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
-            bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
-        }
-        else
-        {
-            ddb = module->modulationAssistant.basevalues[Waveshaper::DRIVE];
-            bias = module->modulationAssistant.basevalues[Waveshaper::BIAS];
-        }
-
-        auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
-        auto damp = pow(10, 0.05 * ddb);
-        auto d1 = _mm_set1_ps(damp);
-
-        lastType = wstype;
-        lastBias = bias;
-        lastDrive = ddb;
-
-        for (const auto &[x, y] : inputSignal)
-        {
-            auto ivs = _mm_set1_ps(y + bias);
-            auto ov1 = ivs;
-
-            if (wsop)
+            for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
             {
-                ov1 = wsop(&wss, ivs, d1);
+                wss.R[i] = _mm_set1_ps(R[i]);
             }
 
-            float r alignas(16)[8];
-            _mm_store_ps(r, ov1);
+            wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
 
-            outputSignal.emplace_back(x, r[0]);
+            float ddb{0.f}, bias{0.f};
+            if (style::XTStyle::getShowModulationAnimationOnDisplay())
+            {
+                ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
+                bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+            }
+            else
+            {
+                ddb = module->modulationAssistant.basevalues[Waveshaper::DRIVE];
+                bias = module->modulationAssistant.basevalues[Waveshaper::BIAS];
+            }
+
+            auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
+            auto damp = pow(10, 0.05 * ddb);
+            auto d1 = _mm_set1_ps(damp);
+
+            lastType = wstype;
+            lastBias = bias;
+            lastDrive = ddb;
+
+            for (const auto &[x, y] : inputSignal)
+            {
+                auto ivs = _mm_set1_ps(y + bias);
+                auto ov1 = ivs;
+
+                if (wsop)
+                {
+                    ov1 = wsop(&wss, ivs, d1);
+                }
+
+                float r alignas(16)[8];
+                _mm_store_ps(r, ov1);
+
+                outputSignal.emplace_back(x, r[0]);
+            }
+        }
+
+        {
+            initializeWaveshaperRegister(wstype, R);
+
+            for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
+            {
+                wss.R[i] = _mm_set1_ps(R[i]);
+            }
+
+            wss.init = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()); // better way?
+
+            auto wsop = sst::waveshapers::GetQuadWaveshaper(wstype);
+
+            for (float x = -2.0; x < 2.0; x += 2.0 * 0.01)
+            {
+                auto ivs = _mm_set1_ps(x);
+                auto d1 = _mm_set1_ps(1.f);
+                auto ov1 = ivs;
+
+                if (wsop)
+                {
+                    ov1 = wsop(&wss, ivs, d1);
+                }
+
+                float r alignas(16)[8];
+                _mm_store_ps(r, ov1);
+
+                responseSignal.emplace_back(x, r[0]);
+            }
         }
     }
 
@@ -230,6 +291,62 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         return ypx;
     }
 
+    void drawResponse(NVGcontext *vg)
+    {
+        if (!module)
+            return;
+
+        if (!module->showTransformCurve)
+            return;
+
+        auto bx = bdwResponse->box;
+        nvgBeginPath(vg);
+        auto markCol = style()->getColor(style::XTStyle::PLOT_MARKS);
+        auto bCol = style()->getColor(style::XTStyle::LED_PANEL);
+        // bCol.a = 0.95;
+        nvgStrokeColor(vg, markCol);
+        nvgFillColor(vg, bCol);
+        nvgRect(vg, 0, 0, bx.getWidth(), bx.getHeight());
+        nvgStrokeWidth(vg, 1);
+        nvgFill(vg);
+        nvgStroke(vg);
+
+        auto xs = 2.0f, ys = 3.8f;
+
+        nvgBeginPath(vg);
+        bool start = true;
+        for (float x = -xs; x <= xs; x += xs * 0.01)
+        {
+            auto px = (x + xs) / (2 * xs) * bx.getWidth();
+
+            auto ly = -x;
+            auto py = (ly + ys) / (2 * ys) * bx.getHeight();
+            if (start)
+                nvgMoveTo(vg, px, py);
+            else
+                nvgLineTo(vg, px, py);
+            start = false;
+        }
+        nvgStroke(vg);
+
+        auto crvCol = style()->getColor(style::XTStyle::PLOT_CURVE);
+        nvgBeginPath(vg);
+        nvgStrokeColor(vg, crvCol);
+        start = true;
+        for (auto &[x, y] : responseSignal)
+        {
+            auto px = (x + xs) / (2 * xs) * bx.getWidth();
+
+            auto ly = -y;
+            auto py = (ly + ys) / (2 * ys) * bx.getHeight();
+            if (start)
+                nvgMoveTo(vg, px, py);
+            else
+                nvgLineTo(vg, px, py);
+            start = false;
+        }
+        nvgStroke(vg);
+    }
     void drawPlotBackground(NVGcontext *vg)
     {
         // This will go in layer 0
