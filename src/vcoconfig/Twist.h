@@ -262,9 +262,8 @@ template <> void VCOConfig<ot_twist>::processVCOSpecificParameters(VCO<ot_twist>
         s->p[TwistOscillator::twist_lpg_response].deactivated = deact;
     }
 
-
     auto l1 = (bool)(m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
-    auto epq =  m->paramQuantities[VCO<ot_twist>::OSC_CTRL_PARAM_0 + TwistOscillator::twist_engine];
+    auto epq = m->paramQuantities[VCO<ot_twist>::OSC_CTRL_PARAM_0 + TwistOscillator::twist_engine];
     if (epq->randomizeEnabled != l1)
     {
         epq->randomizeEnabled = l1;
@@ -303,14 +302,14 @@ void VCOConfig<ot_twist>::oscillatorReInit(VCO<ot_twist> *m, Oscillator *o, floa
     }
 }
 
-
 template <> void VCOConfig<ot_twist>::addMenuItems(VCO<ot_twist> *m, rack::ui::Menu *toThis)
 {
     auto l1 = (int)std::round(m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 1].getValue());
 
     toThis->addChild(rack::createMenuItem("Randomize Twist Engine", CHECKMARK(l1), [m, l1]() {
         m->params[VCO<ot_twist>::ARBITRARY_SWITCH_0 + 1].setValue(l1 ? 0 : 1);
-        m->paramQuantities[VCO<ot_twist>::OSC_CTRL_PARAM_0 + TwistOscillator::twist_engine]->randomizeEnabled = !l1;
+        m->paramQuantities[VCO<ot_twist>::OSC_CTRL_PARAM_0 + TwistOscillator::twist_engine]
+            ->randomizeEnabled = !l1;
     }));
 }
 
