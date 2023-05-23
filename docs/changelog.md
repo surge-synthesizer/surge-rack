@@ -1,5 +1,15 @@
 # Surge XT VCV Modules Changelog
 
+## 2.1.6
+
+A few minor changes based on user requests
+
+- Twist Oscillator has an option to exclude Engine from randomization
+- The stereo pan options in EGxVCA are named more clearly
+- Sliders show modulation animation like Knobs do
+- The waveshaper has a (global) option to display either the current
+  response-to-sine or the response-to-sine and also the waveshaper transform
+
 ## 2.1.5
 
 A few minor fixes causing crashes and mis-streams
