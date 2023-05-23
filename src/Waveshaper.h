@@ -195,7 +195,6 @@ struct Waveshaper : public modules::XTModule
     int monoChannelOffset{0};
 
     std::atomic<bool> doDCBlock{true};
-    std::atomic<bool> showTransformCurve{true};
     bool wasDoDCBlock{true};
     /*
      * This is a bit annoying - i don't want to break 2.0.3.0 patches by turning on
@@ -571,7 +570,6 @@ struct Waveshaper : public modules::XTModule
     {
         auto ws = json_object();
         json_object_set_new(ws, "doDCBlock", json_boolean(doDCBlock));
-        json_object_set_new(ws, "showTransformCurve", json_boolean(showTransformCurve));
         return ws;
     }
 
@@ -586,12 +584,6 @@ struct Waveshaper : public modules::XTModule
         else
         {
             doDCBlock = true;
-        }
-
-        auto stc = json_object_get(modJ, "showTransformCurve");
-        if (stc)
-        {
-            showTransformCurve = json_boolean_value(stc);
         }
     }
 };

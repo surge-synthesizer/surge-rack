@@ -83,6 +83,9 @@ struct XTStyle
     static bool getShowShadows();
     static void setShowShadows(bool b);
 
+    static bool getWaveshaperShowsBothCurves();
+    static void setWaveshaperShowsBothCurves(bool b);
+
     static std::string lightColorName(LightColor c);
     static NVGcolor lightColorColor(LightColor c);
 
