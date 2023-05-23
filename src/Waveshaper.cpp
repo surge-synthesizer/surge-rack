@@ -50,8 +50,10 @@ struct WaveshaperWidget : widgets::XTModuleWidget
                                                 [m]() { m->doDCBlock = !m->doDCBlock; }));
 
             menu->addChild(rack::createMenuItem(
-                "Show Transform and Response", CHECKMARK(m->showTransformCurve),
-                [m]() { m->showTransformCurve = !m->showTransformCurve; }));
+                "Show Transform and Response", CHECKMARK(style()->getWaveshaperShowsBothCurves()),
+                [this]() {
+                    style()->setWaveshaperShowsBothCurves(!style()->getWaveshaperShowsBothCurves());
+                }));
         }
     }
 };
@@ -94,7 +96,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         auto fac = 2.0;
         auto inputRes = (int)box.size.x * fac;
         auto dx = 1.0 / inputRes;
-        auto cmul = module ? (module->showTransformCurve ? 6.0 : 4.0) : 4.0;
+        auto cmul = module ? (style()->getWaveshaperShowsBothCurves() ? 6.0 : 4.0) : 4.0;
         for (int i = 0; i < inputRes; ++i)
         {
             auto x = dx * i;
@@ -124,6 +126,9 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
 
     virtual void onStyleChanged() override
     {
+        // If transform display has changed bounds adjust
+        calculateInputSignal();
+        recalcPath();
         bdw->dirty = true;
         bdwPlot->dirty = true;
         bdwResponse->dirty = true;
@@ -146,7 +151,6 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
     int dirtyCount{0};
     int sumDeact{-1};
     int sumAbs{-1};
-    bool stc{false};
     uint32_t wtloadCompare{842932918};
 
     bool isDirty()
@@ -176,14 +180,6 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             }
 
             dval = wstype != lastType || ddb != lastDrive || bias != lastBias;
-
-            if (module->showTransformCurve != stc)
-            {
-                dval = true;
-                calculateInputSignal();
-                stc = module->showTransformCurve;
-                bdw->dirty = true; // special - gotta redo the background
-            }
         }
         return dval;
     }
@@ -296,7 +292,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         if (!module)
             return;
 
-        if (!module->showTransformCurve)
+        if (!style()->getWaveshaperShowsBothCurves())
             return;
 
         auto bx = bdwResponse->box;

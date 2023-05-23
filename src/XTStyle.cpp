@@ -146,6 +146,7 @@ void XTStyle::initialize()
         handleBool("showModulationAnimationOnKnobs", setShowModulationAnimationOnKnobs, true);
         handleBool("showModulationAnimationOnDisplay", setShowModulationAnimationOnDisplay, true);
         handleBool("showShadows", setShowShadows, true);
+        handleBool("waveshaperShowsBothCurves", setWaveshaperShowsBothCurves, false);
 
         json_decref(fd);
     }
@@ -161,6 +162,7 @@ static bool showKnobValuesAtRest{true};
 static bool showModulationAnimationOnKnobs{true};
 static bool showModulationAnimationOnDisplay{true};
 static bool showShadows{true};
+static bool waveshaperShowsBothCurves{false};
 
 static std::shared_ptr<XTStyle> constructDefaultStyle()
 {
@@ -255,6 +257,17 @@ void XTStyle::setShowShadows(bool b)
     }
 }
 
+bool XTStyle::getWaveshaperShowsBothCurves() { return waveshaperShowsBothCurves; }
+void XTStyle::setWaveshaperShowsBothCurves(bool b)
+{
+    if (b != waveshaperShowsBothCurves)
+    {
+        waveshaperShowsBothCurves = b;
+        updateJSON();
+        notifyStyleListeners();
+    }
+}
+
 void XTStyle::setGlobalModulationColor(sst::surgext_rack::style::XTStyle::LightColor c)
 {
     if (c != defaultGlobalModulationColor)
@@ -319,6 +332,8 @@ void XTStyle::updateJSON()
     json_object_set_new(rootJ, "showModulationAnimationOnDisplay",
                         json_boolean(showModulationAnimationOnDisplay));
     json_object_set_new(rootJ, "showShadows", json_boolean(showShadows));
+    json_object_set_new(rootJ, "waveshaperShowsBothCurves",
+                        json_boolean(waveshaperShowsBothCurves));
     FILE *f = std::fopen(defaultsFile.c_str(), "w");
     if (f)
     {
