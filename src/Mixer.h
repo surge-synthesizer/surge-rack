@@ -24,6 +24,9 @@
 #include "globals.h"
 #include "DSPUtils.h"
 
+#include "sst/basic-blocks/dsp/CorrelatedNoise.h"
+#include "CXOR.h"
+
 namespace sst::surgext_rack::mixer
 {
 struct Mixer : modules::XTModule
@@ -351,14 +354,16 @@ struct Mixer : modules::XTModule
             for (int p = 0; p < polyDepth; ++p)
             {
                 auto col = std::clamp(modulationAssistant.values[NOISE_COL][p], -1.f, 1.f);
-                oL[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
-                                         noisegen[p][0][0], noisegen[p][0][1], col, storage.get()) *
-                                     modules::DecibelParamQuantity::ampToLinear(
-                                         modulationAssistant.values[NOISE_LEV][p]);
-                oR[p >> 2][p % 4] += correlated_noise_o2mk2_storagerng(
-                                         noisegen[p][1][0], noisegen[p][1][1], col, storage.get()) *
-                                     modules::DecibelParamQuantity::ampToLinear(
-                                         modulationAssistant.values[NOISE_LEV][p]);
+                oL[p >> 2][p % 4] +=
+                    sst::basic_blocks::dsp::correlated_noise_o2mk2_supplied_value(
+                        noisegen[p][0][0], noisegen[p][0][1], col, storage->rand_pm1()) *
+                    modules::DecibelParamQuantity::ampToLinear(
+                        modulationAssistant.values[NOISE_LEV][p]);
+                oR[p >> 2][p % 4] +=
+                    sst::basic_blocks::dsp::correlated_noise_o2mk2_supplied_value(
+                        noisegen[p][1][0], noisegen[p][1][1], col, storage->rand_pm1()) *
+                    modules::DecibelParamQuantity::ampToLinear(
+                        modulationAssistant.values[NOISE_LEV][p]);
             }
         }
 

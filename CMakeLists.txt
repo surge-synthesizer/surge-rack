@@ -35,7 +35,9 @@ add_subdirectory(surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
-target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>)
+target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-pointer>)
 target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
@@ -51,6 +53,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-stringop-truncation,-Wno-string-concatenation>
                        $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-class-memaccess,-Wno-class-varargs>
                        $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+                       $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict> # TODO - Remove this
                        $<$<PLATFORM_ID:Darwin>:-Wno-self-assign>
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-lambda-capture>
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
@@ -63,8 +66,6 @@ add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
 target_compile_options(Surge INTERFACE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
-
-add_subdirectory(libs/sst/sst-basic-blocks)
 
 set(SURGE_LIBS surge-common juce_dsp_rack_sub tinyxml strnatcmp samplerate sst-plugininfra fmt sqlite eurorack airwindows sst-basic-blocks)
 
