@@ -35,7 +35,9 @@ add_subdirectory(surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
 # dependency CMake definitions and removed from here
-target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>)
+target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-pointer>)
 target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
