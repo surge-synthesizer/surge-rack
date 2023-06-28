@@ -53,7 +53,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-stringop-truncation,-Wno-string-concatenation>
                        $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-class-memaccess,-Wno-class-varargs>
                        $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
-                       $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict>
+                       $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict> # TODO - Remove this
                        $<$<PLATFORM_ID:Darwin>:-Wno-self-assign>
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-lambda-capture>
                        $<$<PLATFORM_ID:Darwin>:-Wno-mismatched-tags>
