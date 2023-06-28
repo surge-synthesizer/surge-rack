@@ -663,8 +663,10 @@ template <int oscType> struct VCO : public modules::XTModule
                     }
                     surge_osc[c]->setGate(gated);
                     surge_osc[c]->process_block(pitch0, driftVal, true);
-                    sst::basic_blocks::mechanics::copy_from_to<BLOCK_SIZE_OS>(surge_osc[c]->output, osc_downsample[0][c]);
-                    sst::basic_blocks::mechanics::copy_from_to<BLOCK_SIZE_OS>(surge_osc[c]->outputR, osc_downsample[1][c]);
+                    sst::basic_blocks::mechanics::copy_from_to<BLOCK_SIZE_OS>(surge_osc[c]->output,
+                                                                              osc_downsample[0][c]);
+                    sst::basic_blocks::mechanics::copy_from_to<BLOCK_SIZE_OS>(surge_osc[c]->outputR,
+                                                                              osc_downsample[1][c]);
                     halfbandOUT[c]->process_block_D2(osc_downsample[0][c], osc_downsample[1][c],
                                                      BLOCK_SIZE_OS);
 
