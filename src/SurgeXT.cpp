@@ -45,6 +45,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeLFO);
     p->addModel(modelSurgeMixer);
     p->addModel(modelSurgeModMatrix);
+    p->addModel(modelSurgeDigitalRingMods);
 
     p->addModel(modelFXReverb);
     p->addModel(modelFXPhaser);
@@ -64,6 +65,8 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelFXCombulator);
     p->addModel(modelFXSpringReverb);
     p->addModel(modelFXTreeMonster);
+    p->addModel(modelFXBonsai);
+    p->addModel(modelFXNimbus);
 
     p->addModel(modelEGxVCA);
     p->addModel(modelQuadAD);
