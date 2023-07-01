@@ -1927,13 +1927,14 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
     bool centerRule{false};
     bool splitLower{false};
 
-    static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12)
+    static LCDBackground *createWithHeight(float endPosInMM, float widthInScrews = 12,
+                                           float startPosY = posy)
     {
         auto width = rack::app::RACK_GRID_WIDTH * widthInScrews - 2 * posx;
-        auto height = rack::mm2px(endPosInMM) - posy;
+        auto height = rack::mm2px(endPosInMM) - startPosY;
 
         auto res = new LCDBackground();
-        res->setup(rack::Vec(posx, posy), rack::Vec(width, height));
+        res->setup(rack::Vec(posx, startPosY), rack::Vec(width, height));
 
         return res;
     }

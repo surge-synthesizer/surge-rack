@@ -305,6 +305,25 @@
       ]
     },
     {
+      "slug": "SurgeXTFXBonsai",
+      "name": "Bonsai",
+      "description": "A Tape Distortion Model",
+      "tags": [
+        "Effect",
+        "Polyphonic",
+        "Distortion"
+      ]
+    },
+    {
+      "slug": "SurgeXTFXNimbus",
+      "name": "Nimbus",
+      "description": "A popular granular eurorack module",
+      "tags": [
+        "Effect",
+        "Polyphonic"
+      ]
+    },
+    {
       "slug": "SurgeXTLFO",
       "name": "LFO",
       "description": "The Surge XT LFO",
@@ -378,6 +397,15 @@
       "description": "The Surge XT Mixer",
       "tags": [
         "Mixer",
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "SurgeXTDigitalRingMod",
+      "name": "Digital RingMods",
+      "description": "The Surge XT Digital Ring Modulation Models",
+      "tags": [
+        "Ring modulator",
         "Polyphonic"
       ]
     },

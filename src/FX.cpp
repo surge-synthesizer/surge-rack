@@ -288,9 +288,11 @@ FXMODEL(fxt_chow, Chow);
 FXMODEL(fxt_exciter, Exciter);
 FXMODEL(fxt_ensemble, Ensemble);
 FXMODEL(fxt_combulator, Combulator);
+FXMODEL(fxt_nimbus, Nimbus);
 // skip Nimbus - there's loads of clouds out there
 // ski Tape - chow has that covered
 // skip Waveshaper - write a poly version instead
 // skip MSTool - covered by vcv core
 FXMODEL(fxt_spring_reverb, SpringReverb);
 FXMODEL(fxt_treemonster, TreeMonster);
+FXMODEL(fxt_bonsai, Bonsai);

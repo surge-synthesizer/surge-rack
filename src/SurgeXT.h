@@ -61,6 +61,7 @@ extern rack::Model *modelSurgeWaveshaper;
 extern rack::Model *modelSurgeLFO;
 extern rack::Model *modelSurgeMixer;
 extern rack::Model *modelSurgeModMatrix;
+extern rack::Model *modelSurgeDigitalRingMods;
 
 // FX
 
@@ -82,6 +83,9 @@ extern rack::Model *modelFXEnsemble;
 extern rack::Model *modelFXCombulator;
 extern rack::Model *modelFXSpringReverb;
 extern rack::Model *modelFXTreeMonster;
+extern rack::Model *modelFXBonsai;
+extern rack::Model *modelFXNimbus;
+
 extern rack::Model *modelEGxVCA;
 extern rack::Model *modelQuadAD;
 extern rack::Model *modelQuadLFO;
