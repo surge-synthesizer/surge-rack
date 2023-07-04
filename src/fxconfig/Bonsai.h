@@ -41,8 +41,8 @@ template <> FXConfig<fxt_bonsai>::layout_t FXConfig<fxt_bonsai>::getLayout()
     // clang-format off
     auto res = FXConfig<fxt_bonsai>::layout_t{
 
-        {LayoutItem::KNOB12, "GAIN", BonsaiEffect::b_gain_in, col15, row1},
-        {LayoutItem::KNOB12, "SATURATION", BonsaiEffect::b_tape_sat, col25, row1},
+        {LayoutItem::KNOB12, "SATURATION", BonsaiEffect::b_tape_sat, col15, row1},
+        {LayoutItem::KNOB12, "DULL", BonsaiEffect::b_dull, col25, row1},
 
         {LayoutItem::KNOB9, "AMOUNT", BonsaiEffect::b_bass_boost, col[0], row2},
         {LayoutItem::KNOB9, "DISTORT", BonsaiEffect::b_bass_distort, col[1], row2},
@@ -51,10 +51,11 @@ template <> FXConfig<fxt_bonsai>::layout_t FXConfig<fxt_bonsai>::getLayout()
         {LayoutItem::KNOB9, "GAIN", BonsaiEffect::b_noise_gain, col[3], row2},
         LayoutItem::createGrouplabel("NOISE", col[2], row2, 2),
 
-        {LayoutItem::KNOB9, "DULL", BonsaiEffect::b_dull, col[1], row3},
-        {LayoutItem::KNOB9, "GAIN", BonsaiEffect::b_gain_out, col[2], row3},
+        {LayoutItem::KNOB9, "INPUT", BonsaiEffect::b_gain_in, col[0], row3},
+        {LayoutItem::KNOB9, "OUTPUT", BonsaiEffect::b_gain_out, col[1], row3},
+
         {LayoutItem::KNOB9, "MIX", BonsaiEffect::b_mix, col[3], row3},
-        LayoutItem::createGrouplabel("OUTPUT", col[1], row3, 3),
+        LayoutItem::createGrouplabel("GAIN", col[0], row3, 2),
 
 
         LayoutItem::createPresetPlusTwoArea(),
