@@ -78,7 +78,8 @@ void Port::appendContextMenu(rack::Menu *menu)
             {
                 menu->addChild(
                     rack::createSubmenuItem(m->getModel()->name, "", [m, this, lid, rid](auto *x) {
-                        mcon::inputsFromAuxSpanderSubMenu(x, m, this->module, lid, rid, nvgRGB(38, 99, 190));
+                        mcon::inputsFromAuxSpanderSubMenu(x, m, this->module, lid, rid,
+                                                          nvgRGB(38, 99, 190));
                     }));
             }
         }
