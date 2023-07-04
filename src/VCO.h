@@ -21,6 +21,7 @@
 #include <cstring>
 #include <sst/filters/HalfRateFilter.h>
 #include "sst/basic-blocks/mechanics/block-ops.h"
+#include "sst/rackhelpers/neighbor_connectable.h"
 
 #include "LayoutEngine.h"
 
@@ -84,7 +85,8 @@ template <int oscType> struct VCOConfig
     static void oscillatorReInit(VCO<oscType> *m, Oscillator *o, float pitch0) { o->init(pitch0); }
 };
 
-template <int oscType> struct VCO : public modules::XTModule
+template <int oscType>
+struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_mod_inputs{4};
     static constexpr int n_arbitrary_switches{4};
@@ -377,6 +379,11 @@ template <int oscType> struct VCO : public modules::XTModule
 
     static constexpr int n_state_slots{4};
     int intStateForConfig[n_state_slots];
+
+    std::optional<stereoPort_t> getPrimaryOutputs() override
+    {
+        return std::make_pair(OUTPUT_L, OUTPUT_R);
+    }
 
     void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
 

@@ -26,11 +26,12 @@
 
 #include "dsp/utilities/SSESincDelayLine.h"
 #include "TemposyncSupport.h"
+#include "sst/rackhelpers/neighbor_connectable.h"
 
 namespace sst::surgext_rack::delay
 {
 
-struct Delay : modules::XTModule
+struct Delay : modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_delay_params{10};
     static constexpr int n_mod_inputs{4};
@@ -80,6 +81,16 @@ struct Delay : modules::XTModule
     {
         int offset = baseParam - TIME_L;
         return DELAY_MOD_PARAM_0 + offset * n_mod_inputs + modulator;
+    }
+
+    std::optional<stereoPort_t> getPrimaryInputs() override
+    {
+        return std::make_pair(INPUT_L, INPUT_R);
+    }
+
+    std::optional<stereoPort_t> getPrimaryOutputs() override
+    {
+        return std::make_pair(OUTPUT_L, OUTPUT_R);
     }
 
     modules::MonophonicModulationAssistant<Delay, n_delay_params, TIME_L, n_mod_inputs,

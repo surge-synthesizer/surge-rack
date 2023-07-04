@@ -21,6 +21,8 @@ execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CUR
 message(STATUS "SURGE_RACK_PLUG_VERSION ${SURGE_RACK_PLUG_VERSION}")
 message(STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 
+add_subdirectory(libs/sst-rackhelpers)
+
 set(SURGE_SKIP_JUCE_FOR_RACK TRUE CACHE BOOL "skip surge Juce build")
 set(SURGE_SKIP_LUA TRUE CACHE BOOL "skip surge Lua build")
 set(SURGE_SKIP_AIRWINDOWS TRUE CACHE BOOL "skip surge airwindows build")
@@ -95,9 +97,10 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
         src/Waveshaper.cpp
         src/XTModule.cpp
         src/XTModuleWidget.cpp
-        src/XTStyle.cpp)
+        src/XTStyle.cpp
+        src/XTWidgets.cpp)
 
-target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge)
+target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge sst-rackhelpers)
 
 file(COPY surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt

@@ -31,10 +31,11 @@
 #include "sst/basic-blocks/modulators/ADSREnvelope.h"
 #include "sst/basic-blocks/modulators/DAHDEnvelope.h"
 #include "sst/basic-blocks/dsp/PanLaws.h"
+#include "sst/rackhelpers/neighbor_connectable.h"
 
 namespace sst::surgext_rack::egxvca
 {
-struct EGxVCA : modules::XTModule
+struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_mod_params{7};
     static constexpr int n_mod_inputs{4};
@@ -292,6 +293,16 @@ struct EGxVCA : modules::XTModule
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
         snapCalculatedNames();
+    }
+
+    std::optional<stereoPort_t> getPrimaryInputs() override
+    {
+        return std::make_pair(INPUT_L, INPUT_R);
+    }
+
+    std::optional<stereoPort_t> getPrimaryOutputs() override
+    {
+        return std::make_pair(OUTPUT_L, OUTPUT_R);
     }
 
     float meterLevels[MAX_POLY];
