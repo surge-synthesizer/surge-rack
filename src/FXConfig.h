@@ -91,4 +91,5 @@ struct FXLayoutHelper
 #include "fxconfig/RingModulator.h"
 #include "fxconfig/Phaser.h"
 #include "fxconfig/TreeMonster.h"
+#include "fxconfig/Nimbus.h"
 #endif
