@@ -671,8 +671,11 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
             auto xp = layout::LayoutConstants::firstColumnCenter_MM +
                       layout::LayoutConstants::columnWidth_MM * col;
-            w->addInput(rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
-                                                                 w->module, p));
+            auto pt = rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
+                                                               w->module, p);
+            pt->connectAsInputFromMixmaster = true;
+            pt->mixMasterStereoCompanion = (p == in0 ? in1 : in0);
+            w->addInput(pt);
             col++;
         }
 
@@ -681,8 +684,12 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             auto yp = layout::LayoutConstants::inputRowCenter_MM;
             auto xp = layout::LayoutConstants::firstColumnCenter_MM +
                       layout::LayoutConstants::columnWidth_MM * col;
-            w->addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
-                                                                   w->module, p));
+            auto pt = rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
+                                                                w->module, p);
+            pt->connectAsOutputToMixmaster = true;
+            pt->connectOutputToNeighbor = true;
+            pt->mixMasterStereoCompanion = (p == out0 ? out1 : out0);
+            w->addOutput(pt);
             col++;
         }
     }

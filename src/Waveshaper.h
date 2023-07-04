@@ -23,6 +23,7 @@
 #include "globals.h"
 #include <sst/waveshapers.h>
 #include "BiquadFilter.h"
+#include "sst/rackhelpers/neighbor_connectable.h"
 
 namespace sst::surgext_rack::waveshaper
 {
@@ -36,7 +37,8 @@ struct WaveshaperTypeParamQuanity : rack::ParamQuantity
     }
 };
 
-struct Waveshaper : public modules::XTModule
+struct Waveshaper : public modules::XTModule,
+                    sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_wshp_params{5};
     static constexpr int n_mod_inputs{4};
@@ -548,6 +550,16 @@ struct Waveshaper : public modules::XTModule
         }
 
         processPosition++;
+    }
+
+    std::optional<stereoPort_t> getPrimaryInputs() override
+    {
+        return std::make_pair(INPUT_L, INPUT_R);
+    }
+
+    std::optional<stereoPort_t> getPrimaryOutputs() override
+    {
+        return std::make_pair(OUTPUT_L, OUTPUT_R);
     }
 
     float modulationDisplayValue(int paramId) override

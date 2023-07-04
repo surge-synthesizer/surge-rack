@@ -26,6 +26,7 @@
 #include "FxPresetAndClipboardManager.h"
 
 #include "LayoutEngine.h"
+#include "sst/rackhelpers/neighbor_connectable.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -70,7 +71,8 @@ template <int fxType> struct FXConfig
     static constexpr bool softclipOutput() { return false; }
 };
 
-template <int fxType> struct FX : modules::XTModule
+template <int fxType>
+struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_mod_inputs{4};
     static constexpr int n_arbitrary_switches{4};
@@ -174,6 +176,16 @@ template <int fxType> struct FX : modules::XTModule
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
         snapCalculatedNames();
+    }
+
+    std::optional<stereoPort_t> getPrimaryInputs() override
+    {
+        return std::make_pair(INPUT_L, INPUT_R);
+    }
+
+    std::optional<stereoPort_t> getPrimaryOutputs() override
+    {
+        return std::make_pair(OUTPUT_L, OUTPUT_R);
     }
 
     void moduleSpecificSampleRateChange() override

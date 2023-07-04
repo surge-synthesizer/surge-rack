@@ -23,6 +23,8 @@
 #include "DebugHelpers.h"
 #include "globals.h"
 
+#include "sst/rackhelpers/neighbor_connectable.h"
+
 namespace sst::surgext_rack::vcf
 {
 struct VCFTypeParamQuanity : rack::ParamQuantity
@@ -41,7 +43,7 @@ struct VCFSubTypeParamQuanity : rack::ParamQuantity
     std::string getDisplayValueString() override;
 };
 
-struct VCF : public modules::XTModule
+struct VCF : public modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_vcf_params{5};
     static constexpr int n_mod_inputs{4};
@@ -149,6 +151,16 @@ struct VCF : public modules::XTModule
 
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
+    }
+
+    std::optional<stereoPort_t> getPrimaryInputs() override
+    {
+        return std::make_pair(INPUT_L, INPUT_R);
+    }
+
+    std::optional<stereoPort_t> getPrimaryOutputs() override
+    {
+        return std::make_pair(OUTPUT_L, OUTPUT_R);
     }
 
     std::string getName() override { return "VCF"; }
