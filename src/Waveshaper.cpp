@@ -99,7 +99,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         auto fac = 2.0;
         auto inputRes = (int)box.size.x * fac;
         auto dx = 1.0 / inputRes;
-        auto cmul = module ? (style()->getWaveshaperShowsBothCurves() ? 6.0 : 4.0) : 4.0;
+        auto cmul = module ? (style()->getWaveshaperShowsBothCurves() ? 3.0 : 4.0) : 4.0;
         for (int i = 0; i < inputRes; ++i)
         {
             auto x = dx * i;
