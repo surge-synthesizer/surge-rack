@@ -29,6 +29,7 @@
 
 #include "sst/basic-blocks/dsp/CorrelatedNoise.h"
 #include "CXOR.h"
+#include "SurgeStorage.h"
 
 namespace sst::surgext_rack::digitalrm
 {
@@ -36,23 +37,34 @@ struct DigitalRingMod : modules::XTModule
 {
     enum ParamIds
     {
+        TYPE_0,
+        TYPE_1,
+        LINK_01,
         NUM_PARAMS
     };
     enum InputIds
     {
-        INPUT_A_L,
-        INPUT_A_R,
+        INPUT_0_A_L,
+        INPUT_0_A_R,
 
-        INPUT_B_L,
-        INPUT_B_R,
+        INPUT_0_B_L,
+        INPUT_0_B_R,
+
+        INPUT_1_A_L,
+        INPUT_1_A_R,
+
+        INPUT_1_B_L,
+        INPUT_1_B_R,
 
         NUM_INPUTS
 
     };
     enum OutputIds
     {
-        OUTPUT_L,
-        OUTPUT_R,
+        OUTPUT_0_L,
+        OUTPUT_0_R,
+        OUTPUT_1_L,
+        OUTPUT_1_R,
         NUM_OUTPUTS
     };
     enum LightIds
@@ -66,6 +78,27 @@ struct DigitalRingMod : modules::XTModule
 
         setupSurgeCommon(NUM_PARAMS, false, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
+        configSwitch(LINK_01, 0, 1, 0, "Link Second A to First Output", {"Don't Link", "Link"});
+        std::vector<std::string> nm;
+        for (int i = 0; i < n_cxm_modes; ++i)
+            nm.push_back(combinator_mode_names[i]);
+        configSwitch(TYPE_0, 0, n_cxm_modes, 0, "CXOR 1 Algorithm", nm);
+        configSwitch(TYPE_1, 0, n_cxm_modes, 0, "CXOR 2 Algorithm", nm);
+
+        configInput(INPUT_0_A_L, "CXOR 1 A Left");
+        configInput(INPUT_0_A_R, "CXOR 1 A Right");
+        configInput(INPUT_1_A_L, "CXOR 2 A Left");
+        configInput(INPUT_1_A_R, "CXOR 2 A Right");
+        configInput(INPUT_0_B_L, "CXOR 1 B Left");
+        configInput(INPUT_0_B_R, "CXOR 1 B Right");
+        configInput(INPUT_1_B_L, "CXOR 2 B Left");
+        configInput(INPUT_1_B_R, "CXOR 2 B Right");
+
+        configOutput(OUTPUT_0_L, "CXOR 1 Left");
+        configOutput(OUTPUT_0_R, "CXOR 1 Right");
+        configOutput(OUTPUT_1_L, "CXOR 2 Left");
+        configOutput(OUTPUT_1_R, "CXOR 2 Right");
     }
 
     std::string getName() override { return "Mixer"; }

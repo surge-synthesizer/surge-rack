@@ -553,6 +553,11 @@ struct LFO : modules::XTModule
                     isGated[c] = true;
                     isGateConnected[c] = true;
                 }
+                else if (inputs[INPUT_GATE].isConnected() &&
+                         inputs[INPUT_GATE_ENVONLY].isConnected())
+                {
+                    // HANDLE THIS DUAL CASE
+                }
                 else if (inputs[INPUT_GATE].isConnected() && isGated[c] &&
                          (inputs[INPUT_GATE].getVoltage(trigChan) < 1.f))
                 {

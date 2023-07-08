@@ -1911,6 +1911,17 @@ struct LCDBackground : public rack::widget::TransparentWidget, style::StyleParti
         return res;
     }
 
+    static LCDBackground *createAtYPosition(float startY, float height, float widthInScrews = 12,
+                                            float posxDiff = 0)
+    {
+        auto width = rack::app::RACK_GRID_WIDTH * widthInScrews - 2 * (posx - posxDiff);
+
+        auto res = new LCDBackground();
+        res->setup(rack::Vec(posx - posxDiff, startY), rack::Vec(width, height));
+
+        return res;
+    }
+
     void setup(const rack::Vec &pos, const rack::Vec &size)
     {
         box.pos = pos;
