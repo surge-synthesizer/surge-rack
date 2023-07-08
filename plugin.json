@@ -402,8 +402,8 @@
     },
     {
       "slug": "SurgeXTDigitalRingMod",
-      "name": "Digital RingMods",
-      "description": "The Surge XT Digital Ring Modulation Models",
+      "name": "Digital RingModulators and Combinators",
+      "description": "The Surge XT Digital Ring Modulation and Combinator Models",
       "tags": [
         "Ring modulator",
         "Polyphonic"

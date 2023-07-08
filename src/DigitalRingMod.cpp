@@ -143,6 +143,10 @@ DigitalRingModWidget::DigitalRingModWidget(DigitalRingModWidget::M *module) : XT
             widgets::PlotAreaMenuItem::create(rack::Vec(xpos, ys), wsz, module, M::TYPE_0 + inst);
         wid->upcaseDisplay = false;
         wid->centerDisplay = true;
+        wid->onShowMenu = [wid]() {
+            wid->destroyTooltip();
+            wid->createContextMenu();
+        };
         addChild(wid);
 
         if (inst == 1)
