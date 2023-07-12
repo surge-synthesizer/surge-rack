@@ -25,6 +25,7 @@
 #include "XTModule.h"
 #include "LayoutConstants.h"
 #include "sst/rackhelpers/ui.h"
+#include "sst/rackhelpers/module_connector.h"
 
 namespace sst::surgext_rack::widgets
 {
@@ -602,23 +603,16 @@ struct Knob16 : KnobN
     }
 };
 
-struct Port : public rack::app::SvgPort, style::StyleParticipant
+struct Port : public sst::rackhelpers::module_connector::PortConnectionMixin<rack::app::SvgPort>,
+              style::StyleParticipant
 {
     Port() { onStyleChanged(); }
-
-    bool connectAsOutputToMixmaster{false};
-    bool connectAsInputFromMixmaster{false};
-    int mixMasterStereoCompanion{-1};
-
-    bool connectOutputToNeighbor{false};
 
     void onStyleChanged() override
     {
         setSvg(rack::Svg::load(
             rack::asset::plugin(pluginInstance, style()->skinAssetDir() + "/components/port.svg")));
     }
-
-    void appendContextMenu(rack::Menu *menu) override;
 };
 
 struct HasBDW

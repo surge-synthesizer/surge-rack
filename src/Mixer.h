@@ -29,10 +29,11 @@
 
 #include "sst/basic-blocks/dsp/CorrelatedNoise.h"
 #include "CXOR.h"
+#include "sst/rackhelpers/neighbor_connectable.h"
 
 namespace sst::surgext_rack::mixer
 {
-struct Mixer : modules::XTModule
+struct Mixer : modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_mixer_params{8};
     static constexpr int n_mod_inputs{4};
@@ -435,6 +436,18 @@ struct Mixer : modules::XTModule
         // auto-unmute-on-first-connect feature
         for (auto &ev : everConnected)
             ev = true;
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryInputs() override
+    {
+        return {{std::make_pair("Input 1", std::make_pair(INPUT_OSC1_L, INPUT_OSC1_R)),
+                 std::make_pair("Input 2", std::make_pair(INPUT_OSC2_L, INPUT_OSC2_R)),
+                 std::make_pair("Input 3", std::make_pair(INPUT_OSC3_L, INPUT_OSC3_R))}};
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
+    {
+        return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 };
 } // namespace sst::surgext_rack::mixer
