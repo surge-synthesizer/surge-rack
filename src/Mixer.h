@@ -442,15 +442,13 @@ struct Mixer : modules::XTModule, sst::rackhelpers::module_connector::NeighborCo
     {
         return {{std::make_pair("Input 1", std::make_pair(INPUT_OSC1_L, INPUT_OSC1_R)),
                  std::make_pair("Input 2", std::make_pair(INPUT_OSC2_L, INPUT_OSC2_R)),
-                 std::make_pair("Input 3", std::make_pair(INPUT_OSC3_L, INPUT_OSC3_R))}
-        };
+                 std::make_pair("Input 3", std::make_pair(INPUT_OSC3_L, INPUT_OSC3_R))}};
     }
 
     std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
     {
         return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
-
 };
 } // namespace sst::surgext_rack::mixer
 #endif

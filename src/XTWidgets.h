@@ -603,10 +603,10 @@ struct Knob16 : KnobN
     }
 };
 
-struct Port : public sst::rackhelpers::module_connector::PortConnectionMixin<rack::app::SvgPort>, style::StyleParticipant
+struct Port : public sst::rackhelpers::module_connector::PortConnectionMixin<rack::app::SvgPort>,
+              style::StyleParticipant
 {
     Port() { onStyleChanged(); }
-
 
     void onStyleChanged() override
     {

@@ -96,7 +96,6 @@ struct Delay : modules::XTModule, sst::rackhelpers::module_connector::NeighborCo
         return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 
-
     modules::MonophonicModulationAssistant<Delay, n_delay_params, TIME_L, n_mod_inputs,
                                            DELAY_MOD_INPUT>
         modulationAssistant;
