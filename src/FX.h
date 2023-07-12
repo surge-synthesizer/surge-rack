@@ -181,14 +181,14 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
         snapCalculatedNames();
     }
 
-    std::optional<stereoPort_t> getPrimaryInputs() override
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryInputs() override
     {
-        return std::make_pair(INPUT_L, INPUT_R);
+        return {{std::make_pair("Input", std::make_pair(INPUT_L, INPUT_R))}};
     }
 
-    std::optional<stereoPort_t> getPrimaryOutputs() override
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
     {
-        return std::make_pair(OUTPUT_L, OUTPUT_R);
+        return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 
     void moduleSpecificSampleRateChange() override

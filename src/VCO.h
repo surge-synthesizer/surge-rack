@@ -384,9 +384,9 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
     static constexpr int n_state_slots{4};
     int intStateForConfig[n_state_slots];
 
-    std::optional<stereoPort_t> getPrimaryOutputs() override
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
     {
-        return std::make_pair(OUTPUT_L, OUTPUT_R);
+        return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 
     void moduleSpecificSampleRateChange() override { forceRespawnDueToSampleRate = true; }
