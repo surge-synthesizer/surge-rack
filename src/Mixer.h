@@ -120,7 +120,7 @@ struct Mixer : modules::XTModule, sst::rackhelpers::module_connector::NeighborCo
         // Config
         for (int i = OSC1_LEV; i <= RM2X3_LEV; ++i)
         {
-            std::string name = "Input " + std::to_string(i - OSC1_LEV + 1) + " Level";
+            std::string name = inputName(i) + " Level";
             configParam<modules::DecibelParamQuantity>(i, 0, 1, i == OSC1_LEV ? 1 : 0, name);
         }
         configParam(NOISE_COL, -1, 1, 0, "Noise Color", "%", 0, 100);
@@ -128,14 +128,14 @@ struct Mixer : modules::XTModule, sst::rackhelpers::module_connector::NeighborCo
 
         for (int i = OSC1_SOLO; i <= RM2x3_SOLO; ++i)
         {
-            std::string name = "Input " + std::to_string(i - OSC1_LEV + 1) + " Solo";
-            configParam(i, 0, 1, 0, name);
+            std::string name = inputName(i - OSC1_SOLO + OSC1_LEV) + " Solo";
+            configSwitch(i, 0, 1, 0, name, {"Off", "On"});
         }
 
         for (int i = OSC1_MUTE; i <= RM2x3_MUTE; ++i)
         {
-            std::string name = "Input " + std::to_string(i - OSC1_LEV + 1) + " Mute";
-            configParam(i, 0, 1, i == OSC1_MUTE ? 0 : 1, name);
+            std::string name = inputName(i - OSC1_MUTE + OSC1_LEV) + " Mute";
+            configSwitch(i, 0, 1, i == OSC1_MUTE ? 0 : 1, name, {"Off", "On"});
         }
 
         for (int i = 0; i < n_mixer_params * n_mod_inputs; ++i)
@@ -229,6 +229,27 @@ struct Mixer : modules::XTModule, sst::rackhelpers::module_connector::NeighborCo
         needed[osc1] = routes[osc1] || routes[r1x2];
         needed[osc2] = routes[osc2] || routes[r1x2] || routes[r2x3];
         needed[osc3] = routes[osc3] || routes[r2x3];
+    }
+
+    std::string inputName(int p)
+    {
+        switch (p)
+        {
+        case OSC1_LEV:
+            return "Input 1";
+        case OSC2_LEV:
+            return "Input 2";
+        case OSC3_LEV:
+            return "Input 3";
+        case RM1X2_LEV:
+            return "RingMod 1X2";
+        case RM2X3_LEV:
+            return "RingMod 2x3";
+        case NOISE_LEV:
+            return "Noise";
+        }
+
+        return "ERROR";
     }
 
     float modulationDisplayValue(int paramId) override
