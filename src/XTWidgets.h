@@ -2156,7 +2156,7 @@ struct ThereAreFourLights : rack::app::SliderKnob, style::StyleParticipant
 
         menu->addChild(new rack::MenuSeparator);
         menu->addChild(
-            rack::createMenuItem("Initialize", "Double-click", [=]() { this->resetAction(); }));
+            rack::createMenuItem("Initialize", "Double-click", [this]() { this->resetAction(); }));
     }
 };
 

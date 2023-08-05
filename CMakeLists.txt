@@ -33,6 +33,7 @@ set(SURGE_SKIP_STANDALONE TRUE CACHE BOOL "skip surge standalone build")
 set(SURGE_COMPILE_BLOCK_SIZE 8 CACHE STRING "surge compile block size")
 set(SURGE_SIMDE_PATH "${RACK_SDK_DIR}/dep/include" CACHE STRING "surge simde is rack simde")
 
+
 add_subdirectory(surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
 # the warnings should be fixed in the dependencies or the warning could be disabled in the
@@ -63,7 +64,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
 
 target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
-add_compile_options($<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
+add_compile_options($<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror> $<$<COMPILE_LANGUAGE:CXX>:-fno-char8_t>)
 add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
@@ -101,6 +102,7 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
         src/XTWidgets.cpp)
 
 target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge sst-rackhelpers)
+target_compile_options(${RACK_PLUGIN_LIB} PUBLIC -fno-char8_t)
 
 file(COPY surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
