@@ -31,8 +31,11 @@ set(SURGE_SKIP_VST3 TRUE CACHE BOOL "skip surge VST3 build")
 set(SURGE_SKIP_ALSA TRUE CACHE BOOL "skip surge Alsa build")
 set(SURGE_SKIP_STANDALONE TRUE CACHE BOOL "skip surge standalone build")
 set(SURGE_COMPILE_BLOCK_SIZE 8 CACHE STRING "surge compile block size")
-set(SURGE_SIMDE_PATH "${RACK_SDK_DIR}/dep/include" CACHE STRING "surge simde is rack simde")
 
+# Its super common to use RACK_SDK_DIR as a relative path, so resolve for simde
+set(SURGE_SIMDE_PATH_INIT "${RACK_SDK_DIR}/dep/include" CACHE STRING "surge simde is rack simde")
+get_filename_component(SURGE_SIMDE_PATH_ABS ${SURGE_SIMDE_PATH_INIT} ABSOLUTE)
+set(SURGE_SIMDE_PATH "${SURGE_SIMDE_PATH_ABS}" CACHE STRING "surge simde is rack simde, resolved")
 
 add_subdirectory(surge)
 # turn off specific warning as errors enforced by Rack-SDK compiler options for surge libs
