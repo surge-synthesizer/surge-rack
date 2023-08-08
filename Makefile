@@ -15,7 +15,7 @@ ifdef ARCH_MAC
   RACK_PLUGIN_EXT := dylib
   ifdef ARCH_ARM64
     EXTRA_CMAKE := -DCMAKE_OSX_ARCHITECTURES="arm64"
-    RACK_PLUGIN_ARCH := -arm64
+    # RACK_PLUGIN_ARCH := -arm64
   endif
 endif
 
