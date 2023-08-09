@@ -778,23 +778,32 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             auto yp = box.size.y;
 
             auto osc = setupOscillator();
-            const float ups = 3.0, invups = 1.0 / ups;
+            const float ups = 1.5, invups = 1.0 / ups;
 
             float disp_pitch_rs =
                 12.f * std::log2f((700.f * (storage->samplerate / 48000.f)) / 440.f) + 69.f;
 
             osc->init(disp_pitch_rs, true, true);
 
-            int block_pos{BLOCK_SIZE_OS + 1};
+            float oscTmp alignas(16)[2][BLOCK_SIZE_OS];
+            sst::filters::HalfRate::HalfRateFilter hr(6, true);
+            hr.load_coefficients();
+            hr.reset();
+
+            int block_pos{BLOCK_SIZE + 1};
             for (int i = 0; i < xp * ups; ++i)
             {
-                if (block_pos >= BLOCK_SIZE_OS)
+                if (block_pos >= BLOCK_SIZE)
                 {
                     osc->process_block(disp_pitch_rs);
+                    memcpy(oscTmp[0], osc->output, sizeof(oscTmp[0]));
+                    memcpy(oscTmp[1], osc->output, sizeof(oscTmp[1]));
+                    hr.process_block_D2(oscTmp[0], oscTmp[1], BLOCK_SIZE_OS);
+
                     block_pos = 0;
                 }
 
-                float yc = (-osc->output[block_pos] * 0.47 + 0.5) * yp;
+                float yc = (-oscTmp[0][block_pos] * 0.47 + 0.5) * yp;
                 oscPath.emplace_back(i * invups, yc);
                 block_pos++;
             }
