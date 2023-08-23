@@ -672,14 +672,18 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         int col = 0;
         for (auto p : {in0, in1})
         {
-            auto yp = layout::LayoutConstants::inputRowCenter_MM;
-            auto xp = layout::LayoutConstants::firstColumnCenter_MM +
-                      layout::LayoutConstants::columnWidth_MM * col;
-            auto pt = rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
-                                                               w->module, p);
-            pt->connectAsInputFromMixmaster = true;
-            pt->mixMasterStereoCompanion = (p == in0 ? in1 : in0);
-            w->addInput(pt);
+            if (p >= 0)
+            {
+                auto yp = layout::LayoutConstants::inputRowCenter_MM;
+                auto xp = layout::LayoutConstants::firstColumnCenter_MM +
+                          layout::LayoutConstants::columnWidth_MM * col;
+                auto pt = rack::createInputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)),
+                                                                   w->module, p);
+                pt->connectAsInputFromMixmaster = true;
+                if (in0 >= 0 && in1 >= 0)
+                    pt->mixMasterStereoCompanion = (p == in0 ? in1 : in0);
+                w->addInput(pt);
+            }
             col++;
         }
 
