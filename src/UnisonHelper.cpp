@@ -42,7 +42,8 @@ struct UnisonHelperWidget : public widgets::XTModuleWidget
     }
 };
 
-UnisonHelperWidget::UnisonHelperWidget(sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget::M *module)
+UnisonHelperWidget::UnisonHelperWidget(
+    sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget::M *module)
 {
     setModule(module);
     typedef layout::LayoutEngine<UnisonHelperWidget, M::VOICE_COUNT> engine_t;
@@ -63,4 +64,5 @@ UnisonHelperWidget::UnisonHelperWidget(sst::surgext_rack::unisonhelper::ui::Unis
 
 rack::Model *modelUnisonHelper =
     rack::createModel<sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget::M,
-                      sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget>("SurgeXTUnisonHelper");
+                      sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget>(
+        "SurgeXTUnisonHelper");

@@ -78,7 +78,8 @@ struct UnisonHelper : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::ModulationAssistant<UnisonHelper, n_mod_params, VOICE_COUNT, n_mod_inputs, MOD_INPUT_0> modAssist;
+    modules::ModulationAssistant<UnisonHelper, n_mod_params, VOICE_COUNT, n_mod_inputs, MOD_INPUT_0>
+        modAssist;
 
     UnisonHelper() : XTModule()
     {
@@ -95,10 +96,7 @@ struct UnisonHelper : modules::XTModule
         snapCalculatedNames();
     }
 
-    void setupSurge()
-    {
-        setupSurgeCommon(NUM_PARAMS, false, false);
-    }
+    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false, false); }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
@@ -135,10 +133,7 @@ struct UnisonHelper : modules::XTModule
 
     bool isBipolar(int paramId) override { return false; }
 
-    void moduleSpecificSampleRateChange() override
-    {
-
-    }
+    void moduleSpecificSampleRateChange() override {}
 
     std::string getName() override { return std::string("UnisonHelper"); }
 
