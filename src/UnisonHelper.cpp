@@ -13,17 +13,17 @@
  * https://github.com/surge-synthesizer/surge-rack/
  */
 
-#include "BLANK12.h"
+#include "UnisonHelper.h"
 #include "XTModuleWidget.h"
 #include "XTWidgets.h"
 #include "SurgeXT.h"
 
-namespace sst::surgext_rack::blank12::ui
+namespace sst::surgext_rack::unisonhelper::ui
 {
-struct BLANK12Widget : public widgets::XTModuleWidget
+struct UnisonHelperWidget : public widgets::XTModuleWidget
 {
-    typedef sst::surgext_rack::blank12::BLANK12 M;
-    BLANK12Widget(M *module);
+    typedef sst::surgext_rack::unisonhelper::UnisonHelper M;
+    UnisonHelperWidget(M *module);
 
     std::array<std::array<rack::Widget *, M::n_mod_inputs>, n_fx_params> overlays;
     std::array<widgets::ModulatableKnob *, n_fx_params> underKnobs;
@@ -39,34 +39,30 @@ struct BLANK12Widget : public widgets::XTModuleWidget
     {
         if (!module)
             return;
-
-        menu->addChild(new rack::ui::MenuSeparator);
-        /*
-         * Clock entries
-         */
-        addClockMenu<BLANK12>(menu);
     }
 };
 
-BLANK12Widget::BLANK12Widget(sst::surgext_rack::blank12::ui::BLANK12Widget::M *module)
+UnisonHelperWidget::UnisonHelperWidget(
+    sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget::M *module)
 {
     setModule(module);
-    typedef layout::LayoutEngine<BLANK12Widget, M::PAR0, M::CLOCK_IN> engine_t;
+    typedef layout::LayoutEngine<UnisonHelperWidget, M::VOICE_COUNT> engine_t;
     engine_t::initializeModulationToBlank(this);
 
     box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 12, rack::app::RACK_GRID_HEIGHT);
 
-    auto bg = new widgets::Background(box.size, "BLANK12", "fx", "BlankNoDisplay");
+    auto bg = new widgets::Background(box.size, "UNISON", "fx", "BlankNoDisplay");
     addChild(bg);
     bg->addAlpha();
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
-    engine_t::createLeftRightInputLabels(this);
-    engine_t::createInputOutputPorts(this, M::INPUT_L, M::INPUT_R, M::OUTPUT_L, M::OUTPUT_R);
+    engine_t::createLeftRightInputLabels(this, "V/OCT", "");
+    engine_t::createInputOutputPorts(this, M::INPUT_VOCT, -1, M::OUTPUT_L, M::OUTPUT_R);
     resetStyleCouplingToModule();
 }
-} // namespace sst::surgext_rack::blank12::ui
+} // namespace sst::surgext_rack::unisonhelper::ui
 
-rack::Model *modelBLANK12 =
-    rack::createModel<sst::surgext_rack::blank12::ui::BLANK12Widget::M,
-                      sst::surgext_rack::blank12::ui::BLANK12Widget>("SurgeXTBLANK12");
+rack::Model *modelUnisonHelper =
+    rack::createModel<sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget::M,
+                      sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget>(
+        "SurgeXTUnisonHelper");

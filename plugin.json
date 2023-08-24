@@ -417,6 +417,15 @@
         "Utility",
         "Polyphonic"
       ]
+    },
+    {
+      "slug": "SurgeXTUnisonHelper",
+      "name": "UnisonHelper",
+      "description": "The Surge XT Unison features for your favorite Poly VCO",
+      "tags": [
+        "Utility",
+        "Polyphonic"
+      ]
     }
   ]
 }

@@ -94,4 +94,6 @@ extern rack::Model *modelEGxVCA;
 extern rack::Model *modelQuadAD;
 extern rack::Model *modelQuadLFO;
 
+extern rack::Model *modelUnisonHelper;
+
 #endif // SCXT_SRC_SURGEXT_H

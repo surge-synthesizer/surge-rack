@@ -34,16 +34,22 @@
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
 
-namespace sst::surgext_rack::blank12
+namespace sst::surgext_rack::unisonhelper
 {
-struct BLANK12 : modules::XTModule
+struct UnisonHelper : modules::XTModule
 {
-    static constexpr int n_mod_params{1};
+    static constexpr int n_mod_params{3};
     static constexpr int n_mod_inputs{4};
+
+    static constexpr int n_sub_vcos{4};
 
     enum ParamIds
     {
-        PAR0,
+        VOICE_COUNT,
+        DETUNE,
+        DRIFT,
+        DETUNE_EXTEND,
+        CHARACTER,
 
         MOD_PARAM_0,
         NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
@@ -51,11 +57,10 @@ struct BLANK12 : modules::XTModule
 
     enum InputIds
     {
-        INPUT_L,
-        INPUT_R,
-        CLOCK_IN,
+        INPUT_VOCT,
+        INPUT_SUB1,
 
-        MOD_INPUT_0,
+        MOD_INPUT_0 = INPUT_SUB1 + n_sub_vcos,
         NUM_INPUTS = MOD_INPUT_0 + n_mod_inputs,
     };
 
@@ -63,7 +68,9 @@ struct BLANK12 : modules::XTModule
     {
         OUTPUT_L,
         OUTPUT_R,
-        NUM_OUTPUTS
+
+        OUTPUT_VOCT_SUB1,
+        NUM_OUTPUTS = OUTPUT_VOCT_SUB1 + n_sub_vcos
     };
 
     enum LightIds
@@ -71,9 +78,10 @@ struct BLANK12 : modules::XTModule
         NUM_LIGHTS
     };
 
-    modules::ModulationAssistant<BLANK12, n_mod_params, PAR0, n_mod_inputs, MOD_INPUT_0> modAssist;
+    modules::ModulationAssistant<UnisonHelper, n_mod_params, VOICE_COUNT, n_mod_inputs, MOD_INPUT_0>
+        modAssist;
 
-    BLANK12() : XTModule()
+    UnisonHelper() : XTModule()
     {
         {
             std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
@@ -85,15 +93,10 @@ struct BLANK12 : modules::XTModule
         modAssist.setupMatrix(this);
         modAssist.updateValues(this);
 
-        configBypass(INPUT_L, OUTPUT_L);
-        configBypass(INPUT_R, OUTPUT_R);
         snapCalculatedNames();
     }
 
-    void setupSurge()
-    {
-        setupSurgeCommon(NUM_PARAMS, false, false);
-    }
+    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false, false); }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
@@ -121,7 +124,7 @@ struct BLANK12 : modules::XTModule
     float modulationDisplayValue(int paramId) override
     {
         std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
-        int idx = paramId - PAR0;
+        int idx = paramId - VOICE_COUNT;
         if (idx < 0 || idx >= n_mod_params)
             return 0;
 
@@ -130,25 +133,15 @@ struct BLANK12 : modules::XTModule
 
     bool isBipolar(int paramId) override { return false; }
 
-    void moduleSpecificSampleRateChange() override
-    {
-        clockProc.setSampleRate(APP->engine->getSampleRate());
-    }
-    typedef modules::ClockProcessor<BLANK12> clockProcessor_t;
-    clockProcessor_t clockProc;
+    void moduleSpecificSampleRateChange() override {}
 
-    std::string getName() override { return std::string("BLANK12"); }
+    std::string getName() override { return std::string("UnisonHelper"); }
 
     int nChan{-1};
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        if (inputs[CLOCK_IN].isConnected())
-            clockProc.process(this, CLOCK_IN);
-        else
-            clockProc.disconnect(this);
-
-        auto currChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(), 1});
+        auto currChan = std::max({inputs[INPUT_VOCT].getChannels(), 1});
         if (currChan != nChan)
         {
             nChan = currChan;
@@ -164,20 +157,6 @@ struct BLANK12 : modules::XTModule
     {
         std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
     }
-
-    json_t *makeModuleSpecificJson() override
-    {
-        auto vc = json_object();
-
-        clockProc.toJson(vc);
-
-        return vc;
-    }
-
-    void readModuleSpecificJson(json_t *modJ) override
-    {
-        clockProc.fromJson(modJ);
-    }
 };
-} // namespace sst::surgext_rack::blank12
+} // namespace sst::surgext_rack::unisonhelper
 #endif

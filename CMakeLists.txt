@@ -97,6 +97,7 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
         src/ModMatrix.cpp
         src/QuadAD.cpp
         src/QuadLFO.cpp
+        src/UnisonHelper.cpp
         src/VCF.cpp
         src/VCO.cpp
         src/Waveshaper.cpp
