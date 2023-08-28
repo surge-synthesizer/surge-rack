@@ -5,15 +5,11 @@ message(STATUS "Load RackSDK.cmake (mapping based on Rack-SDK-${RACK_SDK_VERSION
 
 if ("${RACK_SDK_DIR}" STREQUAL "")
   message(FATAL_ERROR "Path to Rack SDK is missing! Add -DRACK_SDK_DIR=<PATH> to the cmake call.")
-else ()
+elseif (EXISTS "${RACK_SDK_DIR}/include/rack.hpp")
   message(STATUS "Using Rack-SDK in '${RACK_SDK_DIR}'")
+else ()
+  message(FATAL_ERROR "Couldn't find 'include/rack.hpp' in '${RACK_SDK_DIR}'")
 endif ()
-
-if (EXISTS "${RACK_SDK_DIR}/include/rack.hpp")
-  message(STATUS "Found include/rack.hpp")
-else()
-  message(FATAL_ERROR "Rack SDK in ${RACK_SDK_DIR} missing include/rack.hpp")
-endif()
 
 if ("${PLUGIN_NAME}" STREQUAL "")
   message(FATAL_ERROR "PLUGIN_NAME variable not set! Add PLUGIN_NAME variable to the project CMakeLists.txt before including RackSDK.cmake.\
@@ -28,10 +24,7 @@ if ("${ADDITIONAL_PLUGIN_DISTRIBUTABLES}" STREQUAL "")
 endif ()
 
 # Do not change the RACK_PLUGIN_LIB!
-if (${CMAKE_OSX_ARCHITECTURES} MATCHES "arm64")
-  #set(RACK_PLUGIN_ARCH -arm64)
-endif ()
-set(RACK_PLUGIN_LIB plugin${RACK_PLUGIN_ARCH})
+set(RACK_PLUGIN_LIB plugin)
 
 file(GLOB LICENSE LICENSE*)
 set(PLUGIN_DISTRIBUTABLES plugin.json res ${LICENSE} ${ADDITIONAL_PLUGIN_DISTRIBUTABLES})
@@ -51,19 +44,19 @@ add_compile_options(-g)
 # Optimization
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "Skipping Optimizations for Debug Build")
-else()
+else ()
   message(STATUS "Enabling Optimizations for Non-Debug Build")
   add_compile_options(-O3 -funsafe-math-optimizations -fno-omit-frame-pointer)
-endif()
+endif ()
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 # C++ standard
 if (DEFINED CMAKE_CXX_STANDARD)
   message(STATUS "Retaining CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
-else()
+else ()
   set(CMAKE_CXX_STANDARD 11)
   message(STATUS "Defaulting CMAKE_CXX_STANDARD to ${CMAKE_CXX_STANDARD}")
-endif()
+endif ()
 
 add_library(${RACK_PLUGIN_LIB} MODULE)
 set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES PREFIX "")
@@ -113,13 +106,14 @@ install(TARGETS ${RACK_PLUGIN_LIB} LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/${P
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${PLUGIN_NAME}/ DESTINATION ${PLUGIN_NAME})
 file(COPY ${PLUGIN_DISTRIBUTABLES} DESTINATION ${PLUGIN_NAME})
 
+set(STABLE_PLUGIN_BUILD_TARGET build_plugin)
+add_custom_target(${STABLE_PLUGIN_BUILD_TARGET})
+add_dependencies(${STABLE_PLUGIN_BUILD_TARGET} ${RACK_PLUGIN_LIB})
+
 # A quick installation target to copy the plugin library and plugin.json into VCV Rack plugin folder for development.
 # CMAKE_INSTALL_PREFIX needs to point to the VCV Rack plugin folder in user documents.
-add_custom_target(build_plugin)
-add_dependencies(build_plugin ${RACK_PLUGIN_LIB})
-
-add_custom_target(build_plugin_quick_install
+add_custom_target(${STABLE_PLUGIN_BUILD_TARGET}_quick_install
         COMMAND cmake -E copy $<TARGET_FILE:${RACK_PLUGIN_LIB}> ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/plugin.json ${CMAKE_INSTALL_PREFIX}/${PLUGIN_NAME}
         )
-add_dependencies(build_plugin_quick_install ${RACK_PLUGIN_LIB})
+add_dependencies(${STABLE_PLUGIN_BUILD_TARGET}_quick_install ${RACK_PLUGIN_LIB})

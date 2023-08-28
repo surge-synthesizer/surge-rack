@@ -2,7 +2,7 @@ name: VCV Rack Code Checks
 on: [pull_request]
 
 env:
-  rack-sdk-version: 2.3.0
+  rack-sdk-version: latest
 
 defaults:
   run:
@@ -21,7 +21,7 @@ jobs:
       - name: Get Rack-SDK
         run: |
           pushd $HOME
-          curl -o Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-lin-x64.zip
+          wget -O Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-lin-x64.zip
           unzip Rack-SDK.zip
       - name: Run Code Checks
         run: |
