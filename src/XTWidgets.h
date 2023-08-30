@@ -406,7 +406,7 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
         if (!pq)
             return;
 
-        auto pv = pq->getSmoothValue();
+        auto pv = pq->getValue();
 
         float angle;
         angle = rack::math::rescale(pv, pq->getMinValue(), pq->getMaxValue(), minAngle, maxAngle);
@@ -661,8 +661,8 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
         if (!pq || !uq)
             return;
 
-        auto uv = uq->getSmoothValue();
-        auto pv = pq->getSmoothValue();
+        auto uv = uq->getValue();
+        auto pv = pq->getValue();
 
         auto toAngle = [this](float q, auto *qq, float fac) {
             float angle;
