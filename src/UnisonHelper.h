@@ -154,6 +154,21 @@ struct UnisonHelper : modules::XTModule
         configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "High Cut");
         configOnOff(HICUT_ENABLED, 0, "Enable High Cut");
 
+        configInput(INPUT_VOCT, "V/Oct for pre-unison source");
+
+        for (int i = 0; i < n_sub_vcos; ++i)
+        {
+            configInput(INPUT_SUB1 + i, "Audio from Sub VCO " + std::to_string(i + 1));
+            configOutput(OUTPUT_VOCT_SUB1 + i, "V/Oct to Sub VCO " + std::to_string(i + 1));
+        }
+
+        for (int i = 0; i < n_mod_inputs; ++i)
+        {
+            configInput(MOD_INPUT_0 + i, "Mod " + std::to_string(i + 1));
+        }
+
+        configOutput(OUTPUT_L, "Left");
+        configOutput(OUTPUT_R, "Right");
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
         {
             int tp = paramModulatedBy(i + MOD_PARAM_0);
@@ -238,6 +253,7 @@ struct UnisonHelper : modules::XTModule
     std::array<float, MAX_POLY> baseVOct{};
     std::array<int, n_sub_vcos> channelsPerSubOct{};
     std::array<bool, n_sub_vcos> connectedSet{};
+    bool voctConnected{false};
     bool connectedSetChanged{false};
     int highestContiguousConnectedSub{-1};
 
@@ -322,6 +338,11 @@ struct UnisonHelper : modules::XTModule
                     if (subVcoToInputChannel[i][j] >= 0)
                         channelsPerSubOct[i] = j + 1;
                 }
+            }
+
+            if (!inputs[INPUT_VOCT].isConnected())
+            {
+                infoDisplay = "no v/oct input";
             }
 
 #define DEBUG_LAYOUT 0
@@ -501,6 +522,12 @@ struct UnisonHelper : modules::XTModule
             connectedSoFar = connectedSoFar && tc;
             if (connectedSoFar)
                 highestContiguousConnectedSub = i;
+        }
+
+        if (inputs[INPUT_VOCT].isConnected() != voctConnected)
+        {
+            connectedSetChanged = true;
+            voctConnected = inputs[INPUT_VOCT].isConnected();
         }
     }
 };
