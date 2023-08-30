@@ -179,6 +179,9 @@ struct UnisonHelper : modules::XTModule
     std::array<sst::basic_blocks::dsp::SurgeLag<float, true>, MAX_POLY> driftLFOLag{};
     std::array<float, MAX_POLY> baseVOct{};
     std::array<int, n_sub_vcos> channelsPerSubOct{};
+    std::array<bool, n_sub_vcos> connectedSet{};
+    bool connectedSetChanged{false};
+    int highestContiguousConnectedSub{-1};
 
     std::array<Surge::Oscillator::CharacterFilter<float>, MAX_POLY> characterFilter;
 
@@ -188,6 +191,8 @@ struct UnisonHelper : modules::XTModule
     std::array<std::array<int, MAX_POLY>, n_sub_vcos> subVcoToInputChannel{};
     std::array<std::array<int, MAX_POLY>, n_sub_vcos> indexToUnisonVoice{};
     int maxUsedSubVCO{1};
+    std::string errorCondition;
+    std::atomic<bool> isInErrorState{false};
 
     int samplePos{0};
     int priorChar{-1};
@@ -203,16 +208,20 @@ struct UnisonHelper : modules::XTModule
         }
         auto currChan = std::max({inputs[INPUT_VOCT].getChannels(), 1});
         int currV = std::round(params[VOICE_COUNT].getValue());
-        if (currChan != nChan || currV != nVoices)
+        if (currChan != nChan || currV != nVoices || connectedSetChanged)
         {
             nChan = currChan;
             nVoices = currV;
+            connectedSetChanged = false;
             unisonSetup = Surge::Oscillator::UnisonSetup<float>(nVoices);
+            isInErrorState = false;
 
             // FIXME should really be connected vcos not subs
-            if (nVoices * currChan > n_sub_vcos * MAX_POLY)
+            if (nVoices * currChan > (highestContiguousConnectedSub + 1) * MAX_POLY)
             {
-                // Error condition. Flag to UI
+                isInErrorState = true;
+                errorCondition = fmt::format("{} * {} too many voices for {} sub-vco(s)", nVoices,
+                                             currChan, highestContiguousConnectedSub + 1);
             }
 
             int curVoice{0}, curSub{0};
@@ -234,9 +243,12 @@ struct UnisonHelper : modules::XTModule
                     {
                         curSub++;
                         curVoice = 0;
-                        if (curSub == n_sub_vcos)
+                        if (curSub == n_sub_vcos && v != nVoices - 1 && cc != nChan - 1)
                         {
-                            // FIXME ERROR STATE. For now cycle but fix this
+                            isInErrorState = true;
+                            errorCondition =
+                                fmt::format("{} * {} too many voices for any vco configuration",
+                                            nVoices, currChan);
                             curSub = 0;
                         }
                     }
@@ -255,8 +267,11 @@ struct UnisonHelper : modules::XTModule
                 }
             }
 
+#define DEBUG_LAYOUT 0
 #if DEBUG_LAYOUT
             std::cout << "REBUILD STATUS\n";
+            std::cout << "  errorCond  = " << isInErrorState << " "
+                      << (isInErrorState ? errorCondition : "") << "\n";
             std::cout << "  maxUsedSub = " << maxUsedSubVCO << std::endl;
             std::cout << "  chanPerSub = ";
             for (auto &v : channelsPerSubOct)
@@ -290,6 +305,11 @@ struct UnisonHelper : modules::XTModule
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
 
+        if (samplePos == 0)
+        {
+            updateConnectedSet();
+        }
+
         for (int i = 0; i < currChan; ++i)
         {
             if (samplePos == 0)
@@ -299,7 +319,7 @@ struct UnisonHelper : modules::XTModule
             }
 
             baseVOct[i] = inputs[INPUT_VOCT].getVoltage(i) +
-                          params[DRIFT].getValue() * driftLFOLag[i].getTargetValue() / 24.0;
+                          params[DRIFT].getValue() * driftLFOLag[i].getTargetValue() / 12.0;
             driftLFOLag[i].process();
         }
 
@@ -343,14 +363,22 @@ struct UnisonHelper : modules::XTModule
         samplePos = (samplePos + 1) & (BLOCK_SIZE - 1);
     }
 
-    void activateTempoSync()
+    void updateConnectedSet()
     {
-        std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
-    }
-
-    void deactivateTempoSync()
-    {
-        std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
+        connectedSetChanged = false;
+        auto connectedSoFar = true;
+        highestContiguousConnectedSub = -1;
+        for (int i = 0; i < n_sub_vcos; ++i)
+        {
+            auto tc =
+                inputs[INPUT_SUB1 + i].isConnected() && outputs[OUTPUT_VOCT_SUB1 + i].isConnected();
+            if (tc != connectedSet[i])
+                connectedSetChanged = true;
+            connectedSet[i] = tc;
+            connectedSoFar = connectedSoFar && tc;
+            if (connectedSoFar)
+                highestContiguousConnectedSub = i;
+        }
     }
 };
 } // namespace sst::surgext_rack::unisonhelper
