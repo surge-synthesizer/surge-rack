@@ -1,5 +1,15 @@
 # Surge XT VCV Modules Changelog
 
+A [draft 2.2](nightlychangelog.md) changelog is available
+as we tackle dev this fall.
+
+## 2.1.8
+
+Upgrades for the Rack 2.4.0 SDK and the final
+shape of the ARM64 Rack Build. (2.1.7 includes
+some of these changes and was never released to
+the library)
+
 ## 2.1.6
 
 A few minor changes based on user requests
