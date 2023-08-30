@@ -44,7 +44,7 @@ using rack::appGet;
 
 namespace sst::surgext_rack::modules
 {
-struct XTModule : public rack::Module
+struct XTModule : public rack::Module, public SurgeStorage::ErrorListener
 {
     static std::mutex xtSurgeCreateMutex;
 
@@ -108,6 +108,7 @@ struct XTModule : public rack::Module
 
         showBuildInfo();
         storage = std::make_unique<SurgeStorage>(config);
+        storage->addErrorListener(this);
         storage->getPatch().init_default_values();
         storage->getPatch().copy_globaldata(storage->getPatch().globaldata);
         storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0], 0);
@@ -283,6 +284,14 @@ struct XTModule : public rack::Module
     }
 
     void snapCalculatedNames();
+
+    void onSurgeError(const std::string &msg, const std::string &title,
+                      const SurgeStorage::ErrorType &t) override
+    {
+        WARN("Surge Reported an Error");
+        WARN("%s", title.c_str());
+        WARN("%s", msg.c_str());
+    }
 
     bool isCoupledToGlobalStyle{true};
     style::XTStyle::Style localStyle{style::XTStyle::LIGHT};
