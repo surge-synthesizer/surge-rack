@@ -101,6 +101,11 @@ struct DigitalRingMod : modules::XTModule
         configOutput(OUTPUT_1_L, "CXOR 2 Left");
         configOutput(OUTPUT_1_R, "CXOR 2 Right");
 
+        configBypass(INPUT_0_A_L, OUTPUT_0_L);
+        configBypass(INPUT_0_A_R, OUTPUT_0_R);
+        configBypass(INPUT_1_A_L, OUTPUT_1_L);
+        configBypass(INPUT_1_A_R, OUTPUT_1_R);
+
         memset(inputA, 0, sizeof(inputA));
         memset(inputB, 0, sizeof(inputB));
         memset(output, 0, sizeof(output));

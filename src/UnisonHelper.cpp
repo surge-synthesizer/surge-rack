@@ -60,7 +60,7 @@ UnisonHelperWidget::UnisonHelperWidget(
 
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
     const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0]; //
-    const auto row3 = row2 - (row1 - row2) - rack::mm2px(1.00);
+    const auto row3 = row2 - (row1 - row2) - rack::mm2px(0.50);
 
     float cols[4];
     for (int i = 0; i < 4; ++i)
@@ -83,18 +83,29 @@ UnisonHelperWidget::UnisonHelperWidget(
     }
 
     layout.push_back({li_t::KNOB9, "DETUNE", M::DETUNE, cols[0], row3});
+    layout.push_back({li_t::EXTEND_LIGHT, "", M::DETUNE_EXTEND, cols[0], row3, +1});
+
     layout.push_back({li_t::KNOB12, "VOICES", M::VOICE_COUNT, (cols[1] + cols[2]) * 0.5f, row3});
     layout.back().skipModulation = true;
     layout.push_back({li_t::KNOB9, "DRIFT", M::DRIFT, cols[3], row3});
 
-    layout.push_back(li_t::createLCDArea(row3 - rack::mm2px(3.75)));
+    layout.push_back(li_t::createLCDArea(row3 - rack::mm2px(3.00)));
     for (const auto &lay : layout)
     {
         engine_t::layoutItem(this, lay, "UNISON");
     }
+    auto lcdb = box;
+    {
+        auto lc = getFirstDescendantOfType<widgets::LCDBackground>();
+        if (lc)
+        {
+            lcdb = lc->box;
+        }
+    }
 
     auto oct = widgets::PlotAreaMenuItem::create(
-        rack::Vec(cols[1], row3), rack::Vec(50, rack::mm2px(5)), module, M::CHARACTER);
+        rack::Vec(lcdb.pos.x, lcdb.pos.y + lcdb.size.y - rack::mm2px(6)),
+        rack::Vec(lcdb.size.x - rack::mm2px(1), rack::mm2px(5)), module, M::CHARACTER);
     addChild(oct);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
