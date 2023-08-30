@@ -92,8 +92,20 @@ UnisonHelperWidget::UnisonHelperWidget(
     for (int i = 0; i < 4; ++i)
     {
         layout.push_back(
-            {li_t::PORT, "RTN " + std::to_string(i + 1), M::INPUT_SUB1 + i, cols[i], row2});
+            {li_t::PORT, "VCO " + std::to_string(i + 1), M::INPUT_SUB1 + i, cols[i], row2});
     }
+
+    auto obg = new widgets::OutputDecoration;
+    auto pd_MM = 0.5;
+    obg->box.pos =
+        rack::mm2px(rack::Vec(cols[0] - layout::LayoutConstants::columnWidth_MM * 0.35 - pd_MM,
+                              row1 - layout::LayoutConstants::columnWidth_MM * 0.3 - pd_MM));
+    obg->box.size =
+        rack::mm2px(rack::Vec(layout::LayoutConstants::columnWidth_MM * 3.7 + pd_MM * 2,
+                              layout::LayoutConstants::columnWidth_MM * 0.6 + 5 + pd_MM * 2));
+    obg->setup();
+    addChild(obg);
+
     for (int i = 0; i < 4; ++i)
     {
         layout.push_back({li_t::OUT_PORT, "V/O " + std::to_string(i + 1), M::OUTPUT_VOCT_SUB1 + i,
