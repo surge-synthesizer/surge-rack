@@ -87,6 +87,46 @@ struct UnisonHelper : modules::XTModule
     modules::ModulationAssistant<UnisonHelper, n_mod_params, DETUNE, n_mod_inputs, MOD_INPUT_0>
         modAssist;
 
+    struct DetuneParamQuantity : public rack::engine::ParamQuantity
+    {
+        inline UnisonHelper *dm() { return static_cast<UnisonHelper *>(module); }
+        virtual std::string getDisplayValueString() override
+        {
+            auto m = dm();
+            if (!m)
+                return "ERROR";
+
+            auto v = getValue();
+            if (m->params[DETUNE_EXTEND].getValue() > 0.5)
+            {
+                v = v * 1200;
+            }
+            else
+            {
+                v = v * 100;
+            }
+
+            return fmt::format("{:8.2f} cents", v);
+        }
+
+        void setDisplayValue(float displayValue) override
+        {
+            auto m = dm();
+            if (!m)
+                return;
+
+            auto v = displayValue;
+            if (m->params[DETUNE_EXTEND].getValue() > 0.5)
+            {
+                v = v / 1200;
+            }
+            else
+            {
+                v = v / 100;
+            }
+            setValue(v);
+        }
+    };
     UnisonHelper() : XTModule()
     {
         {
@@ -95,7 +135,8 @@ struct UnisonHelper : modules::XTModule
         }
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam(DETUNE, 0, 1, 0.1, "Detune");
+        configParam<DetuneParamQuantity>(DETUNE, 0, 1, 0.1, "Detune");
+        configSwitch(DETUNE_EXTEND, 0, 1, 0, "Detune Range", {"+/- 100 cents", "+/- 1200 cents"});
         configParam(DRIFT, 0, 1, 0, "Drift");
         configSwitch(CHARACTER, 0, 2, 1, "Character", {"Warm", "Neutral", "Bright"});
         auto pq = configParam(VOICE_COUNT, 1, 9, 3, "Voice Count", " Voices");
@@ -326,6 +367,8 @@ struct UnisonHelper : modules::XTModule
         std::array<float, 16> outputL{}, outputR{};
 
         auto dt = params[DETUNE].getValue() / 12.0;
+        if (params[DETUNE_EXTEND].getValue() > 0.5)
+            dt = dt * 12;
 
         for (auto v = 0; v <= maxUsedSubVCO; ++v)
         {

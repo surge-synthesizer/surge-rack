@@ -83,6 +83,8 @@ UnisonHelperWidget::UnisonHelperWidget(
     }
 
     layout.push_back({li_t::KNOB9, "DETUNE", M::DETUNE, cols[0], row3});
+    layout.push_back({li_t::EXTEND_LIGHT, "", M::DETUNE_EXTEND, cols[0], row3, +1});
+
     layout.push_back({li_t::KNOB12, "VOICES", M::VOICE_COUNT, (cols[1] + cols[2]) * 0.5f, row3});
     layout.back().skipModulation = true;
     layout.push_back({li_t::KNOB9, "DRIFT", M::DRIFT, cols[3], row3});
