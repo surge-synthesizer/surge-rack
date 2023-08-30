@@ -95,9 +95,10 @@ struct UnisonHelper : modules::XTModule
         }
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configParam(DETUNE, 0, 1, 0.1);
-        configParam(DRIFT, 0, 1, 0);
-        auto pq = configParam(VOICE_COUNT, 1, 9, 3);
+        configParam(DETUNE, 0, 1, 0.1, "Detune");
+        configParam(DRIFT, 0, 1, 0, "Drift");
+        configSwitch(CHARACTER, 0, 2, 1, "Character", {"Warm", "Neutral", "Bright"});
+        auto pq = configParam(VOICE_COUNT, 1, 9, 3, "Voice Count", " Voices");
         pq->snapEnabled = true;
 
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
@@ -119,7 +120,15 @@ struct UnisonHelper : modules::XTModule
             d.init(false);
     }
 
-    void setupSurge() { setupSurgeCommon(NUM_PARAMS, false, false); }
+    void setupSurge()
+    {
+        setupSurgeCommon(NUM_PARAMS, false, false);
+        for (auto &cf : characterFilter)
+        {
+            cf.storage = storage.get();
+            cf.init(0);
+        }
+    }
 
     Parameter *surgeDisplayParameterForParamId(int paramId) override
     {
@@ -155,16 +164,23 @@ struct UnisonHelper : modules::XTModule
 
     bool isBipolar(int paramId) override { return false; }
 
-    void moduleSpecificSampleRateChange() override {}
+    void moduleSpecificSampleRateChange() override
+    {
+        for (auto &cf : characterFilter)
+            cf.init(cf.type);
+    }
 
     std::string getName() override { return std::string("UnisonHelper"); }
 
     int nChan{-1}, nVoices{1};
     Surge::Oscillator::UnisonSetup<float> unisonSetup{nVoices};
+
     std::array<Surge::Oscillator::DriftLFO, MAX_POLY> driftLFO{};
     std::array<sst::basic_blocks::dsp::SurgeLag<float, true>, MAX_POLY> driftLFOLag{};
     std::array<float, MAX_POLY> baseVOct{};
     std::array<int, n_sub_vcos> channelsPerSubOct{};
+
+    std::array<Surge::Oscillator::CharacterFilter<float>, MAX_POLY> characterFilter;
 
     /*
      * Data structures for voice mapping
@@ -174,9 +190,17 @@ struct UnisonHelper : modules::XTModule
     int maxUsedSubVCO{1};
 
     int samplePos{0};
+    int priorChar{-1};
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
+        int currChar = std::round(params[CHARACTER].getValue());
+        if (priorChar != currChar)
+        {
+            priorChar = currChar;
+            for (auto &c : characterFilter)
+                c.init(currChar);
+        }
         auto currChan = std::max({inputs[INPUT_VOCT].getChannels(), 1});
         int currV = std::round(params[VOICE_COUNT].getValue());
         if (currChan != nChan || currV != nVoices)
@@ -303,6 +327,11 @@ struct UnisonHelper : modules::XTModule
                     outputR[svi] += iv * pR;
                 }
             }
+        }
+
+        for (int i = 0; i < currChan; ++i)
+        {
+            characterFilter[i].process_block_stereo(&outputL[i], &outputR[i], 1);
         }
 
         for (int i = 0; i < currChan; ++i)

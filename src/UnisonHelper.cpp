@@ -61,7 +61,6 @@ UnisonHelperWidget::UnisonHelperWidget(
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
     const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0]; //
     const auto row3 = row2 - (row1 - row2) - rack::mm2px(1.00);
-    ;
 
     float cols[4];
     for (int i = 0; i < 4; ++i)
@@ -87,10 +86,16 @@ UnisonHelperWidget::UnisonHelperWidget(
     layout.push_back({li_t::KNOB12, "VOICES", M::VOICE_COUNT, (cols[1] + cols[2]) * 0.5f, row3});
     layout.back().skipModulation = true;
     layout.push_back({li_t::KNOB9, "DRIFT", M::DRIFT, cols[3], row3});
+
+    layout.push_back(li_t::createLCDArea(row3 - rack::mm2px(3.75)));
     for (const auto &lay : layout)
     {
         engine_t::layoutItem(this, lay, "UNISON");
     }
+
+    auto oct = widgets::PlotAreaMenuItem::create(
+        rack::Vec(cols[1], row3), rack::Vec(50, rack::mm2px(5)), module, M::CHARACTER);
+    addChild(oct);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
     engine_t::createLeftRightInputLabels(this, "V/OCT", "");
