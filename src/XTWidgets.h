@@ -1605,6 +1605,48 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     }
 };
 
+struct PlotAreaLabel : public rack::app::Knob, style::StyleParticipant
+{
+    static constexpr float padTop_MM = 1.4;
+    static constexpr float padBot_MM = 1.6;
+    BufferedDrawFunctionWidget *bdw{nullptr};
+    std::string label;
+    bool upcaseDisplay{true};
+
+    static PlotAreaLabel *create(rack::Vec pos, rack::Vec sz)
+    {
+        auto *res = rack::createWidget<PlotAreaLabel>(pos);
+
+        res->box.pos = pos;
+        res->box.pos.y += rack::mm2px(padTop_MM);
+        res->box.size = sz;
+        res->box.size.y -= rack::mm2px(padBot_MM);
+
+        res->bdw = new BufferedDrawFunctionWidget(rack::Vec(0, 0), res->box.size,
+                                                  [res](NVGcontext *vg) { res->drawWidget(vg); });
+        res->addChild(res->bdw);
+
+        return res;
+    }
+
+    void drawWidget(NVGcontext *vg)
+    {
+        auto pv = label;
+        if (upcaseDisplay)
+            for (auto &q : pv)
+                q = std::toupper(q);
+
+        nvgBeginPath(vg);
+        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        nvgFontFaceId(vg, style()->fontIdBold(vg));
+        nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        nvgText(vg, rack::mm2px(0.5), box.size.y * 0.5, pv.c_str(), nullptr);
+    }
+
+    void onStyleChanged() override { bdw->dirty = true; }
+};
+
 struct PlotAreaToggleClick : public rack::app::Switch, style::StyleParticipant
 {
     static constexpr float padTop_MM = 1.4;

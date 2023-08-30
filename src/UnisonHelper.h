@@ -39,12 +39,13 @@
 
 #include "LayoutEngine.h"
 #include "ADSRModulationSource.h"
+#include "BiquadFilter.h"
 
 namespace sst::surgext_rack::unisonhelper
 {
 struct UnisonHelper : modules::XTModule
 {
-    static constexpr int n_mod_params{2};
+    static constexpr int n_mod_params{4};
     static constexpr int n_mod_inputs{4};
 
     static constexpr int n_sub_vcos{4};
@@ -53,9 +54,14 @@ struct UnisonHelper : modules::XTModule
     {
         DETUNE,
         DRIFT,
+        LOCUT,
+        HICUT,
         VOICE_COUNT,
         DETUNE_EXTEND,
         CHARACTER,
+
+        LOCUT_ENABLED,
+        HICUT_ENABLED,
 
         MOD_PARAM_0,
         NUM_PARAMS = MOD_PARAM_0 + n_mod_params * n_mod_inputs
@@ -138,9 +144,15 @@ struct UnisonHelper : modules::XTModule
         configParam<DetuneParamQuantity>(DETUNE, 0, 1, 0.1, "Detune");
         configSwitch(DETUNE_EXTEND, 0, 1, 0, "Detune Range", {"+/- 100 cents", "+/- 1200 cents"});
         configParam(DRIFT, 0, 1, 0, "Drift");
-        configSwitch(CHARACTER, 0, 2, 1, "Character", {"Warm", "Neutral", "Bright"});
+        configSwitch(CHARACTER, 0, 2, 1, "Character Filter", {"Warm", "Off", "Bright"});
         auto pq = configParam(VOICE_COUNT, 1, 9, 3, "Voice Count", " Voices");
         pq->snapEnabled = true;
+
+        configParam<modules::MidiNoteParamQuantity<69>>(LOCUT, -60, 70, -60, "Low Cut");
+        configOnOff(LOCUT_ENABLED, 0, "Enable Low Cut");
+
+        configParam<modules::MidiNoteParamQuantity<69>>(HICUT, -60, 70, 70, "High Cut");
+        configOnOff(HICUT_ENABLED, 0, "Enable High Cut");
 
         for (int i = 0; i < n_mod_params * n_mod_inputs; ++i)
         {
@@ -151,6 +163,13 @@ struct UnisonHelper : modules::XTModule
             configParamNoRand(MOD_PARAM_0 + i, -1, 1, 0, name, "%", 0, 100);
         }
 
+        for (int i = 0; i < MAX_POLY; ++i)
+        {
+            lpPost[i] = std::make_unique<BiquadFilter>(storage.get());
+            lpPost[i]->suspend();
+            hpPost[i] = std::make_unique<BiquadFilter>(storage.get());
+            hpPost[i]->suspend();
+        }
         modAssist.initialize(this);
         modAssist.setupMatrix(this);
         modAssist.updateValues(this);
@@ -171,11 +190,10 @@ struct UnisonHelper : modules::XTModule
         }
     }
 
-    Parameter *surgeDisplayParameterForParamId(int paramId) override
-    {
-        std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
-        return nullptr;
-    }
+    bool locutOn{false}, hicutOn{false};
+    std::array<std::unique_ptr<BiquadFilter>, MAX_POLY> lpPost, hpPost;
+
+    Parameter *surgeDisplayParameterForParamId(int paramId) override { return nullptr; }
 
     int polyChannelCount() { return nChan; }
     static int paramModulatedBy(int modIndex)
@@ -195,12 +213,11 @@ struct UnisonHelper : modules::XTModule
 
     float modulationDisplayValue(int paramId) override
     {
-        // std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
         int idx = paramId - DETUNE;
         if (idx < 0 || idx >= n_mod_params)
             return 0;
 
-        return modAssist.modvalues[idx][0];
+        return modAssist.animValues[idx];
     }
 
     bool isBipolar(int paramId) override { return false; }
@@ -232,7 +249,7 @@ struct UnisonHelper : modules::XTModule
     std::array<std::array<int, MAX_POLY>, n_sub_vcos> subVcoToInputChannel{};
     std::array<std::array<int, MAX_POLY>, n_sub_vcos> indexToUnisonVoice{};
     int maxUsedSubVCO{1};
-    std::string errorCondition;
+    std::string infoDisplay;
     std::atomic<bool> isInErrorState{false};
 
     int samplePos{0};
@@ -256,13 +273,13 @@ struct UnisonHelper : modules::XTModule
             connectedSetChanged = false;
             unisonSetup = Surge::Oscillator::UnisonSetup<float>(nVoices);
             isInErrorState = false;
+            infoDisplay = fmt::format("{} in * {} voices", nChan, nVoices);
 
             // FIXME should really be connected vcos not subs
             if (nVoices * currChan > (highestContiguousConnectedSub + 1) * MAX_POLY)
             {
                 isInErrorState = true;
-                errorCondition = fmt::format("{} * {} too many voices for {} sub-vco(s)", nVoices,
-                                             currChan, highestContiguousConnectedSub + 1);
+                infoDisplay = "too many voices";
             }
 
             int curVoice{0}, curSub{0};
@@ -287,15 +304,14 @@ struct UnisonHelper : modules::XTModule
                         if (curSub == n_sub_vcos && v != nVoices - 1 && cc != nChan - 1)
                         {
                             isInErrorState = true;
-                            errorCondition =
-                                fmt::format("{} * {} too many voices for any vco configuration",
-                                            nVoices, currChan);
-                            curSub = 0;
+                            infoDisplay = "too many voices";
                         }
+                        if (curSub == n_sub_vcos)
+                            curSub = 0;
                     }
                 }
             }
-            maxUsedSubVCO = curSub;
+            maxUsedSubVCO = std::clamp(nVoices * nChan / MAX_POLY, 0, n_sub_vcos - 1); // curSub;
 
             // This happens infrequently so this inefficient algo is fine
             for (int i = 0; i < n_sub_vcos; ++i)
@@ -348,7 +364,57 @@ struct UnisonHelper : modules::XTModule
 
         if (samplePos == 0)
         {
+            modAssist.setupMatrix(this);
+            modAssist.updateValues(this);
+
             updateConnectedSet();
+
+            auto loOn = params[LOCUT_ENABLED].getValue() > 0.5;
+            auto hiOn = params[HICUT_ENABLED].getValue() > 0.5;
+
+            if (loOn)
+            {
+                if (!locutOn)
+                {
+                    for (int p = 0; p < MAX_POLY; ++p)
+                        hpPost[p]->suspend();
+                }
+                for (int p = 0; p < nChan; ++p)
+                {
+                    hpPost[p]->coeff_HP(hpPost[p]->calc_omega(modAssist.values[LOCUT][p] / 12.0),
+                                        0.707);
+                    if (!locutOn)
+                        hpPost[p]->coeff_instantize();
+                }
+
+                locutOn = true;
+            }
+            else
+            {
+                locutOn = false;
+            }
+
+            if (hiOn)
+            {
+                if (!hicutOn)
+                {
+                    for (int p = 0; p < MAX_POLY; ++p)
+                        lpPost[p]->suspend();
+                }
+                for (int p = 0; p < nChan; ++p)
+                {
+                    lpPost[p]->coeff_LP2B(lpPost[p]->calc_omega(modAssist.values[HICUT][p] / 12.0),
+                                          0.707);
+                    if (!hicutOn)
+                        lpPost[p]->coeff_instantize();
+                }
+
+                hicutOn = true;
+            }
+            else
+            {
+                hicutOn = false;
+            }
         }
 
         for (int i = 0; i < currChan; ++i)
@@ -360,15 +426,11 @@ struct UnisonHelper : modules::XTModule
             }
 
             baseVOct[i] = inputs[INPUT_VOCT].getVoltage(i) +
-                          params[DRIFT].getValue() * driftLFOLag[i].getTargetValue() / 12.0;
+                          modAssist.values[DRIFT][i] * driftLFOLag[i].getTargetValue() / 12.0;
             driftLFOLag[i].process();
         }
 
         std::array<float, 16> outputL{}, outputR{};
-
-        auto dt = params[DETUNE].getValue() / 12.0;
-        if (params[DETUNE_EXTEND].getValue() > 0.5)
-            dt = dt * 12;
 
         for (auto v = 0; v <= maxUsedSubVCO; ++v)
         {
@@ -376,6 +438,11 @@ struct UnisonHelper : modules::XTModule
             for (auto p = 0; p < MAX_POLY; ++p)
             {
                 auto svi = subVcoToInputChannel[v][p];
+
+                auto dt = modAssist.values[DETUNE][svi] / 12.0;
+                if (params[DETUNE_EXTEND].getValue() > 0.5)
+                    dt = dt * 12;
+
                 auto vi = indexToUnisonVoice[v][p];
                 if (svi >= 0)
                 {
@@ -399,6 +466,19 @@ struct UnisonHelper : modules::XTModule
 
         for (int i = 0; i < currChan; ++i)
         {
+            if (hicutOn)
+            {
+                lpPost[i]->process_sample(outputL[i], outputR[i], outputL[i], outputR[i]);
+            }
+            if (locutOn)
+            {
+                hpPost[i]->process_sample(outputL[i], outputR[i], outputL[i], outputR[i]);
+            }
+            if (isInErrorState)
+            {
+                outputL[i] = 0;
+                outputR[i] = 0;
+            }
             outputs[OUTPUT_L].setVoltage(outputL[i], i);
             outputs[OUTPUT_R].setVoltage(outputR[i], i);
         }
