@@ -1605,7 +1605,7 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     }
 };
 
-struct PlotAreaLabel : public rack::app::Knob, style::StyleParticipant
+struct PlotAreaLabel : public rack::Widget, style::StyleParticipant
 {
     static constexpr float padTop_MM = 1.4;
     static constexpr float padBot_MM = 1.6;

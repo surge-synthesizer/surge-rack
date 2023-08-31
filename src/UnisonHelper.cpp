@@ -146,7 +146,7 @@ UnisonHelperWidget::UnisonHelperWidget(
 
     infoLabel = widgets::PlotAreaLabel::create(
         rack::Vec(lcdb.pos.x + rack::mm2px(1), lcdb.pos.y + lcdb.size.y - rack::mm2px(6)),
-        rack::Vec(lcdb.size.x - rack::mm2px(1), rack::mm2px(5)));
+        rack::Vec(lcdb.size.x - rack::mm2px(10), rack::mm2px(5)));
     infoLabel->label = "";
     addChild(infoLabel);
 
