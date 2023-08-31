@@ -47,6 +47,7 @@ __attribute__((__visibility__("default"))) void init(rack::Plugin *p)
     p->addModel(modelSurgeWaveshaper);
     p->addModel(modelSurgeLFO);
     p->addModel(modelSurgeMixer);
+    p->addModel(modelSurgeMixerSlider);
     p->addModel(modelSurgeModMatrix);
     p->addModel(modelSurgeDigitalRingMods);
 

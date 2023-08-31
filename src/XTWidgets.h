@@ -2362,24 +2362,62 @@ struct VerticalSlider : rack::app::SliderKnob, style::StyleParticipant, Modulata
         auto off = rack::mm2px(0.4);
         auto span = box.size.y - 2 * off;
 
-        auto nv{0.f};
-        if (pq)
+        bool biPolar = pq->getMinValue() * pq->getMaxValue() < 0;
+        auto np{0.f};
+        if (biPolar)
         {
-            nv = (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
+            auto cv{0.f}, nv{0.f};
+            if (pq)
+            {
+                cv = (0 - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
+                nv = (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
+            }
+            np = (1 - nv) * span;
+
+            nvgSave(vg);
+
+            nvgBeginPath(vg);
+            if (cv > nv)
+            {
+                nvgScissor(vg, 0, 0, box.size.x, handle->box.pos.y);
+                nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, (1 - cv) * span, rwidth,
+                        (cv - nv) * span);
+            }
+            else
+            {
+                auto sp = handle->box.pos.y + handle->box.size.y;
+                nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
+
+                nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, (1 - nv) * span, rwidth,
+                        (nv - cv) * span);
+            }
+            nvgFillColor(vg, style()->getColor(style::XTStyle::SLIDER_RING_VALUE));
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 0.5);
+            nvgStroke(vg);
+            nvgRestore(vg);
         }
-        auto np = (1 - nv) * span;
+        else
+        {
+            auto nv{0.f};
+            if (pq)
+            {
+                nv = (pq->getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
+            }
+            np = (1 - nv) * span;
 
-        auto sp = handle->box.pos.y + handle->box.size.y;
-        nvgSave(vg);
-        nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
+            auto sp = handle->box.pos.y + handle->box.size.y;
+            nvgSave(vg);
+            nvgScissor(vg, 0, sp, box.size.x, box.size.y - sp);
 
-        nvgBeginPath(vg);
-        nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth, span - np);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::SLIDER_RING_VALUE));
-        nvgFill(vg);
-        nvgStrokeWidth(vg, 0.5);
-        nvgStroke(vg);
-        nvgRestore(vg);
+            nvgBeginPath(vg);
+            nvgRect(vg, box.size.x * 0.5 - rwidth * 0.5, np + off, rwidth, span - np);
+            nvgFillColor(vg, style()->getColor(style::XTStyle::SLIDER_RING_VALUE));
+            nvgFill(vg);
+            nvgStrokeWidth(vg, 0.5);
+            nvgStroke(vg);
+            nvgRestore(vg);
+        }
 
         if (style::XTStyle::getShowModulationAnimationOnKnobs())
         {
