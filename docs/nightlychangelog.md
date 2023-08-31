@@ -1,4 +1,4 @@
-## 2.2.0
+## 2.2.0 (as of  80743550a31cf)
 
 ### New Modules
   - Bonsai
@@ -12,6 +12,7 @@
   - Unison Helper
     - Given a polyphonic VCO, apply the surge
       unison, drift, and character algorithms
+    - Also includes an expander to route CV along the same paths
   - A copy of the Mixer, just with Sliders
     - Because [sometimes you feel like a knob, sometimes you don't.](https://www.youtube.com/watch?v=4b80vzwnJ8A)
 
