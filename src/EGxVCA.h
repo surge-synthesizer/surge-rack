@@ -72,6 +72,7 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
         ATTACK_FROM = MOD_PARAM_0 + n_mod_params * n_mod_inputs,
         FAST_OR_SLOW,
         STEREO_PAN_LAW,
+        EOC_TYPE,
         NUM_PARAMS
     };
 
@@ -232,6 +233,18 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
         }
     };
 
+    enum EOC_TYPES
+    {
+        EO_CYCLE,
+        START_CYCLE,
+        START_ATTACK,
+        START_HOLD,
+        START_DECAY,
+        START_SUSTAIN,
+        START_RELEASE,
+        ALL_TRANSITIONS
+    };
+
     EGxVCA() : XTModule()
     {
         {
@@ -254,6 +267,12 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
         configSwitch(A_SHAPE, 0, 2, 1, "Attack Curve", {"Faster", "Standard", "Slower"});
         configSwitch(D_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
         configSwitch(R_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
+
+        configSwitch(EOC_TYPE, (int)EO_CYCLE, (int)ALL_TRANSITIONS, (int)EO_CYCLE, "EOC Behavior",
+                     {"End of Cycle", "Start of Cycle", "Start of Attack (DAHD Only)",
+                      "Start of Hold (DAHD Only)", "Start of Decay (ADSR Only)",
+                      "Start of Sustain (ADSR Only)", "Start of Release",
+                      "Trigger on All Transitions"});
 
         // really need to configParam those mod params for this to work
         for (int i = 0; i < n_mod_inputs * n_mod_params; ++i)
@@ -333,6 +352,8 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
             pan[i][1].target = 1.0; // R
             pan[i][2].target = 0.0; // R in L
             pan[i][3].target = 0.0; // L in R
+
+            eocCountdown[i] = 0;
         }
     }
 
@@ -383,6 +404,9 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
             if (processorsDahdSlow[i])
                 processorsDahdSlow[i]->onSampleRateChanged();
         }
+
+        // triggers for 10 ms
+        eocInit = 0.01 * APP->engine->getSampleRate() * BLOCK_SIZE_INV;
     }
     typedef modules::ClockProcessor<EGxVCA> clockProcessor_t;
     clockProcessor_t clockProc;
@@ -395,6 +419,9 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
     bool polyGate{false};
 
     bool doAttack[MAX_POLY];
+
+    int eocCountdown[MAX_POLY];
+    int eocInit;
 
     struct linterp
     {
@@ -512,6 +539,8 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
         int ds = (int)std::round(params[D_SHAPE].getValue());
         int rs = (int)std::round(params[R_SHAPE].getValue());
 
+        auto ett = (EOC_TYPES)std::round(params[EOC_TYPE].getValue());
+
         for (int c = 0; c < nChan; ++c)
         {
             if (doAttack[c])
@@ -526,6 +555,11 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
                 }
                 procs[c]->attackFrom(az * procs[c]->output, av, as, dig);
                 doAttack[c] = false;
+
+                if (ett == START_CYCLE || ett == ALL_TRANSITIONS)
+                {
+                    eocCountdown[c] = eocInit;
+                }
             }
             if (tempoSynced)
             {
@@ -538,9 +572,29 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
             }
             else
             {
+                auto pst = procs[c]->stage;
                 procs[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
                                   modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
                                   inputs[GATE_IN].getVoltage(polyGate * c) > 2);
+                auto nst = procs[c]->stage;
+
+                if (pst != nst)
+                {
+                    if (ett == ALL_TRANSITIONS || (nst == ENVT::s_attack && ett == START_ATTACK) ||
+                        (nst == ENVT::s_decay && ett == START_DECAY) ||
+                        (nst == ENVT::s_sustain && !getMode() && ett == START_SUSTAIN) ||
+                        (nst == ENVT::s_sustain && getMode() && ett == START_HOLD) ||
+                        (nst == ENVT::s_release && ett == START_RELEASE) ||
+                        (nst > ENVT::s_release && ett == EO_CYCLE))
+                    {
+                        eocCountdown[c] = eocInit;
+                    }
+                }
+                else
+                {
+                    if (eocCountdown[c])
+                        eocCountdown[c]--;
+                }
             }
         }
 
@@ -571,7 +625,7 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
             auto nrV = rV * pan[c][1].target + lV * pan[c][3].target;
 
             outputs[ENV_OUT].setVoltage(o1 * 10, c);
-            outputs[EOC_OUT].setVoltage(procs[c]->eoc_output * 10, c);
+            outputs[EOC_OUT].setVoltage((eocCountdown[c] != 0) * 10, c);
             outputs[OUTPUT_L].setVoltage(nlV, c);
             outputs[OUTPUT_R].setVoltage(nrV, c);
 

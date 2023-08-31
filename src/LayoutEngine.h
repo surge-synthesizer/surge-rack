@@ -413,6 +413,14 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             auto s0 = rack::mm2px(rack::Vec(lc::columnWidth_MM, 5));
             auto lab = widgets::Label::createWithBaselineBox(
                 p0, s0, lay.label, lc::labelSize_pt, style::XTStyle::Colors::TEXT_LABEL_OUTPUT);
+
+            if (lay.dynamicLabel && module)
+            {
+                lab->hasDynamicLabel = true;
+                lab->module = static_cast<modules::XTModule *>(module);
+                lab->dynamicLabel = lay.dynLabelFn;
+            }
+
             w->addChild(lab);
             break;
         }

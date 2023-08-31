@@ -56,6 +56,11 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
         menu->addChild(new rack::ui::MenuSeparator);
         addSelectionMenu(menu, module->paramQuantities[M::STEREO_PAN_LAW],
                          {{"Stereo Pan: Balance", 0}, {"Stereo Pan: True Panning", 1}});
+
+        menu->addChild(new rack::ui::MenuSeparator);
+        menu->addChild(rack::createSubmenuItem("EOC Trigger Point", "", [this](auto *x) {
+            addSelectionMenu(x, module->paramQuantities[M::EOC_TYPE]);
+        }));
     }
 
     widgets::DirtyHelper<EGxVCA, false> modeDirty, analogDigitalDirty;
@@ -420,15 +425,41 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
 
     typedef layout::LayoutItem li_t;
     // fixme use the enums
+
+    li_t eocOut{li_t::OUT_PORT, "EOC", M::EOC_OUT, col2, row1};
+    eocOut.dynamicLabel = true;
+    eocOut.dynLabelFn = [](auto m) {
+        auto v = (EGxVCA::EOC_TYPES)std::round(m->params[M::EOC_TYPE].getValue());
+        switch (v)
+        {
+        case EGxVCA::EO_CYCLE:
+            return "EOC";
+        case EGxVCA::START_CYCLE:
+            return "SOC";
+        case EGxVCA::START_ATTACK:
+            return "SOA";
+        case EGxVCA::START_SUSTAIN:
+            return "SOS";
+        case EGxVCA::START_DECAY:
+            return "SOD";
+        case EGxVCA::START_HOLD:
+            return "SOH";
+        case EGxVCA::START_RELEASE:
+            return "SOR";
+        case EGxVCA::ALL_TRANSITIONS:
+            return "ALL";
+        }
+        return "EOC";
+    };
     // clang-format off
     std::vector<li_t> layout = {
         {li_t::KNOB12, "LEVEL", M::LEVEL, col3, rowS},
         {li_t::KNOB9, "PAN", M::PAN, col2, row3},
         {li_t::KNOB9, "RESP", M::RESPONSE, col2, row2},
 
+        eocOut,
         {li_t::PORT, "GATE", M::GATE_IN, col0, row1},
         {li_t::PORT, "CLOCK", M::CLOCK_IN, col1, row1},
-        {li_t::OUT_PORT, "EOC", M::EOC_OUT, col2, row1},
         {li_t::OUT_PORT, "ENV", M::ENV_OUT, col3, row1},
 
         li_t::createLCDArea(row3 - rack::mm2px(2.5))
