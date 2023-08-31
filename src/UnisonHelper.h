@@ -344,12 +344,16 @@ struct UnisonHelper : modules::XTModule, sst::rackhelpers::module_connector::Nei
             {
                 infoDisplay = "no v/oct input";
             }
+            else if (!(inputs[INPUT_SUB1].isConnected() && outputs[OUTPUT_VOCT_SUB1].isConnected()))
+            {
+                infoDisplay = "VCO1 not connected";
+            }
 
 #define DEBUG_LAYOUT 0
 #if DEBUG_LAYOUT
-            std::cout << "REBUILD STATUS\n";
-            std::cout << "  errorCond  = " << isInErrorState << " "
-                      << (isInErrorState ? errorCondition : "") << "\n";
+            static int rsc{1};
+            std::cout << "REBUILD STATUS  " << rsc++ << "\n";
+            std::cout << "  infoDisp   = " << infoDisplay << std::endl;
             std::cout << "  maxUsedSub = " << maxUsedSubVCO << std::endl;
             std::cout << "  chanPerSub = ";
             for (auto &v : channelsPerSubOct)
