@@ -1612,6 +1612,7 @@ struct PlotAreaLabel : public rack::Widget, style::StyleParticipant
     BufferedDrawFunctionWidget *bdw{nullptr};
     std::string label;
     bool upcaseDisplay{true};
+    bool centerDisplay{false};
 
     static PlotAreaLabel *create(rack::Vec pos, rack::Vec sz)
     {
@@ -1640,8 +1641,16 @@ struct PlotAreaLabel : public rack::Widget, style::StyleParticipant
         nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-        nvgText(vg, rack::mm2px(0.5), box.size.y * 0.5, pv.c_str(), nullptr);
+        if (centerDisplay)
+        {
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+            nvgText(vg, box.size.x * 0.5, box.size.y * 0.5, pv.c_str(), nullptr);
+        }
+        else
+        {
+            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+            nvgText(vg, rack::mm2px(0.5), box.size.y * 0.5, pv.c_str(), nullptr);
+        }
     }
 
     void onStyleChanged() override { bdw->dirty = true; }

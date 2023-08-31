@@ -155,9 +155,126 @@ UnisonHelperWidget::UnisonHelperWidget(
     engine_t::createInputOutputPorts(this, M::INPUT_VOCT, -1, M::OUTPUT_L, M::OUTPUT_R);
     resetStyleCouplingToModule();
 }
+
+struct UnisonHelperCVExpanderWidget : widgets::XTModuleWidget
+{
+    typedef UnisonHelperCVExpander M;
+    UnisonHelperCVExpanderWidget(M *module);
+
+    std::array<widgets::PlotAreaLabel *, 3> dispLabels{};
+
+    void step() override
+    {
+        if (module)
+        {
+            auto mod = static_cast<M *>(module);
+            for (int i = 0; i < 3; ++i)
+            {
+                if (dispLabels[i]->label != mod->disp[i])
+                {
+                    dispLabels[i]->label = mod->disp[i];
+                    dispLabels[i]->bdw->dirty = true;
+                }
+            }
+        }
+
+        widgets::XTModuleWidget::step();
+    }
+};
+
+UnisonHelperCVExpanderWidget::UnisonHelperCVExpanderWidget(UnisonHelperCVExpanderWidget::M *module)
+    : XTModuleWidget()
+{
+    setModule(module);
+
+    box.size = rack::Vec(rack::app::RACK_GRID_WIDTH * 6, rack::app::RACK_GRID_HEIGHT);
+    auto bg = new widgets::Background(box.size, "", "other", "blank6hp");
+    addChild(bg);
+
+    auto titleLabel = widgets::Label::createWithBaselineBox(
+        rack::Vec(0, 0),
+        rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM)), "UNISON",
+        layout::LayoutConstants::mainLabelSize_PT);
+    titleLabel->tracking = 0.7;
+    addChild(titleLabel);
+
+    auto titleLabelLower = widgets::Label::createWithBaselineBox(
+        rack::Vec(0, 0),
+        rack::Vec(box.size.x, rack::mm2px(layout::LayoutConstants::mainLabelBaseline_MM + 5.2)),
+        "CV XPAND", layout::LayoutConstants::mainLabelSize_PT);
+    titleLabelLower->tracking = 0.7;
+    addChild(titleLabelLower);
+
+    float cols[2]{box.size.x * 0.5f - rack::mm2px(7), box.size.x * 0.5f + rack::mm2px(7)};
+
+    auto bglcd = widgets::LCDBackground::createAtYPosition(46, 47, 6, 5);
+    addChild(bglcd);
+
+    auto lb = bglcd->box;
+    auto lh = (lb.size.y - rack::mm2px(2)) / 3.f;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        auto lbw = widgets::PlotAreaLabel::create(
+            rack::Vec(lb.pos.x + rack::mm2px(1), lb.pos.y + rack::mm2px(0.333) + i * lh),
+            rack::Vec(lb.size.x - rack::mm2px(2), lh));
+        lbw->label = (i == 0 ? "DISCONNECTED" : "");
+        lbw->centerDisplay = true;
+        addChild(lbw);
+        dispLabels[i] = lbw;
+    }
+
+    for (int s = 0; s < 2; ++s)
+    {
+        auto yp = lb.pos.y + lb.size.y + rack::mm2px(15);
+
+        addInput(rack::createInputCentered<widgets::Port>(rack::Vec(cols[s], yp), module,
+                                                          M::CV_ONE + s));
+
+        auto lab = widgets::Label::createWithBaselineBox(
+            rack::Vec(cols[s] - rack::mm2px(5), yp - rack::mm2px(11)),
+            rack::Vec(rack::mm2px(10), rack::mm2px(5)), "CV " + std::to_string(s + 1),
+            layout::LayoutConstants::labelSize_pt, style::XTStyle::TEXT_LABEL_OUTPUT);
+        addChild(lab);
+
+        yp += rack::mm2px(19);
+
+        // thesese constants are really just eyeballed
+        auto od = new widgets::OutputDecoration;
+        od->box.size =
+            rack::Vec(layout::LayoutConstants::columnWidth_MM * 2.2 + 1, rack::mm2px(2 + 4 * 15));
+        od->box.pos = rack::Vec(cols[s] - od->box.size.x * 0.5, yp - rack::mm2px(10));
+
+        od->setup();
+        addChild(od);
+
+        for (int c = 0; c < UnisonHelper::n_sub_vcos; ++c)
+        {
+            addOutput(rack::createOutputCentered<widgets::Port>(
+                rack::Vec(cols[s], yp), module,
+                M::CV_ROUTE_ONE + s * UnisonHelper::n_sub_vcos + c));
+
+            auto lab = widgets::Label::createWithBaselineBox(
+                rack::Vec(cols[s] - rack::mm2px(5), yp - rack::mm2px(11)),
+                rack::Vec(rack::mm2px(10), rack::mm2px(5)), "VCO " + std::to_string(c + 1),
+                layout::LayoutConstants::labelSize_pt, style::XTStyle::TEXT_LABEL_OUTPUT);
+            addChild(lab);
+
+            yp += rack::mm2px(15);
+        }
+    }
+
+    resetStyleCouplingToModule();
+}
+
 } // namespace sst::surgext_rack::unisonhelper::ui
 
 rack::Model *modelUnisonHelper =
     rack::createModel<sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget::M,
                       sst::surgext_rack::unisonhelper::ui::UnisonHelperWidget>(
         "SurgeXTUnisonHelper");
+
+rack::Model *modelUnisonHelperCVExpander =
+    rack::createModel<sst::surgext_rack::unisonhelper::ui::UnisonHelperCVExpanderWidget::M,
+                      sst::surgext_rack::unisonhelper::ui::UnisonHelperCVExpanderWidget>(
+        "SurgeXTUnisonHelperCVExpander");

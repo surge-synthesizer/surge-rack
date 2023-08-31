@@ -435,6 +435,15 @@
         "Utility",
         "Polyphonic"
       ]
+    },
+    {
+      "slug": "SurgeXTUnisonHelperCVExpander",
+      "name": "UnisonHelper CV Expander",
+      "description": "Expander for the Unison Helper which allows you to co-route CV",
+      "tags": [
+        "Utility",
+        "Polyphonic"
+      ]
     }
   ]
 }
