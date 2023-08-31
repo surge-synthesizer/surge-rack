@@ -109,6 +109,21 @@ struct XTModuleWidget : public virtual rack::ModuleWidget, style::StyleParticipa
                                                 [pq, val = v]() { pq->setValue(val); }));
         }
     }
+
+    void addSelectionMenu(rack::ui::Menu *menu, rack::ParamQuantity *pq)
+    {
+        auto sq = dynamic_cast<rack::SwitchQuantity *>(pq);
+        if (!sq)
+        {
+            return;
+        }
+        auto pqv = (int)std::round(pq->getValue());
+        for (int i = pq->getMinValue(); i <= pq->getMaxValue(); ++i)
+        {
+            menu->addChild(rack::createMenuItem(sq->labels[i], CHECKMARK(i == pqv),
+                                                [pq, val = i]() { pq->setValue(val); }));
+        }
+    }
     virtual void appendContextMenu(rack::ui::Menu *menu) override;
 
   protected:

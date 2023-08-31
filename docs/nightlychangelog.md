@@ -19,6 +19,8 @@
 ### New Behaviors and Features
 
 - Port right mouse buttons have all sorts of neat things I need to document
+- EGxVCA EOC can send a trigger on any transition not just EOC, or on
+  all transitions
 
 ### Bug Fixes 
 
