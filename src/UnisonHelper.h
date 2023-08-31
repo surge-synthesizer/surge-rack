@@ -540,5 +540,118 @@ struct UnisonHelper : modules::XTModule, sst::rackhelpers::module_connector::Nei
         return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 };
+
+struct UnisonHelperCVExpander : modules::XTModule
+{
+    enum ParamIds
+    {
+        NUM_PARAMS
+    };
+    enum InputIds
+    {
+        CV_ONE,
+        CV_TWO,
+        NUM_INPUTS
+    };
+    enum OutputIds
+    {
+        CV_ROUTE_ONE,
+        CV_ROUTE_TWO = CV_ROUTE_ONE + UnisonHelper::n_sub_vcos,
+        NUM_OUTPUTS = CV_ROUTE_TWO + UnisonHelper::n_sub_vcos
+    };
+    enum LightIds
+    {
+        NUM_LIGHTS
+    };
+
+    UnisonHelperCVExpander() : XTModule()
+    {
+        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    }
+    std::string getName() override { return "DelayLineByFreq"; }
+
+    void process(const ProcessArgs &args) override
+    {
+        if (!sourceHelper)
+        {
+            return;
+        }
+
+        for (auto s = 0; s < 2; ++s)
+        {
+            if (!inputs[CV_ONE + s].isConnected())
+                continue;
+
+            bool monoSpread = inputs[CV_ONE + s].getChannels() == 1;
+
+            for (auto v = 0; v <= sourceHelper->maxUsedSubVCO; ++v)
+            {
+                outputs[CV_ROUTE_ONE + s * 4 + v].setChannels(sourceHelper->channelsPerSubOct[v]);
+                for (auto p = 0; p < MAX_POLY; ++p)
+                {
+                    auto ic = monoSpread ? 0 : sourceHelper->subVcoToInputChannel[v][p];
+                    if (ic >= 0)
+                    {
+                        outputs[CV_ROUTE_ONE + s * 4 + v].setVoltage(
+                            inputs[CV_ONE + s].getVoltage(ic), p);
+                    }
+                }
+            }
+        }
+
+        if (samplePos == 0)
+        {
+            disp[0] = "CONNECTED";
+            disp[1] = std::to_string(sourceHelper->nChan) + " IN";
+            disp[2] = std::to_string(sourceHelper->nVoices) + " VOICES";
+        }
+        samplePos = (samplePos + 1) & (updateStringEvery - 1);
+    }
+
+    int samplePos{0};
+    static constexpr int updateStringEvery{256};
+
+    std::array<std::string, 3> disp;
+
+    UnisonHelper *sourceHelper{nullptr};
+    void onExpanderChange(const ExpanderChangeEvent &e) override
+    {
+        auto lem = getLeftExpander();
+        if (!lem.module)
+        {
+            sourceHelper = nullptr;
+            disp[0] = "DISCONNECTED";
+            disp[1] = "";
+            disp[2] = "";
+            return;
+        }
+
+        UnisonHelper *nextSource{nullptr};
+        if (lem.module->getModel() == modelUnisonHelper)
+        {
+            nextSource = static_cast<UnisonHelper *>(lem.module);
+        }
+        else if (lem.module->getModel() == modelUnisonHelperCVExpander)
+        {
+            while (lem.module && lem.module->getModel() == modelUnisonHelperCVExpander)
+            {
+                lem = lem.module->getLeftExpander();
+            }
+            if (lem.module && lem.module->getModel() == modelUnisonHelper)
+            {
+                nextSource = static_cast<UnisonHelper *>(lem.module);
+            }
+        }
+
+        sourceHelper = nextSource;
+
+        if (!sourceHelper)
+        {
+            disp[0] = "DISCONNECTED";
+            disp[1] = "";
+            disp[2] = "";
+        }
+    }
+};
 } // namespace sst::surgext_rack::unisonhelper
 #endif
