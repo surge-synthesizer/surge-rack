@@ -401,6 +401,15 @@
       ]
     },
     {
+      "slug": "SurgeXTMixerSlider",
+      "name": "Mixer with Sliders",
+      "description": "The Surge XT Mixer, just with Sliders!",
+      "tags": [
+        "Mixer",
+        "Polyphonic"
+      ]
+    },
+    {
       "slug": "SurgeXTDigitalRingMod",
       "name": "Digital RingModulators and Combinators",
       "description": "The Surge XT Digital Ring Modulation and Combinator Models",

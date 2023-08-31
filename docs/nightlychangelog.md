@@ -12,6 +12,8 @@
   - Unison Helper
     - Given a polyphonic VCO, apply the surge
       unison, drift, and character algorithms
+  - A copy of the Mixer, just with Sliders
+    - Because [sometimes you feel like a knob, sometimes you don't.](https://www.youtube.com/watch?v=4b80vzwnJ8A)
 
 ### New Behaviors and Features
 

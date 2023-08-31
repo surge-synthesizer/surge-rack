@@ -24,7 +24,7 @@
 
 namespace sst::surgext_rack::mixer::ui
 {
-struct MixerWidget : widgets::XTModuleWidget
+template <bool useKnobs> struct MixerWidget : widgets::XTModuleWidget
 {
     typedef mixer::Mixer M;
     MixerWidget(M *module);
@@ -119,7 +119,9 @@ struct VUWidget : rack::TransparentWidget, style::StyleParticipant
 
     void onStyleChanged() override {}
 };
-MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
+
+template <bool useKnobs>
+MixerWidget<useKnobs>::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 {
     setModule(module);
     typedef layout::LayoutEngine<MixerWidget, M::OSC1_LEV> engine_t;
@@ -130,30 +132,69 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     auto bg = new widgets::Background(box.size, "MIXER", "other", "Mixer");
     addChild(bg);
 
-    std::vector<std::string> labels{"IN 1",   "IN 2",   "IN 3",  "NOISE",
-                                    "RM 1x2", "RM 2x3", "COLOR", "GAIN"};
     int kr{0}, kc{0};
-    for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
+
+    if (useKnobs)
     {
-        auto yc = layout::LayoutConstants::inputRowCenter_MM - 58 - (1 - kr) * 18;
-        auto xc = layout::LayoutConstants::firstColumnCenter_MM +
-                  layout::LayoutConstants::columnWidth_MM * kc;
-
-        auto lay = layout::LayoutItem();
-        lay.type = layout::LayoutItem::KNOB9;
-        lay.parId = i;
-        lay.label = labels[i];
-        lay.xcmm = xc;
-        lay.ycmm = yc;
-
-        kc++;
-        if (kc == 4)
+        std::vector<std::string> labels{"IN 1",   "IN 2",   "IN 3",  "NOISE",
+                                        "RM 1x2", "RM 2x3", "COLOR", "GAIN"};
+        for (int i = M::OSC1_LEV; i <= M::GAIN; ++i)
         {
-            kr++;
-            kc = 0;
-        }
+            auto yc = layout::LayoutConstants::inputRowCenter_MM - 58 - (1 - kr) * 18;
+            auto xc = layout::LayoutConstants::firstColumnCenter_MM +
+                      layout::LayoutConstants::columnWidth_MM * kc;
 
-        engine_t::layoutItem(this, lay, "Mixer");
+            auto lay = layout::LayoutItem();
+            lay.type = layout::LayoutItem::KNOB9;
+            lay.parId = i;
+            lay.label = labels[i];
+            lay.xcmm = xc;
+            lay.ycmm = yc;
+
+            kc++;
+            if (kc == 4)
+            {
+                kr++;
+                kc = 0;
+            }
+
+            engine_t::layoutItem(this, lay, "Mixer");
+        }
+    }
+    else
+    {
+        typedef layout::LayoutItem li_t;
+        const auto sliderStart = layout::LayoutConstants::firstColumnCenter_MM -
+                                 layout::LayoutConstants::columnWidth_MM * 0.75f;
+        const auto dSlider = layout::LayoutConstants::columnWidth_MM * 0.5f;
+
+        const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
+        const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0];
+        const auto row3 = layout::LayoutConstants::vcoRowCenters_MM[0] - (row1 - row2);
+        const auto rowS = (row2 + row3) * 0.5f;
+
+        std::vector<li_t> sliderLayout = {
+            {li_t::VSLIDER_25, "1", M::OSC1_LEV, sliderStart + 1.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "2", M::OSC2_LEV, sliderStart + 2.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "3", M::OSC3_LEV, sliderStart + 3.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "N", M::NOISE_LEV, sliderStart + 4.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "1x2", M::RM1X2_LEV, sliderStart + 5.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "2x3", M::RM2X3_LEV, sliderStart + 6.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "COL", M::NOISE_COL, sliderStart + 7.f * dSlider, rowS},
+            {li_t::VSLIDER_25, "GAIN", M::GAIN, sliderStart + 8.f * dSlider, rowS},
+        };
+
+        for (auto &l : sliderLayout)
+        {
+            engine_t::layoutItem(this, l, "Mixer");
+        }
+        /*
+        auto yc = layout::LayoutConstants::inputRowCenter_MM - 58;
+        auto xc = layout::LayoutConstants::firstColumnCenter_MM +
+                  layout::LayoutConstants::columnWidth_MM * 3;
+        engine_t::layoutItem(this, {li_t::KNOB9, "GAIN", M::GAIN, xc, yc}, "Mixer");
+        engine_t::layoutItem(this, {li_t::KNOB9, "COLOR", M::NOISE_COL, xc, yc - 18}, "Mixer");
+        */
     }
 
     auto solcd = widgets::LCDBackground::posy_MM;
@@ -273,5 +314,9 @@ MixerWidget::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
 // namespace sst::surgext_rack::vcf::ui
 
 rack::Model *modelSurgeMixer =
-    rack::createModel<sst::surgext_rack::mixer::ui::MixerWidget::M,
-                      sst::surgext_rack::mixer::ui::MixerWidget>("SurgeXTMixer");
+    rack::createModel<sst::surgext_rack::mixer::ui::MixerWidget<true>::M,
+                      sst::surgext_rack::mixer::ui::MixerWidget<true>>("SurgeXTMixer");
+
+rack::Model *modelSurgeMixerSlider =
+    rack::createModel<sst::surgext_rack::mixer::ui::MixerWidget<false>::M,
+                      sst::surgext_rack::mixer::ui::MixerWidget<false>>("SurgeXTMixerSlider");
