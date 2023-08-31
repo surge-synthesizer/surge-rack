@@ -43,7 +43,7 @@
 
 namespace sst::surgext_rack::unisonhelper
 {
-struct UnisonHelper : modules::XTModule
+struct UnisonHelper : modules::XTModule, sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_mod_params{4};
     static constexpr int n_mod_inputs{4};
@@ -529,6 +529,11 @@ struct UnisonHelper : modules::XTModule
             connectedSetChanged = true;
             voctConnected = inputs[INPUT_VOCT].isConnected();
         }
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
+    {
+        return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 };
 } // namespace sst::surgext_rack::unisonhelper
