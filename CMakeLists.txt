@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PLUGIN_NAME ${PROJECT_NAME})
-set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs patches presets README.md)
+set(ADDITIONAL_PLUGIN_DISTRIBUTABLES docs README.md)
 include(RackSDK.cmake)
 
 message(STATUS "SurgeXT for Rack Build Process" )
