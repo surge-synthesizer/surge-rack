@@ -49,7 +49,7 @@ build/surge-data:
 	cp -R res/surge_extra_data/fx_presets build/surge-data
 
 
-DISTRIBUTABLES += $(wildcard LICENSE*) res docs patches presets README.md build/surge-data
+DISTRIBUTABLES += $(wildcard LICENSE*) res docs README.md build/surge-data
 
 # Include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
