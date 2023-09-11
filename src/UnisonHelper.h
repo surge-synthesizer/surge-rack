@@ -387,6 +387,8 @@ struct UnisonHelper : modules::XTModule, sst::rackhelpers::module_connector::Nei
         outputs[OUTPUT_L].setChannels(nChan);
         outputs[OUTPUT_R].setChannels(nChan);
 
+        bool stereoOut = outputs[OUTPUT_R].isConnected();
+
         if (samplePos == 0)
         {
             modAssist.setupMatrix(this);
@@ -475,11 +477,18 @@ struct UnisonHelper : modules::XTModule, sst::rackhelpers::module_connector::Nei
                     outputs[OUTPUT_VOCT_SUB1 + v].setVoltage(vo, p);
 
                     auto iv = inputs[INPUT_SUB1 + v].getVoltage(p);
-                    float pL, pR;
-                    unisonSetup.attenuatedPanLaw(vi, pL, pR);
+                    if (stereoOut)
+                    {
+                        float pL, pR;
+                        unisonSetup.attenuatedPanLaw(vi, pL, pR);
 
-                    outputL[svi] += iv * pL;
-                    outputR[svi] += iv * pR;
+                        outputL[svi] += iv * pL;
+                        outputR[svi] += iv * pR;
+                    }
+                    else
+                    {
+                        outputL[svi] += iv;
+                    }
                 }
             }
         }
