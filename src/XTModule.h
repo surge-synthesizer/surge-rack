@@ -92,6 +92,27 @@ struct XTModule : public rack::Module, public SurgeStorage::ErrorListener
 
     static std::atomic<bool> showedPathsOnce;
 
+    fs::path getRackUserWavetablesDir()
+    {
+        return fs::path{rack::asset::user("SurgeXTRack/UserWavetables")};
+    }
+
+    void guaranteeRackUserWavetablesDir()
+    {
+        auto p = getRackUserWavetablesDir();
+        try
+        {
+            if (!fs::exists(p))
+            {
+                fs::create_directories(p);
+            }
+        }
+        catch (const fs::filesystem_error &e)
+        {
+            INFO( "Failed to create FS Dir: %s", e.what());
+        }
+    }
+
     void setupSurgeCommon(int NUM_PARAMS, bool loadWavetables, bool loadFX)
     {
         SurgeStorage::SurgeStorageConfig config;
@@ -103,6 +124,8 @@ struct XTModule : public rack::Module, public SurgeStorage::ErrorListener
             config.suppliedDataPath = rack::asset::plugin(pluginInstance, "build/surge-data/");
             config.extraThirdPartyWavetablesPath =
                 fs::path{rack::asset::user("SurgeXTRack/SurgeXTRack_ExtraContent")};
+            guaranteeRackUserWavetablesDir();
+            config.extraUsersWavetablesPath = getRackUserWavetablesDir();
             config.scanWavetableAndPatches = loadWavetables;
         }
 
