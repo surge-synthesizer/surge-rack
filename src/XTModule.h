@@ -109,7 +109,7 @@ struct XTModule : public rack::Module, public SurgeStorage::ErrorListener
         }
         catch (const fs::filesystem_error &e)
         {
-            INFO( "Failed to create FS Dir: %s", e.what());
+            INFO("Failed to create FS Dir: %s", e.what());
         }
     }
 

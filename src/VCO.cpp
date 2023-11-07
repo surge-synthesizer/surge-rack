@@ -238,18 +238,18 @@ template <int oscType> struct WavetableMenuBuilder
 
         if (fs::is_directory(module->storage->userWavetablesPath))
         {
-            menu->addChild(rack::createMenuItem("Reveal VST User Wavetables Directory", "", [module]() {
-                module->storage->createUserDirectory(); // fine if it exists
-                rack::system::openDirectory(
-                    (module->storage->userWavetablesPath).u8string());
-            }));
+            menu->addChild(
+                rack::createMenuItem("Reveal VST User Wavetables Directory", "", [module]() {
+                    module->storage->createUserDirectory(); // fine if it exists
+                    rack::system::openDirectory((module->storage->userWavetablesPath).u8string());
+                }));
         }
 
-        menu->addChild(rack::createMenuItem("Reveal Rack User Wavetables Directory", "", [module]() {
-            module->guaranteeRackUserWavetablesDir();
-            rack::system::openDirectory(
-                (module->getRackUserWavetablesDir()).u8string());
-        }));
+        menu->addChild(
+            rack::createMenuItem("Reveal Rack User Wavetables Directory", "", [module]() {
+                module->guaranteeRackUserWavetablesDir();
+                rack::system::openDirectory((module->getRackUserWavetablesDir()).u8string());
+            }));
         menu->addChild(rack::createMenuItem("Rescan Wavetables", "",
                                             [module]() { module->forceRefreshWT = true; }));
     }
