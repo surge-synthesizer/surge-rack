@@ -117,8 +117,10 @@ struct EGxVCAWidget : public widgets::XTModuleWidget
         nvgBeginPath(vg);
         nvgStrokeColor(vg, col);
         nvgStrokeWidth(vg, sw);
-        nvgMoveTo(vg, sz.x * 0.65 + rack::mm2px(1), rack::mm2px(5));
-        nvgLineTo(vg, sz.x * 0.65 + rack::mm2px(1), sz.y - rack::mm2px(1));
+
+        // coordinate this with 'disp' below
+        nvgMoveTo(vg, sz.x * 0.615 + rack::mm2px(1), rack::mm2px(5));
+        nvgLineTo(vg, sz.x * 0.615 + rack::mm2px(1), sz.y - rack::mm2px(1));
         nvgStroke(vg);
     }
 };
@@ -594,14 +596,16 @@ EGxVCAWidget::EGxVCAWidget(sst::surgext_rack::egxvca::ui::EGxVCAWidget::M *m)
         rShape = R;
     }
 
+    // Coordinate this with draw dividers above
+    auto disp = 0.615, omdisp = 1 - disp;
     auto envc = new EnvCurveWidget(
         rack::Vec(lcdB.pos.x + rack::mm2px(1), lcdB.pos.y + rack::mm2px(6)),
-        rack::Vec(lcdB.size.x * .65 - rack::mm2px(1), lcdB.size.y - rack::mm2px(7.5)), m);
+        rack::Vec(lcdB.size.x * disp - rack::mm2px(1), lcdB.size.y - rack::mm2px(7.5)), m);
     addChild(envc);
 
     auto respc = new ResponseMeterWidget(
-        rack::Vec(lcdB.pos.x + rack::mm2px(2) + lcdB.size.x * 0.65, lcdB.pos.y + rack::mm2px(6)),
-        rack::Vec(lcdB.size.x * .35 - rack::mm2px(4), lcdB.size.y - rack::mm2px(7.5)), m);
+        rack::Vec(lcdB.pos.x + rack::mm2px(2) + lcdB.size.x * disp, lcdB.pos.y + rack::mm2px(6)),
+        rack::Vec(lcdB.size.x * omdisp - rack::mm2px(4), lcdB.size.y - rack::mm2px(7.5)), m);
     addChild(respc);
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::MOD_INPUT_0);
