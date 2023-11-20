@@ -178,6 +178,8 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
                 oscstorage->wt.queue_id = 0;
                 oscstorage_display->wt.queue_id = 0;
                 storage->perform_queued_wtloads();
+
+                invalidateWavetableStreamingCache = true;
                 wavetableIndex = oscstorage->wt.current_id;
             }
         }
@@ -401,6 +403,9 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
         wavetableQueue;
     std::atomic<int> wavetableIndex{-1};
     std::atomic<uint32_t> wavetableLoads{0};
+    std::atomic<bool> invalidateWavetableStreamingCache{true};
+    std::string wavetableStreamingCache;
+
     uint32_t lastWavetableLoads{0};
     std::atomic<bool> draw3DWavetable{VCOConfig<oscType>::requiresWavetables()};
     std::atomic<bool> animateDisplayFromMod{true};
@@ -438,6 +443,7 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             oscstorage_display->wt.queue_id = nid;
             storage->perform_queued_wtloads();
 
+            invalidateWavetableStreamingCache = true;
             wavetableIndex = oscstorage->wt.current_id;
         }
         else
@@ -446,9 +452,9 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             oscstorage_display->wt.queue_filename = msg.filename;
             oscstorage->wt.frame_size_if_absent = msg.defaultSize;
             oscstorage_display->wt.frame_size_if_absent = msg.defaultSize;
-
             storage->perform_queued_wtloads();
 
+            invalidateWavetableStreamingCache = true;
             wavetableIndex = -1;
         }
         wavetableLoads++;
@@ -768,28 +774,33 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             json_object_set_new(wtT, "n_samples", json_integer(wt.size));
             json_object_set_new(wtT, "flags", json_integer(wt.flags));
 
-            wt_header wth;
-            memset(wth.tag, 0, 4);
-            wth.n_samples = wt.size;
-            wth.n_tables = wt.n_tables;
-            wth.flags = (wt.flags | wtf_int16) & ~wtf_int16_is_16;
-            unsigned int wtsize =
-                wth.n_samples * wt.n_tables * sizeof(uint16_t) + sizeof(wt_header);
-
-            auto *data = new uint8_t[wtsize];
-            auto *odata = data;
-            memcpy(data, &wth, sizeof(wt_header));
-            data += sizeof(wt_header);
-
-            for (int j = 0; j < wth.n_tables; ++j)
+            if (invalidateWavetableStreamingCache)
             {
-                std::memcpy(data, &wt.TableI16WeakPointers[0][j][FIRoffsetI16],
-                            wth.n_samples * sizeof(uint16_t));
-                data += wth.n_samples * sizeof(uint16_t);
+                wt_header wth;
+                memset(wth.tag, 0, 4);
+                wth.n_samples = wt.size;
+                wth.n_tables = wt.n_tables;
+                wth.flags = (wt.flags | wtf_int16) & ~wtf_int16_is_16;
+                unsigned int wtsize =
+                    wth.n_samples * wt.n_tables * sizeof(uint16_t) + sizeof(wt_header);
+
+                auto *data = new uint8_t[wtsize];
+                auto *odata = data;
+                memcpy(data, &wth, sizeof(wt_header));
+                data += sizeof(wt_header);
+
+                for (int j = 0; j < wth.n_tables; ++j)
+                {
+                    std::memcpy(data, &wt.TableI16WeakPointers[0][j][FIRoffsetI16],
+                                wth.n_samples * sizeof(uint16_t));
+                    data += wth.n_samples * sizeof(uint16_t);
+                }
+                wavetableStreamingCache = rack::string::toBase64(odata, wtsize);
+
+                delete[] odata;
+                invalidateWavetableStreamingCache = false;
             }
-            auto b64 = rack::string::toBase64(odata, wtsize);
-            delete[] odata;
-            json_object_set_new(wtT, "data", json_string(b64.c_str()));
+            json_object_set_new(wtT, "data", json_string(wavetableStreamingCache.c_str()));
             json_object_set_new(vco, "wavetable", wtT);
             wtT = nullptr;
         }
@@ -829,6 +840,8 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             oscstorage->wt.BuildWT(data, wth, false);
             oscstorage_display->wt.BuildWT(data, wth, false);
             wavetableLoads++;
+
+            invalidateWavetableStreamingCache = true;
             storage->waveTableDataMutex.unlock();
 
             auto nm = json_object_get(wtJ, "display_name");
