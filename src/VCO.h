@@ -844,7 +844,6 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             invalidateWavetableStreamingCache = true;
             storage->waveTableDataMutex.unlock();
 
-
             auto nm = json_object_get(wtJ, "display_name");
             if (nm)
             {
