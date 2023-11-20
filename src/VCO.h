@@ -840,7 +840,10 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             oscstorage->wt.BuildWT(data, wth, false);
             oscstorage_display->wt.BuildWT(data, wth, false);
             wavetableLoads++;
+
+            invalidateWavetableStreamingCache = true;
             storage->waveTableDataMutex.unlock();
+
 
             auto nm = json_object_get(wtJ, "display_name");
             if (nm)
