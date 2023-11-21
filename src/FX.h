@@ -30,6 +30,7 @@
 
 #include "LayoutEngine.h"
 #include "sst/rackhelpers/neighbor_connectable.h"
+#include "sst/filters/HalfRateFilter.h"
 
 namespace sst::surgext_rack::fx
 {
@@ -53,6 +54,7 @@ template <int fxType> struct FXConfig
     static constexpr int specificParamCount() { return 0; }
     static void configSpecificParams(FX<fxType> *M) {}
     static void processSpecificParams(FX<fxType> *M) {}
+    static void adjustParamsBasedOnState(FX<fxType> *M) {}
     static void loadPresetOntoSpecificParams(FX<fxType> *M,
                                              const Surge::Storage::FxUserPreset::Preset &)
     {
@@ -65,6 +67,7 @@ template <int fxType> struct FXConfig
 
     static constexpr int panelWidthInScrews() { return 12; }
     static constexpr bool usesSideband() { return false; }
+    static constexpr bool usesSidebandOversampled() { return false; }
     static constexpr bool usesClock() { return false; }
     static constexpr bool usesPresets() { return true; }
     static constexpr int numParams() { return n_fx_params; }
@@ -121,7 +124,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
                                  n_mod_inputs, MOD_INPUT_0>
         polyModAssist;
 
-    FX() : XTModule()
+    FX() : XTModule(), halfbandIN(6, true)
     {
         std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
         setupSurge();
@@ -209,6 +212,9 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
     std::vector<Surge::Storage::FxUserPreset::Preset> presets;
 
     std::atomic<bool> polyphonicMode{false};
+
+    sst::filters::HalfRate::HalfRateFilter halfbandIN;
+    std::atomic<bool> sidebandAttached{false};
 
     void setupSurge()
     {
@@ -487,14 +493,25 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
         {
             if (inputs[SIDEBAND_L].isConnected() && !inputs[SIDEBAND_R].isConnected())
             {
-                float ml = inputs[SIDEBAND_L].getVoltageSum();
+                float ml = inputs[SIDEBAND_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
                 modulatorL[0][bufferPos] = ml;
                 modulatorR[0][bufferPos] = ml;
             }
             else
             {
-                modulatorL[0][bufferPos] = inputs[SIDEBAND_L].getVoltageSum();
-                modulatorR[0][bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
+                modulatorL[0][bufferPos] =
+                    inputs[SIDEBAND_L].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+                modulatorR[0][bufferPos] =
+                    inputs[SIDEBAND_R].getVoltageSum() * RACK_TO_SURGE_OSC_MUL;
+            }
+            bool wasSB = sidebandAttached;
+            sidebandAttached = inputs[SIDEBAND_L].isConnected() || inputs[SIDEBAND_R].isConnected();
+            if (FXConfig<fxType>::usesSidebandOversampled())
+            {
+                if (sidebandAttached && !wasSB)
+                {
+                    halfbandIN.reset();
+                }
             }
         }
         bufferPos++;
@@ -511,8 +528,12 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
             {
                 std::memcpy(storage->audio_in_nonOS[0], modulatorL, BLOCK_SIZE * sizeof(float));
                 std::memcpy(storage->audio_in_nonOS[1], modulatorR, BLOCK_SIZE * sizeof(float));
+                if (FXConfig<fxType>::usesSidebandOversampled())
+                {
+                    halfbandIN.process_block_U2(modulatorL[0], modulatorR[0], storage->audio_in[0],
+                                                storage->audio_in[1], BLOCK_SIZE_OS);
+                }
             }
-
             if constexpr (FXConfig<fxType>::specificParamCount() > 0)
             {
                 FXConfig<fxType>::processSpecificParams(this);
@@ -524,6 +545,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
             }
 
             FXConfig<fxType>::processExtraInputs(this);
+            FXConfig<fxType>::adjustParamsBasedOnState(this);
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
 
