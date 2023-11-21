@@ -29,6 +29,8 @@ namespace sst::surgext_rack::fx
  * - two specific params for pre and post
  */
 
+template <> constexpr bool FXConfig<fxt_ringmod>::usesSideband() { return true; }
+template <> constexpr bool FXConfig<fxt_ringmod>::usesSidebandOversampled() { return true; }
 template <> constexpr int FXConfig<fxt_ringmod>::numParams() { return 9; }
 template <> constexpr int FXConfig<fxt_ringmod>::specificParamCount() { return 2; }
 template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
@@ -49,10 +51,14 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
     return {
         {LayoutItem::KNOB12, "FREQUENCY", rm_t::rm_carrier_freq, colC, row1},
 
+        {LayoutItem::KNOB9, "BIAS", rm_t::rm_diode_fwdbias, col[0], row2},
+        {LayoutItem::KNOB9, "LINEAR", rm_t::rm_diode_linregion, col[1], row2},
+        LayoutItem::createGrouplabel("DIODE", col[0], row2, 2),
 
-        {LayoutItem::KNOB9, "BIAS", rm_t::rm_diode_fwdbias, col[1], row2},
-        {LayoutItem::KNOB9, "LINEAR", rm_t::rm_diode_linregion, col[2], row2},
-        LayoutItem::createGrouplabel("DIODE", col[1], row2, 2),
+        {LayoutItem::PORT, "L/MON", fx_t::SIDEBAND_L, col[2], row2},
+        {LayoutItem::PORT, "RIGHT", fx_t::SIDEBAND_R, col[3], row2},
+        LayoutItem::createGrouplabel("EXT", col[2], row2, 2),
+
 
         {LayoutItem::KNOB9, "", rm_t::rm_lowcut, col[0], row3},
         {LayoutItem::KNOB9, "", rm_t::rm_highcut, col[1], row3},
@@ -61,7 +67,7 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
         LayoutItem::createKnobSpanLabel("LO - CUT - HI", col[0], row3, 2),
         LayoutItem::createGrouplabel("EQ", col[0], row3, 2).withExtra("SHORTRIGHT", 1).withExtra("SHORTLEFT", 1),
 
-       {LayoutItem::KNOB9, "DETUNE", rm_t::rm_unison_detune, col[2], row3},
+        {LayoutItem::KNOB9, "DETUNE", rm_t::rm_unison_detune, col[2], row3},
         {LayoutItem::KNOB9, "MIX", rm_t::rm_mix, col[3], row3},
 
         LayoutItem::createPresetPlusOneArea(),
@@ -119,5 +125,16 @@ bool FXConfig<fxt_ringmod>::isDirtyPresetVsSpecificParams(
     auto p1 = m->params[fx_t::FX_SPECIFIC_PARAM_0 + 1].getValue() > 0.5;
     return !((p0 == !ps.da[sx_t::rm_lowcut]) && (p1 == !ps.da[sx_t::rm_highcut]));
 }
+
+template <> void FXConfig<fxt_ringmod>::adjustParamsBasedOnState(FX<fxt_ringmod> *M)
+{
+    typedef FX<fxt_ringmod> fx_t;
+    if (M->inputs[fx_t::SIDEBAND_L].isConnected() || M->inputs[fx_t::SIDEBAND_R].isConnected())
+    {
+        auto &p = M->fxstorage->p[RingModulatorEffect::rm_carrier_shape];
+        p.val.i = p.val_max.i;
+    }
+}
+
 } // namespace sst::surgext_rack::fx
 #endif // SURGEXT_RACK_FX_ROTARYSPEAKER_H
