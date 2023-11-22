@@ -73,7 +73,6 @@ UnisonHelperWidget::UnisonHelperWidget(
 
     auto bg = new widgets::Background(box.size, "UNISON", "fx", "BlankNoDisplay");
     addChild(bg);
-    bg->addAlpha();
 
     const auto row1 = layout::LayoutConstants::vcoRowCenters_MM[1];
     const auto row2 = layout::LayoutConstants::vcoRowCenters_MM[0]; //
