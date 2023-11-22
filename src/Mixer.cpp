@@ -270,6 +270,8 @@ MixerWidget<useKnobs>::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
         lay.label = "";
         lay.xcmm = xc;
         lay.ycmm = yc;
+        lay.extras["mixmaster"] = true;
+        lay.extras["stereo_pair"] = ((i - M::INPUT_OSC1_L) % 2 == 0) ? i + 1 : i - 1;
         engine_t::layoutItem(this, lay, "Mixer");
 
         if (kc % 2 == 0)
@@ -294,13 +296,24 @@ MixerWidget<useKnobs>::MixerWidget(MixerWidget::M *module) : XTModuleWidget()
     auto yp = layout::LayoutConstants::inputRowCenter_MM;
     auto xp =
         layout::LayoutConstants::firstColumnCenter_MM + layout::LayoutConstants::columnWidth_MM * 2;
-    addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
-                                                        M::OUTPUT_L));
+    auto optL = rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
+                                                          M::OUTPUT_L);
 
     xp =
         layout::LayoutConstants::firstColumnCenter_MM + layout::LayoutConstants::columnWidth_MM * 3;
-    addOutput(rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
-                                                        M::OUTPUT_R));
+    auto optR = rack::createOutputCentered<widgets::Port>(rack::mm2px(rack::Vec(xp, yp)), module,
+                                                          M::OUTPUT_R);
+
+    optL->connectAsOutputToMixmaster = true;
+    optL->connectOutputToNeighbor = true;
+    optL->mixMasterStereoCompanion = M::OUTPUT_R;
+
+    optR->connectAsOutputToMixmaster = true;
+    optR->connectOutputToNeighbor = true;
+    optR->mixMasterStereoCompanion = M::OUTPUT_L;
+
+    addOutput(optL);
+    addOutput(optR);
 
     auto bl = layout::LayoutConstants::inputLabelBaseline_MM;
     auto laylab =

@@ -60,7 +60,15 @@ DigitalRingModWidget::DigitalRingModWidget(DigitalRingModWidget::M *module) : XT
         {
             auto yp = rack::mm2px(layout::LayoutConstants::modulationRowCenters_MM[0]) + yShift;
             auto xp = cols[col];
-            addInput(rack::createInputCentered<widgets::Port>(rack::Vec(xp, yp), module, p));
+            auto pt = rack::createInputCentered<widgets::Port>(rack::Vec(xp, yp), module, p);
+
+            pt->connectAsInputFromMixmaster = true;
+            if (p == M::INPUT_0_A_L + inOff)
+                pt->mixMasterStereoCompanion = M::INPUT_0_A_R + inOff;
+            else
+                pt->mixMasterStereoCompanion = M::INPUT_0_A_L + inOff;
+
+            addInput(pt);
             col++;
         }
         col = 0;
@@ -68,7 +76,15 @@ DigitalRingModWidget::DigitalRingModWidget(DigitalRingModWidget::M *module) : XT
         {
             auto yp = rack::mm2px(layout::LayoutConstants::modulationRowCenters_MM[1]) + yShift;
             auto xp = cols[col];
-            addInput(rack::createInputCentered<widgets::Port>(rack::Vec(xp, yp), module, p));
+            auto pt = rack::createInputCentered<widgets::Port>(rack::Vec(xp, yp), module, p);
+
+            pt->connectAsInputFromMixmaster = true;
+            if (p == M::INPUT_0_B_L + inOff)
+                pt->mixMasterStereoCompanion = M::INPUT_0_B_R + inOff;
+            else
+                pt->mixMasterStereoCompanion = M::INPUT_0_B_L + inOff;
+
+            addInput(pt);
             col++;
         }
 
@@ -115,7 +131,17 @@ DigitalRingModWidget::DigitalRingModWidget(DigitalRingModWidget::M *module) : XT
         {
             auto yp = rack::mm2px(layout::LayoutConstants::inputRowCenter_MM) + yShift;
             auto xp = cols[col];
-            addOutput(rack::createOutputCentered<widgets::Port>(rack::Vec(xp, yp), module, p));
+            auto pt = rack::createOutputCentered<widgets::Port>(rack::Vec(xp, yp), module, p);
+
+            pt->connectAsOutputToMixmaster = true;
+            pt->connectOutputToNeighbor = true;
+            pt->connectAsInputFromMixmaster = true;
+            if (p == M::OUTPUT_0_L + outOff)
+                pt->mixMasterStereoCompanion = M::OUTPUT_0_R + outOff;
+            else
+                pt->mixMasterStereoCompanion = M::OUTPUT_0_L + outOff;
+
+            addOutput(pt);
             col++;
         }
 

@@ -31,10 +31,12 @@
 #include "sst/basic-blocks/mechanics/block-ops.h"
 #include "CXOR.h"
 #include "SurgeStorage.h"
+#include <sst/rackhelpers/neighbor_connectable.h>
 
 namespace sst::surgext_rack::digitalrm
 {
-struct DigitalRingMod : modules::XTModule
+struct DigitalRingMod : modules::XTModule,
+                        sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     enum ParamIds
     {
@@ -290,6 +292,22 @@ struct DigitalRingMod : modules::XTModule
             }
         }
         blockPos++;
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryInputs() override
+    {
+        return {{std::make_pair("CXOR 1 Port A", std::make_pair(INPUT_0_A_L, INPUT_0_A_R)),
+                 std::make_pair("CXOR 1 Port B", std::make_pair(INPUT_0_B_L, INPUT_0_B_R)),
+                 std::make_pair("CXOR 2 Port A", std::make_pair(INPUT_1_B_L, INPUT_1_B_R)),
+                 std::make_pair("CXOR 2 Port A", std::make_pair(INPUT_1_B_L, INPUT_1_B_R))}};
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
+    {
+        return {{
+            std::make_pair("CXOR 1", std::make_pair(OUTPUT_0_L, OUTPUT_0_R)),
+            std::make_pair("CXOR 2", std::make_pair(OUTPUT_1_L, OUTPUT_1_R)),
+        }};
     }
 
     std::array<std::array<std::unique_ptr<sst::filters::HalfRate::HalfRateFilter>, MAX_POLY>, 2>
