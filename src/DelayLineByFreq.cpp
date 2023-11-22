@@ -94,7 +94,10 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
     {
         auto yp = rack::mm2px(layout::LayoutConstants::modulationRowCenters_MM[1]);
         auto xp = cols[col];
-        addInput(rack::createInputCentered<widgets::Port>(rack::Vec(xp, yp), module, p));
+        auto ipt = rack::createInputCentered<widgets::Port>(rack::Vec(xp, yp), module, p);
+        ipt->connectAsInputFromMixmaster = true;
+        ipt->mixMasterStereoCompanion = (p == M::INPUT_L ? M::INPUT_R : M::INPUT_L);
+        addInput(ipt);
         col++;
     }
 
@@ -129,7 +132,13 @@ DelayLineByFreqWidget::DelayLineByFreqWidget(DelayLineByFreqWidget::M *module) :
     {
         auto yp = rack::mm2px(layout::LayoutConstants::inputRowCenter_MM);
         auto xp = cols[col];
-        addOutput(rack::createOutputCentered<widgets::Port>(rack::Vec(xp, yp), module, p));
+        auto opt = rack::createOutputCentered<widgets::Port>(rack::Vec(xp, yp), module, p);
+
+        opt->connectOutputToNeighbor = true;
+        opt->connectAsOutputToMixmaster = true;
+        opt->mixMasterStereoCompanion = (p == M::OUTPUT_L ? M::OUTPUT_R : M::OUTPUT_L);
+
+        addOutput(opt);
         col++;
     }
 

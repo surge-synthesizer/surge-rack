@@ -431,6 +431,21 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 lay.parId);
             w->addChild(port);
 
+            if (lay.extras.find("mixmaster") != lay.extras.end())
+            {
+                auto sp = lay.extras.find("stereo_pair");
+                if (sp == lay.extras.end())
+                {
+                    std::cout << "MIX MASTER PORT WITHOUT STEREO PAIR IN EXTRAS" << std::endl;
+                    std::terminate();
+                }
+                else
+                {
+                    port->connectAsInputFromMixmaster = true;
+                    port->mixMasterStereoCompanion = (int)std::round(sp->second);
+                }
+            }
+
             auto boxx0 = lay.xcmm - lc::columnWidth_MM * 0.5;
             auto boxy0 = lay.ycmm + 8.573 - 5;
 

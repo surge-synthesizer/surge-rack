@@ -29,11 +29,14 @@
 #include <memory>
 #include <array>
 
+#include <sst/rackhelpers/neighbor_connectable.h>
+
 #include "dsp/utilities/SSESincDelayLine.h"
 
 namespace sst::surgext_rack::delay
 {
-struct DelayLineByFreq : modules::XTModule
+struct DelayLineByFreq : modules::XTModule,
+                         sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     enum ParamIds
     {
@@ -134,6 +137,16 @@ struct DelayLineByFreq : modules::XTModule
             outputs[INPUT_L].setVoltage(dl, i);
             outputs[INPUT_R].setVoltage(dr, i);
         }
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryInputs() override
+    {
+        return {{std::make_pair("Input", std::make_pair(INPUT_L, INPUT_R))}};
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
+    {
+        return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 };
 } // namespace sst::surgext_rack::delay

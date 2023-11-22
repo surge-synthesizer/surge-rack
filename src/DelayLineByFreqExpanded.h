@@ -32,16 +32,13 @@
 #include "dsp/utilities/SSESincDelayLine.h"
 #include "BiquadFilter.h"
 
-/*
- * FB Filter
- * Display Area
- * LintBuddy
- */
+#include <sst/rackhelpers/neighbor_connectable.h>
 
 namespace sst::surgext_rack::delay
 {
 
-struct DelayLineByFreqExpanded : modules::XTModule
+struct DelayLineByFreqExpanded : modules::XTModule,
+                                 sst::rackhelpers::module_connector::NeighborConnectable_V1
 {
     static constexpr int n_mod_inputs{4};
     static constexpr int n_mod_params{7};
@@ -470,6 +467,16 @@ struct DelayLineByFreqExpanded : modules::XTModule
     void moduleSpecificSampleRateChange() override
     {
         vuFalloff = exp(-2.0 * M_PI * 8 / APP->engine->getSampleRate());
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryInputs() override
+    {
+        return {{std::make_pair("Input", std::make_pair(INPUT_L, INPUT_R))}};
+    }
+
+    std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
+    {
+        return {{std::make_pair("Output", std::make_pair(OUTPUT_L, OUTPUT_R))}};
     }
 };
 } // namespace sst::surgext_rack::delay
