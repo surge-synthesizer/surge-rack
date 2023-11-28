@@ -567,6 +567,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     int dirtyCount{0};
     int sumDeact{-1};
     int sumAbs{-1};
+    int sumExt{-1};
     int priorDeform[n_osc_params]{};
     int charF{-1};
     bool isOneShot{false};
@@ -585,7 +586,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
         bool dval{false};
         if (module)
         {
-            auto lSumDeact = 0, lSumAbs = 0;
+            auto lSumDeact = 0, lSumAbs = 0, lSumExtend = 0;
             for (int i = 0; i < n_osc_params; i++)
             {
                 auto *par = &(oscdata->p[i]);
@@ -600,15 +601,17 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 dval = dval || (tp[par->param_id_in_scene].i != tval.i);
                 lSumDeact += par->deactivated * (1 << i);
                 lSumAbs += par->absolute * (1 << i);
+                lSumExtend += par->extend_range * (1 << i);
 
                 dval = dval || (priorDeform[i] != par->deform_type);
                 priorDeform[i] = par->deform_type;
             }
 
-            if (lSumDeact != sumDeact || lSumAbs != sumAbs)
+            if (lSumDeact != sumDeact || lSumAbs != sumAbs || lSumExtend != sumExt)
             {
                 sumDeact = lSumDeact;
                 sumAbs = lSumAbs;
+                sumExt = lSumExtend;
                 dval = true;
             }
 

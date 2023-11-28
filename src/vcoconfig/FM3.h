@@ -32,6 +32,9 @@ template <> VCOConfig<ot_FM3>::layout_t VCOConfig<ot_FM3>::getLayout()
         // clang-format off
         LayoutItem::createVCOKnob(M::PITCH_0, "PITCH", 0, 0),
         LayoutItem::createVCOKnob(cp + 6, "FEEDBACK", 0, 1),
+        LayoutItem::createVCOLight(LayoutItem::VINTAGE_LIGHT, M::ARBITRARY_SWITCH_0 + 3, 0, 1, false),
+        LayoutItem::createVCOLight(LayoutItem::EXTEND_LIGHT, M::ARBITRARY_SWITCH_0 + 2, 0, 1, true),
+
         LayoutItem::createVCOKnob(cp + 0, "", 0, 2),
         LayoutItem::createVCOKnob(cp + 1, "", 0, 3),
 
@@ -65,10 +68,26 @@ template <> VCOConfig<ot_FM3>::layout_t VCOConfig<ot_FM3>::getLayout()
     };
 }
 
+template <> inline void VCOConfig<ot_FM3>::configureVCOSpecificParameters(VCO<ot_FM3> *m)
+{
+    m->configOnOff(VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 0, 0, "M1 Ratio Absolute");
+    m->configOnOff(VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 1, 0, "M2 Ratio Absolute");
+
+    m->configOnOff(VCO<ot_FM2>::ARBITRARY_SWITCH_0 + 2, 0, "Extend Feedback");
+    m->configOnOff(VCO<ot_FM2>::ARBITRARY_SWITCH_0 + 3, 0, "Enable Vintage Feedback");
+
+    for (int i = 4; i < VCO<ot_FM2>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_FM2>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
+    }
+}
 template <> void VCOConfig<ot_FM3>::processVCOSpecificParameters(VCO<ot_FM3> *m)
 {
     auto l0 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
     auto l1 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+
+    auto l2 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 2].getValue() > 0.5);
+    auto l3 = (bool)(m->params[VCO<ot_FM3>::ARBITRARY_SWITCH_0 + 3].getValue() > 0.5);
 
     for (auto s : {m->oscstorage, m->oscstorage_display})
     {
@@ -76,6 +95,9 @@ template <> void VCOConfig<ot_FM3>::processVCOSpecificParameters(VCO<ot_FM3> *m)
             s->p[FM3Oscillator::fm3_m1ratio].absolute = l0;
         if (l1 != s->p[FM3Oscillator::fm3_m2ratio].absolute)
             s->p[FM3Oscillator::fm3_m2ratio].absolute = l1;
+
+        s->p[FM3Oscillator::fm3_feedback].set_extend_range(l2);
+        s->p[FM3Oscillator::fm3_feedback].deform_type = (l3 ? 1 : 0);
     }
 }
 
