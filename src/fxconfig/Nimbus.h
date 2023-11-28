@@ -25,8 +25,9 @@ namespace sst::surgext_rack::fx
 {
 
 template <> constexpr int FXConfig<fxt_nimbus>::numParams() { return 12; }
-template <> constexpr int FXConfig<fxt_nimbus>::extraInputs() { return 1; }
+template <> constexpr int FXConfig<fxt_nimbus>::extraInputs() { return 2; }
 template <> constexpr int FXConfig<fxt_nimbus>::extraSchmidtTriggers() { return 1; }
+template <> constexpr int FXConfig<fxt_nimbus>::specificParamCount() { return 1; }
 
 template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
 {
@@ -35,25 +36,28 @@ template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
 
     const auto row3 = FXLayoutHelper::rowStart_MM;
     const auto row2 = row3 - FXLayoutHelper::labeledGap_MM;
-    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM - (14 - 9) * 0.5f;
-
-    const auto col15 = (col[0] + col[1]) * 0.5f;
-    const auto col25 = (col[2] + col[3]) * 0.5f;
+    const auto row1 = row2 - FXLayoutHelper::labeledGap_MM;
 
     // clang-format off
     auto res = FXConfig<fxt_nimbus>::layout_t{
 
-        {LayoutItem::KNOB12, "POSITION", NimbusEffect::nmb_position, col15, row1},
-        {LayoutItem::KNOB12, "", NimbusEffect::nmb_size, col25, row1},
+        {LayoutItem::KNOB9, "POSITION", NimbusEffect::nmb_position, col[0], row1},
+        {LayoutItem::KNOB9, "SIZE", NimbusEffect::nmb_size, col[1], row1},
+        {LayoutItem::KNOB9, "PITCH", NimbusEffect::nmb_pitch, col[2], row1},
+        {LayoutItem::KNOB9, "DENSITY", NimbusEffect::nmb_density, col[3], row1},
 
-        {LayoutItem::KNOB9, "PITCH", NimbusEffect::nmb_pitch, col[0], row2},
-        {LayoutItem::KNOB9, "", NimbusEffect::nmb_density, col[1], row2},
-        {LayoutItem::KNOB9, "", NimbusEffect::nmb_texture, col[2], row2},
-        {LayoutItem::KNOB9, "SPREAD", NimbusEffect::nmb_spread, col[3], row2},
+        {LayoutItem::PORT, "TRIG", FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1, col[0], row2},
 
-        {LayoutItem::PORT, "FREEZE", FX<fxt_nimbus>::INPUT_SPECIFIC_0, col[0], row3},
-        {LayoutItem::KNOB9, "FEEDBACK", NimbusEffect::nmb_feedback, col[1], row3},
-        LayoutItem::createGrouplabel("PLAYBACK", col[0], row3, 2),
+        {LayoutItem::PORT, "", FX<fxt_nimbus>::INPUT_SPECIFIC_0, col[1], row2},
+        {LayoutItem::MOMENTARY_PARAM, "", FX<fxt_spring_reverb>::FX_SPECIFIC_PARAM_0, col[2], row2},
+        LayoutItem::createKnobSpanLabel("FREEZE", col[1], row2, 2),
+
+        {LayoutItem::KNOB9, "FEEDBACK", NimbusEffect::nmb_feedback, col[3], row2},
+        LayoutItem::createGrouplabel("PLAYBACK", col[1], row2, 3),
+
+        {LayoutItem::KNOB9, "TEXTURE", NimbusEffect::nmb_texture, col[0], row3},
+        {LayoutItem::KNOB9, "SPREAD", NimbusEffect::nmb_spread, col[1], row3},
+
 
         {LayoutItem::KNOB9, "REVERB", NimbusEffect::nmb_reverb, col[2], row3},
         {LayoutItem::KNOB9, "MIX", NimbusEffect::nmb_mix, col[3], row3},
@@ -68,7 +72,7 @@ template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
 
     auto &sz = res[1];
     auto &den = res[3];
-    auto &tex = res[4];
+    auto &tex = res[10];
 
     sz.dynamicLabel = true;
     sz.dynLabelFn = [](auto *m) {
@@ -115,14 +119,24 @@ template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
     return res;
 }
 
+template <> void FXConfig<fxt_nimbus>::configSpecificParams(FX<fxt_nimbus> *m)
+{
+    typedef FX<fxt_nimbus> fx_t;
+    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 0, "Manual Freeze");
+}
+
 template <> void FXConfig<fxt_nimbus>::configExtraInputs(FX<fxt_nimbus> *m)
 {
     m->configInput(FX<fxt_nimbus>::INPUT_SPECIFIC_0, "Gate to Freeze");
+    m->configInput(FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1, "Trigger");
 }
 
 template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that)
 {
     auto frozen = that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0].getVoltage() > 3;
+    frozen = frozen || (that->params[FX<fxt_nimbus>::FX_SPECIFIC_PARAM_0].getValue() > 0.5);
+    auto triggered = that->extraInputTriggers[0].process(
+        that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1].getVoltage());
 
     if (frozen)
     {
@@ -132,6 +146,9 @@ template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that)
     {
         that->fxstorage->p[NimbusEffect::nmb_freeze].set_value_f01(0);
     }
+
+    auto nb = static_cast<NimbusEffect *>(that->surge_effect.get());
+    nb->setNimbusTrigger(triggered);
 }
 } // namespace sst::surgext_rack::fx
 
