@@ -33,6 +33,9 @@ template <> VCOConfig<ot_sine>::layout_t VCOConfig<ot_sine>::getLayout()
         // clang-format off
         LayoutItem::createVCOKnob(M::PITCH_0, "PITCH", 0, 0),
         LayoutItem::createVCOKnob(cp + 1, "FEEDBACK", 0, 1),
+        LayoutItem::createVCOLight(LayoutItem::VINTAGE_LIGHT, M::ARBITRARY_SWITCH_0 + 2, 0, 1),
+
+        LayoutItem::createVCOKnob(cp + 4, "", 1, 3),
 
         LayoutItem::createVCOKnob(cp + 5, "DETUNE", 1, 0),
         LayoutItem::createVCOKnob(cp + 3, "", 1, 2),
@@ -50,8 +53,9 @@ template <> inline void VCOConfig<ot_sine>::configureVCOSpecificParameters(VCO<o
 {
     m->configOnOff(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0, 0, "Enable Low Cut");
     m->configOnOff(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1, 0, "Enable High Cut");
+    m->configOnOff(VCO<ot_sine>::ARBITRARY_SWITCH_0 + 2, 0, "Enable Vintage Feedback");
 
-    for (int i = 2; i < VCO<ot_sine>::n_arbitrary_switches; ++i)
+    for (int i = 3; i < VCO<ot_sine>::n_arbitrary_switches; ++i)
     {
         m->configParam(VCO<ot_sine>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
     }
@@ -68,6 +72,7 @@ template <> void VCOConfig<ot_sine>::processVCOSpecificParameters(VCO<ot_sine> *
 {
     auto l0 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
     auto l1 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+    auto l2 = (bool)(m->params[VCO<ot_sine>::ARBITRARY_SWITCH_0 + 2].getValue() > 0.5);
 
     for (auto s : {m->oscstorage, m->oscstorage_display})
     {
@@ -75,6 +80,7 @@ template <> void VCOConfig<ot_sine>::processVCOSpecificParameters(VCO<ot_sine> *
             s->p[SineOscillator::sine_lowcut].deactivated = !l0;
         if (l1 != !s->p[SineOscillator::sine_highcut].deactivated)
             s->p[SineOscillator::sine_highcut].deactivated = !l1;
+        s->p[SineOscillator::sine_feedback].deform_type = (l2 ? 1 : 0);
     }
 }
 } // namespace sst::surgext_rack::vco

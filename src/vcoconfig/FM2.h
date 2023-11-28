@@ -19,6 +19,8 @@
 #ifndef SURGE_XT_RACK_SRC_VCOCONFIG_FM2_H
 #define SURGE_XT_RACK_SRC_VCOCONFIG_FM2_H
 
+#include "dsp/oscillators/FM2Oscillator.h"
+
 namespace sst::surgext_rack::vco
 {
 
@@ -30,6 +32,9 @@ template <> VCOConfig<ot_FM2>::layout_t VCOConfig<ot_FM2>::getLayout()
         // clang-format off
         LayoutItem::createVCOKnob(M::PITCH_0, "PITCH", 0, 0),
         LayoutItem::createVCOKnob(cp + 6, "FEEDBACK", 0, 1),
+        LayoutItem::createVCOLight(LayoutItem::VINTAGE_LIGHT, M::ARBITRARY_SWITCH_0 + 1, 0, 1, false),
+        LayoutItem::createVCOLight(LayoutItem::EXTEND_LIGHT, M::ARBITRARY_SWITCH_0 + 0, 0, 1, true),
+
         LayoutItem::createVCOKnob(cp + 0, "", 0, 2),
         LayoutItem::createVCOKnob(cp + 1, "", 0, 3),
         LayoutItem::createVCOSpanLabel("AMT - M1 - RATIO", 0, 2, 2),
@@ -42,6 +47,29 @@ template <> VCOConfig<ot_FM2>::layout_t VCOConfig<ot_FM2>::getLayout()
         LayoutItem::createVCOSpanLabel("AMT - M2 - RATIO", 1, 2, 2),
         // clang-format on
     };
+}
+
+template <> inline void VCOConfig<ot_FM2>::configureVCOSpecificParameters(VCO<ot_FM2> *m)
+{
+    m->configOnOff(VCO<ot_FM2>::ARBITRARY_SWITCH_0 + 0, 0, "Extend Feedback");
+    m->configOnOff(VCO<ot_FM2>::ARBITRARY_SWITCH_0 + 1, 0, "Enable Vintage Feedback");
+
+    for (int i = 2; i < VCO<ot_FM2>::n_arbitrary_switches; ++i)
+    {
+        m->configParam(VCO<ot_FM2>::ARBITRARY_SWITCH_0 + i, 0, 1, 0, "Unused");
+    }
+}
+
+template <> void VCOConfig<ot_FM2>::processVCOSpecificParameters(VCO<ot_FM2> *m)
+{
+    auto l0 = (bool)(m->params[VCO<ot_FM2>::ARBITRARY_SWITCH_0 + 0].getValue() > 0.5);
+    auto l1 = (bool)(m->params[VCO<ot_FM2>::ARBITRARY_SWITCH_0 + 1].getValue() > 0.5);
+
+    for (auto s : {m->oscstorage, m->oscstorage_display})
+    {
+        s->p[FM2Oscillator::fm2_feedback].set_extend_range(l0);
+        s->p[FM2Oscillator::fm2_feedback].deform_type = (l1 ? 1 : 0);
+    }
 }
 } // namespace sst::surgext_rack::vco
 

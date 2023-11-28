@@ -907,7 +907,8 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
     enum RenderType
     {
         POWER,
-        EXTENDED
+        EXTENDED,
+        VINTAGE
     } type{POWER};
 
     ActivateKnobSwitch()
@@ -959,6 +960,15 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
                        crossRadius);
     }
 
+    void setupVintagePath(NVGcontext *vg)
+    {
+        const float shrinkBy = rack::mm2px(0.9);
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, shrinkBy, shrinkBy);
+        nvgLineTo(vg, box.size.x * 0.5, box.size.y - shrinkBy);
+        nvgLineTo(vg, box.size.x - shrinkBy, shrinkBy);
+    }
+
     void drawBackground(NVGcontext *vg)
     {
         auto col = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_OFF);
@@ -987,6 +997,19 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             nvgStroke(vg);
             nvgFill(vg);
         }
+        if (type == VINTAGE)
+        {
+            setupVintagePath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::PANEL_RULER));
+            nvgStrokeWidth(vg, 2);
+            nvgLineCap(vg, NVG_ROUND);
+            nvgStroke(vg);
+            setupVintagePath(vg);
+            nvgStrokeColor(vg, col);
+            nvgLineCap(vg, NVG_BUTT);
+            nvgStrokeWidth(vg, 1.0);
+            nvgStroke(vg);
+        }
     }
 
     void drawLight(NVGcontext *vg)
@@ -999,26 +1022,27 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
 
         const float halo = rack::settings::haloBrightness;
 
-        if (halo > 0.f)
-        {
-            nvgBeginPath(vg);
-            nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, box.size.x * 0.5, box.size.x * 0.5);
-
-            auto pcol = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
-            NVGcolor icol = pcol;
-            icol.a = halo;
-            NVGcolor ocol = pcol;
-            ocol.a = 0.f;
-            NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, box.size.y * 0.5, radius,
-                                               box.size.x * 0.5, icol, ocol);
-            nvgFillPaint(vg, paint);
-            nvgFill(vg);
-
-            drawBackground(vg);
-        }
-
         if (type == POWER)
         {
+            if (halo > 0.f)
+            {
+                nvgBeginPath(vg);
+                nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, box.size.x * 0.5,
+                           box.size.x * 0.5);
+
+                auto pcol = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
+                NVGcolor icol = pcol;
+                icol.a = halo;
+                NVGcolor ocol = pcol;
+                ocol.a = 0.f;
+                NVGpaint paint = nvgRadialGradient(vg, box.size.x * 0.5, box.size.y * 0.5, radius,
+                                                   box.size.x * 0.5, icol, ocol);
+                nvgFillPaint(vg, paint);
+                nvgFill(vg);
+
+                drawBackground(vg);
+            }
+
             nvgBeginPath(vg);
             nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
             nvgEllipse(vg, box.size.x * 0.5, box.size.y * 0.5, radius * 0.9, radius * 0.9);
@@ -1029,6 +1053,33 @@ struct ActivateKnobSwitch : rack::app::Switch, style::StyleParticipant
             setupExtendedPath(vg);
             nvgFillColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
             nvgFill(vg);
+        }
+        if (type == VINTAGE)
+        {
+            if (halo > 0.f)
+            {
+                auto pcol = style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON);
+                NVGcolor icol = pcol;
+                icol.a = halo * 0.5; // draw it twice to fake a gradient
+
+                setupVintagePath(vg);
+                nvgStrokeColor(vg, icol);
+                nvgLineCap(vg, NVG_ROUND);
+                nvgStrokeWidth(vg, 3);
+                nvgStroke(vg);
+
+                setupVintagePath(vg);
+                nvgStrokeColor(vg, icol);
+                nvgLineCap(vg, NVG_ROUND);
+                nvgStrokeWidth(vg, 4);
+                nvgStroke(vg);
+                drawBackground(vg);
+            }
+            setupVintagePath(vg);
+            nvgStrokeColor(vg, style()->getColor(style::XTStyle::POWER_BUTTON_LIGHT_ON));
+            nvgLineCap(vg, NVG_BUTT);
+            nvgStrokeWidth(vg, 1);
+            nvgStroke(vg);
         }
     }
 

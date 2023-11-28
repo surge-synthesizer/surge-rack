@@ -47,6 +47,7 @@ struct LayoutItem
         LCD_MENU_ITEM_SURGE_PARAM,
         POWER_LIGHT,
         EXTEND_LIGHT,
+        VINTAGE_LIGHT,
         ERROR
     } type{ERROR};
     std::string label{"ERR"};
@@ -138,10 +139,10 @@ struct LayoutItem
         return res;
     }
 
-    static LayoutItem createVCOLight(Type t, int param, int row, int col)
+    static LayoutItem createVCOLight(Type t, int param, int row, int col, bool upperRight = true)
     {
         auto res = createVCOItem(t, param, "", row, col);
-        res.spanmm = 1;
+        res.spanmm = upperRight ? 1 : -1;
         return res;
     }
 
@@ -488,6 +489,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
         break;
         case LayoutItem::POWER_LIGHT:
         case LayoutItem::EXTEND_LIGHT:
+        case LayoutItem::VINTAGE_LIGHT:
         {
             auto dir = lay.spanmm < 0 ? -1 : 1;
             auto as = abs(lay.spanmm);
@@ -500,6 +502,10 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             if (lay.type == LayoutItem::EXTEND_LIGHT)
             {
                 light->type = widgets::ActivateKnobSwitch::EXTENDED;
+            }
+            if (lay.type == LayoutItem::VINTAGE_LIGHT)
+            {
+                light->type = widgets::ActivateKnobSwitch::VINTAGE;
             }
             w->addChild(light);
         }
