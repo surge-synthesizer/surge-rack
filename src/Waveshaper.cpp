@@ -42,6 +42,21 @@ struct WaveshaperWidget : widgets::XTModuleWidget
             toggles[mod]->onToggle(!toggles[mod]->pressedState);
     }
 
+    void displayChannelMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+
+        int cd = m->displayPolyChannel;
+
+        for (int i = 0; i < MAX_POLY; ++i)
+        {
+            auto name = std::string("Ch ") + std::to_string(i + 1);
+            p->addChild(rack::createMenuItem(name, CHECKMARK(i == cd),
+                                             [m, i] { m->displayPolyChannel = i; }));
+        }
+    }
+
     void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (module)
@@ -56,6 +71,12 @@ struct WaveshaperWidget : widgets::XTModuleWidget
                 "Show Transform and Response", CHECKMARK(style()->getWaveshaperShowsBothCurves()),
                 [this]() {
                     style()->setWaveshaperShowsBothCurves(!style()->getWaveshaperShowsBothCurves());
+                }));
+
+            menu->addChild(new rack::MenuSeparator);
+            menu->addChild(rack::createSubmenuItem(
+                "Curve Poly Channel", "", [this, m = static_cast<Waveshaper *>(module)](auto *x) {
+                    displayChannelMenu(x, m);
                 }));
         }
     }
@@ -170,11 +191,15 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             auto wstype = (sst::waveshapers::WaveshaperType)std::round(
                 module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
 
+            auto ch = (int)module->displayPolyChannel;
+            if (ch >= module->polyChannelCount())
+                ch = 0;
+
             float ddb{0.f}, bias{0.f};
             if (style::XTStyle::getShowModulationAnimationOnDisplay())
             {
-                ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
-                bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+                ddb = module->modulationAssistant.values[Waveshaper::DRIVE][ch];
+                bias = module->modulationAssistant.values[Waveshaper::BIAS][ch];
             }
             else
             {
@@ -182,13 +207,14 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
                 bias = module->modulationAssistant.basevalues[Waveshaper::BIAS];
             }
 
-            dval = wstype != lastType || ddb != lastDrive || bias != lastBias;
+            dval = wstype != lastType || ddb != lastDrive || bias != lastBias ||
+                   lastDisplayPoly != module->displayPolyChannel;
         }
         return dval;
     }
 
     sst::waveshapers::WaveshaperType lastType{waveshapers::WaveshaperType::wst_none};
-    float lastDrive{-100}, lastBias{-100};
+    float lastDrive{-100}, lastBias{-100}, lastDisplayPoly{-1};
 
     void recalcPath()
     {
@@ -202,6 +228,9 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         sst::waveshapers::QuadWaveshaperState wss;
         float R[4];
 
+        auto ch = (int)module->displayPolyChannel;
+        if (ch >= module->polyChannelCount())
+            ch = 0;
         {
             initializeWaveshaperRegister(wstype, R);
 
@@ -215,8 +244,8 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             float ddb{0.f}, bias{0.f};
             if (style::XTStyle::getShowModulationAnimationOnDisplay())
             {
-                ddb = module->modulationAssistant.values[Waveshaper::DRIVE][0];
-                bias = module->modulationAssistant.values[Waveshaper::BIAS][0];
+                ddb = module->modulationAssistant.values[Waveshaper::DRIVE][ch];
+                bias = module->modulationAssistant.values[Waveshaper::BIAS][ch];
             }
             else
             {
@@ -231,6 +260,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
             lastType = wstype;
             lastBias = bias;
             lastDrive = ddb;
+            lastDisplayPoly = module->displayPolyChannel;
 
             for (const auto &[x, y] : inputSignal)
             {

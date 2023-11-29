@@ -308,6 +308,21 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
         }
     }
 
+    virtual void displayChannelMenu(rack::Menu *p, M *m)
+    {
+        if (!m)
+            return;
+
+        int cd = m->displayPolyChannel;
+
+        for (int i = 0; i < MAX_POLY; ++i)
+        {
+            auto name = std::string("Ch ") + std::to_string(i + 1);
+            p->addChild(rack::createMenuItem(name, CHECKMARK(i == cd),
+                                             [m, i] { m->displayPolyChannel = i; }));
+        }
+    }
+
     virtual void appendModuleSpecificMenu(rack::ui::Menu *menu) override
     {
         if (module)
@@ -358,6 +373,9 @@ template <int oscType> struct VCOWidget : public widgets::XTModuleWidget
             menu->addChild(rack::createMenuItem("Apply DC Blocker", CHECKMARK(m->doDCBlock),
                                                 [m]() { m->doDCBlock = !m->doDCBlock; }));
             VCOConfig<oscType>::addMenuItems(m, menu);
+            menu->addChild(new rack::MenuSeparator);
+            menu->addChild(rack::createSubmenuItem(
+                "Curve Poly Channel", "", [this, m](auto *x) { displayChannelMenu(x, m); }));
         }
     }
 
@@ -565,6 +583,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
 
     bool firstDirty{false};
     int dirtyCount{0};
+    int ppc{-1};
     int sumDeact{-1};
     int sumAbs{-1};
     int sumExt{-1};
@@ -621,6 +640,12 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
                 dval = true;
             }
 
+            if (ppc != module->displayPolyChannel)
+            {
+                ppc = module->displayPolyChannel;
+                dval = true;
+            }
+
             if (VCOConfig<oscType>::requiresWavetables())
             {
                 auto wos = module->isWTOneShot();
@@ -643,6 +668,10 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
     {
         tp[oscdata->pitch.param_id_in_scene].f = 0;
 
+        auto ch = (int)module->displayPolyChannel;
+        if (ch >= module->polyChannelCount())
+            ch = 0;
+
         for (int i = 0; i < n_osc_params; i++)
         {
             auto *par = &(oscdata->p[i]);
@@ -651,7 +680,7 @@ struct OSCPlotWidget : public rack::widget::TransparentWidget, style::StyleParti
             if (par->valtype == vt_float && module->animateDisplayFromMod)
             {
                 tp[idis].f +=
-                    module->modAssist.modvalues[i + 1][0] * (par->val_max.f - par->val_min.f);
+                    module->modAssist.modvalues[i + 1][ch] * (par->val_max.f - par->val_min.f);
             }
         }
 
@@ -1380,7 +1409,7 @@ VCOWidget<oscType>::VCOWidget(VCOWidget<oscType>::M *module) : XTModuleWidget()
 
     engine_t::addModulationSection(this, M::n_mod_inputs, M::OSC_MOD_INPUT);
 
-    engine_t ::createLeftRightInputLabels(this, "V/OCT", "");
+    engine_t::createLeftRightInputLabels(this, "V/OCT", "");
     engine_t::createInputOutputPorts(this, M::PITCH_CV, M::RETRIGGER, M::OUTPUT_L, M::OUTPUT_R);
 
     // Special input 2 label is dynamic for WT. This is a wee bit of a generatlization
