@@ -19,6 +19,7 @@
 #ifndef SURGE_XT_RACK_SRC_FX_H
 #define SURGE_XT_RACK_SRC_FX_H
 
+#include <cmath>
 #include "SurgeXT.h"
 #include "dsp/Effect.h"
 #include "XTModule.h"
@@ -75,6 +76,7 @@ template <int fxType> struct FXConfig
 
     static constexpr float rescaleInputFactor() { return 1.0; }
     static constexpr bool softclipOutput() { return false; }
+    static constexpr bool nanCheckOutput() { return false; }
 };
 
 template <int fxType>
@@ -435,6 +437,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
     std::string getName() override { return std::string("FX<") + fx_type_names[fxType] + ">"; }
 
     int bufferPos{0};
+    uint32_t lastNanCheck{0};
     float bufferL alignas(16)[MAX_POLY][BLOCK_SIZE], bufferR alignas(16)[MAX_POLY][BLOCK_SIZE];
     float modulatorL alignas(16)[MAX_POLY][BLOCK_SIZE], modulatorR
         alignas(16)[MAX_POLY][BLOCK_SIZE];
@@ -567,6 +570,25 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
 
             FXConfig<fxType>::populateExtraOutputs(this, 0, surge_effect.get());
 
+            if constexpr (FXConfig<fxType>::nanCheckOutput())
+            {
+                if (lastNanCheck == 0)
+                {
+                    bool isNumber{true};
+                    for (int ns = 0; ns < BLOCK_SIZE; ++ns)
+                    {
+                        isNumber = isNumber && std::isfinite(processedL[0][ns]);
+                        isNumber = isNumber && std::isfinite(processedR[0][ns]);
+                    }
+
+                    if (!isNumber)
+                    {
+                        reinitialize();
+                    }
+                }
+                lastNanCheck = (lastNanCheck + 1) % 32;
+            }
+
             bufferPos = 0;
         }
 
@@ -581,6 +603,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
             outl = outl - 4.0 / 27.0 * outl * outl * outl;
             outr = outr - 4.0 / 27.0 * outr * outr * outr;
         }
+
         outl *= SURGE_TO_RACK_OSC_MUL;
         outr *= SURGE_TO_RACK_OSC_MUL;
         if (outputs[OUTPUT_L].isConnected() && !outputs[OUTPUT_R].isConnected())
@@ -604,6 +627,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
     void reinitialize()
     {
         surge_effect->init();
+        halfbandIN.reset();
         for (const auto &s : surge_effect_poly)
             if (s)
                 s->init();

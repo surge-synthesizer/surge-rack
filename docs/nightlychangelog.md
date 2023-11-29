@@ -39,3 +39,5 @@
 - Modulating a frequncy-style surge parameter gets a 'set to 1oct/v' menu item
   in the RMB.
 - Cache the WT conversion for saving into your patch in the WT/Window VCO
+- In rare cases the SpringReverb could NaN. Reset the effect automatically if
+  these occur as a workaround.
