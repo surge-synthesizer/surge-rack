@@ -250,10 +250,14 @@ struct LFO : modules::XTModule
         {
             surge_lfo[i]->assign(storage.get(), lfostorage, storage->getPatch().scenedata[0],
                                  nullptr, surge_ss.get(), surge_ms.get(), surge_fs.get());
-            isGated[i] = false;
-            isGateConnected[i] = false;
-            isTriggered[i] = false;
-            isTriggeredEnvOnly[i] = false;
+
+            gateInputHigh[i] = false;
+            gateEnvInputHigh[i] = false;
+            anyGateInputHigh[i] = false;
+            prevAnyGateInputHigh[i] = false;
+            gateInputTriggered[i] = false;
+            gateEnvInputTriggered[i] = false;
+
             priorIntPhase[i] = -1;
             endPhaseCountdown[i] = 0;
             trigABCountdown[0][i] = 0;
@@ -354,8 +358,11 @@ struct LFO : modules::XTModule
     bool firstProcess{true};
 
     rack::dsp::SchmittTrigger envGateTrigger[MAX_POLY], envGateTriggerEnvOnly[MAX_POLY];
-    bool isGated[MAX_POLY], isGateConnected[MAX_POLY];
-    bool isTriggered[MAX_POLY], isTriggeredEnvOnly[MAX_POLY];
+
+    bool gateInputHigh[MAX_POLY]{}, gateEnvInputHigh[MAX_POLY]{}, anyGateInputHigh[MAX_POLY]{};
+    bool prevAnyGateInputHigh[MAX_POLY]{};
+    bool gateInputTriggered[MAX_POLY]{}, gateEnvInputTriggered[MAX_POLY]{};
+
     int priorIntPhase[MAX_POLY], endPhaseCountdown[MAX_POLY], priorEnvStage[MAX_POLY];
     int trigABCountdown[2][MAX_POLY];
 
@@ -405,8 +412,8 @@ struct LFO : modules::XTModule
         if (tt == FOLLOW_TRIG_POLY &&
             (inputs[INPUT_GATE].isConnected() || inputs[INPUT_GATE_ENVONLY].isConnected()))
         {
-            nChan = std::max(1, inputs[INPUT_GATE].getChannels());
-            nChan = std::max(nChan, inputs[INPUT_GATE_ENVONLY].getChannels());
+            nChan = std::max(
+                {1, inputs[INPUT_GATE].getChannels(), inputs[INPUT_GATE_ENVONLY].getChannels()});
         }
         else
         {
@@ -430,10 +437,15 @@ struct LFO : modules::XTModule
             {
                 if (inputs[INPUT_GATE].isConnected() &&
                     envGateTrigger[c].process(inputs[INPUT_GATE].getVoltage(c)))
-                    isTriggered[c] = true;
+                    gateInputTriggered[c] = true;
+                gateInputHigh[c] = inputs[INPUT_GATE].getVoltage(c) > 2;
+
                 if (inputs[INPUT_GATE_ENVONLY].isConnected() &&
                     envGateTriggerEnvOnly[c].process(inputs[INPUT_GATE_ENVONLY].getVoltage(c)))
-                    isTriggeredEnvOnly[c] = true;
+                    gateEnvInputTriggered[c] = true;
+                gateEnvInputHigh[c] = inputs[INPUT_GATE_ENVONLY].getVoltage(c) > 2;
+
+                anyGateInputHigh[c] = gateEnvInputHigh[c] || gateInputHigh[c];
             }
         }
         else
@@ -441,14 +453,21 @@ struct LFO : modules::XTModule
             // broadcast 0 to the rest
             if (inputs[INPUT_GATE].isConnected() &&
                 envGateTrigger[0].process(inputs[INPUT_GATE].getVoltage(0)))
-                isTriggered[0] = true;
+                gateInputTriggered[0] = true;
+            gateInputHigh[0] = inputs[INPUT_GATE].getVoltage(0) > 2;
             if (inputs[INPUT_GATE_ENVONLY].isConnected() &&
                 envGateTriggerEnvOnly[0].process(inputs[INPUT_GATE_ENVONLY].getVoltage(0)))
-                isTriggeredEnvOnly[0] = true;
+                gateEnvInputTriggered[0] = true;
+            gateEnvInputHigh[0] = inputs[INPUT_GATE].getVoltage(0) > 2;
+            anyGateInputHigh[0] = gateEnvInputHigh[0] || gateInputHigh[0];
+
             for (int c = 1; c < nChan; ++c)
             {
-                isTriggered[c] = isTriggered[0];
-                isTriggeredEnvOnly[c] = isTriggeredEnvOnly[0];
+                gateInputTriggered[c] = gateInputTriggered[0];
+                gateEnvInputTriggered[c] = gateEnvInputTriggered[0];
+                gateInputHigh[c] = gateInputHigh[0];
+                gateEnvInputHigh[c] = gateEnvInputHigh[0];
+                anyGateInputHigh[c] = anyGateInputHigh[0];
             }
         }
 
@@ -525,75 +544,26 @@ struct LFO : modules::XTModule
 
             lfostorage->rate.deactivated = direct;
             bool scaleAmp = params[SCALE_RAW_OUTPUTS].getValue() > 0.5;
+            bool anyGateConnected =
+                inputs[INPUT_GATE].isConnected() || inputs[INPUT_GATE_ENVONLY].isConnected();
             for (int c = 0; c < nChan; ++c)
             {
-                int trigChan = c;
-                if (tt == TAKE_CHANNEL_0)
-                    trigChan = 0;
-
                 float ampScale[3];
                 ampScale[0] = 1.f;
                 ampScale[1] = scaleAmp ? modAssist.values[AMPLITUDE][c] : 1;
                 ampScale[2] = scaleAmp ? modAssist.values[AMPLITUDE][c] : 1;
 
-                bool inNewAttack = firstProcess;
-                bool inNewEnvAttack = false;
-                // move this to every sample and record it eliminating the first process thing too
-                if (isTriggered[c])
-                {
-                    isGated[c] = true;
-                    inNewAttack = true;
-                    isGateConnected[c] = true;
-                    isTriggered[c] = false;
-                }
-                else if (isTriggeredEnvOnly[c])
-                {
-                    inNewEnvAttack = true;
-                    isTriggeredEnvOnly[c] = false;
-                    isGated[c] = true;
-                    isGateConnected[c] = true;
-                }
-                else if (inputs[INPUT_GATE].isConnected() &&
-                         inputs[INPUT_GATE_ENVONLY].isConnected())
-                {
-                    // HANDLE THIS DUAL CASE
-                }
-                else if (inputs[INPUT_GATE].isConnected() && isGated[c] &&
-                         (inputs[INPUT_GATE].getVoltage(trigChan) < 1.f))
-                {
-                    isGated[c] = false;
-                    surge_lfo[c]->release();
-                    isGateConnected[c] = true;
-                }
-                else if (inputs[INPUT_GATE_ENVONLY].isConnected() && isGated[c] &&
-                         (inputs[INPUT_GATE_ENVONLY].getVoltage(trigChan) < 1.f))
-                {
-                    isGated[c] = false;
-                    surge_lfo[c]->release();
+                // Clear this state once consumed
+                bool attackEntireLFO = gateInputTriggered[c];
+                gateInputTriggered[c] = false;
 
-                    isGateConnected[c] = true;
-                }
-                else if (!inputs[INPUT_GATE].isConnected() &&
-                         !inputs[INPUT_GATE_ENVONLY].isConnected())
+                bool attackEnvelopeOnly = gateEnvInputTriggered[c];
+                gateEnvInputTriggered[c] = false;
+                if (prevAnyGateInputHigh[c] && !anyGateInputHigh[c])
                 {
-                    if (isGateConnected[c])
-                        inNewAttack = true;
-                    if (!isGated[c])
-                        inNewAttack = true;
-                    isGated[c] = true;
-                    isGateConnected[c] = false;
+                    surge_lfo[c]->release();
                 }
-                else if ((inputs[INPUT_GATE].isConnected() ||
-                          inputs[INPUT_GATE_ENVONLY].isConnected()) &&
-                         !isGateConnected[c])
-                {
-                    // Handle the at-startup case where we load a connected thing
-                    // from construction. Make us connected, but not gated, and don't
-                    // attack (since we won't release later since we aren't getaed yet)
-                    isGateConnected[c] = true;
-                    isGated[c] = false;
-                    inNewAttack = false;
-                }
+                prevAnyGateInputHigh[c] = anyGateInputHigh[c];
 
                 if (direct)
                 {
@@ -620,7 +590,7 @@ struct LFO : modules::XTModule
 
                 surge_lfo[c]->onepoleFactor = onepoleFactor;
 
-                if (inNewAttack)
+                if (attackEntireLFO)
                 {
                     if (retriggerFromZero)
                         surge_lfo[c]->envRetrigMode = LFOModulationSource::FROM_ZERO;
@@ -631,15 +601,16 @@ struct LFO : modules::XTModule
                     priorEnvStage[c] = -1;
                 }
                 surge_lfo[c]->process_block();
-                if (inNewAttack)
+                if (attackEntireLFO)
                 {
-                    // Do the painful thing in the infrequent case
+                    // Do the painful thing in the infrequent case. This basically moves the
+                    // interpolant forward one step at the start of a new attack
                     output0[0][c / 4].s[c % 4] = surge_lfo[c]->get_output(0) * ampScale[0];
                     output0[1][c / 4].s[c % 4] = surge_lfo[c]->get_output(1) * ampScale[1];
                     output0[2][c / 4].s[c % 4] = surge_lfo[c]->get_output(2) * ampScale[2];
                     surge_lfo[c]->process_block();
                 }
-                else if (inNewEnvAttack)
+                else if (attackEnvelopeOnly)
                 {
                     if (retriggerFromZero)
                         surge_lfo[c]->envRetrigMode = LFOModulationSource::FROM_ZERO;
@@ -660,7 +631,7 @@ struct LFO : modules::XTModule
                     priorEnvStage[c] = surge_lfo[c]->getEnvState();
                     newEnvStage = true;
                     if (priorEnvStage[c] == lfoeg_stuck)
-                        newEnvRelease = !isGated[c];
+                        newEnvRelease = !anyGateInputHigh[c];
                 }
 
                 auto feg = surge_lfo[c]->retrigger_FEG;
@@ -695,7 +666,7 @@ struct LFO : modules::XTModule
 
                 for (int p = 0; p < 3; ++p)
                     ts[p][c] = surge_lfo[c]->get_output(p) * ampScale[p];
-                ts[2][c] *= isGateConnected[c] ? 1.f : untrigEnvMult;
+                ts[2][c] *= anyGateConnected ? 1.f : untrigEnvMult;
             }
             for (int p = 0; p < 3; ++p)
                 for (int i = 0; i < 4; ++i)

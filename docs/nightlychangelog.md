@@ -45,3 +45,6 @@
   the gate was high. This caused polyphony mis-fires on patch startup
   in some rare cases. Now it will trigger an envlope for a
   newly added channel in a high gate situation.
+- Rework the LFOxEG gate behavior so the code is less confusing.
+  As a result, fix a bug where the envelope would mis-trigger when
+  both GATE and GATEENV were connected.
