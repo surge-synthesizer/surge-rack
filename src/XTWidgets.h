@@ -802,6 +802,29 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
             rack::Knob::onLeave(e);
     }
 
+    bool hasVoltPerOctUnits(Parameter *p)
+    {
+        switch (p->ctrltype)
+        {
+        case ct_freq_hpf:
+        case ct_freq_audible:
+        case ct_freq_audible_deactivatable:
+        case ct_freq_audible_deactivatable_hp:
+        case ct_freq_audible_deactivatable_lp:
+        case ct_freq_audible_fm3_extendable:
+        case ct_freq_audible_with_tunability:
+        case ct_freq_audible_very_low_minval:
+        case ct_freq_reson_band1:
+        case ct_freq_reson_band2:
+        case ct_freq_reson_band3:
+        case ct_freq_vocoder_low:
+        case ct_freq_vocoder_high:
+        case ct_freq_ringmod:
+            return (p->val_max.f - p->val_min.f) > 120;
+        }
+        return false;
+    }
+
     void appendContextMenu(rack::Menu *menu) override
     {
         auto spq = dynamic_cast<modules::SurgeParameterModulationQuantity *>(getParamQuantity());
@@ -817,6 +840,23 @@ struct ModRingKnob : rack::app::Knob, style::StyleParticipant, HasBDW
             auto spql = new SQPParamLabel;
             spql->spq = spq;
             menu->addChildBottom(spql);
+
+            auto pr = spq->surgepar();
+            if (pr && hasVoltPerOctUnits(pr))
+            {
+                menu->addChild(rack::createMenuItem("Modulate at 1Oct/V", "", [spq]() {
+                    auto newVal = 120.f / (spq->surgepar()->val_max.f - spq->surgepar()->val_min.f);
+                    auto *h = new rack::history::ParamChange;
+                    h->name = std::string("change ") + spq->getLabel();
+                    h->moduleId = spq->module->id;
+                    h->paramId = spq->paramId;
+                    h->oldValue = spq->getValue();
+                    h->newValue = newVal;
+                    APP->history->push(h);
+
+                    spq->setValue(newVal);
+                }));
+            }
         }
     }
 };

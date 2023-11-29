@@ -34,5 +34,6 @@
 - Remove some uneeded pre-XT content from the vcvplugin build step
 - Align the EGxVCA envelope/meter split with the knobs. Once you see it
   you just gotta fix it!
+- Modulating a frequncy-style surge parameter gets a 'set to 1oct/v' menu item
+  in the RMB.
 - Cache the WT conversion for saving into your patch in the WT/Window VCO
-- 
