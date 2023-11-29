@@ -415,7 +415,7 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
     int processCount{BLOCK_SIZE};
     int meterUpdateCount{0};
 
-    int nChan{-1};
+    int nChan{-1}, priorNChan{-1};
     bool polyGate{false};
 
     bool doAttack[MAX_POLY];
@@ -453,6 +453,19 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
             nChan = std::max({inputs[INPUT_L].getChannels(), inputs[INPUT_R].getChannels(),
                               inputs[GATE_IN].getChannels(), 1});
             polyGate = inputs[GATE_IN].getChannels() > 1;
+
+            if (nChan != priorNChan)
+            {
+                if (priorNChan > 0 && nChan > priorNChan)
+                {
+                    for (int c = priorNChan; c < nChan; ++c)
+                    {
+                        // we want to newly check the schmidt trigger
+                        triggers[c].state = false;
+                    }
+                }
+                priorNChan = nChan;
+            }
 
             modAssist.setupMatrix(this);
             modAssist.updateValues(this);

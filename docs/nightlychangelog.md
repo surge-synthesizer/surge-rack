@@ -41,3 +41,7 @@
 - Cache the WT conversion for saving into your patch in the WT/Window VCO
 - In rare cases the SpringReverb could NaN. Reset the effect automatically if
   these occur as a workaround.
+- The EGxVCA didn't trigger envelopes for newly added polyphony while
+  the gate was high. This caused polyphony mis-fires on patch startup
+  in some rare cases. Now it will trigger an envlope for a
+  newly added channel in a high gate situation.
