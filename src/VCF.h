@@ -27,6 +27,7 @@
 #include "globals.h"
 
 #include "sst/rackhelpers/neighbor_connectable.h"
+#include "sst/rackhelpers/json.h"
 
 namespace sst::surgext_rack::vcf
 {
@@ -185,6 +186,7 @@ struct VCF : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
     sst::filters::FilterCoefficientMaker<SurgeStorage> coefMaker[MAX_POLY];
     float delayBuffer[nQFUs][4][sst::filters::utilities::MAX_FB_COMB +
                                 sst::filters::utilities::SincTable::FIRipol_N];
+    std::atomic<int> displayPolyChannel{0};
 
     void setupSurge()
     {
@@ -226,6 +228,20 @@ struct VCF : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             currentOutGain[i] = modulationAssistant.valuesSSE[OUT_GAIN][i];
             currentMix[i] = modulationAssistant.valuesSSE[MIX][i];
         }
+    }
+
+    json_t *makeModuleSpecificJson() override
+    {
+        auto vcf = json_object();
+        json_object_set_new(vcf, "displayPolyChannel", json_integer(displayPolyChannel));
+        return vcf;
+    }
+
+    void readModuleSpecificJson(json_t *modJ) override
+    {
+        auto pc = rackhelpers::json::jsonSafeGet<int>(modJ, "displayPolyChannel");
+        if (pc.has_value())
+            displayPolyChannel = *pc;
     }
 
     int processPosition;

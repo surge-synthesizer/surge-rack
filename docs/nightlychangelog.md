@@ -1,4 +1,4 @@
-## 2.2.0 (as of  eabda3)
+## 2.2.0 
 
 ### New Modules
   - Bonsai
@@ -26,6 +26,8 @@
   internal sin oscillator
 - FM2/3/Sine VCO get vintage (averaged) feedback mode. FM2/3 get optional
   extended feedback (which is always on in Sine)
+- VCOs, VCF and WaveShaper can select the polyphonic channel to display on
+  the internal scope / curve display
 
 ### Bug Fixes and Small Changes
 

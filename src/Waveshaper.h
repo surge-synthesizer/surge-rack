@@ -27,6 +27,7 @@
 #include <sst/waveshapers.h>
 #include "BiquadFilter.h"
 #include "sst/rackhelpers/neighbor_connectable.h"
+#include "sst/rackhelpers/json.h"
 
 namespace sst::surgext_rack::waveshaper
 {
@@ -199,6 +200,7 @@ struct Waveshaper : public modules::XTModule,
     int lastPolyL{-2}, lastPolyR{-2};
     int monoChannelOffset{0};
 
+    std::atomic<int> displayPolyChannel;
     std::atomic<bool> doDCBlock{true};
     bool wasDoDCBlock{true};
     /*
@@ -585,6 +587,7 @@ struct Waveshaper : public modules::XTModule,
     {
         auto ws = json_object();
         json_object_set_new(ws, "doDCBlock", json_boolean(doDCBlock));
+        json_object_set_new(ws, "displayPolyChannel", json_integer(displayPolyChannel));
         return ws;
     }
 
@@ -600,6 +603,10 @@ struct Waveshaper : public modules::XTModule,
         {
             doDCBlock = true;
         }
+
+        auto pc = rackhelpers::json::jsonSafeGet<int>(modJ, "displayPolyChannel");
+        if (pc.has_value())
+            displayPolyChannel = *pc;
     }
 };
 

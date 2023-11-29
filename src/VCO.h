@@ -26,6 +26,7 @@
 #include <sst/filters/HalfRateFilter.h>
 #include "sst/basic-blocks/mechanics/block-ops.h"
 #include "sst/rackhelpers/neighbor_connectable.h"
+#include "sst/rackhelpers/json.h"
 
 #include "LayoutEngine.h"
 
@@ -751,6 +752,7 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
     modules::DCBlocker blockers[2][MAX_POLY];
     int halfbandM{6};
     bool halfbandSteep{true};
+    std::atomic<int> displayPolyChannel{0};
     std::array<std::unique_ptr<sst::filters::HalfRate::HalfRateFilter>, MAX_POLY> halfbandOUT;
     sst::filters::HalfRate::HalfRateFilter halfbandIN;
     float audioInBuffer[BLOCK_SIZE_OS];
@@ -808,6 +810,7 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
         json_object_set_new(vco, "halfbandM", json_integer(halfbandM));
         json_object_set_new(vco, "halfbandSteep", json_boolean(halfbandSteep));
         json_object_set_new(vco, "doDCBlock", json_boolean(doDCBlock));
+        json_object_set_new(vco, "displayPolyChannel", json_integer(displayPolyChannel));
         return vco;
     }
     void readModuleSpecificJson(json_t *modJ) override
@@ -884,6 +887,10 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             doDCBlock = json_boolean_value(ddb);
         else
             doDCBlock = true;
+
+        auto pc = rackhelpers::json::jsonSafeGet<int>(modJ, "displayPolyChannel");
+        if (pc.has_value())
+            displayPolyChannel = *pc;
     }
 };
 
