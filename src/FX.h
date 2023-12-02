@@ -77,6 +77,8 @@ template <int fxType> struct FXConfig
     static constexpr float rescaleInputFactor() { return 1.0; }
     static constexpr bool softclipOutput() { return false; }
     static constexpr bool nanCheckOutput() { return false; }
+
+    static void addFXSpecificMenuItems(FX<fxType> *M, rack::ui::Menu *) {}
 };
 
 template <int fxType>

@@ -64,6 +64,8 @@ template <int fxType> struct FXWidget : public widgets::XTModuleWidget
         {
             addClockMenu<FX<fxType>>(menu);
         }
+
+        FXConfig<fxType>::addFXSpecificMenuItems(xtm, menu);
     }
 };
 
