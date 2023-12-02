@@ -27,7 +27,7 @@ namespace sst::surgext_rack::fx
 template <> constexpr int FXConfig<fxt_nimbus>::numParams() { return 12; }
 template <> constexpr int FXConfig<fxt_nimbus>::extraInputs() { return 2; }
 template <> constexpr int FXConfig<fxt_nimbus>::extraSchmidtTriggers() { return 1; }
-template <> constexpr int FXConfig<fxt_nimbus>::specificParamCount() { return 1; }
+template <> constexpr int FXConfig<fxt_nimbus>::specificParamCount() { return 2; }
 
 template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
 {
@@ -94,8 +94,7 @@ template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
         if (md == 0)
             return "DENSITY";
         if (md == 1 || md == 2)
-            return "DIFF"
-                   "";
+            return "DIFF";
         if (md == 3)
             return "SMEAR";
 
@@ -122,13 +121,32 @@ template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
 template <> void FXConfig<fxt_nimbus>::configSpecificParams(FX<fxt_nimbus> *m)
 {
     typedef FX<fxt_nimbus> fx_t;
-    m->configOnOff(fx_t::FX_SPECIFIC_PARAM_0, 0, "Manual Freeze");
+    m->configOnOffNoRand(fx_t::FX_SPECIFIC_PARAM_0, 0, "Manual Freeze");
+    m->configOnOffNoRand(fx_t::FX_SPECIFIC_PARAM_0 + 1, 0, "Randomize Engine");
+
+    m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_mode]->randomizeEnabled =
+        false;
+    m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_quality]->randomizeEnabled =
+        false;
 }
 
 template <> void FXConfig<fxt_nimbus>::configExtraInputs(FX<fxt_nimbus> *m)
 {
     m->configInput(FX<fxt_nimbus>::INPUT_SPECIFIC_0, "Gate to Freeze");
     m->configInput(FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1, "Trigger");
+
+    m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_freeze]->randomizeEnabled =
+        false;
+}
+
+template <> void FXConfig<fxt_nimbus>::processSpecificParams(FX<fxt_nimbus> *m)
+{
+    auto md = m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_mode]->getValue();
+
+    auto lv = m->paramQuantities[FX<fxt_nimbus>::FX_SPECIFIC_PARAM_0 + 1]->getValue() > 0.5;
+    m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_mode]->randomizeEnabled = lv;
+    m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_quality]->randomizeEnabled =
+        lv;
 }
 
 template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that)
@@ -149,6 +167,22 @@ template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that)
 
     auto nb = static_cast<NimbusEffect *>(that->surge_effect.get());
     nb->setNimbusTrigger(triggered);
+}
+
+template <>
+void FXConfig<fxt_nimbus>::addFXSpecificMenuItems(FX<fxt_nimbus> *m, rack::ui::Menu *toThis)
+{
+    auto l1 = (int)std::round(m->params[FX<fxt_nimbus>::FX_SPECIFIC_PARAM_0 + 1].getValue());
+
+    toThis->addChild(new rack::ui::MenuSeparator());
+    toThis->addChild(
+        rack::createMenuItem("Randomize Nimbus Mode/Quality", CHECKMARK(l1), [m, l1]() {
+            m->params[FX<fxt_nimbus>::FX_SPECIFIC_PARAM_0 + 1].setValue(l1 ? 0 : 1);
+            m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_mode]
+                ->randomizeEnabled = !l1;
+            m->paramQuantities[FX<fxt_nimbus>::FX_PARAM_0 + NimbusEffect::nmb_quality]
+                ->randomizeEnabled = !l1;
+        }));
 }
 } // namespace sst::surgext_rack::fx
 
