@@ -26,7 +26,7 @@ namespace sst::surgext_rack::fx
 
 template <> constexpr int FXConfig<fxt_nimbus>::numParams() { return 12; }
 template <> constexpr int FXConfig<fxt_nimbus>::extraInputs() { return 2; }
-template <> constexpr int FXConfig<fxt_nimbus>::extraSchmidtTriggers() { return 1; }
+template <> constexpr int FXConfig<fxt_nimbus>::extraSchmidtTriggers() { return MAX_POLY; }
 template <> constexpr int FXConfig<fxt_nimbus>::specificParamCount() { return 2; }
 
 template <> FXConfig<fxt_nimbus>::layout_t FXConfig<fxt_nimbus>::getLayout()
@@ -149,12 +149,15 @@ template <> void FXConfig<fxt_nimbus>::processSpecificParams(FX<fxt_nimbus> *m)
         lv;
 }
 
-template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that)
+template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that, int channel)
 {
-    auto frozen = that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0].getVoltage() > 3;
+    auto uc = channel * (that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0].getChannels() > 1);
+    auto tc = channel * (that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1].getChannels() > 1);
+
+    auto frozen = that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0].getVoltage(uc) > 3;
     frozen = frozen || (that->params[FX<fxt_nimbus>::FX_SPECIFIC_PARAM_0].getValue() > 0.5);
-    auto triggered = that->extraInputTriggers[0].process(
-        that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1].getVoltage());
+    auto triggered = that->extraInputTriggers[channel].process(
+        that->inputs[FX<fxt_nimbus>::INPUT_SPECIFIC_0 + 1].getVoltage(tc));
 
     if (frozen)
     {
@@ -165,8 +168,16 @@ template <> void FXConfig<fxt_nimbus>::processExtraInputs(FX<fxt_nimbus> *that)
         that->fxstorage->p[NimbusEffect::nmb_freeze].set_value_f01(0);
     }
 
-    auto nb = static_cast<NimbusEffect *>(that->surge_effect.get());
-    nb->setNimbusTrigger(triggered);
+    if (that->polyphonicMode)
+    {
+        auto nb = static_cast<NimbusEffect *>(that->surge_effect_poly[channel].get());
+        nb->setNimbusTrigger(triggered);
+    }
+    else
+    {
+        auto nb = static_cast<NimbusEffect *>(that->surge_effect.get());
+        nb->setNimbusTrigger(triggered);
+    }
 }
 
 template <>

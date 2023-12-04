@@ -46,7 +46,7 @@ template <int fxType> struct FXConfig
     static constexpr int extraInputs() { return 0; }
     static constexpr int extraSchmidtTriggers() { return 1; }
     static void configExtraInputs(FX<fxType> *M) {}
-    static void processExtraInputs(FX<fxType> *M) {}
+    static void processExtraInputs(FX<fxType> *M, int channel) {}
 
     static constexpr int extraOutputs() { return 0; }
     static void configExtraOutputs(FX<fxType> *M) {}
@@ -133,6 +133,9 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
         std::lock_guard<std::mutex> lgxt(xtSurgeCreateMutex);
         setupSurge();
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
+        for (auto &t : extraInputTriggers)
+            t.state = false;
 
         int lastParam{0};
         for (int i = 0; i < n_fx_params; ++i)
@@ -549,7 +552,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
                 fxstorage->p[i].set_value_f01(modAssist.basevalues[i]);
             }
 
-            FXConfig<fxType>::processExtraInputs(this);
+            FXConfig<fxType>::processExtraInputs(this, 0);
             FXConfig<fxType>::adjustParamsBasedOnState(this);
 
             copyGlobaldataSubset(storage_id_start, storage_id_end);
@@ -626,13 +629,21 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
 
     int lastNChan{-1};
 
-    void reinitialize()
+    void reinitialize(int c = -1)
     {
-        surge_effect->init();
-        halfbandIN.reset();
-        for (const auto &s : surge_effect_poly)
-            if (s)
-                s->init();
+        if (c == -1)
+        {
+            surge_effect->init();
+            halfbandIN.reset();
+            for (const auto &s : surge_effect_poly)
+                if (s)
+                    s->init();
+        }
+        else
+        {
+            // poly nan case
+            surge_effect_poly[c]->init();
+        }
     }
 
     void guaranteePolyFX(int chan)
@@ -700,6 +711,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
                 modulatorR[0][bufferPos] = inputs[SIDEBAND_R].getVoltageSum();
             }
         }
+
         bufferPos++;
 
         if (bufferPos >= BLOCK_SIZE)
@@ -717,10 +729,10 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
                 fxstorage->p[i].set_value_f01(polyModAssist.basevalues[i]);
             }
 
-            FXConfig<fxType>::processExtraInputs(this);
-
             for (int c = 0; c < chan; ++c)
             {
+                FXConfig<fxType>::processExtraInputs(this, c);
+
                 std::memcpy(processedL[c], bufferL[c], BLOCK_SIZE * sizeof(float));
                 std::memcpy(processedR[c], bufferR[c], BLOCK_SIZE * sizeof(float));
 
@@ -749,6 +761,29 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
                 surge_effect_poly[c]->process_ringout(processedL[c], processedR[c], true);
 
                 FXConfig<fxType>::populateExtraOutputs(this, c, surge_effect_poly[c].get());
+            }
+
+            if constexpr (FXConfig<fxType>::nanCheckOutput())
+            {
+                if (lastNanCheck == 0)
+                {
+                    for (int c = 0; c < chan; ++c)
+                    {
+
+                        bool isNumber{true};
+                        for (int ns = 0; ns < BLOCK_SIZE; ++ns)
+                        {
+                            isNumber = isNumber && std::isfinite(processedL[c][ns]);
+                            isNumber = isNumber && std::isfinite(processedR[c][ns]);
+                        }
+
+                        if (!isNumber)
+                        {
+                            reinitialize(c);
+                        }
+                    }
+                }
+                lastNanCheck = (lastNanCheck + 1) % 32;
             }
             bufferPos = 0;
         }

@@ -69,9 +69,11 @@ template <> void FXConfig<fxt_chow>::configExtraInputs(FX<fxt_chow> *m)
  * template <> void FXConfig<fxt_chow>::processSpecificParams(FX<fxt_chow> *m)
  */
 
-template <> void FXConfig<fxt_chow>::processExtraInputs(FX<fxt_chow> *that)
+template <> void FXConfig<fxt_chow>::processExtraInputs(FX<fxt_chow> *that, int channel)
 {
-    auto t = that->inputs[FX<fxt_chow>::INPUT_SPECIFIC_0].getVoltage() > 3;
+    auto uc = channel * (that->inputs[FX<fxt_chow>::INPUT_SPECIFIC_0].getChannels() > 1);
+
+    auto t = that->inputs[FX<fxt_chow>::INPUT_SPECIFIC_0].getVoltage(uc) > 3;
     auto d = that->params[FX<fxt_chow>::FX_SPECIFIC_PARAM_0].getValue() > 0.5;
     if (t || d)
     {
