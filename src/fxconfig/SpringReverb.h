@@ -28,7 +28,10 @@ namespace sst::surgext_rack::fx
 
 template <> constexpr int FXConfig<fxt_spring_reverb>::numParams() { return 8; }
 template <> constexpr int FXConfig<fxt_spring_reverb>::extraInputs() { return 1; }
-template <> constexpr int FXConfig<fxt_spring_reverb>::extraSchmidtTriggers() { return 2; }
+template <> constexpr int FXConfig<fxt_spring_reverb>::extraSchmidtTriggers()
+{
+    return 1 + MAX_POLY;
+}
 template <> constexpr int FXConfig<fxt_spring_reverb>::specificParamCount() { return 1; }
 template <> constexpr bool FXConfig<fxt_spring_reverb>::nanCheckOutput() { return true; }
 template <> FXConfig<fxt_spring_reverb>::layout_t FXConfig<fxt_spring_reverb>::getLayout()
@@ -79,12 +82,15 @@ template <> void FXConfig<fxt_spring_reverb>::configExtraInputs(FX<fxt_spring_re
  * template <> void FXConfig<fxt_spring_reverb>::processSpecificParams(FX<fxt_spring_reverb> *m)
  */
 
-template <> void FXConfig<fxt_spring_reverb>::processExtraInputs(FX<fxt_spring_reverb> *that)
+template <>
+void FXConfig<fxt_spring_reverb>::processExtraInputs(FX<fxt_spring_reverb> *that, int channel)
 {
-    auto t = that->extraInputTriggers[0].process(
-        that->inputs[FX<fxt_spring_reverb>::INPUT_SPECIFIC_0].getVoltage());
-    auto d = that->extraInputTriggers[1].process(
+    auto uc = channel * (that->inputs[FX<fxt_spring_reverb>::INPUT_SPECIFIC_0].getChannels() > 1);
+    auto t = that->extraInputTriggers[1 + channel].process(
+        that->inputs[FX<fxt_spring_reverb>::INPUT_SPECIFIC_0].getVoltage(uc));
+    auto d = that->extraInputTriggers[0].process(
         that->params[FX<fxt_spring_reverb>::FX_SPECIFIC_PARAM_0].getValue(), 0.5);
+
     if (t || d)
     {
         that->fxstorage->p[6].set_value_f01(1);
