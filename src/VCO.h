@@ -807,6 +807,32 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
             wtT = nullptr;
         }
 
+        // A little bit of defensive code I added in 2.2 in case we change int bounds in the
+        // future. I don't read this yet but I do write it
+        auto *paramNatural = json_array();
+        for (int i = 0; i < n_osc_params; ++i)
+        {
+            const auto &p = oscstorage->p[i];
+            auto *parJ = json_object();
+
+            json_object_set(parJ, "index", json_integer(i));
+            json_object_set(parJ, "valtype", json_integer(p.valtype));
+            switch (p.valtype)
+            {
+            case vt_float:
+                json_object_set(parJ, "val_f", json_real(p.val.f));
+                break;
+            case vt_int:
+                json_object_set(parJ, "val_i", json_integer(p.val.i));
+                break;
+            case vt_bool:
+                json_object_set(parJ, "val_b", json_boolean(p.val.b));
+                break;
+            }
+            json_array_append_new(paramNatural, parJ);
+        }
+        json_object_set_new(vco, "paramNatural", paramNatural);
+
         json_object_set_new(vco, "halfbandM", json_integer(halfbandM));
         json_object_set_new(vco, "halfbandSteep", json_boolean(halfbandSteep));
         json_object_set_new(vco, "doDCBlock", json_boolean(doDCBlock));
