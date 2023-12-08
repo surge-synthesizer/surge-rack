@@ -312,12 +312,12 @@ struct DigitalRingMod : modules::XTModule,
 
     std::array<std::array<std::unique_ptr<sst::filters::HalfRate::HalfRateFilter>, MAX_POLY>, 2>
         halfbandInA, halfbandInB, halfbandOut;
-    static constexpr int blockSize{4}, blockSizeOS{blockSize << 1};
-    float inputA[2][MAX_POLY][2][blockSize]; // 0,1; poly; L/R
+    static constexpr int blockSize{8}, blockSizeOS{blockSize << 1};
+    float inputA alignas(16) [2][MAX_POLY][2][blockSize]; // 0,1; poly; L/R
     bool aMono[2]{false, false};
-    float inputB[2][MAX_POLY][2][blockSize]; // 0,1; poly; L/R
+    float inputB alignas(16) [2][MAX_POLY][2][blockSize]; // 0,1; poly; L/R
     bool bMono[2]{false, false};
-    float output[2][MAX_POLY][2][blockSize]; // 0,1; poly; L/R
+    float output alignas(16) [2][MAX_POLY][2][blockSize]; // 0,1; poly; L/R
     int blockPos{0};
     int poly[2]{1, 1};
 };
