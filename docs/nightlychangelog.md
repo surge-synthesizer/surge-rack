@@ -1,4 +1,4 @@
-## 2.2.0 
+## 2.2.1
 
 ### New Modules
   - Bonsai
@@ -48,3 +48,4 @@
 - Rework the LFOxEG gate behavior so the code is less confusing.
   As a result, fix a bug where the envelope would mis-trigger when
   both GATE and GATEENV were connected.
+- VCO Character, Level and Drift don't participate in randomization

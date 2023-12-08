@@ -248,9 +248,9 @@ struct VCO : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
         configParamNoRand(RETRIGGER_STYLE, 0, 1, 0, "Random Phase on Retrigger");
         configParamNoRand(EXTEND_UNISON, 0, 1, 0, "Extend Unison");
         configParamNoRand(ABSOLUTE_UNISON, 0, 1, 0, "Absolute Unison");
-        configParam(CHARACTER, 0, 2, 1, "Character Filter");
-        configParam(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
-        configParam(FIXED_ATTENUATION, 0, 1, 1, "Output Level", "%", 0, 100);
+        configParamNoRand(CHARACTER, 0, 2, 1, "Character Filter");
+        configParamNoRand(DRIFT, 0, 1, 0, "Oscillator Drift", "%", 0, 100);
+        configParamNoRand(FIXED_ATTENUATION, 0, 1, 1, "Output Level", "%", 0, 100);
 
         VCOConfig<oscType>::configureVCOSpecificParameters(this);
         config_osc->~Oscillator();
