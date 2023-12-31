@@ -82,12 +82,14 @@ struct DigitalRingMod : modules::XTModule,
         setupSurgeCommon(NUM_PARAMS, false, false);
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-        configSwitch(LINK_01, 0, 1, 0, "Link Second A to First Output", {"Don't Link", "Link"});
+        auto linkS =
+            configSwitch(LINK_01, 0, 1, 0, "Link Second A to First Output", {"Don't Link", "Link"});
+        linkS->randomizeEnabled = false;
         std::vector<std::string> nm;
         for (int i = 0; i < n_cxm_modes; ++i)
             nm.push_back(combinator_mode_names[i]);
-        configSwitch(TYPE_0, 0, n_cxm_modes, 0, "CXOR 1 Algorithm", nm);
-        configSwitch(TYPE_1, 0, n_cxm_modes, 0, "CXOR 2 Algorithm", nm);
+        configSwitch(TYPE_0, 0, n_cxm_modes - 1, 0, "CXOR 1 Algorithm", nm);
+        configSwitch(TYPE_1, 0, n_cxm_modes - 1, 0, "CXOR 2 Algorithm", nm);
 
         configInput(INPUT_0_A_L, "CXOR 1 A Left");
         configInput(INPUT_0_A_R, "CXOR 1 A Right");
