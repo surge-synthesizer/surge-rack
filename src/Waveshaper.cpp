@@ -226,7 +226,7 @@ struct WaveshaperPlotWidget : public rack::widget::TransparentWidget, style::Sty
         auto wstype = (sst::waveshapers::WaveshaperType)std::round(
             module->paramQuantities[Waveshaper::WSHP_TYPE]->getValue());
         sst::waveshapers::QuadWaveshaperState wss;
-        float R[4];
+        float R[sst::waveshapers::n_waveshaper_registers];
 
         auto ch = (int)module->displayPolyChannel;
         if (ch >= module->polyChannelCount())

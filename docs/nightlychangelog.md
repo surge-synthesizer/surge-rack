@@ -1,3 +1,9 @@
+## 2.2.2
+
+A small fix release after 2.2.1
+
+- LFO Uni- and Bi-polar waveforms align properly.
+
 ## 2.2.1
 
 ### New Modules

@@ -758,7 +758,11 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
 
         float scaleComp = 0.9;
         float scaleOff = (1.0 - scaleComp) * 0.5;
-
+        if (isuni)
+        {
+            // double the mapping range, so half the offset
+            scaleOff = scaleOff * 0.5;
+        }
         for (int i = 0; i < totalSamples; i += averagingWindow)
         {
             float val = 0;
@@ -857,8 +861,12 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
         auto sx = box.size.x / valScale, sy = box.size.y / valScale;
         if (isuni)
             sy = sy * 2;
+        bool drawingUp{true};
         for (const auto &pt : {eupathV, edpathV})
         {
+            if (isuni && !drawingUp)
+                continue;
+            drawingUp = false;
             bool first{true};
             nvgBeginPath(vg);
             for (const auto &[x, y] : pt)
