@@ -904,7 +904,8 @@ struct QuadLFO : modules::XTModule
             for (int c = 0; c < chanByLFO[i]; ++c)
             {
                 auto r = RateQuantity::independentRateScale(modAssist.values[RATE_0 + i][c]);
-                if (ic && triggers[i][c].process(inputs[TRIGGER_0].getVoltage(c * (!monoTrigger))))
+                if (ic &&
+                    triggers[i][c].process(inputs[TRIGGER_0 + i].getVoltage(c * (!monoTrigger))))
                 {
                     processors[i][c]->attack(shape);
                 }
