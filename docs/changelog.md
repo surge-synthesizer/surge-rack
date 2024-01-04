@@ -1,7 +1,7 @@
 # Surge XT VCV Modules Changelog
 
 
-## 2.2.1 (2.2.0 was never released)
+## 2.2.1
 
 ### New Modules
   - Bonsai
