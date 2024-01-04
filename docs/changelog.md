@@ -1,7 +1,58 @@
 # Surge XT VCV Modules Changelog
 
-A [draft 2.2](nightlychangelog.md) changelog is available
-as we tackle dev this fall.
+
+## 2.2.1 (2.2.0 was never released)
+
+### New Modules
+  - Bonsai
+    - Bonsai is a tape-style distortion effect
+  - Nimbus
+    - Nimbus is the surge port of the popular mutable granular delay effect
+  - Digital RingModulators and Combinators
+    - Surge XT 1.3 added a variety of functional forms for
+      digital ring modulation and waveform combination. This module
+      exposes them to the Rack ecosystem.
+  - Unison Helper
+    - Given a polyphonic VCO, apply the surge
+      unison, drift, and character algorithms
+    - Also includes an expander to route CV along the same paths
+    - [This video](https://www.youtube.com/watch?v=w0fXLlHKLrk) gives you a brief guide
+  - A copy of the Mixer, just with Sliders
+    - Because [sometimes you feel like a knob, sometimes you don't.](https://www.youtube.com/watch?v=4b80vzwnJ8A)
+
+### New Behaviors and Features
+
+- Port right mouse buttons have all sorts of neat things to auto connect
+  to neighbors and to mixmaster/auxmaster
+- EGxVCA EOC can send a trigger on any transition not just EOC, or on
+  all transitions
+- The Ring Modulator can modulate against external input, not just the
+  internal sin oscillator
+- FM2/3/Sine VCO get vintage (averaged) feedback mode. FM2/3 get optional
+  extended feedback (which is always on in Sine)
+- VCOs, VCF and WaveShaper can select the polyphonic channel to display on
+  the internal scope / curve display
+
+### Bug Fixes and Small Changes
+
+- Correct The Mixer Tooltip labels
+- Adjust the path to SIMDE to be absolute path
+- Remove some uneeded pre-XT content from the vcvplugin build step
+- Align the EGxVCA envelope/meter split with the knobs. Once you see it
+  you just gotta fix it!
+- Modulating a frequncy-style surge parameter gets a 'set to 1oct/v' menu item
+  in the RMB.
+- Cache the WT conversion for saving into your patch in the WT/Window VCO
+- In rare cases the SpringReverb could NaN. Reset the effect automatically if
+  these occur as a workaround.
+- The EGxVCA didn't trigger envelopes for newly added polyphony while
+  the gate was high. This caused polyphony mis-fires on patch startup
+  in some rare cases. Now it will trigger an envlope for a
+  newly added channel in a high gate situation.
+- Rework the LFOxEG gate behavior so the code is less confusing.
+  As a result, fix a bug where the envelope would mis-trigger when
+  both GATE and GATEENV were connected.
+- VCO Character, Level and Drift don't participate in randomization
 
 ## 2.1.8
 
