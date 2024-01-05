@@ -42,7 +42,7 @@ void XTStyle::initialize()
     if (!fd)
     {
 #ifdef USING_CARDINAL_NOT_RACK
-        setGlobalStyle(rack::settings::darkMode ? DARK : LIGHT);
+        setGlobalStyle(rack::settings::preferDarkPanels ? DARK : LIGHT);
 #else
         setGlobalStyle(MID);
 #endif
