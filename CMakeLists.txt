@@ -23,6 +23,7 @@ message(STATUS "SURGE_RACK_SURGE_VERSION ${SURGE_RACK_SURGE_VERSION}")
 
 add_subdirectory(libs/sst-rackhelpers)
 
+set(SURGE_BUILD_32BIT_LINUX TRUE CACHE BOOL "Allow 32 bit to try")
 set(SURGE_SKIP_JUCE_FOR_RACK TRUE CACHE BOOL "skip surge Juce build")
 set(SURGE_SKIP_LUA TRUE CACHE BOOL "skip surge Lua build")
 set(SURGE_SKIP_AIRWINDOWS TRUE CACHE BOOL "skip surge airwindows build")
@@ -68,7 +69,11 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
 
 target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
-add_compile_options($<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror> $<$<COMPILE_LANGUAGE:CXX>:-fno-char8_t>)
+add_compile_options($<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+  message(STATUS "Turning on fno-char8_t for c++20")
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-char8_t>)
+endif()
 add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
