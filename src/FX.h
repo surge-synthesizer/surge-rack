@@ -193,7 +193,19 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
 
     std::optional<std::vector<labeledStereoPort_t>> getPrimaryInputs() override
     {
-        return {{std::make_pair("Input", std::make_pair(INPUT_L, INPUT_R))}};
+        if constexpr (FXConfig<fxType>::usesSideband() ||
+            FXConfig<fxType>::usesSidebandOversampled())
+        {
+            return {
+                {std::make_pair("Input", std::make_pair(INPUT_L, INPUT_R)),
+                std::make_pair("SideBand", std::make_pair(SIDEBAND_L, SIDEBAND_R))}
+            };
+
+        }
+        else
+        {
+            return {{std::make_pair("Input", std::make_pair(INPUT_L, INPUT_R))}};
+        }
     }
 
     std::optional<std::vector<labeledStereoPort_t>> getPrimaryOutputs() override
