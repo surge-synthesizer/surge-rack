@@ -11,5 +11,6 @@ A small fix release after 2.2.1
 - Some tweaks to the ringmod, including changing display when connecting and
   disconnecting
 - FX sidechains participate in neighbor inputs
+- RingMod deactivates useless controls when sideband attached
 
 
