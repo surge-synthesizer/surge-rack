@@ -129,10 +129,24 @@ bool FXConfig<fxt_ringmod>::isDirtyPresetVsSpecificParams(
 template <> void FXConfig<fxt_ringmod>::adjustParamsBasedOnState(FX<fxt_ringmod> *M)
 {
     typedef FX<fxt_ringmod> fx_t;
+    auto &p = M->fxstorage->p[RingModulatorEffect::rm_carrier_shape];
+
     if (M->inputs[fx_t::SIDEBAND_L].isConnected() || M->inputs[fx_t::SIDEBAND_R].isConnected())
     {
-        auto &p = M->fxstorage->p[RingModulatorEffect::rm_carrier_shape];
         p.val.i = p.val_max.i;
+        auto pq = M->getParamQuantity(FX<fxt_ringmod>::FX_PARAM_0 +
+                                      RingModulatorEffect::rm_carrier_shape);
+        pq->setValue(1.0);
+    }
+    else
+    {
+        if (p.val.i == p.val_max.i)
+        {
+            p.val.i = 0;
+            auto pq = M->getParamQuantity(FX<fxt_ringmod>::FX_PARAM_0 +
+                                          RingModulatorEffect::rm_carrier_shape);
+            pq->setValue(0.0);
+        }
     }
 }
 
