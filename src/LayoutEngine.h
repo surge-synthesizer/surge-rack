@@ -60,6 +60,8 @@ struct LayoutItem
     bool dynamicLabel{false};
     std::function<std::string(modules::XTModule *m)> dynLabelFn{nullptr};
 
+    std::function<bool(modules::XTModule *m)> dynamicDeactivateFn{nullptr};
+
     static LayoutItem createLCDArea(float ht)
     {
         auto res = LayoutItem();
@@ -284,6 +286,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
             }
             if (knob)
             {
+                knob->dynamicDeactivateFn = lay.dynamicDeactivateFn;
                 w->addChild(knob->asWidget());
                 auto boxx0 = lay.xcmm - lc::columnWidth_MM * 0.5 - halfSize;
                 auto boxy0 = lay.ycmm + 8.573 + halfSize - 5;
@@ -560,6 +563,7 @@ template <typename W, int param0, int clockId = -1> struct LayoutEngine
                 rack::Vec(xpos, ypos), rack::Vec(width, height), module, lay.parId);
             wid->upcaseDisplay = false;
             wid->centerDisplay = true;
+            wid->dynamicDeactivateFn = lay.dynamicDeactivateFn;
 
             if (sd == 0)
             {

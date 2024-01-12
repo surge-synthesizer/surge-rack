@@ -48,7 +48,7 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
     typedef RingModulatorEffect rm_t;
 
     // clang-format off
-    return {
+    FXConfig<fxt_ringmod>::layout_t res = {
         {LayoutItem::KNOB12, "FREQUENCY", rm_t::rm_carrier_freq, colC, row1},
 
         {LayoutItem::KNOB9, "BIAS", rm_t::rm_diode_fwdbias, col[0], row2},
@@ -75,6 +75,18 @@ template <> FXConfig<fxt_ringmod>::layout_t FXConfig<fxt_ringmod>::getLayout()
         LayoutItem::createRightMenuItem("Voices", rm_t::rm_unison_voices)
     };
     // clang-format on
+
+    // this indexing is a bit of a hack
+    res[0].dynamicDeactivateFn = [](auto m) {
+        auto fxm = static_cast<FX<fxt_ringmod> *>(m);
+        auto &p = fxm->fxstorage->p[RingModulatorEffect::rm_carrier_shape];
+        return p.val.i == p.val_max.i;
+    };
+    res[13].dynamicDeactivateFn = res[0].dynamicDeactivateFn;
+    res[16].dynamicDeactivateFn = res[0].dynamicDeactivateFn;
+    res[17].dynamicDeactivateFn = res[0].dynamicDeactivateFn;
+
+    return res;
 }
 
 template <> void FXConfig<fxt_ringmod>::configSpecificParams(FX<fxt_ringmod> *m)

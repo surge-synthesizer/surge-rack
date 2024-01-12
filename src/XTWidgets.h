@@ -308,6 +308,9 @@ struct ModulatableKnob
 {
     virtual void setIsModEditing(bool b) = 0;
     virtual rack::Widget *asWidget() = 0;
+
+    bool deactivated{false};
+    std::function<bool(modules::XTModule *m)> dynamicDeactivateFn{nullptr};
 };
 
 struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant, ModulatableKnob
@@ -388,6 +391,9 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 
     void drawRing(NVGcontext *vg)
     {
+        if (deactivated)
+            return;
+
         float radius = rack::mm2px(ringWidth_MM * 2 + knobSize_MM) * 0.5;
         nvgBeginPath(vg);
         nvgArc(vg, box.size.x * 0.5, box.size.y * 0.5, radius, minAngle - M_PI_2, maxAngle - M_PI_2,
@@ -400,6 +406,9 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
 
     void drawValueRing(NVGcontext *vg)
     {
+        if (deactivated)
+            return;
+
         if (isModEditing)
             return;
         auto *pq = getParamQuantity();
@@ -455,12 +464,15 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
     BufferedDrawFunctionWidget *bw{nullptr}, *bwValue{nullptr}, *bwShadow{nullptr};
     void onChange(const ChangeEvent &e) override;
     void onStyleChanged() override { setupWidgets(); }
+
+    std::shared_ptr<rack::window::Svg> ptrSvg;
     void setupWidgets()
     {
         auto compDir = style()->skinAssetDir() + "/components";
 
-        setSvg(
-            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + knobPointerAsset)));
+        ptrSvg =
+            rack::Svg::load(rack::asset::plugin(pluginInstance, compDir + "/" + knobPointerAsset));
+        setSvg(ptrSvg);
         bg->setSvg(rack::Svg::load(
             rack::asset::plugin(pluginInstance, compDir + "/" + knobBackgroundAsset)));
         // bg->visible = false;
@@ -532,6 +544,19 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
         nvgRestore(vg);
     }
 
+    void setDeactivated(bool isDA)
+    {
+        deactivated = isDA;
+
+        bw->dirty = true;
+        bwValue->dirty = true;
+
+        bwShadow->dirty = true;
+
+        sw->setVisible(!deactivated);
+        fb->dirty = true;
+    }
+
     float priorMDA{0};
     bool priorBip{false};
     void step() override
@@ -550,8 +575,65 @@ struct KnobN : public rack::componentlibrary::RoundKnob, style::StyleParticipant
                 bwValue->dirty = true;
                 priorBip = bip;
             }
+
+            if (dynamicDeactivateFn)
+            {
+                auto xtm = static_cast<modules::XTModule *>(module);
+                auto oda = deactivated;
+                auto nda = dynamicDeactivateFn(xtm);
+                if (oda != nda)
+                {
+                    setDeactivated(nda);
+                }
+            }
         }
         rack::componentlibrary::RoundKnob::step();
+    }
+
+    void onHover(const HoverEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onHover(e);
+    }
+    void onButton(const ButtonEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onButton(e);
+    }
+
+    void onDragStart(const DragStartEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onDragStart(e);
+    }
+    void onDragEnd(const DragEndEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onDragEnd(e);
+    }
+
+    void onDragMove(const DragMoveEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onDragMove(e);
+    }
+
+    void onDragLeave(const DragLeaveEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onDragLeave(e);
+    }
+
+    void onHoverScroll(const HoverScrollEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onHoverScroll(e);
+    }
+
+    void onLeave(const LeaveEvent &e) override
+    {
+        if (!deactivated)
+            rack::componentlibrary::RoundKnob::onLeave(e);
     }
 };
 
@@ -1616,7 +1698,9 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
     static constexpr float padTop_MM = 1.4;
     static constexpr float padBot_MM = 1.6;
     BufferedDrawFunctionWidget *bdw{nullptr};
-    std::function<std::string(const std::string &)> transformLabel;
+    std::function<std::string(const std::string &)> transformLabel{nullptr};
+    bool deactivated{false};
+    std::function<bool(modules::XTModule *)> dynamicDeactivateFn{nullptr};
     std::function<void()> onShowMenu = []() {};
     bool upcaseDisplay{true};
     bool centerDisplay{false};
@@ -1655,7 +1739,10 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
         pv = transformLabel(pv);
 
         nvgBeginPath(vg);
-        nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
+        if (deactivated)
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_MARKS));
+        else
+            nvgFillColor(vg, style()->getColor(style::XTStyle::PLOT_CONTROL_TEXT));
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, layout::LayoutConstants::labelSize_pt * 96 / 72);
         if (centerDisplay)
@@ -1689,8 +1776,17 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
         Widget::onChange(e);
     }
 
+    void onHover(const HoverEvent &e) override
+    {
+        if (!deactivated)
+            rack::app::Knob::onHover(e);
+    }
+
     void onAction(const ActionEvent &e) override
     {
+        if (deactivated)
+            return;
+
         onShowMenu();
         e.consume(this);
     }
@@ -1708,6 +1804,19 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
                 {
                     bdw->dirty = true;
                     cacheString = pv;
+                }
+            }
+
+            if (dynamicDeactivateFn)
+            {
+                auto xtm = static_cast<modules::XTModule *>(module);
+
+                auto oda = deactivated;
+                auto nda = dynamicDeactivateFn(xtm);
+                if (oda != nda)
+                {
+                    deactivated = nda;
+                    bdw->dirty = true;
                 }
             }
         }
