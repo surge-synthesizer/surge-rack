@@ -1694,6 +1694,25 @@ struct PlotAreaMenuItem : public rack::app::Knob, style::StyleParticipant
         onShowMenu();
         e.consume(this);
     }
+
+    std::string cacheString{};
+    void step() override
+    {
+        if (module)
+        {
+            auto *pq = getParamQuantity();
+            if (pq)
+            {
+                auto pv = pq->getDisplayValueString();
+                if (pv != cacheString)
+                {
+                    bdw->dirty = true;
+                    cacheString = pv;
+                }
+            }
+        }
+        rack::Knob::step();
+    }
 };
 
 struct PlotAreaLabel : public rack::Widget, style::StyleParticipant
