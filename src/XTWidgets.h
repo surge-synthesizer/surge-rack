@@ -112,7 +112,6 @@ struct Label : BufferedDrawFunctionWidget, style::StyleParticipant
 
     void drawLabel(NVGcontext *vg)
     {
-        auto col = style()->getColor(color);
         nvgBeginPath(vg);
         nvgFontFaceId(vg, style()->fontIdBold(vg));
         nvgFontSize(vg, size * 96.0 / 72.0);
