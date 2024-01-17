@@ -16,12 +16,11 @@ FLAGS += -Isurge/src/common -Isurge/src/common/dsp \
 	-Isurge/libs/strnatcmp \
 	-Isurge/src/headless \
         -Isurge/libs/tuning-library/include \
+        -include src/armpatch.h \
         -include limits \
 	-DRELEASE=1 \
 	-DTARGET_HEADLESS \
 	-DTARGET_RACK 
-
-FLAGS += -include immintrin.h
 
 
 
