@@ -3,7 +3,7 @@
  *
  * A set of modules expressing Surge XT into the VCV Rack Module Ecosystem
  *
- * Copyright 2019 - 2023, Various authors, as described in the github
+ * Copyright 2019 - 2024, Various authors, as described in the github
  * transaction log.
  *
  * Surge XT for VCV Rack is released under the GNU General Public License
@@ -39,7 +39,7 @@ template <> VCOConfig<ot_wavetable>::layout_t VCOConfig<ot_wavetable>::getLayout
         LayoutItem::createVCOKnob(cp + 1, "", 1, 2),
         LayoutItem::createVCOKnob(cp + 4, "", 1, 3),
         LayoutItem::createVCOSpanLabel("V - SKEW - H", 1, 2, 2),
-
+        LayoutItem::createVCOLight(LayoutItem::EXTEND_LIGHT, M::EXTEND_UNISON, 1, 0)
         // clang-format on
     };
 }

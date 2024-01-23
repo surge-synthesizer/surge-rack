@@ -3,7 +3,7 @@
  *
  * A set of modules expressing Surge XT into the VCV Rack Module Ecosystem
  *
- * Copyright 2019 - 2023, Various authors, as described in the github
+ * Copyright 2019 - 2024, Various authors, as described in the github
  * transaction log.
  *
  * Surge XT for VCV Rack is released under the GNU General Public License
@@ -35,6 +35,7 @@
 
 #include <sst/plugininfra/cpufeatures.h>
 #include "TemposyncSupport.h"
+#include "version.h"
 
 namespace logger = rack::logger;
 using rack::appGet;
@@ -53,18 +54,17 @@ struct XTModule : public rack::Module, public SurgeStorage::ErrorListener
     std::string getBuildInfo()
     {
         char version[1024];
-        snprintf(version, 1023, "os:%s pluggit:%s surgegit:%s buildtime=%s %s",
+        snprintf(version, 1023, "os:%s surge:%s buildtime=%s %s",
 #if WINDOWS
                  "win",
-#endif
-#if MAC
+#elif MAC
                  "macos",
-#endif
-#if LINUX
+#elif LINUX
                  "linux",
+#else
+                 "unknown",
 #endif
-                 TOSTRING(SURGE_RACK_PLUG_VERSION), TOSTRING(SURGE_RACK_SURGE_VERSION), __DATE__,
-                 __TIME__);
+                 Surge::Build::GitHash, __DATE__, __TIME__);
         return std::string(version);
     }
 
