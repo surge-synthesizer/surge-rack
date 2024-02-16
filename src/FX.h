@@ -642,16 +642,34 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
     {
         if (c == -1)
         {
+            // Re-initialize everything
             surge_effect->init();
             halfbandIN.reset();
             for (const auto &s : surge_effect_poly)
                 if (s)
+                {
                     s->init();
+                }
+
+            // We are just starting over so clear all the buffers
+            bufferPos = 0;
+
+            memset(processedL, 0, sizeof(float) * MAX_POLY * BLOCK_SIZE);
+            memset(processedR, 0, sizeof(float) * MAX_POLY * BLOCK_SIZE);
+            memset(bufferL, 0, sizeof(float) * MAX_POLY * BLOCK_SIZE);
+            memset(bufferR, 0, sizeof(float) * MAX_POLY * BLOCK_SIZE);
         }
         else
         {
             // poly nan case
             surge_effect_poly[c]->init();
+
+            // Other buffers are fine. Just clear mine. And don't change
+            // pos since the zeros wont hurt me.
+            memset(processedL[c], 0, sizeof(float) * BLOCK_SIZE);
+            memset(processedR[c], 0, sizeof(float) * BLOCK_SIZE);
+            memset(bufferL[c], 0, sizeof(float) * BLOCK_SIZE);
+            memset(bufferR[c], 0, sizeof(float) * BLOCK_SIZE);
         }
     }
 
