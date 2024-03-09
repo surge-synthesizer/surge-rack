@@ -147,6 +147,9 @@ struct Waveshaper : public modules::XTModule,
 
         modulationAssistant.initialize(this);
 
+        // initialize values, they can be used by the UI before processing if plugin is bypassed
+        modulationAssistant.updateValues(this);
+
         configBypass(INPUT_L, OUTPUT_L);
         configBypass(INPUT_R, OUTPUT_R);
     }
@@ -200,7 +203,7 @@ struct Waveshaper : public modules::XTModule,
     int lastPolyL{-2}, lastPolyR{-2};
     int monoChannelOffset{0};
 
-    std::atomic<int> displayPolyChannel;
+    std::atomic<int> displayPolyChannel{0};
     std::atomic<bool> doDCBlock{true};
     bool wasDoDCBlock{true};
     /*
