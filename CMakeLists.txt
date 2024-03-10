@@ -112,7 +112,7 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
         src/XTWidgets.cpp)
 
 target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge sst-rackhelpers)
-target_compile_options(${RACK_PLUGIN_LIB} PUBLIC -fno-char8_t -Wno-sign-compare)
+target_compile_options(${RACK_PLUGIN_LIB} PUBLIC -Wno-sign-compare)
 
 file(COPY surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
