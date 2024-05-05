@@ -343,7 +343,7 @@ struct VCF : public modules::XTModule, sst::rackhelpers::module_connector::Neigh
 
     void process(const typename rack::Module::ProcessArgs &args) override
     {
-        // auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
+        auto fpuguard = sst::plugininfra::cpufeatures::FPUStateGuard();
 
         auto ftype = (sst::filters::FilterType)(int)(std::round(params[VCF_TYPE].getValue()));
         auto fsubtype =
