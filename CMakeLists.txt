@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 project(SurgeXTRack VERSION 1.0 LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PLUGIN_NAME ${PROJECT_NAME})
@@ -70,10 +70,6 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
 target_compile_options(surge-common PRIVATE $<$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>:-faligned-allocation>)
 
 add_compile_options($<$<BOOL:${SURGE_XT_WARNINGS_ARE_ERRORS}>:-Werror>)
-if (CMAKE_CXX_STANDARD GREATER_EQUAL 20)
-  message(STATUS "Turning on fno-char8_t for c++20")
-  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-char8_t>)
-endif()
 add_compile_definitions($<$<CONFIG:Debug>:SURGEXT_RACK_DEBUG>)
 
 add_library(Surge INTERFACE)
@@ -112,7 +108,7 @@ target_sources(${RACK_PLUGIN_LIB} PRIVATE
         src/XTWidgets.cpp)
 
 target_link_libraries(${RACK_PLUGIN_LIB} PRIVATE Surge sst-rackhelpers)
-target_compile_options(${RACK_PLUGIN_LIB} PUBLIC -Wno-sign-compare)
+target_compile_options(${RACK_PLUGIN_LIB} PUBLIC -Wno-sign-compare -fno-char8_t)
 
 file(COPY surge/resources/surge-shared/configuration.xml
              surge/resources/surge-shared/windows.wt
