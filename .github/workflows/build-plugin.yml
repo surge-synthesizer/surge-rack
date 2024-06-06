@@ -2,7 +2,7 @@ name: Build VCV Rack Plugin
 on: [push, pull_request]
 
 env:
-  rack-sdk-version: 2.5.1
+  rack-sdk-version: latest
   rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
 
 defaults:
@@ -15,8 +15,8 @@ jobs:
     name: Modify plugin version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         id: plugin-version-cache
         with:
           path: plugin.json
@@ -41,10 +41,10 @@ jobs:
       matrix:
         platform: [win-x64, lin-x64]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: plugin-version-cache
         with:
           path: plugin.json
@@ -55,7 +55,7 @@ jobs:
           pushd ${{ env.rack-plugin-toolchain-dir }}
           make plugin-build-${{ matrix.platform }}
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ${{ env.rack-plugin-toolchain-dir }}/plugin-build
           name: ${{ matrix.platform }}
@@ -69,10 +69,10 @@ jobs:
       matrix:
         platform: [x64, arm64]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: plugin-version-cache
         with:
           path: plugin.json
@@ -80,7 +80,7 @@ jobs:
       - name: Get Rack-SDK
         run: |
           pushd $HOME
-          wget -O Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-${{ matrix.platform }}.zip
+          wget -O Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-x64+arm64.zip
           unzip Rack-SDK.zip
       - name: Build plugin
         run: |
@@ -92,7 +92,7 @@ jobs:
           make dist
           echo "Plugin architecture '$(lipo -archs plugin*.dylib)'"
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: dist/*.vcvplugin
           name: mac-${{ matrix.platform }}
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, build-mac]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: FranzDiebold/github-env-vars-action@v2
       - name: Check if plugin version matches tag
         run: |
@@ -115,7 +115,7 @@ jobs:
             exit 1
           fi
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref }}
           name: Release ${{ env.CI_REF_NAME }}
@@ -123,7 +123,7 @@ jobs:
             ${{ env.GITHUB_REPOSITORY_NAME }} VCV Rack Plugin ${{ env.CI_REF_NAME }}
           draft: false
           prerelease: false
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: _artifacts
       - name: Upload release assets
@@ -142,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, build-mac]
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: _artifacts
       - name: Delete old release assets
