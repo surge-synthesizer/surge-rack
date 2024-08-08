@@ -155,7 +155,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
         for (int i = 0; i < n_fx_params * n_mod_inputs; ++i)
         {
             std::string name{"Mod"};
-            name += std::to_string((i - FX_MOD_PARAM_0) % 4 + 1);
+            name += std::to_string(i % 4 + 1);
 
             configParamNoRand<modules::SurgeParameterModulationQuantity>(FX_MOD_PARAM_0 + i, -1, 1,
                                                                          0, name)
