@@ -44,7 +44,8 @@ add_subdirectory(surge)
 # dependency CMake definitions and removed from here
 target_compile_options(juce_dsp_rack_sub PRIVATE -Wno-deprecated-copy
         $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
-        $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-pointer>)
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-pointer>
+        -DJUCE_AUDIOWORKGROUP_TYPES_AVAILABLE=0)
 target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
