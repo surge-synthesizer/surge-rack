@@ -266,7 +266,7 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
 
         configSwitch(A_SHAPE, 0, 2, 1, "Attack Curve", {"Faster", "Standard", "Slower"});
         configSwitch(D_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
-        configSwitch(R_SHAPE, 0, 2, 1, "Decay Curve", {"Faster", "Standard", "Slower"});
+        configSwitch(R_SHAPE, 0, 2, 1, "Release Curve", {"Faster", "Standard", "Slower"});
 
         configSwitch(EOC_TYPE, (int)EO_CYCLE, (int)ALL_TRANSITIONS, (int)EO_CYCLE, "EOC Behavior",
                      {"End of Cycle", "Start of Cycle", "Start of Attack (DAHD Only)",
