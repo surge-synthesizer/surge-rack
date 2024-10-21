@@ -574,6 +574,7 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
                     eocCountdown[c] = eocInit;
                 }
             }
+            auto pst = procs[c]->stage;
             if (tempoSynced)
             {
                 auto av = aTS + modAssist.modvalues[EG_A][c];
@@ -585,29 +586,28 @@ struct EGxVCA : modules::XTModule, sst::rackhelpers::module_connector::NeighborC
             }
             else
             {
-                auto pst = procs[c]->stage;
                 procs[c]->process(modAssist.values[EG_A][c], modAssist.values[EG_D][c],
                                   modAssist.values[EG_S][c], modAssist.values[EG_R][c], as, ds, rs,
                                   inputs[GATE_IN].getVoltage(polyGate * c) > 2);
-                auto nst = procs[c]->stage;
+            }
+            auto nst = procs[c]->stage;
 
-                if (pst != nst)
+            if (pst != nst)
+            {
+                if (ett == ALL_TRANSITIONS || (nst == ENVT::s_attack && ett == START_ATTACK) ||
+                    (nst == ENVT::s_decay && ett == START_DECAY) ||
+                    (nst == ENVT::s_sustain && !getMode() && ett == START_SUSTAIN) ||
+                    (nst == ENVT::s_sustain && getMode() && ett == START_HOLD) ||
+                    (nst == ENVT::s_release && ett == START_RELEASE) ||
+                    (nst > ENVT::s_release && ett == EO_CYCLE))
                 {
-                    if (ett == ALL_TRANSITIONS || (nst == ENVT::s_attack && ett == START_ATTACK) ||
-                        (nst == ENVT::s_decay && ett == START_DECAY) ||
-                        (nst == ENVT::s_sustain && !getMode() && ett == START_SUSTAIN) ||
-                        (nst == ENVT::s_sustain && getMode() && ett == START_HOLD) ||
-                        (nst == ENVT::s_release && ett == START_RELEASE) ||
-                        (nst > ENVT::s_release && ett == EO_CYCLE))
-                    {
-                        eocCountdown[c] = eocInit;
-                    }
+                    eocCountdown[c] = eocInit;
                 }
-                else
-                {
-                    if (eocCountdown[c])
-                        eocCountdown[c]--;
-                }
+            }
+            else
+            {
+                if (eocCountdown[c])
+                    eocCountdown[c]--;
             }
         }
 

@@ -1,5 +1,10 @@
 # Surge XT VCV Modules Changelog
 
+## 2.2.5
+
+- Fix a release curve tooltip in EGxVCA
+- Fix a problem where EGxVCA with a clock would not fire EOC markers
+
 ## 2.2.4
 
 - Move to the surge 1.3.3 submodule (with a small modification)
