@@ -239,7 +239,7 @@ struct FX : modules::XTModule, sst::rackhelpers::module_connector::NeighborConne
         fxstorage = &(storage->getPatch().fx[0]);
         // Surge proper defaults this to true then uses the patch loader to set it to false
         // based on version. We don't do the patch load here so...
-        for (int i=0; i<n_fx_params; ++i)
+        for (int i = 0; i < n_fx_params; ++i)
             fxstorage->p[i].deactivated = false;
         fxstorage->type.val.i = fxType;
 
