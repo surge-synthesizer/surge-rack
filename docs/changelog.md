@@ -1,5 +1,10 @@
 # Surge XT VCV Modules Changelog
 
+## 2.2.6
+
+- Fix a problem where the phaser wouldn't phase
+- Fix the FM3 M3 frequency tooltip, which is 60- not 69- based
+
 ## 2.2.5
 
 - Fix a release curve tooltip in EGxVCA
