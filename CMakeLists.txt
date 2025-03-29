@@ -47,6 +47,7 @@ target_compile_options(juce_dsp_rack_sub PRIVATE
         $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-pointer>
         -DJUCE_AUDIOWORKGROUP_TYPES_AVAILABLE=0)
+target_compile_options(fmt PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-reference>)
 target_compile_options(eurorack PRIVATE -Wno-unused-local-typedefs $<$<PLATFORM_ID:Darwin>:-Wno-infinite-recursion>)
 target_compile_options(sqlite PRIVATE -Wno-error)
 target_compile_options(sst-plugininfra PRIVATE -Wno-unused-variable)
@@ -62,6 +63,7 @@ target_compile_options(surge-common PRIVATE -Wno-sign-compare -Wno-ignored-quali
                        $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-stringop-truncation,-Wno-string-concatenation>
                        $<IF:$<CXX_COMPILER_ID:GNU>,-Wno-class-memaccess,-Wno-class-varargs>
                        $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+                       $<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-reference>
                        $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict> # TODO - Remove this
                        $<$<PLATFORM_ID:Darwin>:-Wno-self-assign>
                        $<$<PLATFORM_ID:Darwin>:-Wno-unused-lambda-capture>
