@@ -58,12 +58,12 @@ else ()
   message(STATUS "Defaulting CMAKE_CXX_STANDARD to ${CMAKE_CXX_STANDARD}")
 endif ()
 
-add_library(${RACK_PLUGIN_LIB} MODULE)
-set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES PREFIX "")
-
 # Since the plugin's compiler could be a different version than Rack's compiler, link libstdc++ and libgcc statically to avoid ABI issues.
 add_link_options($<$<CXX_COMPILER_ID:GNU>:-static-libstdc++> $<$<PLATFORM_ID:Linux>:-static-libgcc>)
 add_compile_options($<IF:$<STREQUAL:${CMAKE_OSX_ARCHITECTURES},arm64>,-march=armv8-a+fp+simd,-march=nehalem>)
+
+add_library(${RACK_PLUGIN_LIB} MODULE)
+set_target_properties(${RACK_PLUGIN_LIB} PROPERTIES PREFIX "")
 
 add_library(RackSDK INTERFACE)
 target_include_directories(RackSDK INTERFACE ${RACK_SDK_DIR}/include ${RACK_SDK_DIR}/dep/include)
