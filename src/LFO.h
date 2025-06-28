@@ -132,6 +132,7 @@ struct LFO : modules::XTModule
     LFOStorage *lfostorageDisplay;
     std::atomic<bool> retriggerFromZero{false};
     std::atomic<float> onepoleFactor{0.75f};
+    std::atomic<bool> processHasRun{false};
 
     modules::ModulationAssistant<LFO, n_lfo_params, RATE, n_mod_inputs, LFO_MOD_INPUT> modAssist;
 
@@ -713,6 +714,8 @@ struct LFO : modules::XTModule
                 }
             }
         }
+
+        processHasRun = true;
     }
 
     int pulseSamples{48000 / 100};

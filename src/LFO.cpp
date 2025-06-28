@@ -695,6 +695,9 @@ struct LFOWaveform : rack::Widget, style::StyleParticipant
 
     void drawWaveform(NVGcontext *vg)
     {
+        if (!module->processHasRun)
+            return;
+
         auto lfodata = module->lfostorageDisplay;
         auto storage = module->storage.get();
 
